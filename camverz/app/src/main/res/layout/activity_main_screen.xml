@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- User Info Section -->
+        <TextView
+            android:id="@+id/user_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome, User"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginTop="20dp"
+            android:layout_gravity="center"/>
+
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠ Not Verified"
+            android:textColor="#E0DFFF"
+            android:textSize="14sp"
+            android:layout_marginTop="5dp"
+            android:layout_gravity="center"/>
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose Your Interest"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            android:layout_marginTop="40dp"
+            android:layout_gravity="center"/>
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect with verified users worldwide"
+            android:textColor="#E0DFFF"
+            android:textSize="14sp"
+            android:layout_marginTop="5dp"
+            android:layout_gravity="center"/>
+
+        <!-- GAY Card -->
+        <LinearLayout
+            android:id="@+id/cardGay"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@drawable/card_bg"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="40dp"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👨"
+                android:textSize="50sp"
+                android:layout_marginRight="15dp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Gay"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🏳️‍🌈"
+                android:textSize="35sp"/>
+        </LinearLayout>
+
+        <!-- LESBIAN Card -->
+        <LinearLayout
+            android:id="@+id/cardLesbian"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@drawable/card_bg"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="20dp"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👩"
+                android:textSize="50sp"
+                android:layout_marginRight="15dp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Lesbian"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💖"
+                android:textSize="35sp"/>
+        </LinearLayout>
+
+        <!-- STRAIGHT Card -->
+        <LinearLayout
+            android:id="@+id/cardStraight"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@drawable/card_bg"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="20dp"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👫"
+                android:textSize="50sp"
+                android:layout_marginRight="15dp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Straight"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔥"
+                android:textSize="35sp"/>
+        </LinearLayout>
+
+        <!-- Action Buttons -->
+        <Button
+            android:id="@+id/start_chat_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Matching"
+            android:layout_marginTop="30dp"/>
+
+        <Button
+            android:id="@+id/verification_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Complete Verification"
+            android:layout_marginTop="12dp"/>
+
+        <Button
+            android:id="@+id/logout_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="40dp"/>
+
+    </LinearLayout>
+</ScrollView>

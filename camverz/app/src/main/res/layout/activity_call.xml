@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- REMOTE VIDEO FULLSCREEN -->
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/remoteView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- LOCAL VIDEO SMALL PREVIEW -->
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/localView"
+        android:layout_width="140dp"
+        android:layout_height="180dp"
+        android:layout_margin="18dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:elevation="20dp"
+        />
+
+    <!-- CONTROL BUTTONS -->
+    <LinearLayout
+        android:id="@+id/bottomButtons"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:padding="20dp"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/btnMute"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:padding="15dp"
+            android:background="@android:color/darker_gray"
+            android:src="@android:drawable/ic_btn_speak_now"/>
+
+        <ImageView
+            android:id="@+id/btnSwitchCamera"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:padding="15dp"
+            android:layout_marginStart="25dp"
+            android:background="@android:color/darker_gray"
+            android:src="@android:drawable/ic_menu_camera"/>
+
+        <ImageView
+            android:id="@+id/btnEnd"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:padding="15dp"
+            android:layout_marginStart="25dp"
+            android:background="#FF3B30"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"/>
+    </LinearLayout>
+
+</RelativeLayout>

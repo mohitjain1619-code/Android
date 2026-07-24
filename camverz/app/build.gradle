@@ -1,0 +1,72 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.google.services)
+}
+
+android {
+    namespace 'com.mohitt.camverz'
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "com.mohitt.camverz"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    packagingOptions {
+        exclude 'META-INF/native-image/org.bytedeco.javacpp/jni-config.json'
+    }
+}
+
+dependencies {
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+
+    // Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:34.6.0')
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-auth'
+    implementation 'com.google.firebase:firebase-firestore'
+    implementation 'com.google.firebase:firebase-storage'
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
+
+    // Socket.IO
+    implementation 'io.socket:socket.io-client:2.1.2'
+
+    // JSON
+    implementation 'org.json:json:20250517'
+
+
+    implementation 'io.github.webrtc-sdk:android:137.7151.05'
+
+
+
+
+
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}

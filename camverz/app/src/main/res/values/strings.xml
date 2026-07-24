@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">camverz</string>
+    
+    <!-- Call Activity -->
+    <string name="mute_audio">Mute audio</string>
+    <string name="switch_camera">Switch camera</string>
+    <string name="end_call">End call</string>
+    <string name="connecting">Connecting…</string>
+    
+    <!-- Gender Selection -->
+    <string name="select_your_gender">Select Your Gender</string>
+    <string name="gender_help_text">This helps us connect you with the right people</string>
+    <string name="male">👨 Male</string>
+    <string name="female">👩 Female</string>
+    <string name="continue_arrow">Continue →</string>
+    
+    <!-- Main Screen -->
+    <string name="welcome_user">Welcome, User</string>
+    <string name="verified">✓ Verified</string>
+    <string name="not_verified">⚠ Not Verified</string>
+    <string name="choose_interest">Choose Your Interest</string>
+    <string name="verified_users_text">Connect with verified users worldwide</string>
+    <string name="start_matching">Start Matching</string>
+    <string name="complete_verification">Complete Verification</string>
+    <string name="logout">Logout</string>
+    
+    <!-- Categories -->
+    <string name="gay">Gay</string>
+    <string name="gay_emoji">👨</string>
+    <string name="gay_flag">🏳️‍🌈</string>
+    <string name="lesbian">Lesbian</string>
+    <string name="lesbian_emoji">👩</string>
+    <string name="lesbian_heart">💖</string>
+    <string name="straight">Straight</string>
+    <string name="straight_couple">👫</string>
+    <string name="straight_fire">🔥</string>
+    
+    <!-- Login -->
+    <string name="welcome_to_camverz">Welcome to Camverz</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    
+    <!-- Connecting Activity -->
+    <string name="finding_match">Finding a Match…</string>
+    <string name="wait_connect_message">Please wait while we connect you…</string>
+    <string name="cancel">Cancel</string>
+    
+    <!-- Verification Activity -->
+    <string name="verification">Verification</string>
+    <string name="selfie">Selfie</string>
+    <string name="take_selfie">Take Selfie</string>
+    <string name="id_document">ID Document</string>
+    <string name="upload_id">Upload ID</string>
+    <string name="submit_verification">Submit Verification</string>
+    
+    <!-- Status Messages -->
+    <string name="matched_starting_call">Matched! Starting call…</string>
+    <string name="finding_match_status">Finding match…</string>
+    <string name="error_loading_profile">Error loading profile</string>
+</resources>
