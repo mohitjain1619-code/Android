@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer rainbow glow -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="45"
+                android:startColor="#44FF00FF"
+                android:centerColor="#4400E5FF"
+                android:endColor="#44FFD700"
+                android:type="linear" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <!-- Glass effect -->
+    <item android:top="3dp" android:bottom="3dp" android:left="3dp" android:right="3dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#55000000"
+                android:centerColor="#33000000"
+                android:endColor="#22000000"
+                android:type="linear" />
+            <corners android:radius="18dp" />
+            <stroke android:width="2dp" android:color="#88FF00FF" />
+        </shape>
+    </item>
+</layer-list>

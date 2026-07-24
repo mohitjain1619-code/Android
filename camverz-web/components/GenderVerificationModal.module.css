@@ -1,0 +1,250 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 18, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.content {
+  background: var(--bg-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: clamp(20px, 4vw, 32px);
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 0 60px rgba(0, 229, 255, 0.1), var(--shadow-glass);
+  text-align: center;
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  padding: 4px;
+}
+
+.closeBtn:hover {
+  color: var(--neon-pink);
+}
+
+.title {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  font-weight: 800;
+  margin-bottom: 8px;
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.desc {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+/* Camera & Preview Wrapper */
+.cameraWrapper {
+  position: relative;
+  width: 280px;
+  height: 380px;
+  margin: 0 auto 20px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.video, .previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror effect for front camera */
+}
+
+/* High-tech Face Frame Overlay */
+.faceGuideFrame {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: radial-gradient(circle, transparent 40%, rgba(6, 6, 18, 0.6) 80%);
+}
+
+.ovalMask {
+  width: 180px;
+  height: 240px;
+  border-radius: 50%;
+  position: relative;
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.ovalMask.notAligned {
+  border: 2px dashed rgba(255, 0, 92, 0.45); /* Crimson red/pink dashed outline */
+  box-shadow: 0 0 10px rgba(255, 0, 92, 0.1), 0 0 0 9999px rgba(6, 6, 18, 0.6);
+}
+
+.ovalMask.aligned {
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 25px rgba(0, 230, 118, 0.4), 0 0 0 9999px rgba(6, 6, 18, 0.6);
+}
+
+.ovalMask.scanning {
+  border: 2px solid var(--neon-purple);
+  box-shadow: 0 0 25px rgba(189, 0, 255, 0.4), 0 0 0 9999px rgba(6, 6, 18, 0.6);
+}
+
+/* Alignment Status Banner */
+.alignmentStatus {
+  margin: 12px 0 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.statusRed {
+  color: var(--neon-pink);
+  text-shadow: 0 0 8px rgba(255, 0, 92, 0.2);
+}
+
+.statusGreen {
+  color: var(--neon-green);
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.2);
+  animation: pulseGlow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+  from {
+    opacity: 0.85;
+  }
+  to {
+    opacity: 1;
+    text-shadow: 0 0 12px rgba(0, 230, 118, 0.4);
+  }
+}
+
+/* Scanning Laser Line */
+.laserLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-cyan), transparent);
+  box-shadow: 0 0 12px var(--neon-cyan), 0 0 4px var(--neon-cyan);
+  animation: scanLaser 2s linear infinite;
+}
+
+.laserLine.scanning {
+  background: linear-gradient(90deg, transparent, var(--neon-purple), var(--neon-purple), transparent);
+  box-shadow: 0 0 12px var(--neon-purple), 0 0 4px var(--neon-purple);
+}
+
+/* 3-Second Countdown Overlay */
+.countdownOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 6, 18, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.countdownNumber {
+  font-family: var(--font-display);
+  font-size: 5rem;
+  font-weight: 900;
+  text-shadow: 0 0 20px rgba(0, 229, 255, 0.8), 0 0 40px rgba(189, 0, 255, 0.4);
+  animation: countdownPulse 1s ease infinite;
+}
+
+/* Success & Error Layouts */
+.statusContainer {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  margin-bottom: 20px;
+}
+
+.successIcon {
+  color: var(--neon-green);
+  animation: bounce 0.6s ease;
+  margin-bottom: 8px;
+}
+
+.errorIcon {
+  color: var(--neon-pink);
+  margin-bottom: 8px;
+}
+
+.statusTitle {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.statusDesc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Action Controls */
+.controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.controls button {
+  flex: 1;
+}
+
+/* Animations */
+@keyframes scanLaser {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(0.6); opacity: 0.3; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.8); opacity: 0; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

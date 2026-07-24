@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/call_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Remote (Main) Video View -->
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/remoteView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Draggable Floating Local Video Window with Colorful Border -->
+    <FrameLayout
+        android:id="@+id/local_view_container"
+        android:layout_width="110dp"
+        android:layout_height="160dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="80dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_floating_window_colorful"
+        android:elevation="8dp"
+        android:padding="3dp">
+
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/localView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        
+        <!-- Swap indicator icon -->
+        <ImageView
+            android:id="@+id/swap_indicator"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_swap_vert"
+            android:alpha="0.7"
+            android:padding="6dp"
+            android:background="@drawable/bg_swap_button"
+            app:tint="#FFFFFF"
+            android:visibility="gone"/>
+    </FrameLayout>
+
+    <!-- Controls Container -->
+    <RelativeLayout
+        android:id="@+id/controls_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Top User Info Bar with Beautiful Gradient -->
+        <LinearLayout
+            android:id="@+id/top_user_info_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/bg_top_bar_glass"
+            android:paddingStart="20dp"
+            android:paddingTop="45dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp"
+            android:elevation="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            
+            <!-- User Avatar -->
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/peer_avatar"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:src="@drawable/ic_user_placeholder"
+                app:civ_border_width="2dp"
+                app:civ_border_color="#00E5FF"/>
+            
+            <!-- User Name and Connection Status -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+                
+                <TextView
+                    android:id="@+id/peer_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connecting..."
+                    android:textColor="#FFFFFF"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:shadowColor="#00E5FF"
+                    android:shadowDx="0"
+                    android:shadowDy="0"
+                    android:shadowRadius="6"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+                
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp">
+                    
+                    <View
+                        android:id="@+id/connection_dot"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/bg_connection_dot"
+                        android:layout_marginEnd="8dp"/>
+                    
+                    <TextView
+                        android:id="@+id/connection_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Connected"
+                        android:textColor="#B3FFFFFF"
+                        android:textSize="13sp"/>
+                </LinearLayout>
+            </LinearLayout>
+            
+            <!-- Follow Button -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/follow_button_card"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="6dp"
+                android:layout_marginStart="10dp">
+                
+                <TextView
+                    android:id="@+id/follow_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Follow"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_follow_button"
+                    android:paddingStart="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="10dp"
+                    android:clickable="true"
+                    android:focusable="true"/>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- Bottom Controls Bar with Colorful Gradient -->
+        <LinearLayout
+            android:id="@+id/bottom_controls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/bg_bottom_controls_colorful"
+            android:gravity="center"
+            android:paddingTop="28dp"
+            android:paddingBottom="36dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:elevation="4dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnToggleVideo"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_video_button_purple"
+                android:src="@drawable/ic_videocam_on"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                app:tint="#FFFFFF"
+                android:layout_marginEnd="12dp"
+                android:elevation="4dp"
+                android:stateListAnimator="@null"/>
+
+            <ImageButton
+                android:id="@+id/btnMute"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_video_button_gradient"
+                android:src="@drawable/ic_mic_on"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                app:tint="#FFFFFF"
+                android:layout_marginEnd="12dp"
+                android:elevation="4dp"
+                android:stateListAnimator="@null"/>
+
+            <ImageButton
+                android:id="@+id/btnEnd"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@drawable/bg_end_button_gradient"
+                android:src="@drawable/ic_call_end"
+                android:padding="20dp"
+                android:scaleType="fitCenter"
+                app:tint="#FFFFFF"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:elevation="6dp"
+                android:stateListAnimator="@null"/>
+
+            <ImageButton
+                android:id="@+id/btnSwitchCamera"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_video_button_pink"
+                android:src="@drawable/ic_camera_flip"
+                android:padding="14dp"
+                android:scaleType="fitCenter"
+                app:tint="#FFFFFF"
+                android:layout_marginStart="12dp"
+                android:elevation="4dp"
+                android:stateListAnimator="@null"/>
+
+        </LinearLayout>
+    </RelativeLayout>
+
+</RelativeLayout>

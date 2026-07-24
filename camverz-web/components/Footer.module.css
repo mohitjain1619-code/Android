@@ -1,0 +1,118 @@
+.footer {
+  border-top: 1px solid var(--glass-border);
+  background: rgba(6, 6, 18, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: clamp(32px, 6vw, 64px) 0 clamp(16px, 3vw, 32px);
+  position: relative;
+  z-index: 1;
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 24px);
+}
+
+.grid {
+  display: grid;
+  gap: clamp(24px, 4vw, 40px);
+  grid-template-columns: 1fr;
+  margin-bottom: clamp(24px, 4vw, 48px);
+}
+
+@media (min-width: 480px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (min-width: 768px) {
+  .grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
+}
+
+.brand {}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.3rem;
+  margin-bottom: 12px;
+}
+
+.logoText {
+  font-family: var(--font-display);
+  font-weight: 800;
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tagline {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.linkGroup h4 {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.linkGroup a {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  transition: color 0.2s ease;
+  text-decoration: none;
+}
+
+.linkGroup a:hover {
+  color: var(--neon-cyan);
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding-top: clamp(16px, 3vw, 24px);
+  border-top: 1px solid var(--glass-border);
+}
+
+@media (min-width: 768px) {
+  .bottom {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.bottom p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.badges {
+  display: flex;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+}

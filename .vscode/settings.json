@@ -1,0 +1,11 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.exclusions": [
+        "**/node_modules/**",
+        "**/.metadata/**",
+        "**/mediapipe-samples/**"
+    ],
+    "files.exclude": {
+        "**/mediapipe-samples": true
+    }
+}

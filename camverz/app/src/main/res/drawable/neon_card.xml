@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background with a very subtle gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="45"
+                android:startColor="#2A2A2A"
+                android:endColor="#1A1A1A" />
+        </shape>
+    </item>
+    <!-- Glossy Overlay -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#44FFFFFF"
+                android:endColor="#00FFFFFF" />
+        </shape>
+    </item>
+    <!-- Neon Border -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="18dp" />
+            <stroke
+                android:width="2dp">
+                <gradient
+                    android:angle="45"
+                    android:startColor="#7F00FF"
+                    android:centerColor="#E100FF"
+                    android:endColor="#00E5FF" />
+            </stroke>
+        </shape>
+    </item>
+</layer-list>

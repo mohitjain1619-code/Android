@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_profile_post_card"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/post_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            app:layout_constraintEnd_toStartOf="@+id/post_menu_button"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="This is a sample post text that can be quite long and wrap to multiple lines." />
+
+        <LinearLayout
+            android:id="@+id/action_buttons_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/post_text">
+
+            <ImageView
+                android:id="@+id/like_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_like_outline" />
+
+            <TextView
+                android:id="@+id/like_count_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#B3FFFFFF"
+                tools:text="12" />
+
+            <ImageView
+                android:id="@+id/comment_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:src="@drawable/ic_comment" />
+
+            <TextView
+                android:id="@+id/comment_count_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="#B3FFFFFF"
+                tools:text="12" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/timestamp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@id/action_buttons_layout"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/action_buttons_layout"
+            tools:text="10:30 AM" />
+
+        <ImageView
+            android:id="@+id/post_menu_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:src="@drawable/ic_more_vert"
+            app:layout_constraintEnd_toEndOf="parent"
+            app.layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

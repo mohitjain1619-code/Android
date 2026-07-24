@@ -1,0 +1,283 @@
+.page {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-dark);
+  z-index: 250;
+  overflow: hidden;
+}
+
+/* ── Idle State ── */
+.idleContainer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(16px, 3vw, 24px);
+  position: relative;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  border-radius: var(--radius-full);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.backBtn:hover {
+  color: var(--text-primary);
+  background: var(--glass-bg-hover);
+}
+
+.idleContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.idleIcon {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--neon-cyan);
+  margin-bottom: 8px;
+  animation: glowPulse 3s ease infinite;
+}
+
+.idleContent h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.idleContent p {
+  color: var(--text-secondary);
+}
+
+/* ── Remote Video ── */
+.remoteVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+/* ── Local PIP ── */
+.localPip {
+  position: absolute;
+  bottom: 120px;
+  right: 16px;
+  width: clamp(100px, 25vw, 150px);
+  aspect-ratio: 9 / 16;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+  z-index: 10;
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.2s;
+}
+
+.localPip:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.localVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* ── Connecting Overlay ── */
+.connectingOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 6, 18, 0.9);
+  backdrop-filter: blur(10px);
+  z-index: 20;
+  text-align: center;
+  gap: 12px;
+}
+
+.searchAnimation {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neon-cyan);
+  margin-bottom: 8px;
+}
+
+.ring, .ring2, .ring3 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--neon-cyan);
+  animation: pulse 2s ease infinite;
+}
+
+.ring2 {
+  border-color: var(--neon-purple);
+  animation-delay: 0.4s;
+}
+
+.ring3 {
+  border-color: var(--neon-pink);
+  animation-delay: 0.8s;
+}
+
+.connectingOverlay h3 {
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+}
+
+.connectingOverlay p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Top Bar ── */
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: clamp(12px, 2vw, 16px) clamp(12px, 3vw, 20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+  z-index: 15;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+}
+
+.peerInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.peerAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+}
+
+.peerName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.callTimer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.connDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neon-orange);
+}
+
+.dotGreen {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+/* ── Bottom Controls ── */
+.bottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: clamp(16px, 3vw, 24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2vw, 16px);
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  z-index: 15;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.bottomBar.hidden {
+  transform: translateY(10px);
+}
+
+.controlBtn {
+  width: clamp(48px, 10vw, 56px);
+  height: clamp(48px, 10vw, 56px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.2s;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.controlBtn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+
+.controlActive {
+  background: rgba(255, 60, 60, 0.3) !important;
+  border-color: rgba(255, 60, 60, 0.5);
+}
+
+.endBtn {
+  background: #FF3B3B !important;
+  border-color: #FF3B3B !important;
+  width: clamp(56px, 12vw, 64px) !important;
+  height: clamp(56px, 12vw, 64px) !important;
+}
+
+.endBtn:hover {
+  background: #FF1111 !important;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+}
+
+.nextBtn {
+  background: rgba(0, 229, 255, 0.2) !important;
+  border-color: rgba(0, 229, 255, 0.4) !important;
+}
+
+.nextBtn:hover {
+  background: rgba(0, 229, 255, 0.35) !important;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}

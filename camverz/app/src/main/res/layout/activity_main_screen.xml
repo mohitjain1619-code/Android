@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F0C29">
+
+    <!-- Background Shine -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_premium_shine"
+        android:alpha="0.8" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include
+            android:id="@+id/top_nav_bar"
+            layout="@layout/top_nav_enhanced"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/top_nav_bar"
+            android:layout_above="@id/bottom_nav_bar"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Title -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Choose Your Interest"
+                    android:textColor="#FFFFFF"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="20dp"
+                    android:layout_gravity="center"
+                    android:shadowColor="#8000D9FF"
+                    android:shadowRadius="20" />
+
+                <!-- Subtitle -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connect with verified users worldwide"
+                    android:textColor="#E0DFFF"
+                    android:textSize="14sp"
+                    android:layout_marginTop="5dp"
+                    android:layout_gravity="center"/>
+
+                <!-- GAY Card -->
+                <LinearLayout
+                    android:id="@+id/cardGay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_item"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="40dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👨"
+                        android:textSize="50sp"
+                        android:layout_marginEnd="15dp"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Gay"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#00D9FF"
+                        android:shadowRadius="10"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🏳️‍🌈"
+                        android:textSize="35sp"/>
+                </LinearLayout>
+
+                <!-- LESBIAN Card -->
+                <LinearLayout
+                    android:id="@+id/cardLesbian"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_item"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="20dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👩"
+                        android:textSize="50sp"
+                        android:layout_marginEnd="15dp"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Lesbian"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#FF00FF"
+                        android:shadowRadius="10"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💖"
+                        android:textSize="35sp"/>
+                </LinearLayout>
+
+                <!-- STRAIGHT Card -->
+                <LinearLayout
+                    android:id="@+id/cardStraight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_item"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="40dp"
+                    android:padding="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👫"
+                        android:textSize="50sp"
+                        android:layout_marginEnd="15dp"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Straight"
+                        android:textColor="#FFFFFF"
+                        android:textSize="22sp"
+                        android:textStyle="bold"
+                        android:shadowColor="#FFFFFF"
+                        android:shadowRadius="10"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔥"
+                        android:textSize="35sp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <include
+            android:id="@+id/bottom_nav_bar"
+            layout="@layout/bottom_nav_enhanced"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true" />
+
+    </RelativeLayout>
+</FrameLayout>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer glow -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#44FF1744" />
+            <size android:width="80dp" android:height="80dp" />
+        </shape>
+    </item>
+    <!-- Middle glow -->
+    <item android:top="6dp" android:bottom="6dp" android:left="6dp" android:right="6dp">
+        <shape android:shape="oval">
+            <solid android:color="#66FF1744" />
+        </shape>
+    </item>
+    <!-- Button gradient -->
+    <item android:top="12dp" android:bottom="12dp" android:left="12dp" android:right="12dp">
+        <shape android:shape="oval">
+            <gradient
+                android:angle="135"
+                android:startColor="#FF1744"
+                android:centerColor="#F50057"
+                android:endColor="#C51162"
+                android:type="linear" />
+            <stroke android:width="2dp" android:color="#FF8A80" />
+        </shape>
+    </item>
+</layer-list>

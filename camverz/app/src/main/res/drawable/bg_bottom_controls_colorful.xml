@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background gradient - colorful -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#DD000000"
+                android:centerColor="#99000000"
+                android:endColor="#77000000"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- Rainbow gradient overlay -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#33FF00FF"
+                android:centerColor="#2200E5FF"
+                android:endColor="#00000000"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- Top border with gradient -->
+    <item android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="0"
+                android:startColor="#66FF00FF"
+                android:centerColor="#6600E5FF"
+                android:endColor="#66FFD700"
+                android:type="linear" />
+            <size android:height="2dp" />
+        </shape>
+    </item>
+</layer-list>

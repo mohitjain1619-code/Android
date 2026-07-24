@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:background="@drawable/bg_inbox_item_glassy"
+    android:padding="16dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profileImageView"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:src="@mipmap/ic_launcher"
+        app:civ_border_color="#FFFFFFFF"
+        app:civ_border_width="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/nameTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/timestampTextView"
+        app:layout_constraintStart_toEndOf="@id/profileImageView"
+        app:layout_constraintTop_toTopOf="@id/profileImageView"
+        tools:text="User Name" />
+
+    <TextView
+        android:id="@+id/lastMessageTextView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="4dp"
+        android:textColor="#CCCCCC"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@id/unread_indicator"
+        app:layout_constraintStart_toEndOf="@id/profileImageView"
+        app:layout_constraintTop_toBottomOf="@id/nameTextView"
+        tools:text="This is the last message." />
+
+    <TextView
+        android:id="@+id/timestampTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="10:00 AM" />
+
+    <View
+        android:id="@+id/unread_indicator"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/unread_indicator_background"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/lastMessageTextView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/lastMessageTextView"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

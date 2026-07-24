@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_call_gradient">
+
+    <TextView
+        android:id="@+id/searchingTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Finding Your Perfect Match 🔍"
+        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="80dp" />
+
+    <!-- Animated Pulse Circle -->
+    <FrameLayout
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerInParent="true"
+        android:id="@+id/pulseContainer">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_search_pulse"
+            app:tint="#FFFFFF"
+            android:alpha="0.6" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/waitingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Waiting for someone..."
+        android:textColor="#DDFFFFFF"
+        android:textSize="16sp"
+        android:layout_below="@id/pulseContainer"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp" />
+
+    <TextView
+        android:id="@+id/categoryText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Category: Straight"
+        android:textColor="#AAFFFFFF"
+        android:textSize="14sp"
+        android:layout_below="@id/waitingText"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp" />
+
+    <Button
+        android:id="@+id/cancelButton"
+        android:layout_width="200dp"
+        android:layout_height="55dp"
+        android:text="Cancel Search"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_end_btn"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="80dp" />
+
+</RelativeLayout>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_feed_shiny"
+    tools:context=".MessagesActivity">
+
+    <FrameLayout
+        android:id="@+id/back_button_container"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="12dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_arrow_back"
+            android:tint="#00D9FF"
+            android:contentDescription="Back" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/no_messages_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="No messages yet"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/messages_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp" />
+
+</RelativeLayout>

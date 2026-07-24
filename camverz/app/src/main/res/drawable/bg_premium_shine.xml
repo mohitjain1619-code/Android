@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Base: Deep, dark purple background -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#1A0025"
+                android:centerColor="#10001C"
+                android:endColor="#0A0014"
+                android:type="linear"/>
+        </shape>
+    </item>
+
+    <!-- Large Blue Aurora (Top Left) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="80%p"
+                android:centerX="0.1"
+                android:centerY="0.1"
+                android:startColor="#4D0088FF"
+                android:endColor="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Large Red/Orange Aurora (Bottom Right) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="90%p"
+                android:centerX="0.9"
+                android:centerY="0.9"
+                android:startColor="#66FF4500"
+                android:endColor="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Central Purple/Pink Glow -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="70%p"
+                android:centerX="0.6"
+                android:centerY="0.7"
+                android:startColor="#4DDA00FF"
+                android:endColor="@android:color/transparent" />
+        </shape>
+    </item>
+
+    <!-- Glossy Overlay for Shine -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#1AFFFFFF"
+                android:endColor="#00FFFFFF"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

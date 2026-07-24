@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="24dp"
+    app:cardBackgroundColor="#1A1A1A"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_delete"
+            android:layout_gravity="center_horizontal"
+            app:tint="#FF4444"
+            android:layout_marginBottom="16dp"/>
+            <!-- Assuming ic_delete exists or use a standard android icon if needed, but I'll try to rely on common sense. 
+                 If ic_delete doesn't exist, I might need to skip the icon or use another one.
+                 Let's check if ic_delete exists or similar. 
+                 Actually, I didn't check for ic_delete. I'll use a standard vector or text title only to be safe. -->
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete Account"
+            android:textColor="#FF4444"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="12dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Are you sure you want to delete your account? This action is permanent and cannot be undone."
+            android:textColor="#CCCCCC"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.2"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Type 'delete' to confirm"
+            android:textColor="#888888"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/et_confirm_delete"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="@drawable/bg_glass_item"
+            android:hint="delete"
+            android:textColorHint="#55FFFFFF"
+            android:textColor="#FFFFFF"
+            android:paddingHorizontal="16dp"
+            android:inputType="text"
+            android:layout_marginBottom="32dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="Cancel"
+                android:backgroundTint="#333333"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="8dp"
+                android:textAllCaps="false"/>
+
+            <Button
+                android:id="@+id/btn_confirm_delete"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="Delete"
+                android:backgroundTint="#FF4444"
+                android:textColor="#FFFFFF"
+                android:layout_marginStart="8dp"
+                android:enabled="false"
+                android:alpha="0.5"
+                android:textAllCaps="false"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

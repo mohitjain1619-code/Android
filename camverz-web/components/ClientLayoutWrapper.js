@@ -1,0 +1,47 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '../lib/auth-context';
+import Navbar from './Navbar';
+import Footer from './Footer';
+import ParticleBackground from './ParticleBackground';
+import LoginModal from './LoginModal';
+import OnboardingModal from './OnboardingModal';
+import GenderVerificationModal from './GenderVerificationModal';
+import AppRedirectModal from './AppRedirectModal';
+
+export default function ClientLayoutWrapper({ children }) {
+  const { user, userData, showLogin, setShowLogin, showVerification, setShowVerification, showOnboarding, setShowOnboarding, showAppRedirect } = useAuth();
+  const pathname = usePathname();
+  const isCallPage = pathname?.startsWith('/call');
+
+  // Auto-trigger onboarding if user is logged in but profile is not completed
+  useEffect(() => {
+    if (user && userData && !userData.gender) {
+      setShowOnboarding(true);
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [user, userData, setShowOnboarding]);
+
+  return (
+    <>
+      <div className="bg-gradient-page" />
+      <ParticleBackground />
+      
+      {!isCallPage && <Navbar />}
+      
+      <main style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+        {children}
+      </main>
+      
+      {!isCallPage && <Footer />}
+
+      {/* Global Modals */}
+      {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
+      {showOnboarding && <OnboardingModal onClose={() => setShowOnboarding(false)} />}
+      {showVerification && <GenderVerificationModal onClose={() => setShowVerification(false)} />}
+      {showAppRedirect && <AppRedirectModal />}
+    </>
+  );
+}

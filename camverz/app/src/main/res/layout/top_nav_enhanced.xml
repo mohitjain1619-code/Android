@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- Glass Container with Premium Background -->
+    <RelativeLayout
+        android:id="@+id/nav_container_top"
+        android:layout_width="match_parent"
+        android:layout_height="65dp"
+        android:background="@drawable/premium_nav_bg_rectangular"
+        android:gravity="center_vertical">
+
+        <!-- Menu Icon -->
+        <ImageView
+            android:id="@+id/menu_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:paddingEnd="20dp"
+            android:src="@drawable/ic_menu"
+            android:contentDescription="Menu" />
+
+    </RelativeLayout>
+
+</FrameLayout>

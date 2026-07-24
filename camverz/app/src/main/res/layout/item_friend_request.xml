@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="#20FFFFFF" 
+    app:cardCornerRadius="18dp"
+    app:cardElevation="8dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/requester_avatar"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_launcher_background" />
+
+        <LinearLayout
+            android:id="@+id/requester_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="16dp"
+            android:layout_toEndOf="@+id/requester_avatar"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/requester_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="User Name"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/accept_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#4CAF50"
+                android:text="Accept"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/reject_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="#F44336"
+                android:text="Reject"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The outer glow gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <gradient
+                android:angle="0"
+                android:startColor="#00C2FF"
+                android:centerColor="#8A2BE2"
+                android:endColor="#FF00FF"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- The inner dark glass part, inset to create the border effect -->
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <solid android:color="#D01A1A2E" />
+        </shape>
+    </item>
+    <!-- Glossy Highlight Overlay -->
+    <item android:left="3dp" android:right="3dp" android:top="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <gradient
+                android:angle="270"
+                android:startColor="#60FFFFFF"
+                android:centerColor="#00FFFFFF"
+                android:type="linear" />
+        </shape>
+    </item>
+</layer-list>

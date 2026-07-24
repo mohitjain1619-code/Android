@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true" android:color="#FF00FF" /> <!-- Bright pink for pressed state -->
+    <item android:state_selected="true" android:color="#00FFFF" /> <!-- Bright cyan for selected state -->
+    <item android:color="#FFFFFF" /> <!-- Default color -->
+</selector>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_premium_shine"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/post_text"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="@drawable/card_bg"
+        android:gravity="top"
+        android:hint="What's on your mind?"
+        android:inputType="textMultiLine"
+        android:padding="16dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#E0DFFF" />
+
+    <TextView
+        android:id="@+id/choose_target_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/post_text"
+        android:layout_marginTop="16dp"
+        android:text="Choose to whom you want to show:"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <RadioGroup
+        android:id="@+id/category_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/choose_target_label"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <RadioButton
+            android:id="@+id/category_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="All"
+            android:textColor="#FFFFFF"/>
+
+        <RadioButton
+            android:id="@+id/category_male"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Male"
+            android:textColor="#FFFFFF"/>
+
+        <RadioButton
+            android:id="@+id/category_female"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Female"
+            android:textColor="#FFFFFF"/>
+
+    </RadioGroup>
+
+
+
+    <Button
+        android:id="@+id/post_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:text="Post" />
+
+</RelativeLayout>

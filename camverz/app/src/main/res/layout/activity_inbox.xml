@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_feed_shiny"
+    tools:context=".InboxActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+
+        <FrameLayout
+            android:id="@+id/back_button_container"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_arrow_back"
+                android:tint="#00D9FF"
+                android:contentDescription="Back" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/notification_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end">
+
+            <ImageView
+                android:id="@+id/notification_bell"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:src="@drawable/ic_notification_bell" />
+
+            <TextView
+                android:id="@+id/notification_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|top"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/notification_badge_background"
+                android:gravity="center"
+                android:padding="4dp"
+                android:textColor="@android:color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="1" />
+        </FrameLayout>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/inboxRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
+        android:padding="8dp" />
+
+    <TextView
+        android:id="@+id/no_messages_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="No messages yet"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
+    <!-- Floating Menu Buttons - 4 Small Circles -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/transparent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:spacing="8dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="16dp">
+
+            <!-- Home -->
+            <FrameLayout
+                android:id="@+id/menu_home_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_floating_menu_button"
+                android:elevation="8dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_flash"
+                    android:tint="#FFFFFF"
+                    android:contentDescription="Home" />
+            </FrameLayout>
+
+            <!-- Explore -->
+            <FrameLayout
+                android:id="@+id/menu_explore_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_floating_menu_button"
+                android:elevation="8dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_comment"
+                    android:tint="#FFFFFF"
+                    android:contentDescription="Explore" />
+            </FrameLayout>
+
+            <!-- Messages -->
+            <FrameLayout
+                android:id="@+id/menu_messages_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_floating_menu_button"
+                android:elevation="8dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chat"
+                    android:tint="#FFFFFF"
+                    android:contentDescription="Messages" />
+            </FrameLayout>
+
+            <!-- Profile -->
+            <FrameLayout
+                android:id="@+id/menu_profile_btn"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_floating_menu_button"
+                android:elevation="8dp">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_heart"
+                    android:tint="#FFFFFF"
+                    android:contentDescription="Profile" />
+            </FrameLayout>
+
+        </LinearLayout>
+    </FrameLayout>
+
+</RelativeLayout>

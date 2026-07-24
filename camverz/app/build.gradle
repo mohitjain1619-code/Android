@@ -1,0 +1,103 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    // google-services plugin removed — no longer using Firebase
+}
+
+android {
+    namespace 'com.mohitt.camverz'
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "com.mohitt.camverz"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // Define BASE_URL for all API calls
+        buildConfigField "String", "BASE_URL", '"http://localhost:3000"'
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+
+    packagingOptions {
+        exclude 'META-INF/native-image/org.bytedeco.javacpp/jni-config.json'
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+}
+
+dependencies {
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.material
+
+    // Google Sign-In (still used — authenticates via our backend, not Firebase)
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
+
+    // Retrofit (API client — replaces Firebase Firestore/Auth)
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+    // Encrypted SharedPreferences (secure JWT storage)
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    
+    // Location
+    implementation 'com.google.android.gms:play-services-location:21.2.0'
+
+    // Socket.IO
+    implementation 'io.socket:socket.io-client:2.1.2'
+
+    // JSON
+    implementation 'org.json:json:20250517'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    // WebRTC
+    implementation 'io.github.webrtc-sdk:android:137.7151.05'
+
+    // UI
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
+
+    // CameraX
+    implementation 'androidx.camera:camera-core:1.3.0'
+    implementation 'androidx.camera:camera-camera2:1.3.0'
+    implementation 'androidx.camera:camera-lifecycle:1.3.0'
+    implementation 'androidx.camera:camera-view:1.3.0'
+
+    // Guava for ListenableFuture
+    implementation 'com.google.guava:guava:33.0.0-android'
+
+    // For face detection - using ML Kit instead of MediaPipe (more stable)
+    implementation 'com.google.mlkit:face-detection:16.1.5'
+
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}

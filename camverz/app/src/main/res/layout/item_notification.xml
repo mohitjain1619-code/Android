@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_profile_post_card"
+        android:padding="16dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/user_avatar"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true" />
+
+        <TextView
+            android:id="@+id/post_preview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Hello!" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_toStartOf="@id/post_preview"
+            android:layout_toEndOf="@id/user_avatar"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/notification_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                tools:text="Mohit Jain liked your post" />
+
+            <TextView
+                android:id="@+id/timestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#CCCCCC"
+                android:textSize="12sp"
+                tools:text="2 hours ago" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>

@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F0C29">
+
+    <!-- Live Background Layer -->
+    <ImageView
+        android:id="@+id/bg_gradient"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_premium_shine"
+        android:alpha="0.8" />
+
+    <!-- Floating Orbs -->
+    <ImageView
+        android:id="@+id/orb1"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:src="@drawable/ic_orb_soft"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="-100dp"
+        android:layout_marginStart="-50dp"
+        android:alpha="0.6" />
+
+    <ImageView
+        android:id="@+id/orb2"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:src="@drawable/ic_orb_soft"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="100dp"
+        android:layout_marginEnd="-50dp"
+        android:alpha="0.5" />
+
+    <ImageView
+        android:id="@+id/orb3"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/ic_orb_soft"
+        android:layout_gravity="center_vertical|start"
+        android:layout_marginStart="50dp"
+        android:alpha="0.4" />
+
+    <!-- Main Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="24dp">
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Glowing Icon -->
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                
+                <View
+                    android:id="@+id/icon_pulse"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:background="@drawable/ic_orb_soft"
+                    android:alpha="0.5"
+                    android:layout_gravity="center" />
+
+                <ImageView
+                    android:id="@+id/app_icon"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:background="@drawable/bg_round_btn"
+                    android:padding="25dp"
+                    android:src="@drawable/ic_video"
+                    app:tint="@android:color/white"
+                    android:layout_gravity="center"
+                    android:elevation="10dp" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/app_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="Random Video Chat"
+                android:textColor="@android:color/white"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:shadowColor="#8000D9FF"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="20" />
+
+            <TextView
+                android:id="@+id/app_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Connect with people worldwide"
+                android:textColor="#CCFFFFFF"
+                android:textSize="18sp"
+                android:letterSpacing="0.02" />
+
+            <!-- Features List -->
+            <LinearLayout
+                android:id="@+id/features_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="48dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <!-- Feature 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_glass_item"
+                    android:padding="16dp"
+                    android:layout_marginBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_flash"
+                        app:tint="#00D9FF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Instant Matching"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Feature 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_glass_item"
+                    android:padding="16dp"
+                    android:layout_marginBottom="12dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_verified"
+                        app:tint="#B800E6" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Verified Users"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Feature 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_glass_item"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_heart"
+                        app:tint="#FF4081" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Interest-Based"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Bottom Section -->
+            <LinearLayout
+                android:id="@+id/bottom_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="32dp"
+                android:layout_marginBottom="16dp">
+
+                <Button
+                    android:id="@+id/get_started_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_neon_button_pill"
+                    android:text="Get Started with Google Sign In"
+                    android:drawableStart="@drawable/ic_google"
+                    android:drawablePadding="12dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="false"
+                    android:elevation="8dp"
+                    android:stateListAnimator="@null"
+                    app:backgroundTint="@null" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:text="By continuing, you agree to our Terms &amp; Privacy Policy"
+                    android:textColor="#99FFFFFF"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>

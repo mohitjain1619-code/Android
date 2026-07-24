@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- CameraX Preview -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/camera_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Oval Frame Overlay -->
+    <com.mohitt.camverz.OvalFrameView
+        android:id="@+id/oval_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <!-- Instructions Overlay -->
+    <FrameLayout
+        android:id="@+id/instructions_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Arrow Instruction -->
+        <LinearLayout
+            android:id="@+id/arrow_instruction"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="60dp">
+
+            <TextView
+                android:id="@+id/instruction_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LOOK FRONT"
+                android:textSize="32sp"
+                android:textStyle="bold"
+                android:textColor="#00D9FF"
+                android:shadowColor="#00D9FF"
+                android:shadowRadius="15"
+                android:layout_marginBottom="20dp"
+                android:letterSpacing="0.1" />
+
+            <ImageView
+                android:id="@+id/arrow_image"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="#00D9FF" />
+        </LinearLayout>
+
+        <!-- Countdown Circle -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+
+            <LinearLayout
+                android:id="@+id/countdown_container"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:background="@drawable/bg_glass_item"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/countdown_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5"
+                    android:textSize="72sp"
+                    android:textStyle="bold"
+                    android:textColor="#00D9FF"
+                    android:shadowColor="#00D9FF"
+                    android:shadowRadius="20" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Progress Indicator -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- Step Indicators -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginBottom="20dp">
+
+                <View
+                    android:id="@+id/step_1"
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:layout_margin="6dp"
+                    android:background="@drawable/bg_neon_button_pill"
+                    android:elevation="4dp" />
+            </LinearLayout>
+
+            <!-- Progress Text -->
+            <TextView
+                android:id="@+id/progress_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Keep your head still and follow instructions"
+                android:textColor="#88FFFFFF"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Results Screen -->
+    <FrameLayout
+        android:id="@+id/results_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_feed_shiny"
+        android:visibility="gone">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Header -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp">
+
+                    <FrameLayout
+                        android:id="@+id/back_button"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:layout_gravity="start">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_arrow_back"
+                            app:tint="#00D9FF"
+                            android:contentDescription="Back" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Verification Complete"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:shadowColor="#00D9FF"
+                        android:shadowRadius="10"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginTop="4dp" />
+                </FrameLayout>
+
+                <!-- Success Message -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_glass_item"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:layout_marginBottom="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✓ Liveness verification successful!"
+                        android:textColor="#00D9FF"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Front image captured successfully. Complete gender verification to continue."
+                        android:textColor="#E0E0E0"
+                        android:textSize="14sp"
+                        android:lineSpacingExtra="3dp" />
+                </LinearLayout>
+
+                <!-- Captured Image -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:layout_marginBottom="24dp">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/bg_glass_item">
+
+                        <ImageView
+                            android:id="@+id/image_front"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:contentDescription="Front face" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="bottom"
+                            android:text="FRONT"
+                            android:textColor="#00D9FF"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:paddingVertical="8dp"
+                            android:background="#22000000" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <!-- Verify Gender Button -->
+                <Button
+                    android:id="@+id/verify_gender_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_glass_item"
+                    android:text="Verify Gender"
+                    android:textAllCaps="false"
+                    android:textColor="#00D9FF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"
+                    app:backgroundTint="@null" />
+
+                <!-- Submit Button -->
+                <Button
+                    android:id="@+id/submit_verification_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_neon_button_pill"
+                    android:text="Confirm &amp; Submit Verification"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:shadowColor="#00D9FF"
+                    android:shadowRadius="10"
+                    android:enabled="false"
+                    android:alpha="0.5"
+                    android:layout_marginBottom="16dp"
+                    app:backgroundTint="@null" />
+
+                <!-- Retake Button -->
+                <Button
+                    android:id="@+id/retake_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:background="@drawable/bg_glass_item"
+                    android:text="Retake Photo"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</FrameLayout>

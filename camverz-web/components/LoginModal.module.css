@@ -1,0 +1,93 @@
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  background: var(--glass-bg);
+}
+
+.close:hover {
+  color: var(--text-primary);
+  background: var(--glass-bg-hover);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logoGlow {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  animation: float 3s ease infinite;
+  filter: drop-shadow(0 0 20px rgba(0, 229, 255, 0.5));
+}
+
+.header h2 {
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  margin-bottom: 8px;
+}
+
+.header p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.googleBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 24px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.googleBtn:hover:not(:disabled) {
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.googleBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.disclaimer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 20px;
+  line-height: 1.5;
+}
+
+.disclaimer a {
+  color: var(--neon-cyan);
+}
+
+.errorMsg {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  color: #ff4d4d;
+  font-size: 0.85rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  line-height: 1.4;
+}

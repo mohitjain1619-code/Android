@@ -1,0 +1,187 @@
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: var(--glass-bg);
+  transition: all 0.2s;
+}
+
+.close:hover {
+  color: var(--text-primary);
+  background: var(--glass-bg-hover);
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+
+.dotActive {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+}
+
+.stepTitle {
+  text-align: center;
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+  margin-bottom: 8px;
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stepContent {
+  margin: 20px 0 24px;
+}
+
+.stepDesc {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.genderCards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.genderCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.genderCard:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--glass-border-hover);
+}
+
+.genderActive {
+  background: rgba(0, 229, 255, 0.08) !important;
+  border-color: var(--neon-cyan) !important;
+  color: var(--neon-cyan) !important;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.15);
+}
+
+.genderEmoji {
+  font-size: 2.5rem;
+}
+
+.verifyNote {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--neon-pink);
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 0, 110, 0.08);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 0, 110, 0.2);
+}
+
+.dobWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.dobWrapper input {
+  color-scheme: dark;
+}
+
+.error {
+  color: #FF4444;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.ageNote {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.avatarGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+@media (max-width: 480px) {
+  .avatarGrid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.avatarItem {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  padding: 0;
+  background: var(--glass-bg);
+}
+
+.avatarItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarActive {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.navBtns {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}

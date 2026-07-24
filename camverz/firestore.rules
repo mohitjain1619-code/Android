@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rule for user profiles
+    match /users/{userId} {
+      // Any authenticated user can read a user's profile.
+      allow read: if request.auth != null;
+
+      // A user can create or delete their own profile.
+      allow create, delete: if request.auth.uid == userId;
+
+      // Allow user to update their own profile (any field)
+      allow update: if request.auth.uid == userId;
+
+      // Allow any authenticated user to update another user's followers array (for follow/unfollow)
+      allow update: if request.auth != null &&
+        request.resource.data.diff(resource.data).changedKeys().hasOnly(['followers']) &&
+        !(request.auth.uid == userId);
+
+      // Rule for the blocked_users subcollection
+      match /blocked_users/{blockedId} {
+        // Any authenticated user can read the blocked list to check if they are blocked.
+        allow read: if request.auth != null;
+        // Only the owner of the list can add or remove blocked users.
+        allow write: if request.auth.uid == userId;
+      }
+    }
+
+    // Rule for posts
+    match /posts/{postId} {
+      // Any authenticated user can read posts.
+      allow read: if request.auth != null;
+      // Any authenticated user can create a post.
+      allow create: if request.auth != null;
+      // An authenticated user can update a post to like it.
+      // The author of the post can also update it.
+      allow update: if request.auth != null &&
+                      (request.resource.data.diff(resource.data).changedKeys().hasOnly(['likes', 'likedBy']) ||
+                       request.auth.uid == resource.data.userId);
+      // Only the post's author can delete their own post.
+      allow delete: if request.auth.uid == resource.data.userId;
+
+      // Rule for comments on a post
+      match /comments/{commentId} {
+        // Any authenticated user can read and create comments.
+        allow read, create: if request.auth != null;
+        // Only the author of a comment can update or delete it.
+        allow update, delete: if request.auth.uid == resource.data.userId;
+      }
+    }
+
+    // Rule for notifications
+    match /notifications/{notificationId} {
+      // Any authenticated user can create a notification (e.g., by liking a post).
+      allow create: if request.auth != null;
+      // Only the target user of the notification can read, update, or delete it.
+      allow read, update, delete: if request.auth.uid == resource.data.targetUserId;
+    }
+
+    // Rule for chat messages
+    match /chats/{chatId}/messages/{messageId} {
+      // Only users who are part of a chat can read or write messages.
+      // Assumes the chatId is formatted like "userId1_userId2".
+      allow read, write: if request.auth != null && request.auth.uid in chatId.split('_');
+    }
+
+    // Rule for user inboxes, tracking conversations
+    match /inbox/{userId}/conversations/{conversationId} {
+      // A user can only read their own inbox.
+      allow read: if request.auth.uid == userId;
+      // Allow a user to write to their own inbox or the other person's inbox
+      // to keep conversation metadata in sync.
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == conversationId);
+    }
+  }
+}

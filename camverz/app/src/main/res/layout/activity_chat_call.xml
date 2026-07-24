@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_neon_gradient"
+    tools:context=".ChatCallActivity">
+
+    <!-- OUTGOING CALL LAYOUT -->
+    <RelativeLayout
+        android:id="@+id/layout_outgoing"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="120dp"
+                android:layout_height="120dp">
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_avatar_glow" />
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/outgoing_avatar"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_user_placeholder" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/outgoing_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="User Name"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:shadowColor="#00E5FF"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="10"/>
+
+            <TextView
+                android:id="@+id/outgoing_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Calling..."
+                android:textColor="#DDFFFFFF"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_end_call_outgoing"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="48dp"
+            android:background="@drawable/bg_reject_button"
+            android:src="@drawable/ic_neon_voice_call"
+            android:rotation="135"
+            android:padding="16dp"
+            app:tint="#FFFFFF" />
+    </RelativeLayout>
+
+    <!-- INCOMING CALL LAYOUT -->
+    <RelativeLayout
+        android:id="@+id/layout_incoming"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="140dp"
+                android:layout_height="140dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_avatar_glow" />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/incoming_avatar"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_user_placeholder" />
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/incoming_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:letterSpacing="0.1"
+                android:text="Incoming Video Call"
+                android:textAllCaps="true"
+                android:textColor="#00E5FF"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/incoming_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:fontFamily="sans-serif-medium"
+                android:shadowColor="#00E5FF"
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="15"
+                android:text="User Name"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="64dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_reject_call"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_reject_button"
+                android:src="@drawable/ic_neon_voice_call"
+                android:rotation="135"
+                android:padding="16dp"
+                app:tint="#FFFFFF"
+                android:layout_marginEnd="48dp"/>
+
+            <ImageButton
+                android:id="@+id/btn_accept_call"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_accept_button"
+                android:src="@drawable/ic_neon_voice_call"
+                android:padding="16dp"
+                app:tint="#FFFFFF"
+                android:layout_marginStart="48dp"/>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ACTIVE CALL LAYOUT -->
+    <RelativeLayout
+        android:id="@+id/layout_active"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:visibility="gone"
+        tools:visibility="gone">
+
+        <!-- Remote (Main) Video View -->
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/remote_view_renderer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Draggable Floating Local Video Window -->
+        <FrameLayout
+            android:id="@+id/local_view_container"
+            android:layout_width="110dp"
+            android:layout_height="160dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="80dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/bg_floating_window"
+            android:elevation="8dp"
+            android:padding="3dp">
+            
+            <org.webrtc.SurfaceViewRenderer
+                android:id="@+id/local_view_renderer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+            
+            <!-- Swap indicator icon -->
+            <ImageView
+                android:id="@+id/swap_indicator"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_swap_vert"
+                android:alpha="0.7"
+                android:padding="6dp"
+                android:background="@drawable/bg_call_button_glow"
+                app:tint="#FFFFFF"
+                android:visibility="gone"/>
+        </FrameLayout>
+
+        <!-- Controls Container -->
+        <RelativeLayout
+            android:id="@+id/controls_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Top Bar with User Info and Follow Button -->
+            <LinearLayout
+                android:id="@+id/top_bar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_top_bar_glass"
+                android:gravity="center_vertical"
+                android:paddingStart="20dp"
+                android:paddingTop="40dp"
+                android:paddingEnd="20dp"
+                android:paddingBottom="16dp"
+                android:elevation="4dp"
+                android:orientation="horizontal">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/active_avatar"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_user_placeholder"
+                    android:elevation="2dp"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+                    
+                    <TextView
+                        android:id="@+id/active_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="User Name"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:shadowColor="#00E5FF"
+                        android:shadowDx="0"
+                        android:shadowDy="0"
+                        android:shadowRadius="8"/>
+                    
+                    <TextView
+                        android:id="@+id/call_timer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="00:00"
+                        android:textColor="#00E5FF"
+                        android:textSize="14sp"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_follow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_follow_button"
+                    android:text="Follow"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:elevation="2dp"
+                    android:stateListAnimator="@null"/>
+            </LinearLayout>
+
+            <!-- Bottom Controls Bar -->
+            <LinearLayout
+                android:id="@+id/bottom_controls"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:background="@drawable/bg_bottom_controls_glass"
+                android:gravity="center"
+                android:paddingTop="24dp"
+                android:paddingBottom="32dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:elevation="4dp"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btn_toggle_video"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_video_button_gradient"
+                    android:src="@drawable/ic_videocam_on"
+                    android:padding="14dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#FFFFFF"
+                    android:layout_marginEnd="12dp"
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null"/>
+
+                <ImageButton
+                    android:id="@+id/btn_mute"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_video_button_gradient"
+                    android:src="@drawable/ic_mic_on"
+                    android:padding="14dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#FFFFFF"
+                    android:layout_marginEnd="12dp"
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null"/>
+
+                <ImageButton
+                    android:id="@+id/btn_end_call_active"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:background="@drawable/bg_end_button_gradient"
+                    android:src="@drawable/ic_call_end"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#FFFFFF"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:elevation="6dp"
+                    android:stateListAnimator="@null"/>
+
+                <ImageButton
+                    android:id="@+id/btn_switch_camera"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/bg_video_button_gradient"
+                    android:src="@drawable/ic_camera_flip"
+                    android:padding="14dp"
+                    android:scaleType="fitCenter"
+                    app:tint="#FFFFFF"
+                    android:layout_marginStart="12dp"
+                    android:elevation="4dp"
+                    android:stateListAnimator="@null"/>
+
+            </LinearLayout>
+        </RelativeLayout>
+    </RelativeLayout>
+
+</FrameLayout>

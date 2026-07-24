@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer pulsing circle 1 -->
+    <group android:name="pulse1">
+        <path
+            android:name="circle1"
+            android:fillColor="@android:color/white"
+            android:pathData="M 100 100 m -60 0 a 60 60 0 1 0 120 0 a 60 60 0 1 0 -120 0"
+            android:strokeWidth="2"
+            android:strokeColor="@android:color/white"
+            android:fillAlpha="0.2" />
+    </group>
+
+    <!-- Middle pulsing circle 2 -->
+    <group android:name="pulse2">
+        <path
+            android:name="circle2"
+            android:fillColor="@android:color/white"
+            android:pathData="M 100 100 m -40 0 a 40 40 0 1 0 80 0 a 40 40 0 1 0 -80 0"
+            android:strokeWidth="2"
+            android:strokeColor="@android:color/white"
+            android:fillAlpha="0.4" />
+    </group>
+
+    <!-- Center circle -->
+    <path
+        android:name="centerCircle"
+        android:fillColor="@android:color/white"
+        android:pathData="M 100 100 m -20 0 a 20 20 0 1 0 40 0 a 20 20 0 1 0 -40 0" />
+
+</vector>

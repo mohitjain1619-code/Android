@@ -1,0 +1,254 @@
+.page {
+  padding: clamp(64px, 6vw, 75px) clamp(12px, 3vw, 24px) clamp(20px, 4vw, 40px);
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 3vw, 24px);
+}
+
+.header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: clamp(16px, 3vw, 24px);
+  text-align: center;
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.avatarWrapper {
+  position: relative;
+  width: clamp(80px, 20vw, 120px);
+  height: clamp(80px, 20vw, 120px);
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 3px solid var(--glass-border);
+  border-radius: 50%;
+}
+
+.avatarOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatarWrapper:hover .avatarOverlay { opacity: 1; }
+
+.verifiedBadge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-dark);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.userName {
+  font-size: clamp(1.3rem, 4vw, 1.8rem);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.genderBadge, .metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 24px);
+  margin-top: 12px;
+}
+
+.statsRow div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statsRow strong {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.statsRow span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.statDivider {
+  width: 1px;
+  height: 24px;
+  background: var(--glass-border);
+}
+
+.headerActions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* Sections */
+.section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: clamp(12px, 2.5vw, 18px);
+}
+
+.section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  margin-bottom: 12px;
+  color: var(--neon-cyan);
+}
+
+.bioText {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.infoText {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.chipGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 480px) {
+  .detailGrid { grid-template-columns: 1fr 1fr; }
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* Verification Banner */
+.verificationBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(255, 0, 110, 0.08) 0%, rgba(189, 0, 255, 0.08) 100%);
+  border: 1px solid rgba(255, 0, 110, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(255, 0, 110, 0.1);
+}
+
+@media (min-width: 600px) {
+  .verificationBanner {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+    padding: 16px 24px;
+    align-items: center;
+  }
+}
+
+.bannerInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bannerIcon {
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+.bannerText h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.bannerText p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}

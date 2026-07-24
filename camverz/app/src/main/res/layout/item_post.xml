@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    android:background="@drawable/bg_glassy_post"
+    android:padding="16dp">
+
+    <!-- User Info Header -->
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_image"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:src="@drawable/ic_user_placeholder" />
+
+    <TextView
+        android:id="@+id/username_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/profile_image"
+        android:layout_marginStart="12dp"
+        android:layout_toEndOf="@id/profile_image"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:text="username" />
+
+    <!-- Verification badge next to username -->
+    <ImageView
+        android:id="@+id/post_verification_badge"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:layout_alignTop="@id/username_text_view"
+        android:layout_marginStart="4dp"
+        android:layout_toEndOf="@id/username_text_view"
+        android:src="@drawable/ic_verified_badge"
+        android:visibility="gone"
+        android:contentDescription="User Verified" />
+
+    <TextView
+        android:id="@+id/timestamp_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/username_text_view"
+        android:layout_alignStart="@id/username_text_view"
+        android:textColor="#B3FFFFFF"
+        android:textSize="12sp"
+        tools:text="2 hours ago" />
+
+    <ImageView
+        android:id="@+id/post_menu_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:src="@drawable/ic_more_vert"
+        android:visibility="gone"
+        tools:visibility="visible"/>
+
+    <!-- Post Content -->
+    <TextView
+        android:id="@+id/post_text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_image"
+        android:layout_marginTop="16dp"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        tools:text="This is a sample post text that is long enough to wrap to multiple lines." />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/post_text_view"
+        android:layout_marginTop="24dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/like_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_like_outline" />
+
+        <TextView
+            android:id="@+id/like_count_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:textColor="#B3FFFFFF"
+            tools:text="12" />
+
+        <ImageView
+            android:id="@+id/comment_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:src="@drawable/ic_comment" />
+
+        <TextView
+            android:id="@+id/comment_count_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:textColor="#B3FFFFFF"
+            tools:text="12" />
+
+    </LinearLayout>
+
+</RelativeLayout>
