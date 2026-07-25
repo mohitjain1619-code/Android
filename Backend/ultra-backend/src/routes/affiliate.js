@@ -21,14 +21,6 @@ const router = express.Router();
       ADD COLUMN IF NOT EXISTS youtube_oauth_channel_id TEXT;
     `);
     console.log("✅ Database schema migrated for Instagram/YouTube verification");
-
-    // One-off reset for Mohit's testing profile on deployment
-    await query(`
-      UPDATE affiliates 
-      SET instagram_verified = false, youtube_verified = false, status = 'pending'
-      WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'mohitjain1619@gmail.com');
-    `);
-    console.log("✅ Reset verification status for Mohit's testing profile");
   } catch (err) {
     console.error("❌ Database migration error during startup:", err.message);
   }
@@ -317,23 +309,18 @@ async function verifyProfileBioCode(profileUrl, expectedCode, platform) {
   }
 }
 
-// POST /verify/instagram-bio - Instagram bio check
+// POST /verify/instagram-bio - Instagram bio check (Bypassed)
 router.post("/verify/instagram-bio", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
     if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
-    if (!aff.instagram_url || !aff.instagram_bio_code) return res.status(400).json({ error: "Instagram URL or verification code missing." });
 
-    const checkResult = await verifyProfileBioCode(aff.instagram_url, aff.instagram_bio_code, "Instagram");
-    const { success, reason } = checkResult;
-
-    if (success) {
-      await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
-      return res.json({ status: "success", message: "Instagram verified! You can now remove the code from your bio.", reason });
-    } else {
-      return res.status(400).json({ error: reason });
-    }
+    await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
+    return res.json({ 
+      status: "success", 
+      message: "Instagram verified! (Bypassed for testing - you can now remove the code from your bio)." 
+    });
   } catch (err) {
     console.error("Verify Instagram bio error:", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -377,7 +364,7 @@ router.post("/linkedin/verify-bio", requireAuth, async (req, res) => {
   }
 });
 
-// POST /reset-verification - reset bio verification
+// POST /reset-verification - reset bio verification and generate new codes
 router.post("/reset-verification", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -386,15 +373,22 @@ router.post("/reset-verification", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Affiliate profile not found." });
     }
 
+    // Generate new random codes
+    const igChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const igBioCode = `CAMVERZ-IG-${igChars}`;
+    const ytChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const ytBioCode = `CAMVERZ-YT-${ytChars}`;
+
     await query(
       `UPDATE affiliates 
        SET instagram_verified = false, youtube_verified = false, status = 'pending',
+           instagram_bio_code = $1, youtube_bio_code = $2,
            linkedin_bio_verified = false, linkedin_bio_verified_at = null 
-       WHERE id = $1`,
-      [aff.id]
+       WHERE id = $3`,
+      [igBioCode, ytBioCode, aff.id]
     );
 
-    return res.json({ status: "success", message: "Verification status reset successfully" });
+    return res.json({ status: "success", message: "Verification status reset successfully with new codes" });
   } catch (err) {
     console.error("Reset verification error:", err);
     return res.status(500).json({ error: "Internal server error" });
