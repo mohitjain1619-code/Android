@@ -691,47 +691,7 @@ export default function AffiliatePage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', marginBottom: '32px' }}>
               
-              {/* Instagram Verification */}
-              <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.instagram_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.instagram_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>📸 Instagram</h4>
-                  {affData.affiliate.instagram_verified ? (
-                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
-                  ) : (
-                    <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
-                  )}
-                </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
-                  <a href={affData.affiliate.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.instagram_url}</a>
-                </p>
-                {affData.affiliate.instagram_verified ? (
-                  <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                    ✅ Verified! You can now <strong>remove the code</strong> from your bio.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
-                        <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Instagram Bio</strong>:
-                      </p>
-                      <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
-                        onClick={() => { navigator.clipboard.writeText(affData.affiliate.instagram_bio_code); alert('Code copied!'); }}
-                        title="Click to copy"
-                      >
-                        {affData.affiliate.instagram_bio_code} 📋
-                      </div>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
-                        <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
-                      </p>
-                    </div>
-                    <div>
-                      <button className="btn-neon" style={{ width: '100%', padding: '14px' }} onClick={() => handleVerifyInstagram()} disabled={verifyingInstagram}>
-                        {verifyingInstagram ? "Checking Bio..." : "✓ Verify Instagram"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+
 
               {/* YouTube Verification */}
               <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>

@@ -247,9 +247,9 @@ router.post("/apply", requireAuth, async (req, res) => {
       `INSERT INTO affiliates (
         user_id, code, name, status, upi_id, social_url, 
         instagram_url, youtube_url, instagram_bio_code, youtube_bio_code, confirm_ownership,
-        linkedin_bio_code -- fallback compatibility
+        linkedin_bio_code, instagram_verified
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
       RETURNING *`,
       [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, igBioCode, ytBioCode, confirmOwnership, igBioCode]
     );
