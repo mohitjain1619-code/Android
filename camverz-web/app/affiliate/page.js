@@ -129,7 +129,7 @@ export default function AffiliatePage() {
         document.getElementById('apply-section')?.scrollIntoView({ behavior: 'smooth' });
       }
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || "Application submission failed. Please try another code.");
+      setErrorMsg(err.response?.data?.error || err.message || "Application submission failed. Please try another code.");
     } finally {
       setSubmitting(false);
     }

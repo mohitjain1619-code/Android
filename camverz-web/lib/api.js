@@ -4,7 +4,7 @@ import axios from 'axios';
 // API CLIENT — Replaces Firebase SDK
 // Change API_URL for production
 // ============================================
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://android-9t8m.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
