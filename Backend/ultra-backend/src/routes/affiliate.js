@@ -22,6 +22,12 @@ const router = express.Router();
     `);
     console.log("✅ Database schema migrated for Instagram/YouTube verification");
 
+    // Fresh start: truncate all existing affiliate tables
+    await query(`
+      TRUNCATE TABLE affiliate_clicks, affiliate_signups, affiliate_sales, affiliate_payouts, affiliates CASCADE;
+    `);
+    console.log("✅ Truncated all affiliate tables for fresh start testing");
+
 
 
 
