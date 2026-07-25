@@ -11,7 +11,7 @@ const EXPIRY_KEY = 'camverz_affiliate_ref_expiry';
 const COOKIE_DURATION_DAYS = 30;
 
 /**
- * Capture a referral code and store it with a 30-day expiry.
+ * Capture a referral code and store it with a 30-day expiryy.
  * Overwrites any existing referral (Last Click attribution).
  */
 export function captureReferral(code) {
