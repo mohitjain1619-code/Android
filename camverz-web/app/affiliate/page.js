@@ -8,7 +8,8 @@ import {
   verifyAffiliateBio, 
   resetAffiliateVerification,
   verifyInstagramBio,
-  verifyYoutubeBio
+  verifyYoutubeBio,
+  verifyOtherBio
 } from '../../lib/api';
 import { 
   Zap, 
@@ -44,6 +45,7 @@ export default function AffiliatePage() {
   const [upiId, setUpiId] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [otherUrl, setOtherUrl] = useState('');
   const [confirmOwnership, setConfirmOwnership] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -53,6 +55,7 @@ export default function AffiliatePage() {
   const [verifying, setVerifying] = useState(false);
   const [verifyingInstagram, setVerifyingInstagram] = useState(false);
   const [verifyingYoutube, setVerifyingYoutube] = useState(false);
+  const [verifyingOther, setVerifyingOther] = useState(false);
   const [resetting, setResetting] = useState(false);
 
   // FAQ Accordion State
@@ -92,8 +95,12 @@ export default function AffiliatePage() {
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!name.trim() || !code.trim() || !instagramUrl.trim() || !youtubeUrl.trim()) {
-      setErrorMsg("All fields are required.");
+    if (!name.trim() || !code.trim()) {
+      setErrorMsg("Name and Preferred Code are required.");
+      return;
+    }
+    if (!instagramUrl.trim() && !youtubeUrl.trim() && !otherUrl.trim()) {
+      setErrorMsg("Please provide at least one platform link (Instagram, YouTube, or Other Platform).");
       return;
     }
     if (!confirmOwnership) {
@@ -107,7 +114,11 @@ export default function AffiliatePage() {
       return;
     }
 
-    const combinedSocialUrl = `Instagram: ${instagramUrl.trim()} | YouTube: ${youtubeUrl.trim()}`;
+    const parts = [];
+    if (instagramUrl.trim()) parts.push(`Instagram: ${instagramUrl.trim()}`);
+    if (youtubeUrl.trim()) parts.push(`YouTube: ${youtubeUrl.trim()}`);
+    if (otherUrl.trim()) parts.push(`Other: ${otherUrl.trim()}`);
+    const combinedSocialUrl = parts.join(" | ");
 
     try {
       setSubmitting(true);
@@ -126,6 +137,7 @@ export default function AffiliatePage() {
         setUpiId('');
         setInstagramUrl('');
         setYoutubeUrl('');
+        setOtherUrl('');
         setConfirmOwnership(false);
         await loadAffiliateData();
         
@@ -185,6 +197,22 @@ export default function AffiliatePage() {
       setErrorMsg(err.response?.data?.error || err.message || "YouTube channel bio verification failed.");
     } finally {
       setVerifyingYoutube(false);
+    }
+  };
+
+  const handleVerifyOther = async () => {
+    setErrorMsg('');
+    try {
+      setVerifyingOther(true);
+      const response = await verifyOtherBio();
+      if (response.status === 'success') {
+        alert(response.message);
+        await loadAffiliateData();
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.error || err.message || "Other platform bio verification failed.");
+    } finally {
+      setVerifyingOther(false);
     }
   };
 
@@ -617,26 +645,35 @@ export default function AffiliatePage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>INSTAGRAM PROFILE URL</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>INSTAGRAM PROFILE URL (OPTIONAL)</label>
                   <input 
                     type="url" 
                     className="input-glass" 
                     placeholder="e.g. https://instagram.com/username" 
                     value={instagramUrl} 
                     onChange={(e) => setInstagramUrl(e.target.value)} 
-                    required 
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>YOUTUBE CHANNEL URL</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>YOUTUBE CHANNEL URL (OPTIONAL)</label>
                   <input 
                     type="url" 
                     className="input-glass" 
                     placeholder="e.g. https://youtube.com/@channel" 
                     value={youtubeUrl} 
                     onChange={(e) => setYoutubeUrl(e.target.value)} 
-                    required 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>OTHER PLATFORM URL (e.g. XHAMSTER / FAPHOUSE - OPTIONAL)</label>
+                  <input 
+                    type="url" 
+                    className="input-glass" 
+                    placeholder="e.g. https://xhamster.com/creators/username" 
+                    value={otherUrl} 
+                    onChange={(e) => setOtherUrl(e.target.value)} 
                   />
                 </div>
 
@@ -692,53 +729,102 @@ export default function AffiliatePage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', marginBottom: '32px' }}>
 
 
-              <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🎬 YouTube</h4>
+              {/* YouTube Card */}
+              {affData.affiliate.youtube_url && (
+                <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🎬 YouTube</h4>
+                    {affData.affiliate.youtube_verified ? (
+                      <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
+                    ) : (
+                      <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                    )}
+                  </div>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
+                    <a href={affData.affiliate.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.youtube_url}</a>
+                  </p>
                   {affData.affiliate.youtube_verified ? (
-                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
+                    <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                      ✅ Verified! You can now <strong>remove the code</strong> from your channel description.
+                    </div>
                   ) : (
-                    <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
+                          <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>YouTube Channel Description</strong>:
+                        </p>
+                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                          onClick={() => { navigator.clipboard.writeText(affData.affiliate.youtube_bio_code); alert('Code copied!'); }}
+                          title="Click to copy"
+                        >
+                          {affData.affiliate.youtube_bio_code} 📋
+                        </div>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
+                          <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
+                        </p>
+                      </div>
+                      <div>
+                        <button className="btn-neon" style={{ width: '100%', padding: '14px' }} onClick={() => handleVerifyYoutube()} disabled={verifyingYoutube}>
+                          {verifyingYoutube ? "Checking Description..." : "✓ Verify YouTube"}
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
-                  <a href={affData.affiliate.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.youtube_url}</a>
-                </p>
-                {affData.affiliate.youtube_verified ? (
-                  <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
-                    ✅ Verified! You can now <strong>remove the code</strong> from your channel description.
+              )}
+
+              {/* Other Platform Card */}
+              {affData.affiliate.other_url && (
+                <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.other_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.other_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🌐 Other Platform</h4>
+                    {affData.affiliate.other_verified ? (
+                      <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
+                    ) : (
+                      <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
-                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
-                        <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>YouTube Channel Description</strong>:
-                      </p>
-                      <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
-                        onClick={() => { navigator.clipboard.writeText(affData.affiliate.youtube_bio_code); alert('Code copied!'); }}
-                        title="Click to copy"
-                      >
-                        {affData.affiliate.youtube_bio_code} 📋
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
+                    <a href={affData.affiliate.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.other_url}</a>
+                  </p>
+                  {affData.affiliate.other_verified ? (
+                    <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                      ✅ Verified! You can now <strong>remove the code</strong> from your profile/bio.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
+                          <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Profile Bio/Description</strong>:
+                        </p>
+                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                          onClick={() => { navigator.clipboard.writeText(affData.affiliate.other_bio_code); alert('Code copied!'); }}
+                          title="Click to copy"
+                        >
+                          {affData.affiliate.other_bio_code} 📋
+                        </div>
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
+                          <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
+                        </p>
                       </div>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
-                        <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
-                      </p>
+                      <div>
+                        <button className="btn-neon" style={{ width: '100%', padding: '14px' }} onClick={() => handleVerifyOther()} disabled={verifyingOther}>
+                          {verifyingOther ? "Checking Profile..." : "✓ Verify Profile"}
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <button className="btn-neon" style={{ width: '100%', padding: '14px' }} onClick={() => handleVerifyYoutube()} disabled={verifyingYoutube}>
-                        {verifyingYoutube ? "Checking Description..." : "✓ Verify YouTube"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
             </div>
 
-            {affData.affiliate.instagram_verified && affData.affiliate.youtube_verified && (
+            {((!affData.affiliate.instagram_url || affData.affiliate.instagram_verified) &&
+              (!affData.affiliate.youtube_url || affData.affiliate.youtube_verified) &&
+              (!affData.affiliate.other_url || affData.affiliate.other_verified)) && (
               <div style={{ background: 'rgba(0, 230, 118, 0.06)', border: '1px solid rgba(0, 230, 118, 0.2)', padding: '16px 20px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center' }}>
                 <p style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.95rem', margin: 0 }}>
-                  🎉 Both profiles verified! Your application is now under admin review.
+                  🎉 All submitted profiles verified! Your application is now under admin review.
                 </p>
               </div>
             )}

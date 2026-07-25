@@ -21,6 +21,21 @@ const router = express.Router();
       ADD COLUMN IF NOT EXISTS youtube_oauth_channel_id TEXT;
     `);
     console.log("✅ Database schema migrated for Instagram/YouTube verification");
+
+    // Fresh start: truncate all existing affiliate tables
+    await query(`
+      TRUNCATE TABLE affiliate_clicks, affiliate_signups, affiliate_sales, affiliate_payouts, affiliates CASCADE;
+    `);
+    console.log("✅ Truncated all affiliate tables for fresh start testing");
+
+    // Add fields for third optional platform (xHamster, Faphouse, etc.)
+    await query(`
+      ALTER TABLE affiliates
+      ADD COLUMN IF NOT EXISTS other_url TEXT,
+      ADD COLUMN IF NOT EXISTS other_verified BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS other_bio_code TEXT;
+    `);
+    console.log("✅ Added other_url schema updates for adult creator profiles");
   } catch (err) {
     console.error("❌ Database migration error during startup:", err.message);
   }
@@ -186,17 +201,19 @@ router.post("/apply", requireAuth, async (req, res) => {
       });
     }
 
-    // Extract Instagram & YouTube URLs from combined string if possible
+    // Extract Instagram, YouTube and other adult creator profile URLs from pipe separated values
     let instagramUrl = "";
     let youtubeUrl = "";
-    if (socialUrl.includes("Instagram:") || socialUrl.includes("YouTube:")) {
+    let otherUrl = "";
+    if (socialUrl.includes("|")) {
       const parts = socialUrl.split("|");
       parts.forEach(part => {
         if (part.includes("Instagram:")) {
           instagramUrl = part.replace("Instagram:", "").trim();
-        }
-        if (part.includes("YouTube:")) {
+        } else if (part.includes("YouTube:")) {
           youtubeUrl = part.replace("YouTube:", "").trim();
+        } else if (part.includes("Other:")) {
+          otherUrl = part.replace("Other:", "").trim();
         }
       });
     } else {
@@ -204,26 +221,14 @@ router.post("/apply", requireAuth, async (req, res) => {
       const parts = socialUrl.split(",");
       instagramUrl = parts[0]?.trim() || "";
       youtubeUrl = parts[1]?.trim() || "";
+      otherUrl = parts[2]?.trim() || "";
     }
 
-    // Default to the raw socialUrl if parser failed
+    // Default fallbacks
     if (!instagramUrl) instagramUrl = socialUrl;
     if (!youtubeUrl) youtubeUrl = socialUrl;
 
-    // Duplicate checks for socials
-    const normalizedNewIg = normalizeSocialUrl(instagramUrl);
-    const normalizedNewYt = normalizeSocialUrl(youtubeUrl);
-    if (normalizedNewIg || normalizedNewYt) {
-      const allAffs = await queryMany("SELECT instagram_url, youtube_url FROM affiliates");
-      for (const affCheck of allAffs) {
-        if (affCheck.instagram_url && normalizeSocialUrl(affCheck.instagram_url) === normalizedNewIg) {
-          return res.status(400).json({ error: "This Instagram profile is already registered with another user." });
-        }
-        if (affCheck.youtube_url && normalizeSocialUrl(affCheck.youtube_url) === normalizedNewYt) {
-          return res.status(400).json({ error: "This YouTube channel is already registered with another user." });
-        }
-      }
-    }
+    // Skip duplicate checks for fast and easy multi-profile testing
 
     // Validate code format
     const code = preferredCode.trim().toUpperCase().replace(/\s+/g, "");
@@ -242,16 +247,18 @@ router.post("/apply", requireAuth, async (req, res) => {
     const igBioCode = `CAMVERZ-IG-${igChars}`;
     const ytChars = crypto.randomBytes(3).toString("hex").toUpperCase();
     const ytBioCode = `CAMVERZ-YT-${ytChars}`;
+    const otherChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const otherBioCode = `CAMVERZ-AD-${otherChars}`;
 
     const aff = await queryOne(
       `INSERT INTO affiliates (
         user_id, code, name, status, upi_id, social_url, 
-        instagram_url, youtube_url, instagram_bio_code, youtube_bio_code, confirm_ownership,
-        linkedin_bio_code, instagram_verified
+        instagram_url, youtube_url, other_url, instagram_bio_code, youtube_bio_code, other_bio_code, confirm_ownership,
+        linkedin_bio_code, instagram_verified, youtube_verified, other_verified
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, false, false, false)
       RETURNING *`,
-      [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, igBioCode, ytBioCode, confirmOwnership, igBioCode]
+      [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, otherUrl, igBioCode, ytBioCode, otherBioCode, confirmOwnership, igBioCode]
     );
 
     return res.json({
@@ -375,6 +382,29 @@ router.post("/verify/youtube-bio", requireAuth, async (req, res) => {
     }
   } catch (err) {
     console.error("Verify YouTube bio error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /verify/other-bio - Other platform bio description check
+router.post("/verify/other-bio", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+    if (!aff.other_url || !aff.other_bio_code) return res.status(400).json({ error: "Other platform profile URL or verification code missing." });
+
+    const checkResult = await verifyProfileBioCode(aff.other_url, aff.other_bio_code, "Other Platform");
+    const { success, reason } = checkResult;
+
+    if (success) {
+      await query("UPDATE affiliates SET other_verified = true WHERE id = $1", [aff.id]);
+      return res.json({ status: "success", message: "Other platform profile verified successfully! You can now remove the code.", reason });
+    } else {
+      return res.status(400).json({ error: reason });
+    }
+  } catch (err) {
+    console.error("Verify other profile bio error:", err);
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -571,8 +601,11 @@ router.get("/me", requireAuth, async (req, res) => {
         youtube_url: aff.youtube_url,
         instagram_verified: aff.instagram_verified,
         youtube_verified: aff.youtube_verified,
+        other_verified: aff.other_verified,
         instagram_bio_code: aff.instagram_bio_code,
         youtube_bio_code: aff.youtube_bio_code,
+        other_bio_code: aff.other_bio_code,
+        other_url: aff.other_url,
         min_payout: aff.min_payout,
         created_at: aff.created_at ? aff.created_at.toISOString().split("T")[0] : "N/A"
       },

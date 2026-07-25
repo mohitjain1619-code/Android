@@ -316,6 +316,11 @@ export async function verifyYoutubeBio() {
   return data;
 }
 
+export async function verifyOtherBio() {
+  const { data } = await api.post('/affiliate/verify/other-bio');
+  return data;
+}
+
 export async function resetAffiliateVerification() {
   const { data } = await api.post('/affiliate/reset-verification');
   return data;
