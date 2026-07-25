@@ -22,11 +22,7 @@ const router = express.Router();
     `);
     console.log("✅ Database schema migrated for Instagram/YouTube verification");
 
-    // Fresh start: truncate all existing affiliate tables
-    await query(`
-      TRUNCATE TABLE affiliate_clicks, affiliate_signups, affiliate_sales, affiliate_payouts, affiliates CASCADE;
-    `);
-    console.log("✅ Truncated all affiliate tables for fresh start testing");
+
 
     // Add fields for third optional platform (xHamster, Faphouse, etc.)
     await query(`
@@ -224,9 +220,7 @@ router.post("/apply", requireAuth, async (req, res) => {
       otherUrl = parts[2]?.trim() || "";
     }
 
-    // Default fallbacks
-    if (!instagramUrl) instagramUrl = socialUrl;
-    if (!youtubeUrl) youtubeUrl = socialUrl;
+
 
     // Skip duplicate checks for fast and easy multi-profile testing
 

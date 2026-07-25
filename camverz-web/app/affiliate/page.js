@@ -645,7 +645,7 @@ export default function AffiliatePage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>INSTAGRAM PROFILE URL (OPTIONAL)</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>INSTAGRAM PROFILE URL</label>
                   <input 
                     type="url" 
                     className="input-glass" 
@@ -656,7 +656,7 @@ export default function AffiliatePage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>YOUTUBE CHANNEL URL (OPTIONAL)</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>YOUTUBE CHANNEL URL</label>
                   <input 
                     type="url" 
                     className="input-glass" 
@@ -667,11 +667,11 @@ export default function AffiliatePage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>OTHER PLATFORM URL (e.g. XHAMSTER / FAPHOUSE - OPTIONAL)</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>OTHER PLATFORM PROFILE URL</label>
                   <input 
                     type="url" 
                     className="input-glass" 
-                    placeholder="e.g. https://xhamster.com/creators/username" 
+                    placeholder="e.g. https://example.com/profile/username" 
                     value={otherUrl} 
                     onChange={(e) => setOtherUrl(e.target.value)} 
                   />
@@ -697,7 +697,7 @@ export default function AffiliatePage() {
                   style={{ marginTop: '3px' }}
                   required 
                 />
-                <span>I confirm that the submitted Instagram & YouTube profiles belong to me and represent my authentic public identity.</span>
+                <span>I confirm that the submitted social profiles belong to me and represent my authentic identity.</span>
               </label>
 
               <button type="submit" className="btn-neon" style={{ width: '100%', marginTop: '10px', padding: '14px' }} disabled={submitting}>
