@@ -249,7 +249,7 @@ router.post("/apply", requireAuth, async (req, res) => {
         instagram_url, youtube_url, instagram_bio_code, youtube_bio_code, confirm_ownership,
         linkedin_bio_code, instagram_verified
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
       RETURNING *`,
       [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, igBioCode, ytBioCode, confirmOwnership, igBioCode]
     );
@@ -410,7 +410,7 @@ router.post("/reset-verification", requireAuth, async (req, res) => {
 
     await query(
       `UPDATE affiliates 
-       SET instagram_verified = false, youtube_verified = false, status = 'pending',
+       SET instagram_verified = true, youtube_verified = false, status = 'pending',
            instagram_bio_code = $1, youtube_bio_code = $2,
            linkedin_bio_verified = false, linkedin_bio_verified_at = null 
        WHERE id = $3`,
