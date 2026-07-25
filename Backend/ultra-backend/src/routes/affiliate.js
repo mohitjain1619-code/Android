@@ -21,6 +21,14 @@ const router = express.Router();
       ADD COLUMN IF NOT EXISTS youtube_oauth_channel_id TEXT;
     `);
     console.log("✅ Database schema migrated for Instagram/YouTube verification");
+
+    // One-off reset for Mohit's testing profile on deployment
+    await query(`
+      UPDATE affiliates 
+      SET instagram_verified = false, youtube_verified = false, status = 'pending'
+      WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'mohitjain1619@gmail.com');
+    `);
+    console.log("✅ Reset verification status for Mohit's testing profile");
   } catch (err) {
     console.error("❌ Database migration error during startup:", err.message);
   }
@@ -380,7 +388,8 @@ router.post("/reset-verification", requireAuth, async (req, res) => {
 
     await query(
       `UPDATE affiliates 
-       SET linkedin_bio_verified = false, linkedin_bio_verified_at = null 
+       SET instagram_verified = false, youtube_verified = false, status = 'pending',
+           linkedin_bio_verified = false, linkedin_bio_verified_at = null 
        WHERE id = $1`,
       [aff.id]
     );
