@@ -30,6 +30,8 @@ const router = express.Router();
 
 
 
+
+
     // Add fields for third optional platform (xHamster, Faphouse, etc.)
     await query(`
       ALTER TABLE affiliates
@@ -182,15 +184,29 @@ router.post("/track-click", async (req, res) => {
 // POST /apply - apply to creator program
 router.post("/apply", requireAuth, async (req, res) => {
   try {
-    const { name, preferredCode, upiId, socialUrl, confirmOwnership } = req.body;
+    const { name, preferredCode, instagramUrl, youtubeUrl, otherUrl, confirmOwnership } = req.body;
     const userId = req.user.userId;
 
     if (!name || !preferredCode) {
       return res.status(400).json({ error: "Name and preferred referral code are required." });
     }
-    if (!socialUrl || !socialUrl.trim()) {
-      return res.status(400).json({ error: "Profile URLs are required for application verification." });
+    
+    const igClean = instagramUrl ? instagramUrl.trim() : "";
+    const ytClean = youtubeUrl ? youtubeUrl.trim() : "";
+    const otherClean = otherUrl ? otherUrl.trim() : "";
+
+    if (!igClean && !ytClean && !otherClean) {
+      return res.status(400).json({ error: "Please provide at least one profile URL (Instagram, YouTube, or Other Platform)." });
     }
+    
+    // Validate otherUrl strictly to xhamster.com or faphouse.com if provided
+    if (otherClean) {
+      const lowerOther = otherClean.toLowerCase();
+      if (!lowerOther.includes("xhamster.com") && !lowerOther.includes("faphouse.com")) {
+        return res.status(400).json({ error: "Other platform profile URL must be a valid xHamster or Faphouse link." });
+      }
+    }
+
     if (!confirmOwnership) {
       return res.status(400).json({ error: "You must confirm ownership of the profiles." });
     }
@@ -203,32 +219,12 @@ router.post("/apply", requireAuth, async (req, res) => {
       });
     }
 
-    // Extract Instagram, YouTube and other adult creator profile URLs from pipe separated values
-    let instagramUrl = "";
-    let youtubeUrl = "";
-    let otherUrl = "";
-    if (socialUrl.includes("|")) {
-      const parts = socialUrl.split("|");
-      parts.forEach(part => {
-        if (part.includes("Instagram:")) {
-          instagramUrl = part.replace("Instagram:", "").trim();
-        } else if (part.includes("YouTube:")) {
-          youtubeUrl = part.replace("YouTube:", "").trim();
-        } else if (part.includes("Other:")) {
-          otherUrl = part.replace("Other:", "").trim();
-        }
-      });
-    } else {
-      // Fallback: split by comma
-      const parts = socialUrl.split(",");
-      instagramUrl = parts[0]?.trim() || "";
-      youtubeUrl = parts[1]?.trim() || "";
-      otherUrl = parts[2]?.trim() || "";
-    }
-
-
-
-    // Skip duplicate checks for fast and easy multi-profile testing
+    // Construct socialUrl for backward compatibility
+    const parts = [];
+    if (igClean) parts.push(`Instagram: ${igClean}`);
+    if (ytClean) parts.push(`YouTube: ${ytClean}`);
+    if (otherClean) parts.push(`Other: ${otherClean}`);
+    const socialUrl = parts.join(" | ");
 
     // Validate code format
     const code = preferredCode.trim().toUpperCase().replace(/\s+/g, "");
@@ -250,15 +246,25 @@ router.post("/apply", requireAuth, async (req, res) => {
     const otherChars = crypto.randomBytes(3).toString("hex").toUpperCase();
     const otherBioCode = `CAMVERZ-AD-${otherChars}`;
 
+    // Auto verify flags if field is empty
+    const instagramVerified = !igClean;
+    const youtubeVerified = !ytClean;
+    const otherVerified = !otherClean;
+
     const aff = await queryOne(
       `INSERT INTO affiliates (
         user_id, code, name, status, upi_id, social_url, 
         instagram_url, youtube_url, other_url, instagram_bio_code, youtube_bio_code, other_bio_code, confirm_ownership,
         linkedin_bio_code, instagram_verified, youtube_verified, other_verified
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, false, false, false)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *`,
-      [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, otherUrl, igBioCode, ytBioCode, otherBioCode, confirmOwnership, igBioCode]
+      [
+        userId, code, name, "pending", null, socialUrl, 
+        igClean || null, ytClean || null, otherClean || null, 
+        igBioCode, ytBioCode, otherBioCode, confirmOwnership, 
+        igBioCode, instagramVerified, youtubeVerified, otherVerified
+      ]
     );
 
     return res.json({
@@ -427,7 +433,7 @@ router.post("/linkedin/verify-bio", requireAuth, async (req, res) => {
 router.post("/reset-verification", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
+    const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
     if (!aff) {
       return res.status(400).json({ error: "Affiliate profile not found." });
     }
@@ -437,14 +443,20 @@ router.post("/reset-verification", requireAuth, async (req, res) => {
     const igBioCode = `CAMVERZ-IG-${igChars}`;
     const ytChars = crypto.randomBytes(3).toString("hex").toUpperCase();
     const ytBioCode = `CAMVERZ-YT-${ytChars}`;
+    const otherChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const otherBioCode = `CAMVERZ-AD-${otherChars}`;
+
+    const instagramVerified = !aff.instagram_url;
+    const youtubeVerified = !aff.youtube_url;
+    const otherVerified = !aff.other_url;
 
     await query(
       `UPDATE affiliates 
-       SET instagram_verified = true, youtube_verified = false, status = 'pending',
-           instagram_bio_code = $1, youtube_bio_code = $2,
+       SET instagram_verified = $1, youtube_verified = $2, other_verified = $3, status = 'pending',
+           instagram_bio_code = $4, youtube_bio_code = $5, other_bio_code = $6,
            linkedin_bio_verified = false, linkedin_bio_verified_at = null 
-       WHERE id = $3`,
-      [igBioCode, ytBioCode, aff.id]
+       WHERE id = $7`,
+      [instagramVerified, youtubeVerified, otherVerified, igBioCode, ytBioCode, otherBioCode, aff.id]
     );
 
     return res.json({ status: "success", message: "Verification status reset successfully with new codes" });
