@@ -112,25 +112,14 @@ public class ConnectingActivity extends BaseActivity {
 
                 runOnUiThread(() -> {
                     isWaiting = false;
-                    socket.off("match-found"); // Unregister immediately to avoid multiple dialogs
+                    socket.off("match-found"); // Unregister immediately
 
-                    new android.app.AlertDialog.Builder(ConnectingActivity.this)
-                            .setTitle("Match Found!")
-                            .setMessage("Do you want to connect?")
-                            .setPositiveButton("Connect", (d, w) -> {
-                                matchAccepted = true; // CRITICAL: Set flag to prevent leaving queue
-                                Intent i = new Intent(ConnectingActivity.this, CallActivity.class);
-                                i.putExtra("peer", peerId);
-                                i.putExtra("category", category);
-                                startActivity(i);
-                                finish();
-                            })
-                            .setNegativeButton("Skip", (d, w) -> {
-                                joinQueue(); // Re-join queue if user skips
-                                d.dismiss();
-                            })
-                            .setCancelable(false)
-                            .show();
+                    matchAccepted = true; // CRITICAL: Set flag to prevent leaving queue
+                    Intent i = new Intent(ConnectingActivity.this, CallActivity.class);
+                    i.putExtra("peer", peerId);
+                    i.putExtra("category", category);
+                    startActivity(i);
+                    finish();
                 });
 
             } catch (Exception e) {

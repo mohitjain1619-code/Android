@@ -12,6 +12,57 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Remote Video Off Overlay (WhatsApp style circular avatar on blurred/dark background) -->
+    <RelativeLayout
+        android:id="@+id/remote_avatar_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#12121A"
+        android:visibility="gone">
+
+        <!-- Glowing/Blur background placeholder -->
+        <ImageView
+            android:id="@+id/remote_avatar_blur_bg"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:alpha="0.25" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/remote_avatar_large"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:src="@drawable/ic_user_placeholder"
+                app:civ_border_width="3dp"
+                app:civ_border_color="#00D9FF" />
+
+            <TextView
+                android:id="@+id/remote_avatar_name_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="User Name"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Camera is turned off"
+                android:textColor="#B3FFFFFF"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
     <!-- Draggable Floating Local Video Window with Colorful Border -->
     <FrameLayout
         android:id="@+id/local_view_container"
@@ -28,6 +79,24 @@
             android:id="@+id/localView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+
+        <!-- Local Camera Off Overlay -->
+        <FrameLayout
+            android:id="@+id/local_avatar_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#20202F"
+            android:visibility="gone">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/local_avatar_small"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_user_placeholder"
+                app:civ_border_width="1.5dp"
+                app:civ_border_color="#00D9FF" />
+        </FrameLayout>
         
         <!-- Swap indicator icon -->
         <ImageView
@@ -164,11 +233,11 @@
 
             <ImageButton
                 android:id="@+id/btnToggleVideo"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_video_button_purple"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_call_btn_glass"
                 android:src="@drawable/ic_videocam_on"
-                android:padding="14dp"
+                android:padding="16dp"
                 android:scaleType="fitCenter"
                 app:tint="#FFFFFF"
                 android:layout_marginEnd="12dp"
@@ -177,11 +246,11 @@
 
             <ImageButton
                 android:id="@+id/btnMute"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_video_button_gradient"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_call_btn_glass"
                 android:src="@drawable/ic_mic_on"
-                android:padding="14dp"
+                android:padding="16dp"
                 android:scaleType="fitCenter"
                 app:tint="#FFFFFF"
                 android:layout_marginEnd="12dp"
@@ -190,11 +259,11 @@
 
             <ImageButton
                 android:id="@+id/btnEnd"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:background="@drawable/bg_end_button_gradient"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_call_btn_red"
                 android:src="@drawable/ic_call_end"
-                android:padding="20dp"
+                android:padding="16dp"
                 android:scaleType="fitCenter"
                 app:tint="#FFFFFF"
                 android:layout_marginStart="12dp"
@@ -204,11 +273,11 @@
 
             <ImageButton
                 android:id="@+id/btnSwitchCamera"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
-                android:background="@drawable/bg_video_button_pink"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_call_btn_glass"
                 android:src="@drawable/ic_camera_flip"
-                android:padding="14dp"
+                android:padding="16dp"
                 android:scaleType="fitCenter"
                 app:tint="#FFFFFF"
                 android:layout_marginStart="12dp"

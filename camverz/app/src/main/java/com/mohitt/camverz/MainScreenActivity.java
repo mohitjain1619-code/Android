@@ -31,6 +31,10 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import com.applovin.sdk.AppLovinSdk;
+import com.applovin.mediation.ads.MaxAdView;
+import com.applovin.sdk.AppLovinSdkUtils;
+
 public class MainScreenActivity extends BaseActivity {
 
     private static final String TAG = "MainScreen";
@@ -45,6 +49,8 @@ public class MainScreenActivity extends BaseActivity {
     private ImageView iconVideo, iconProfile, iconImage, iconMessage;
     private TextView messageBadge;
 
+    private MaxAdView adView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +59,12 @@ public class MainScreenActivity extends BaseActivity {
         tokenManager = TokenManager.getInstance(this);
         api = ApiClient.getInstance(this).getApi();
         socket = SocketManager.getInstance();
+
+        // Initialize AppLovin MAX SDK for ads
+        AppLovinSdk.getInstance(this).setMediationProvider("max");
+        AppLovinSdk.initializeSdk(this, configuration -> {
+            runOnUiThread(this::loadBannerAd);
+        });
 
         if (tokenManager.isLoggedIn()) {
             // Register current user on socket for private calls
@@ -140,6 +152,9 @@ public class MainScreenActivity extends BaseActivity {
         popup.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.action_logout) {
                 logout();
+                return true;
+            } else if (item.getItemId() == R.id.action_mediation_debugger) {
+                AppLovinSdk.getInstance(this).showMediationDebugger();
                 return true;
             }
             return false;
@@ -264,9 +279,35 @@ public class MainScreenActivity extends BaseActivity {
         startActivity(intent);
     }
 
+    private void loadBannerAd() {
+        adView = new MaxAdView("YOUR_BANNER_AD_UNIT_ID", this);
+
+        // Set size (Match parent width, 50dp height for phones)
+        int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
+        adView.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                heightPx
+        ));
+
+        // Background color is required for banners to function properly
+        adView.setBackgroundColor(Color.TRANSPARENT);
+
+        // Add to your layout
+        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
+        if (adContainer != null) {
+            adContainer.addView(adView);
+            // Load the ad
+            adView.loadAd();
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (adView != null) {
+            adView.destroy();
+            adView = null;
+        }
         socket.off("match-found");
         socket.off("incoming-private-call");
         socket.off("new_message");

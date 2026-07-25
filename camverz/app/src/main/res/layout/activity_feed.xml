@@ -92,7 +92,8 @@
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/top_bar">
+        android:layout_below="@id/top_bar"
+        android:layout_above="@id/banner_ad_container">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/posts_recycler_view"
@@ -101,8 +102,16 @@
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+    <FrameLayout
+        android:id="@+id/banner_ad_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/floating_menu_container"
+        android:background="@android:color/transparent" />
+
     <!-- Floating Menu Buttons - 4 Small Circles -->
     <FrameLayout
+        android:id="@+id/floating_menu_container"
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_alignParentBottom="true"

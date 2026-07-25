@@ -128,6 +128,10 @@ export class WebRTCManager {
         console.error('Error adding ICE:', e);
       }
     });
+
+    this.socket.on('peer-disconnected', () => {
+      this.disconnect();
+    });
   }
 
   async createOffer() {

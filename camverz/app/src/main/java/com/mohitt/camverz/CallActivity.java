@@ -26,6 +26,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
+import com.applovin.mediation.ads.MaxInterstitialAd;
+import com.applovin.mediation.MaxAd;
+import com.applovin.mediation.MaxAdListener;
+import com.applovin.mediation.MaxError;
 import com.google.gson.JsonObject;
 import com.mohitt.camverz.api.ApiClient;
 import com.mohitt.camverz.api.ApiService;
@@ -85,6 +89,12 @@ public class CallActivity extends AppCompatActivity {
     private View connectionDot;
     private androidx.cardview.widget.CardView followButtonCard;
 
+    private RelativeLayout remoteAvatarOverlay;
+    private FrameLayout localAvatarOverlay;
+    private ImageView remoteAvatarBlurBg;
+    private CircleImageView remoteAvatarLarge, localAvatarSmall;
+    private TextView remoteAvatarNameText;
+
     private boolean isMuted = false, isVideoOff = false;
     private boolean isCameraSwitching = false;
     private boolean areControlsVisible = true;
@@ -102,6 +112,9 @@ public class CallActivity extends AppCompatActivity {
     private String peerId, myUid, roomName;
     private String peerNameValue, peerAvatarUrl;
     private Socket socket;
+
+    private MaxInterstitialAd interstitialAd;
+    private int retryAttempt;
     private boolean isInitiator = false;
     private boolean callEnded = false;
     private boolean isFollowing = false;
@@ -136,6 +149,43 @@ public class CallActivity extends AppCompatActivity {
         setContentView(R.layout.activity_call);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+
+        // Preload AppLovin MAX Interstitial Ad
+        interstitialAd = new MaxInterstitialAd("YOUR_INTERSTITIAL_AD_UNIT_ID", this);
+        interstitialAd.setListener(new MaxAdListener() {
+            @Override
+            public void onAdLoaded(MaxAd ad) {
+                retryAttempt = 0;
+            }
+
+            @Override
+            public void onAdLoadFailed(String adUnitId, MaxError error) {
+                retryAttempt++;
+                int delayMillis = (int) Math.min(Math.pow(2, Math.min(6, retryAttempt)) * 1000, 30000);
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (interstitialAd != null) {
+                        interstitialAd.loadAd();
+                    }
+                }, delayMillis);
+            }
+
+            @Override
+            public void onAdDisplayed(MaxAd ad) {}
+
+            @Override
+            public void onAdClicked(MaxAd ad) {}
+
+            @Override
+            public void onAdHidden(MaxAd ad) {
+                finish();
+            }
+
+            @Override
+            public void onAdDisplayFailed(MaxAd ad, MaxError error) {
+                finish();
+            }
+        });
+        interstitialAd.loadAd();
 
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
@@ -199,11 +249,26 @@ public class CallActivity extends AppCompatActivity {
         followButton = findViewById(R.id.follow_button);
         followButtonCard = findViewById(R.id.follow_button_card);
 
+        remoteAvatarOverlay = findViewById(R.id.remote_avatar_overlay);
+        localAvatarOverlay = findViewById(R.id.local_avatar_overlay);
+        remoteAvatarBlurBg = findViewById(R.id.remote_avatar_blur_bg);
+        remoteAvatarLarge = findViewById(R.id.remote_avatar_large);
+        localAvatarSmall = findViewById(R.id.local_avatar_small);
+        remoteAvatarNameText = findViewById(R.id.remote_avatar_name_text);
+
         btnMute.setOnClickListener(v -> toggleMute());
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnEnd.setOnClickListener(v -> disconnect());
         btnToggleVideo.setOnClickListener(v -> toggleVideo());
         followButton.setOnClickListener(v -> handleFollowClick());
+
+        String localAvatar = tokenManager.getUserAvatar();
+        if (localAvatar != null && !localAvatar.isEmpty()) {
+            int avatarResId = getResources().getIdentifier(localAvatar, "drawable", getPackageName());
+            if (avatarResId != 0) {
+                Glide.with(this).load(avatarResId).placeholder(R.drawable.av1).into(localAvatarSmall);
+            }
+        }
         
         remoteView.setOnClickListener(v -> toggleControlsVisibility());
         setupDraggableLocalView();
@@ -680,6 +745,27 @@ public class CallActivity extends AppCompatActivity {
                 Log.e(TAG, "Error processing receive-ice", e);
             }
         });
+
+        socket.on("peer-disconnected", args -> {
+            runOnUiThread(this::disconnect);
+        });
+
+        socket.on("call-control", args -> {
+            try {
+                JSONObject data = (JSONObject) args[0];
+                String type = data.getString("type");
+                boolean enabled = data.getBoolean("enabled");
+                String senderId = data.getString("senderId");
+                
+                if (!myUid.equals(senderId) && "video".equals(type)) {
+                    runOnUiThread(() -> {
+                        remoteAvatarOverlay.setVisibility(enabled ? View.GONE : View.VISIBLE);
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error processing call-control event", e);
+            }
+        });
     }
 
     private void createOffer() {
@@ -754,6 +840,7 @@ public class CallActivity extends AppCompatActivity {
         
         btnMute.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
             btnMute.setImageResource(isMuted ? R.drawable.ic_mic_off : R.drawable.ic_mic_on);
+            btnMute.setBackgroundResource(isMuted ? R.drawable.bg_call_btn_red : R.drawable.bg_call_btn_glass);
             btnMute.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
         }).start();
         
@@ -766,8 +853,22 @@ public class CallActivity extends AppCompatActivity {
         
         btnToggleVideo.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
             btnToggleVideo.setImageResource(isVideoOff ? R.drawable.ic_videocam_off : R.drawable.ic_videocam_on);
+            btnToggleVideo.setBackgroundResource(isVideoOff ? R.drawable.bg_call_btn_red : R.drawable.bg_call_btn_glass);
+            localAvatarOverlay.setVisibility(isVideoOff ? View.VISIBLE : View.GONE);
             btnToggleVideo.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
         }).start();
+
+        // Emit call-control event to notify peer
+        try {
+            JSONObject data = new JSONObject();
+            data.put("room", roomName);
+            data.put("type", "video");
+            data.put("enabled", !isVideoOff);
+            data.put("senderId", myUid);
+            socket.emit("call-control", data);
+        } catch (JSONException e) {
+            Log.e(TAG, "Error emitting video call-control event", e);
+        }
         
         resetAutoHideTimer();
     }
@@ -860,7 +961,13 @@ public class CallActivity extends AppCompatActivity {
             eglBase = null;
         }
 
-        finish();
+        runOnUiThread(() -> {
+            if (interstitialAd != null && interstitialAd.isReady()) {
+                interstitialAd.showAd();
+            } else {
+                finish();
+            }
+        });
     }
 
     private void loadPeerUserInfo() {
@@ -881,15 +988,22 @@ public class CallActivity extends AppCompatActivity {
                         isFollowing = user.has("isFollowing") && user.get("isFollowing").getAsBoolean();
 
                         peerName.setText(peerNameValue);
+                        remoteAvatarNameText.setText(peerNameValue);
                         if (peerAvatarUrl != null && !peerAvatarUrl.isEmpty()) {
                             int avatarResId = getResources().getIdentifier(peerAvatarUrl, "drawable", getPackageName());
                             if (avatarResId != 0) {
                                 Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
+                                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
+                                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
                             } else {
                                 Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
+                                Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
+                                Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
                             }
                         } else {
                             Glide.with(CallActivity.this).load(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
+                            Glide.with(CallActivity.this).load(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
+                            Glide.with(CallActivity.this).load(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
                         }
                         updateFollowButtonUI();
                         return;
@@ -985,6 +1099,10 @@ public class CallActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         disconnect();
+        if (interstitialAd != null) {
+            interstitialAd.setListener(null);
+            interstitialAd = null;
+        }
         super.onDestroy();
     }
 }

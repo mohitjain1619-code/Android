@@ -97,6 +97,13 @@ dependencies {
     // For face detection - using ML Kit instead of MediaPipe (more stable)
     implementation 'com.google.mlkit:face-detection:16.1.5'
 
+    // AppLovin MAX SDK & Mediation Adapters (AdMob, Meta, InMobi, Pangle)
+    implementation 'com.applovin:applovin-sdk:13.0.1'
+    implementation 'com.applovin.mediation:google-adapter:+'
+    implementation 'com.applovin.mediation:facebook-adapter:+'
+    implementation 'com.applovin.mediation:inmobi-adapter:+'
+    implementation 'com.applovin.mediation:bytedance-adapter:+'
+
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core

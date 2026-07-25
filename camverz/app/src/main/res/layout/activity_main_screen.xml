@@ -27,7 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_below="@id/top_nav_bar"
-            android:layout_above="@id/bottom_nav_bar"
+            android:layout_above="@id/banner_ad_container"
             android:padding="20dp">
 
             <LinearLayout
@@ -169,6 +169,13 @@
 
             </LinearLayout>
         </ScrollView>
+
+        <FrameLayout
+            android:id="@+id/banner_ad_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/bottom_nav_bar"
+            android:background="@android:color/transparent" />
 
         <include
             android:id="@+id/bottom_nav_bar"

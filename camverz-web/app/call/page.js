@@ -5,7 +5,7 @@ import { useAuth } from '../../lib/auth-context';
 import { getSocket } from '../../lib/socket';
 import { WebRTCManager } from '../../lib/webrtc';
 import { getUser } from '../../lib/firestore';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, SwitchCamera, UserPlus, ArrowLeft, Loader } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, SwitchCamera, SkipForward, ArrowLeft, Loader } from 'lucide-react';
 import styles from './page.module.css';
 
 function CallPageInner() {
@@ -18,6 +18,7 @@ function CallPageInner() {
   const [peerData, setPeerData] = useState(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [isRemoteVideoOff, setIsRemoteVideoOff] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [connectionState, setConnectionState] = useState('');
   const [timer, setTimer] = useState(0);
@@ -135,6 +136,12 @@ function CallPageInner() {
         webrtc.joinRoom();
       });
 
+      socket.on('call-control', (data) => {
+        if (data.senderId !== user.uid && data.type === 'video') {
+          setIsRemoteVideoOff(!data.enabled);
+        }
+      });
+
       socket.on('queue-position', (data) => {
         // Optional: show queue position
       });
@@ -150,6 +157,10 @@ function CallPageInner() {
     socketRef.current?.emit('leave-queue', { uid: user?.uid });
     socketRef.current?.off('match-found');
     socketRef.current?.off('queue-position');
+    socketRef.current?.off('call-control');
+    setIsRemoteVideoOff(false);
+    setIsVideoOff(false);
+    setIsMuted(false);
     if (localVideoRef.current?.srcObject) {
       localVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
     }
@@ -160,16 +171,6 @@ function CallPageInner() {
     setState('idle');
     setPeerData(null);
     setTimer(0);
-  };
-
-  const nextCall = () => {
-    webrtcRef.current?.disconnect();
-    setState('connecting');
-    socketRef.current?.emit('join-queue', {
-      uid: user.uid,
-      gender: userData?.gender || '',
-      category,
-    });
   };
 
   // PIP Drag
@@ -232,11 +233,28 @@ function CallPageInner() {
   return (
     <div className={styles.page} onClick={resetControlTimer}>
       {/* Remote Video */}
-      <video ref={remoteVideoRef} className={styles.remoteVideo} autoPlay playsInline />
+      <video ref={remoteVideoRef} className={styles.remoteVideo} autoPlay playsInline style={{ display: isRemoteVideoOff ? 'none' : 'block' }} />
+
+      {/* Remote Video Off Avatar Overlay */}
+      {isRemoteVideoOff && (
+        <div className={styles.remoteAvatarOverlay}>
+          <div className={styles.remoteAvatarBlurBg} style={{ backgroundImage: `url(/avatars/${peerData?.avatar || 'av1'}.png)` }} />
+          <div className={styles.remoteAvatarContainer}>
+            <img src={`/avatars/${peerData?.avatar || 'av1'}.png`} alt="" className={styles.remoteAvatar} />
+            <div className={styles.remoteAvatarName}>{peerData?.name || 'User'}</div>
+            <div className={styles.remoteAvatarSubText}>Camera is turned off</div>
+          </div>
+        </div>
+      )}
 
       {/* Local PIP */}
       <div ref={pipRef} className={styles.localPip} onPointerDown={onPipPointerDown}>
-        <video ref={localVideoRef} className={styles.localVideo} autoPlay playsInline muted />
+        <video ref={localVideoRef} className={styles.localVideo} autoPlay playsInline muted style={{ display: isVideoOff ? 'none' : 'block' }} />
+        {isVideoOff && (
+          <div className={styles.pipAvatarOverlay}>
+            <img src={`/avatars/${userData?.avatar || 'av1'}.png`} alt="" className={styles.pipAvatar} />
+          </div>
+        )}
       </div>
 
       {/* Connecting Overlay */}
@@ -275,20 +293,31 @@ function CallPageInner() {
       {/* Bottom Controls */}
       {state === 'in-call' && (
         <div className={`${styles.bottomBar} ${showControls ? '' : styles.hidden}`}>
-          <button className={`${styles.controlBtn} ${isMuted ? styles.controlActive : ''}`} onClick={() => { setIsMuted(webrtcRef.current?.toggleMute()); }}>
+          <button className={`${styles.controlBtn} ${isMuted ? styles.controlActive : ''}`} onClick={() => { setIsMuted(webrtcRef.current?.toggleMute()); }} title={isMuted ? "Unmute Mic" : "Mute Mic"}>
             {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
           </button>
-          <button className={`${styles.controlBtn} ${isVideoOff ? styles.controlActive : ''}`} onClick={() => { setIsVideoOff(webrtcRef.current?.toggleVideo()); }}>
+          <button 
+            className={`${styles.controlBtn} ${isVideoOff ? styles.controlActive : ''}`} 
+            onClick={() => { 
+              const nextVal = !isVideoOff;
+              setIsVideoOff(nextVal);
+              webrtcRef.current?.toggleVideo();
+              socketRef.current?.emit('call-control', {
+                room: webrtcRef.current?.roomName,
+                type: 'video',
+                enabled: !nextVal,
+                senderId: user.uid
+              });
+            }}
+            title={isVideoOff ? "Turn Video On" : "Turn Video Off"}
+          >
             {isVideoOff ? <VideoOff size={22} /> : <Video size={22} />}
           </button>
-          <button className={`${styles.controlBtn} ${styles.endBtn}`} onClick={endCall}>
+          <button className={`${styles.controlBtn} ${styles.endBtn}`} onClick={endCall} title="End Call">
             <PhoneOff size={22} />
           </button>
-          <button className={styles.controlBtn} onClick={() => webrtcRef.current?.switchCamera()}>
+          <button className={styles.controlBtn} onClick={() => webrtcRef.current?.switchCamera()} title="Switch Camera">
             <SwitchCamera size={22} />
-          </button>
-          <button className={`${styles.controlBtn} ${styles.nextBtn}`} onClick={nextCall}>
-            Next
           </button>
         </div>
       )}

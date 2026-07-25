@@ -11,6 +11,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import android.graphics.Color;
+
+import com.applovin.mediation.ads.MaxAdView;
+import com.applovin.sdk.AppLovinSdkUtils;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.JsonArray;
@@ -41,6 +45,7 @@ public class FeedActivity extends BaseActivity {
     
     private ApiService api;
     private TokenManager tokenManager;
+    private MaxAdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +105,7 @@ public class FeedActivity extends BaseActivity {
 
         updateFilterButtons();
         fetchPosts();
+        loadBannerAd();
     }
 
     private void setCategory(String category) {
@@ -167,5 +173,36 @@ public class FeedActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         fetchPosts();
+    }
+
+    private void loadBannerAd() {
+        adView = new MaxAdView("YOUR_BANNER_AD_UNIT_ID", this);
+
+        // Set size (Match parent width, 50dp height for phones)
+        int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
+        adView.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                heightPx
+        ));
+
+        // Background color is required for banners to function properly
+        adView.setBackgroundColor(Color.TRANSPARENT);
+
+        // Add to your layout
+        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
+        if (adContainer != null) {
+            adContainer.addView(adView);
+            // Load the ad
+            adView.loadAd();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (adView != null) {
+            adView.destroy();
+            adView = null;
+        }
     }
 }

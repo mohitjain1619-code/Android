@@ -150,6 +150,16 @@
             android:exported="false"
             android:screenOrientation="portrait"/>
 
+        <!-- AdMob Application ID (Test ID) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
+        <!-- AppLovin SDK Key -->
+        <meta-data
+            android:name="applovin.sdk.key"
+            android:value="YOUR_APPLOVIN_SDK_KEY_HERE" />
+
     </application>
 
 </manifest>
