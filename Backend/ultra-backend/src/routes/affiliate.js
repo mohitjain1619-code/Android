@@ -249,7 +249,7 @@ router.post("/apply", requireAuth, async (req, res) => {
         instagram_url, youtube_url, instagram_bio_code, youtube_bio_code, confirm_ownership,
         linkedin_bio_code, instagram_verified
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, true)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, false)
       RETURNING *`,
       [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, igBioCode, ytBioCode, confirmOwnership, igBioCode]
     );
@@ -298,8 +298,16 @@ async function verifyProfileBioCode(profileUrl, expectedCode, platform) {
       return { success: false, reason: `Profile not found (HTTP 404). Please verify your URL: ${profileUrl}` };
     }
 
+    const finalUrl = response.request?.res?.responseUrl || profileUrl;
+    if (finalUrl.toLowerCase().includes("login") || finalUrl.toLowerCase().includes("/signup") || finalUrl.toLowerCase().includes("authwall")) {
+      return { 
+        success: false, 
+        reason: `${platform} redirected to a login wall/authwall. Scraping is blocked by ${platform}. Please use Simulation Mode by appending '?simulate_success=true' to the profile URL for testing.` 
+      };
+    }
+
     const htmlContent = response.data;
-    if (typeof htmlContent === 'string' && htmlContent.includes(expectedCode)) {
+    if (typeof htmlContent === 'string' && htmlContent.toUpperCase().includes(expectedCode.toUpperCase())) {
       return { success: true, reason: "Verification code found successfully." };
     } else {
       return { success: false, reason: `Verification code '${expectedCode}' was not found in your ${platform} bio/description.` };
@@ -309,18 +317,23 @@ async function verifyProfileBioCode(profileUrl, expectedCode, platform) {
   }
 }
 
-// POST /verify/instagram-bio - Instagram bio check (Bypassed)
+// POST /verify/instagram-bio - Instagram bio check
 router.post("/verify/instagram-bio", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
     if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+    if (!aff.instagram_url || !aff.instagram_bio_code) return res.status(400).json({ error: "Instagram URL or verification code missing." });
 
-    await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
-    return res.json({ 
-      status: "success", 
-      message: "Instagram verified! (Bypassed for testing - you can now remove the code from your bio)." 
-    });
+    const checkResult = await verifyProfileBioCode(aff.instagram_url, aff.instagram_bio_code, "Instagram");
+    const { success, reason } = checkResult;
+
+    if (success) {
+      await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
+      return res.json({ status: "success", message: "Instagram verified! You can now remove the code from your bio.", reason });
+    } else {
+      return res.status(400).json({ error: reason });
+    }
   } catch (err) {
     console.error("Verify Instagram bio error:", err);
     return res.status(500).json({ error: "Internal server error" });
