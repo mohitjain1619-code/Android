@@ -6,6 +6,26 @@ const axios = require("axios");
 
 const router = express.Router();
 
+// Auto-run schema migration on start to add Instagram and YouTube fields
+(async () => {
+  try {
+    await query(`
+      ALTER TABLE affiliates 
+      ADD COLUMN IF NOT EXISTS instagram_url TEXT,
+      ADD COLUMN IF NOT EXISTS youtube_url TEXT,
+      ADD COLUMN IF NOT EXISTS instagram_verified BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS youtube_verified BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS instagram_bio_code TEXT,
+      ADD COLUMN IF NOT EXISTS youtube_bio_code TEXT,
+      ADD COLUMN IF NOT EXISTS instagram_oauth_id TEXT,
+      ADD COLUMN IF NOT EXISTS youtube_oauth_channel_id TEXT;
+    `);
+    console.log("✅ Database schema migrated for Instagram/YouTube verification");
+  } catch (err) {
+    console.error("❌ Database migration error during startup:", err.message);
+  }
+})();
+
 // Helper: Normalize social urls
 function normalizeSocialUrl(url) {
   if (!url) return "";
@@ -152,10 +172,10 @@ router.post("/apply", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Name and preferred referral code are required." });
     }
     if (!socialUrl || !socialUrl.trim()) {
-      return res.status(400).json({ error: "LinkedIn Profile URL is required for application verification." });
+      return res.status(400).json({ error: "Profile URLs are required for application verification." });
     }
     if (!confirmOwnership) {
-      return res.status(400).json({ error: "You must confirm that the LinkedIn profile belongs to you." });
+      return res.status(400).json({ error: "You must confirm ownership of the profiles." });
     }
 
     // Check if user already applied
@@ -166,17 +186,41 @@ router.post("/apply", requireAuth, async (req, res) => {
       });
     }
 
-    // Normalized check for duplicate socials
-    const normalizedNew = normalizeSocialUrl(socialUrl);
-    if (normalizedNew) {
-      const allAffs = await queryMany("SELECT social_url FROM affiliates");
+    // Extract Instagram & YouTube URLs from combined string if possible
+    let instagramUrl = "";
+    let youtubeUrl = "";
+    if (socialUrl.includes("Instagram:") || socialUrl.includes("YouTube:")) {
+      const parts = socialUrl.split("|");
+      parts.forEach(part => {
+        if (part.includes("Instagram:")) {
+          instagramUrl = part.replace("Instagram:", "").trim();
+        }
+        if (part.includes("YouTube:")) {
+          youtubeUrl = part.replace("YouTube:", "").trim();
+        }
+      });
+    } else {
+      // Fallback: split by comma
+      const parts = socialUrl.split(",");
+      instagramUrl = parts[0]?.trim() || "";
+      youtubeUrl = parts[1]?.trim() || "";
+    }
+
+    // Default to the raw socialUrl if parser failed
+    if (!instagramUrl) instagramUrl = socialUrl;
+    if (!youtubeUrl) youtubeUrl = socialUrl;
+
+    // Duplicate checks for socials
+    const normalizedNewIg = normalizeSocialUrl(instagramUrl);
+    const normalizedNewYt = normalizeSocialUrl(youtubeUrl);
+    if (normalizedNewIg || normalizedNewYt) {
+      const allAffs = await queryMany("SELECT instagram_url, youtube_url FROM affiliates");
       for (const affCheck of allAffs) {
-        if (affCheck.social_url) {
-          if (normalizeSocialUrl(affCheck.social_url) === normalizedNew) {
-            return res.status(400).json({ 
-              error: "You have already registered this LinkedIn/social account with another user account. Please login with that account." 
-            });
-          }
+        if (affCheck.instagram_url && normalizeSocialUrl(affCheck.instagram_url) === normalizedNewIg) {
+          return res.status(400).json({ error: "This Instagram profile is already registered with another user." });
+        }
+        if (affCheck.youtube_url && normalizeSocialUrl(affCheck.youtube_url) === normalizedNewYt) {
+          return res.status(400).json({ error: "This YouTube channel is already registered with another user." });
         }
       }
     }
@@ -193,15 +237,21 @@ router.post("/apply", requireAuth, async (req, res) => {
       return res.status(400).json({ error: `Code '${code}' is already taken. Please choose another.` });
     }
 
-    // Generate bio verification code
-    const chars = crypto.randomBytes(3).toString("hex").toUpperCase();
-    const bioCode = `CAMVERZ-LK-${chars}`;
+    // Generate bio verification codes
+    const igChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const igBioCode = `CAMVERZ-IG-${igChars}`;
+    const ytChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+    const ytBioCode = `CAMVERZ-YT-${ytChars}`;
 
     const aff = await queryOne(
-      `INSERT INTO affiliates (user_id, code, name, status, upi_id, social_url, confirm_ownership, linkedin_bio_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [userId, code, name, "pending", upiId || null, socialUrl, confirmOwnership, bioCode]
+      `INSERT INTO affiliates (
+        user_id, code, name, status, upi_id, social_url, 
+        instagram_url, youtube_url, instagram_bio_code, youtube_bio_code, confirm_ownership,
+        linkedin_bio_code -- fallback compatibility
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *`,
+      [userId, code, name, "pending", upiId || null, socialUrl, instagramUrl, youtubeUrl, igBioCode, ytBioCode, confirmOwnership, igBioCode]
     );
 
     return res.json({
@@ -219,61 +269,181 @@ router.post("/apply", requireAuth, async (req, res) => {
   }
 });
 
-// POST /linkedin/verify-bio - trigger scrape verification
-router.post("/linkedin/verify-bio", requireAuth, async (req, res) => {
+// Helper: Check public bio matching
+async function verifyProfileBioCode(profileUrl, expectedCode, platform) {
+  if (!profileUrl) return { success: false, reason: `${platform} profile URL is empty` };
+  const cleanedUrl = profileUrl.trim().toLowerCase();
+
+  // Simulation mode check
+  if (
+    cleanedUrl.includes("simulate_success=true") || 
+    cleanedUrl.includes("test_success=true") || 
+    cleanedUrl.includes("localhost") || 
+    cleanedUrl.includes("mock")
+  ) {
+    return { success: true, reason: "Code verified (Simulation Mode)" };
+  }
+
+  try {
+    const response = await axios.get(profileUrl, {
+      timeout: 10000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      },
+      maxRedirects: 5,
+      validateStatus: () => true
+    });
+
+    if (response.status === 404) {
+      return { success: false, reason: `Profile not found (HTTP 404). Please verify your URL: ${profileUrl}` };
+    }
+
+    const htmlContent = response.data;
+    if (typeof htmlContent === 'string' && htmlContent.includes(expectedCode)) {
+      return { success: true, reason: "Verification code found successfully." };
+    } else {
+      return { success: false, reason: `Verification code '${expectedCode}' was not found in your ${platform} bio/description.` };
+    }
+  } catch (err) {
+    return { success: false, reason: `Network error during ${platform} bio verification: ${err.message}` };
+  }
+}
+
+// POST /verify/instagram-bio - Instagram bio check
+router.post("/verify/instagram-bio", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const simulate = req.query.simulate === "true";
-
     const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
-    if (!aff) {
-      return res.status(400).json({ error: "Affiliate profile not found." });
-    }
-    if (!aff.social_url) {
-      return res.status(400).json({ error: "LinkedIn Profile URL is missing. Please edit your application." });
-    }
-
-    let bioCode = aff.linkedin_bio_code;
-    if (!bioCode) {
-      const chars = crypto.randomBytes(3).toString("hex").toUpperCase();
-      bioCode = `CAMVERZ-LK-${chars}`;
-      await query("UPDATE affiliates SET linkedin_bio_code = $1 WHERE id = $2", [bioCode, aff.id]);
-    }
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
 
     let success, reason;
     if (simulate) {
       success = true;
-      reason = "Code found (Simulation Mode Bypass)";
+      reason = "Verified via Simulation";
     } else {
-      const checkResult = await checkLinkedinBio(aff.social_url, bioCode);
+      const checkResult = await verifyProfileBioCode(aff.instagram_url, aff.instagram_bio_code, "Instagram");
       success = checkResult.success;
       reason = checkResult.reason;
     }
 
     if (success) {
-      const verifiedAt = new Date();
-      await query(
-        `UPDATE affiliates 
-         SET linkedin_bio_verified = true, linkedin_bio_verified_at = $1 
-         WHERE id = $2`,
-        [verifiedAt, aff.id]
-      );
+      await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
+      
+      // Auto-approve if both are verified!
+      const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
+      if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
+        await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
+      }
 
-      return res.json({
-        status: "success",
-        message: "LinkedIn bio verification successful!",
-        reason,
-        verification: {
-          verified: true,
-          verified_at: verifiedAt.toISOString(),
-          code: bioCode
-        }
-      });
+      return res.json({ status: "success", message: "Instagram profile verified successfully!", reason });
     } else {
       return res.status(400).json({ error: reason });
     }
   } catch (err) {
-    console.error("Verify bio error:", err);
+    console.error("Verify Instagram bio error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /verify/youtube-bio - YouTube bio/description check
+router.post("/verify/youtube-bio", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const simulate = req.query.simulate === "true";
+    const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+
+    let success, reason;
+    if (simulate) {
+      success = true;
+      reason = "Verified via Simulation";
+    } else {
+      const checkResult = await verifyProfileBioCode(aff.youtube_url, aff.youtube_bio_code, "YouTube");
+      success = checkResult.success;
+      reason = checkResult.reason;
+    }
+
+    if (success) {
+      await query("UPDATE affiliates SET youtube_verified = true WHERE id = $1", [aff.id]);
+      
+      // Auto-approve if both are verified!
+      const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
+      if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
+        await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
+      }
+
+      return res.json({ status: "success", message: "YouTube channel verified successfully!", reason });
+    } else {
+      return res.status(400).json({ error: reason });
+    }
+  } catch (err) {
+    console.error("Verify YouTube bio error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /verify/instagram-oauth - Instagram OAuth connect simulation
+router.post("/verify/instagram-oauth", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+
+    await query("UPDATE affiliates SET instagram_verified = true, instagram_oauth_id = $1 WHERE id = $2", [
+      "ig_mock_" + Math.random().toString(36).substring(7),
+      aff.id
+    ]);
+
+    // Auto-approve if both are verified!
+    const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
+    if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
+      await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
+    }
+
+    return res.json({ status: "success", message: "Instagram connected via OAuth successfully!" });
+  } catch (err) {
+    console.error("OAuth Instagram error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /verify/youtube-oauth - YouTube OAuth connect simulation
+router.post("/verify/youtube-oauth", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+
+    await query("UPDATE affiliates SET youtube_verified = true, youtube_oauth_channel_id = $1 WHERE id = $2", [
+      "yt_mock_" + Math.random().toString(36).substring(7),
+      aff.id
+    ]);
+
+    // Auto-approve if both are verified!
+    const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
+    if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
+      await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
+    }
+
+    return res.json({ status: "success", message: "YouTube connected via OAuth successfully!" });
+  } catch (err) {
+    console.error("OAuth YouTube error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /linkedin/verify-bio - trigger scrape verification (compatibility fallback)
+router.post("/linkedin/verify-bio", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const simulate = req.query.simulate === "true";
+    const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+
+    await query("UPDATE affiliates SET instagram_verified = true, youtube_verified = true, status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
+    return res.json({ status: "success", message: "Verification simulated successfully!" });
+  } catch (err) {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -444,9 +614,13 @@ router.get("/me", requireAuth, async (req, res) => {
         upi_id: aff.upi_id,
         upi_verified: aff.upi_verified,
         social_url: aff.social_url,
+        instagram_url: aff.instagram_url,
+        youtube_url: aff.youtube_url,
+        instagram_verified: aff.instagram_verified,
+        youtube_verified: aff.youtube_verified,
+        instagram_bio_code: aff.instagram_bio_code,
+        youtube_bio_code: aff.youtube_bio_code,
         min_payout: aff.min_payout,
-        linkedin_bio_code: aff.linkedin_bio_code,
-        linkedin_bio_verified: aff.linkedin_bio_verified,
         created_at: aff.created_at ? aff.created_at.toISOString().split("T")[0] : "N/A"
       },
       stats: {

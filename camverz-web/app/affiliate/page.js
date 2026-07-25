@@ -6,7 +6,11 @@ import {
   getAffiliateMe, 
   applyAffiliate, 
   verifyAffiliateBio, 
-  resetAffiliateVerification 
+  resetAffiliateVerification,
+  verifyInstagramBio,
+  verifyYoutubeBio,
+  connectInstagramOauth,
+  connectYoutubeOauth
 } from '../../lib/api';
 import { 
   Zap, 
@@ -49,6 +53,10 @@ export default function AffiliatePage() {
 
   // Verification States
   const [verifying, setVerifying] = useState(false);
+  const [verifyingInstagram, setVerifyingInstagram] = useState(false);
+  const [verifyingYoutube, setVerifyingYoutube] = useState(false);
+  const [connectingInstagram, setConnectingInstagram] = useState(false);
+  const [connectingYoutube, setConnectingYoutube] = useState(false);
   const [resetting, setResetting] = useState(false);
 
   // FAQ Accordion State
@@ -149,6 +157,70 @@ export default function AffiliatePage() {
       setErrorMsg(err.response?.data?.error || "Bio verification failed. Ensure the code is visible in your bio.");
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const handleVerifyInstagram = async (simulate = false) => {
+    setErrorMsg('');
+    try {
+      setVerifyingInstagram(true);
+      const response = await verifyInstagramBio(simulate);
+      if (response.status === 'success') {
+        alert(response.message);
+        await loadAffiliateData();
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.error || err.message || "Instagram bio verification failed.");
+    } finally {
+      setVerifyingInstagram(false);
+    }
+  };
+
+  const handleVerifyYoutube = async (simulate = false) => {
+    setErrorMsg('');
+    try {
+      setVerifyingYoutube(true);
+      const response = await verifyYoutubeBio(simulate);
+      if (response.status === 'success') {
+        alert(response.message);
+        await loadAffiliateData();
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.error || err.message || "YouTube channel bio verification failed.");
+    } finally {
+      setVerifyingYoutube(false);
+    }
+  };
+
+  const handleConnectInstagram = async () => {
+    setErrorMsg('');
+    try {
+      setConnectingInstagram(true);
+      const response = await connectInstagramOauth();
+      if (response.status === 'success') {
+        alert(response.message);
+        await loadAffiliateData();
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.error || err.message || "Instagram connection failed.");
+    } finally {
+      setConnectingInstagram(false);
+    }
+  };
+
+  const handleConnectYoutube = async () => {
+    setErrorMsg('');
+    try {
+      setConnectingYoutube(true);
+      const response = await connectYoutubeOauth();
+      if (response.status === 'success') {
+        alert(response.message);
+        await loadAffiliateData();
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.error || err.message || "YouTube connection failed.");
+    } finally {
+      setConnectingYoutube(false);
     }
   };
 
@@ -636,57 +708,126 @@ export default function AffiliatePage() {
 
         {/* State C: Logged in & Application pending review */}
         {isPendingCreator && (
-          <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
-            <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>⏳</div>
-            <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Application Under Review</h3>
-            <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '24px', fontSize: '0.95rem' }}>
-              Your application with code <strong className="neon-text">{affData.affiliate.code}</strong> is submitted.
-              To confirm ownership of the profile (<a href={affData.affiliate.social_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.social_url}</a>), complete the bio verification details below.
-            </p>
-
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '24px', marginBottom: '28px', textAlign: 'left' }}>
-              <h4 style={{ marginBottom: '12px', color: '#white', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <Shield size={18} color="var(--neon-cyan)" />
-                <span>Verification Instructions</span>
-              </h4>
-              <ol style={{ paddingLeft: '20px', color: 'var(--text-secondary)', fontSize: '0.85rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li>
-                  Copy this code: <strong style={{ color: 'var(--neon-pink)', background: 'rgba(255,0,110,0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>{affData.affiliate.linkedin_bio_code}</strong>
-                </li>
-                <li>Add it to your Instagram bio or YouTube channel description.</li>
-                <li>Click <strong>Verify Profile Bio</strong> to automate validation.</li>
-              </ol>
+          <div className="glass-card" style={{ padding: '40px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>⏳</div>
+              <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Application Under Review</h3>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
+                Your referral code <strong className="neon-text">{affData.affiliate.code}</strong> is reserved.
+                Please verify ownership of both your profiles to complete registration.
+              </p>
             </div>
 
             {errorMsg && (
-              <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '12px 16px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '24px', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.9rem', textAlign: 'left' }}>
+              <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '12px 16px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '28px', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
                 <AlertCircle size={18} />
                 <span>{errorMsg}</span>
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button 
-                className="btn-neon" 
-                onClick={() => handleVerifyBio(false)} 
-                disabled={verifying}
-              >
-                {verifying ? "Verifying..." : "Verify Profile Bio"}
-              </button>
-              <button 
-                className="btn-glass" 
-                onClick={() => handleVerifyBio(true)} 
-                disabled={verifying}
-                style={{ borderColor: 'var(--neon-purple)' }}
-              >
-                Simulate Success (Testing)
-              </button>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', marginBottom: '32px' }}>
+              
+              {/* Instagram Verification Block */}
+              <div className="glass-card" style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.instagram_verified ? '1px solid rgba(0, 230, 118, 0.2)' : '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>Instagram Verification</h4>
+                  {affData.affiliate.instagram_verified ? (
+                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <CheckCircle size={16} /> Verified
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--neon-pink)', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                  )}
+                </div>
+
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', wordBreak: 'break-all' }}>
+                  Profile URL: <a href={affData.affiliate.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.instagram_url}</a>
+                </p>
+
+                {!affData.affiliate.instagram_verified && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <button 
+                      className="btn-neon" 
+                      onClick={handleConnectInstagram} 
+                      disabled={connectingInstagram}
+                      style={{ background: 'var(--gradient-neon)' }}
+                    >
+                      {connectingInstagram ? "Connecting..." : "Connect Instagram (OAuth)"}
+                    </button>
+
+                    <div style={{ borderTop: '1px dashed var(--glass-border)', paddingTop: '16px' }}>
+                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>OR BIO CODE METHOD:</span>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
+                        Add code <strong style={{ color: 'var(--neon-pink)', background: 'rgba(255,0,110,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{affData.affiliate.instagram_bio_code}</strong> to your Instagram bio and click:
+                      </p>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="btn-glass" style={{ flex: 1, padding: '10px' }} onClick={() => handleVerifyInstagram(false)} disabled={verifyingInstagram}>
+                          {verifyingInstagram ? "Checking..." : "Verify Bio"}
+                        </button>
+                        <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px' }} onClick={() => handleVerifyInstagram(true)} disabled={verifyingInstagram}>
+                          Simulate
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* YouTube Verification Block */}
+              <div className="glass-card" style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.2)' : '1px solid var(--glass-border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>YouTube Verification</h4>
+                  {affData.affiliate.youtube_verified ? (
+                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <CheckCircle size={16} /> Verified
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--neon-pink)', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                  )}
+                </div>
+
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', wordBreak: 'break-all' }}>
+                  Channel URL: <a href={affData.affiliate.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.youtube_url}</a>
+                </p>
+
+                {!affData.affiliate.youtube_verified && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <button 
+                      className="btn-neon" 
+                      onClick={handleConnectYoutube} 
+                      disabled={connectingYoutube}
+                      style={{ background: 'var(--gradient-neon)' }}
+                    >
+                      {connectingYoutube ? "Connecting..." : "Connect YouTube Channel"}
+                    </button>
+
+                    <div style={{ borderTop: '1px dashed var(--glass-border)', paddingTop: '16px' }}>
+                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>OR BIO CODE METHOD:</span>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
+                        Add code <strong style={{ color: 'var(--neon-pink)', background: 'rgba(255,0,110,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{affData.affiliate.youtube_bio_code}</strong> to your YouTube description and click:
+                      </p>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="btn-glass" style={{ flex: 1, padding: '10px' }} onClick={() => handleVerifyYoutube(false)} disabled={verifyingYoutube}>
+                          {verifyingYoutube ? "Checking..." : "Verify Bio"}
+                        </button>
+                        <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px' }} onClick={() => handleVerifyYoutube(true)} disabled={verifyingYoutube}>
+                          Simulate
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
               <button 
                 className="btn-glass" 
                 onClick={handleResetVerification} 
                 disabled={resetting}
               >
-                Reset Application
+                Reset Application & Edit URLs
               </button>
             </div>
           </div>
