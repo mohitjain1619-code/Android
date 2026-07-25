@@ -129,7 +129,7 @@ export function AuthProvider({ children }) {
                 setUser({ uid: result.user.id, ...result.user });
                 setUserData(result.user);
                 
-                if (result.isNewUser || !result.user.gender) {
+                if ((result.isNewUser || !result.user.gender) && window.location.pathname !== '/affiliate') {
                   setShowOnboarding(true);
                 }
                 resolve(result);

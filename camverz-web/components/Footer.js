@@ -19,6 +19,7 @@ export default function Footer() {
             <h4>Platform</h4>
             <Link href="/">Home</Link>
             <Link href="/posts">Posts</Link>
+            <Link href="/affiliate">Creator Program</Link>
             <Link href="/blog">Blog</Link>
             <Link href="/about">About</Link>
             <Link href="/contact">Contact</Link>

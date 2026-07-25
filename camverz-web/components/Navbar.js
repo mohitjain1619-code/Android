@@ -23,6 +23,7 @@ export default function Navbar() {
   const links = [
     { href: '/', label: 'Home', icon: Video },
     { href: '/posts', label: 'Posts', icon: FileText },
+    { href: '/affiliate', label: 'Creator Program', icon: Crown },
     { href: '#messages', label: 'Messages', icon: MessageSquare, redirect: 'messages' },
     { href: '#notifications', label: 'Notifications', icon: Bell, redirect: 'notifications' },
     { href: '/blog', label: 'Blog', icon: BookOpen },

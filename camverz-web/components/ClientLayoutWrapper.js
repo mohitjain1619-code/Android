@@ -24,12 +24,16 @@ export default function ClientLayoutWrapper({ children }) {
 
   // Auto-trigger onboarding if user is logged in but profile is not completed
   useEffect(() => {
+    if (pathname?.startsWith('/affiliate')) {
+      setShowOnboarding(false);
+      return;
+    }
     if (user && userData && !userData.gender) {
       setShowOnboarding(true);
     } else {
       setShowOnboarding(false);
     }
-  }, [user, userData, setShowOnboarding]);
+  }, [user, userData, setShowOnboarding, pathname]);
 
   return (
     <>
