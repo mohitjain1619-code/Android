@@ -283,6 +283,7 @@ export default function AffiliatePage() {
   const referralLink = affData?.affiliate ? `${siteUrl}?ref=${affData.affiliate.code}` : '';
 
   const isAdmin = user && user.email === 'mohitjain1619@gmail.com';
+  const isApprovedCreator = user && affData?.has_affiliate && affData.affiliate.status === 'approved';
 
   if (authLoading || (loading && user)) {
     return (
