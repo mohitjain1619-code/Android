@@ -8,9 +8,7 @@ import {
   verifyAffiliateBio, 
   resetAffiliateVerification,
   verifyInstagramBio,
-  verifyYoutubeBio,
-  connectInstagramOauth,
-  connectYoutubeOauth
+  verifyYoutubeBio
 } from '../../lib/api';
 import { 
   Zap, 
@@ -55,8 +53,6 @@ export default function AffiliatePage() {
   const [verifying, setVerifying] = useState(false);
   const [verifyingInstagram, setVerifyingInstagram] = useState(false);
   const [verifyingYoutube, setVerifyingYoutube] = useState(false);
-  const [connectingInstagram, setConnectingInstagram] = useState(false);
-  const [connectingYoutube, setConnectingYoutube] = useState(false);
   const [resetting, setResetting] = useState(false);
 
   // FAQ Accordion State
@@ -189,38 +185,6 @@ export default function AffiliatePage() {
       setErrorMsg(err.response?.data?.error || err.message || "YouTube channel bio verification failed.");
     } finally {
       setVerifyingYoutube(false);
-    }
-  };
-
-  const handleConnectInstagram = async () => {
-    setErrorMsg('');
-    try {
-      setConnectingInstagram(true);
-      const response = await connectInstagramOauth();
-      if (response.status === 'success') {
-        alert(response.message);
-        await loadAffiliateData();
-      }
-    } catch (err) {
-      setErrorMsg(err.response?.data?.error || err.message || "Instagram connection failed.");
-    } finally {
-      setConnectingInstagram(false);
-    }
-  };
-
-  const handleConnectYoutube = async () => {
-    setErrorMsg('');
-    try {
-      setConnectingYoutube(true);
-      const response = await connectYoutubeOauth();
-      if (response.status === 'success') {
-        alert(response.message);
-        await loadAffiliateData();
-      }
-    } catch (err) {
-      setErrorMsg(err.response?.data?.error || err.message || "YouTube connection failed.");
-    } finally {
-      setConnectingYoutube(false);
     }
   };
 
@@ -710,11 +674,11 @@ export default function AffiliatePage() {
         {isPendingCreator && (
           <div className="glass-card" style={{ padding: '40px' }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>⏳</div>
-              <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Application Under Review</h3>
+              <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📋</div>
+              <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Verify Your Profiles</h3>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
-                Your referral code <strong className="neon-text">{affData.affiliate.code}</strong> is reserved.
-                Please verify ownership of both your profiles to complete registration.
+                Your referral code <strong className="neon-text">{affData.affiliate.code}</strong> is reserved!
+                Verify ownership of your Instagram &amp; YouTube accounts below. After verification, our team will review and approve.
               </p>
             </div>
 
@@ -727,93 +691,91 @@ export default function AffiliatePage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', marginBottom: '32px' }}>
               
-              {/* Instagram Verification Block */}
-              <div className="glass-card" style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.instagram_verified ? '1px solid rgba(0, 230, 118, 0.2)' : '1px solid var(--glass-border)' }}>
+              {/* Instagram Verification */}
+              <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.instagram_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.instagram_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>Instagram Verification</h4>
+                  <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>📸 Instagram</h4>
                   {affData.affiliate.instagram_verified ? (
-                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <CheckCircle size={16} /> Verified
-                    </span>
+                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
                   ) : (
-                    <span style={{ color: 'var(--neon-pink)', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                    <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
                   )}
                 </div>
-
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', wordBreak: 'break-all' }}>
-                  Profile URL: <a href={affData.affiliate.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.instagram_url}</a>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
+                  <a href={affData.affiliate.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.instagram_url}</a>
                 </p>
-
-                {!affData.affiliate.instagram_verified && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <button 
-                      className="btn-neon" 
-                      onClick={handleConnectInstagram} 
-                      disabled={connectingInstagram}
-                      style={{ background: 'var(--gradient-neon)' }}
-                    >
-                      {connectingInstagram ? "Connecting..." : "Connect Instagram (OAuth)"}
-                    </button>
-
-                    <div style={{ borderTop: '1px dashed var(--glass-border)', paddingTop: '16px' }}>
-                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>OR BIO CODE METHOD:</span>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
-                        Add code <strong style={{ color: 'var(--neon-pink)', background: 'rgba(255,0,110,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{affData.affiliate.instagram_bio_code}</strong> to your Instagram bio and click:
+                {affData.affiliate.instagram_verified ? (
+                  <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                    ✅ Verified! You can now <strong>remove the code</strong> from your bio.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
+                        <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Instagram Bio</strong>:
                       </p>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button className="btn-glass" style={{ flex: 1, padding: '10px' }} onClick={() => handleVerifyInstagram(false)} disabled={verifyingInstagram}>
-                          {verifyingInstagram ? "Checking..." : "Verify Bio"}
-                        </button>
-                        <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px' }} onClick={() => handleVerifyInstagram(true)} disabled={verifyingInstagram}>
-                          Simulate
-                        </button>
+                      <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                        onClick={() => { navigator.clipboard.writeText(affData.affiliate.instagram_bio_code); alert('Code copied!'); }}
+                        title="Click to copy"
+                      >
+                        {affData.affiliate.instagram_bio_code} 📋
                       </div>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
+                        <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button className="btn-neon" style={{ flex: 1, padding: '12px' }} onClick={() => handleVerifyInstagram(false)} disabled={verifyingInstagram}>
+                        {verifyingInstagram ? "Checking Bio..." : "✓ Verify Instagram"}
+                      </button>
+                      <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px 14px' }} onClick={() => handleVerifyInstagram(true)} disabled={verifyingInstagram}>
+                        Test
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* YouTube Verification Block */}
-              <div className="glass-card" style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.2)' : '1px solid var(--glass-border)' }}>
+              {/* YouTube Verification */}
+              <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>YouTube Verification</h4>
+                  <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🎬 YouTube</h4>
                   {affData.affiliate.youtube_verified ? (
-                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <CheckCircle size={16} /> Verified
-                    </span>
+                    <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
                   ) : (
-                    <span style={{ color: 'var(--neon-pink)', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
+                    <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
                   )}
                 </div>
-
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', wordBreak: 'break-all' }}>
-                  Channel URL: <a href={affData.affiliate.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.youtube_url}</a>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
+                  <a href={affData.affiliate.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.youtube_url}</a>
                 </p>
-
-                {!affData.affiliate.youtube_verified && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <button 
-                      className="btn-neon" 
-                      onClick={handleConnectYoutube} 
-                      disabled={connectingYoutube}
-                      style={{ background: 'var(--gradient-neon)' }}
-                    >
-                      {connectingYoutube ? "Connecting..." : "Connect YouTube Channel"}
-                    </button>
-
-                    <div style={{ borderTop: '1px dashed var(--glass-border)', paddingTop: '16px' }}>
-                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>OR BIO CODE METHOD:</span>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
-                        Add code <strong style={{ color: 'var(--neon-pink)', background: 'rgba(255,0,110,0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{affData.affiliate.youtube_bio_code}</strong> to your YouTube description and click:
+                {affData.affiliate.youtube_verified ? (
+                  <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
+                    ✅ Verified! You can now <strong>remove the code</strong> from your channel description.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
+                        <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>YouTube Channel Description</strong>:
                       </p>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <button className="btn-glass" style={{ flex: 1, padding: '10px' }} onClick={() => handleVerifyYoutube(false)} disabled={verifyingYoutube}>
-                          {verifyingYoutube ? "Checking..." : "Verify Bio"}
-                        </button>
-                        <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px' }} onClick={() => handleVerifyYoutube(true)} disabled={verifyingYoutube}>
-                          Simulate
-                        </button>
+                      <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                        onClick={() => { navigator.clipboard.writeText(affData.affiliate.youtube_bio_code); alert('Code copied!'); }}
+                        title="Click to copy"
+                      >
+                        {affData.affiliate.youtube_bio_code} 📋
                       </div>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
+                        <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
+                      </p>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button className="btn-neon" style={{ flex: 1, padding: '12px' }} onClick={() => handleVerifyYoutube(false)} disabled={verifyingYoutube}>
+                        {verifyingYoutube ? "Checking Description..." : "✓ Verify YouTube"}
+                      </button>
+                      <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px 14px' }} onClick={() => handleVerifyYoutube(true)} disabled={verifyingYoutube}>
+                        Test
+                      </button>
                     </div>
                   </div>
                 )}
@@ -821,17 +783,23 @@ export default function AffiliatePage() {
 
             </div>
 
+            {affData.affiliate.instagram_verified && affData.affiliate.youtube_verified && (
+              <div style={{ background: 'rgba(0, 230, 118, 0.06)', border: '1px solid rgba(0, 230, 118, 0.2)', padding: '16px 20px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center' }}>
+                <p style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.95rem', margin: 0 }}>
+                  🎉 Both profiles verified! Your application is now under admin review.
+                </p>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button 
-                className="btn-glass" 
-                onClick={handleResetVerification} 
-                disabled={resetting}
-              >
-                Reset Application & Edit URLs
+              <button className="btn-glass" onClick={handleResetVerification} disabled={resetting} style={{ fontSize: '0.85rem' }}>
+                {resetting ? "Resetting..." : "Reset Application & Edit URLs"}
               </button>
             </div>
           </div>
         )}
+
+
 
       </div>
 

@@ -329,14 +329,7 @@ router.post("/verify/instagram-bio", requireAuth, async (req, res) => {
 
     if (success) {
       await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
-      
-      // Auto-approve if both are verified!
-      const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
-      if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
-        await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
-      }
-
-      return res.json({ status: "success", message: "Instagram profile verified successfully!", reason });
+      return res.json({ status: "success", message: "Instagram verified! You can now remove the code from your bio.", reason });
     } else {
       return res.status(400).json({ error: reason });
     }
@@ -366,14 +359,7 @@ router.post("/verify/youtube-bio", requireAuth, async (req, res) => {
 
     if (success) {
       await query("UPDATE affiliates SET youtube_verified = true WHERE id = $1", [aff.id]);
-      
-      // Auto-approve if both are verified!
-      const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
-      if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
-        await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
-      }
-
-      return res.json({ status: "success", message: "YouTube channel verified successfully!", reason });
+      return res.json({ status: "success", message: "YouTube verified! You can now remove the code from your channel description.", reason });
     } else {
       return res.status(400).json({ error: reason });
     }
@@ -383,66 +369,15 @@ router.post("/verify/youtube-bio", requireAuth, async (req, res) => {
   }
 });
 
-// POST /verify/instagram-oauth - Instagram OAuth connect simulation
-router.post("/verify/instagram-oauth", requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
-    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
-
-    await query("UPDATE affiliates SET instagram_verified = true, instagram_oauth_id = $1 WHERE id = $2", [
-      "ig_mock_" + Math.random().toString(36).substring(7),
-      aff.id
-    ]);
-
-    // Auto-approve if both are verified!
-    const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
-    if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
-      await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
-    }
-
-    return res.json({ status: "success", message: "Instagram connected via OAuth successfully!" });
-  } catch (err) {
-    console.error("OAuth Instagram error:", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /verify/youtube-oauth - YouTube OAuth connect simulation
-router.post("/verify/youtube-oauth", requireAuth, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
-    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
-
-    await query("UPDATE affiliates SET youtube_verified = true, youtube_oauth_channel_id = $1 WHERE id = $2", [
-      "yt_mock_" + Math.random().toString(36).substring(7),
-      aff.id
-    ]);
-
-    // Auto-approve if both are verified!
-    const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
-    if (updatedAff.instagram_verified && updatedAff.youtube_verified) {
-      await query("UPDATE affiliates SET status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
-    }
-
-    return res.json({ status: "success", message: "YouTube connected via OAuth successfully!" });
-  } catch (err) {
-    console.error("OAuth YouTube error:", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// POST /linkedin/verify-bio - trigger scrape verification (compatibility fallback)
+// POST /linkedin/verify-bio - legacy compatibility fallback
 router.post("/linkedin/verify-bio", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const simulate = req.query.simulate === "true";
     const aff = await queryOne("SELECT id FROM affiliates WHERE user_id = $1", [userId]);
     if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
 
-    await query("UPDATE affiliates SET instagram_verified = true, youtube_verified = true, status = 'approved', approved_at = NOW() WHERE id = $1", [aff.id]);
-    return res.json({ status: "success", message: "Verification simulated successfully!" });
+    await query("UPDATE affiliates SET instagram_verified = true, youtube_verified = true WHERE id = $1", [aff.id]);
+    return res.json({ status: "success", message: "Profiles verified. Admin will review your application." });
   } catch (err) {
     return res.status(500).json({ error: "Internal server error" });
   }

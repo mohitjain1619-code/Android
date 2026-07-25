@@ -316,16 +316,6 @@ export async function verifyYoutubeBio(simulate = false) {
   return data;
 }
 
-export async function connectInstagramOauth() {
-  const { data } = await api.post('/affiliate/verify/instagram-oauth');
-  return data;
-}
-
-export async function connectYoutubeOauth() {
-  const { data } = await api.post('/affiliate/verify/youtube-oauth');
-  return data;
-}
-
 export async function resetAffiliateVerification() {
   const { data } = await api.post('/affiliate/reset-verification');
   return data;
