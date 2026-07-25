@@ -1,0 +1,127 @@
+version: "3.9"
+
+services:
+  # ============================================
+  # PostgreSQL 16 - Persistent Data Store
+  # Replaces: Firebase Firestore
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: camverz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-camverz}
+      POSTGRES_USER: ${POSTGRES_USER:-camverz}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-camverz_dev_2024}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-camverz} -d ${POSTGRES_DB:-camverz}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ============================================
+  # Redis 7 - In-Memory Cache & Realtime State
+  # Handles: Online users, queue, sessions, rate limiting
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: camverz-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ============================================
+  # Node.js Backend - Express + Socket.IO
+  # Replaces: Railway deployment
+  # ============================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: camverz-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=${PORT:-3000}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-camverz}
+      - POSTGRES_USER=${POSTGRES_USER:-camverz}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-camverz_dev_2024}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-camverz-jwt-super-secret-change-in-production-2024}
+      - JWT_EXPIRY=${JWT_EXPIRY:-30d}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - REKOGNITION_MIN_CONFIDENCE=${REKOGNITION_MIN_CONFIDENCE:-80}
+      - TURN_ENABLED=${TURN_ENABLED:-true}
+      - TURN_USER=${TURN_USER:-camverz}
+      - TURN_PASS=${TURN_PASS:-camverz_turn_2024}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./server.js:/app/server.js
+      - ./package.json:/app/package.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # ============================================
+  # Nginx - Reverse Proxy
+  # Routes: / → backend:3000
+  # Later: SSL termination via Cloudflare
+  # ============================================
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: camverz-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  # ============================================
+  # Coturn - WebRTC TURN/STUN Server
+  # Self-hosted, replaces Metered.ca
+  # ============================================
+  coturn:
+    image: coturn/coturn:latest
+    container_name: camverz-coturn
+    restart: unless-stopped
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+      - "49152-49200:49152-49200/udp"
+    volumes:
+      - ./coturn/turnserver.conf:/etc/turnserver.conf:ro
+    command: ["-c", "/etc/turnserver.conf"]
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
