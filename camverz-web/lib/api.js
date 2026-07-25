@@ -311,29 +311,4 @@ export async function resetAffiliateVerification() {
   return data;
 }
 
-export async function getAdminAffiliates() {
-  const { data } = await api.get('/affiliate/admin/list');
-  return data;
-}
-
-export async function approveAffiliate(affiliateId) {
-  const { data } = await api.put(`/affiliate/admin/${affiliateId}/approve`);
-  return data;
-}
-
-export async function updateAffiliateAdmin(affiliateId, updates) {
-  const { data } = await api.put(`/affiliate/admin/${affiliateId}/update`, updates);
-  return data;
-}
-
-export async function getAdminSales() {
-  const { data } = await api.get('/affiliate/admin/sales');
-  return data;
-}
-
-export async function recordAdminPayout(payoutDetails) {
-  const { data } = await api.post('/affiliate/admin/payout', payoutDetails);
-  return data;
-}
-
 export default api;
