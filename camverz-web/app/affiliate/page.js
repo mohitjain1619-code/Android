@@ -6,7 +6,12 @@ import {
   getAffiliateMe, 
   applyAffiliate, 
   verifyAffiliateBio, 
-  resetAffiliateVerification 
+  resetAffiliateVerification,
+  getAdminAffiliates,
+  approveAffiliate,
+  updateAffiliateAdmin,
+  getAdminSales,
+  recordAdminPayout
 } from '../../lib/api';
 import { 
   Zap, 
@@ -24,7 +29,10 @@ import {
   AlertCircle,
   ChevronDown,
   Calendar,
-  Crown
+  Crown,
+  Settings,
+  Activity,
+  Edit2
 } from 'lucide-react';
 
 export default function AffiliatePage() {
@@ -34,6 +42,7 @@ export default function AffiliatePage() {
   const [affData, setAffData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState('creator'); // 'creator' or 'admin'
   
   // Application Form States
   const [name, setName] = useState('');
@@ -52,6 +61,27 @@ export default function AffiliatePage() {
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null);
 
+  // Admin Dashboard States
+  const [adminCreators, setAdminCreators] = useState([]);
+  const [adminSales, setAdminSales] = useState([]);
+  const [adminTab, setAdminTab] = useState('creators'); // 'creators' or 'sales'
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  // Admin Action States (Modals/Forms)
+  const [activePayoutCreator, setActivePayoutCreator] = useState(null);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutMethod, setPayoutMethod] = useState('upi');
+  const [payoutTxRef, setPayoutTxRef] = useState('');
+  const [payoutNotes, setPayoutNotes] = useState('');
+  const [payoutSubmitting, setPayoutSubmitting] = useState(false);
+
+  const [activeEditCreator, setActiveEditCreator] = useState(null);
+  const [editStatus, setEditStatus] = useState('approved');
+  const [editRate, setEditRate] = useState('0.25');
+  const [editMinPayout, setEditMinPayout] = useState('8000');
+  const [editNotes, setEditNotes] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
   // Fetch Affiliate Data
   const loadAffiliateData = async () => {
     if (!user) {
@@ -69,9 +99,33 @@ export default function AffiliatePage() {
     }
   };
 
+  // Fetch Admin Data
+  const loadAdminData = async () => {
+    if (user?.email !== 'mohitjain1619@gmail.com') return;
+    try {
+      setAdminLoading(true);
+      const [creators, sales] = await Promise.all([
+        getAdminAffiliates(),
+        getAdminSales()
+      ]);
+      setAdminCreators(creators);
+      setAdminSales(sales);
+    } catch (err) {
+      console.error("Failed to load admin data:", err);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadAffiliateData();
   }, [user]);
+
+  useEffect(() => {
+    if (viewMode === 'admin') {
+      loadAdminData();
+    }
+  }, [viewMode]);
 
   // Copy to clipboard handler
   const handleCopyLink = (text) => {
@@ -119,8 +173,6 @@ export default function AffiliatePage() {
         setSocialUrl('');
         setConfirmOwnership(false);
         await loadAffiliateData();
-        
-        // Scroll to status section
         document.getElementById('action-card')?.scrollIntoView({ behavior: 'smooth' });
       }
     } catch (err) {
@@ -163,27 +215,74 @@ export default function AffiliatePage() {
     }
   };
 
+  // Admin: Approve Creator Application
+  const handleApproveCreator = async (creatorId) => {
+    if (!window.confirm("Are you sure you want to approve this creator?")) return;
+    try {
+      await approveAffiliate(creatorId);
+      alert("Creator approved successfully!");
+      await loadAdminData();
+    } catch (err) {
+      alert("Failed to approve creator.");
+    }
+  };
+
+  // Admin: Submit Creator Updates
+  const handleSaveCreatorEdit = async (e) => {
+    e.preventDefault();
+    if (!activeEditCreator) return;
+    try {
+      setEditSubmitting(true);
+      await updateAffiliateAdmin(activeEditCreator.id, {
+        status: editStatus,
+        commissionRate: parseFloat(editRate),
+        minPayout: parseInt(editMinPayout, 10),
+        adminNotes: editNotes
+      });
+      alert("Creator settings updated!");
+      setActiveEditCreator(null);
+      await loadAdminData();
+    } catch (err) {
+      alert("Failed to update creator details.");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  // Admin: Submit Payout Entry
+  const handleSavePayout = async (e) => {
+    e.preventDefault();
+    if (!activePayoutCreator) return;
+    if (!payoutAmount || isNaN(payoutAmount)) {
+      alert("Please enter a valid amount.");
+      return;
+    }
+    try {
+      setPayoutSubmitting(true);
+      await recordAdminPayout({
+        affiliateId: activePayoutCreator.id,
+        amount: parseFloat(payoutAmount),
+        method: payoutMethod,
+        transactionRef: payoutTxRef,
+        adminNotes: payoutNotes
+      });
+      alert("Payout recorded successfully!");
+      setActivePayoutCreator(null);
+      setPayoutAmount('');
+      setPayoutTxRef('');
+      setPayoutNotes('');
+      await loadAdminData();
+    } catch (err) {
+      alert("Failed to record payout.");
+    } finally {
+      setPayoutSubmitting(false);
+    }
+  };
+
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://camverz-nine.vercel.app';
   const referralLink = affData?.affiliate ? `${siteUrl}?ref=${affData.affiliate.code}` : '';
 
-  const faqs = [
-    {
-      q: "How does the Camverz Creator Partnership work?",
-      a: "Simple: Join the program, claim your unique code, and share your referral link with your audience. When someone visits our platform via your link and signs up, they are linked to you forever. You earn a 25% lifetime commission on all call package purchases they make."
-    },
-    {
-      q: "What does 'lifetime commission' mean?",
-      a: "It means you continue to earn commission on renewals, coins, packages, and any future premium features purchased by your referred users — for life, with no expiry date."
-    },
-    {
-      q: "How is tracking calculated?",
-      a: "We use a 30-day cookie window. If a user clicks your link and signs up within 30 days, they are permanently associated with your creator account. Last click attribution applies."
-    },
-    {
-      q: "When do I get paid?",
-      a: "Payouts are processed monthly. Once your pending balance reaches our minimum payout threshold of ₹8,000, we transfer the earnings directly to your UPI ID or bank account."
-    }
-  ];
+  const isAdmin = user && user.email === 'mohitjain1619@gmail.com';
 
   if (authLoading || (loading && user)) {
     return (
@@ -196,17 +295,286 @@ export default function AffiliatePage() {
     );
   }
 
-  // Determine if user has approved affiliate status
-  const isApprovedCreator = user && affData?.has_affiliate && affData.affiliate.status === 'approved';
+  // ═══════════════════════════════════════════════════════════
+  // 1. ADMIN VIEW (Control Center Panel)
+  // ═══════════════════════════════════════════════════════════
+  if (isAdmin && viewMode === 'admin') {
+    return (
+      <div className="section" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
+        
+        {/* Toggle View Header */}
+        <div className="glass-card" style={{ padding: '24px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          <div>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Crown size={28} color="var(--neon-purple)" />
+              <span>Affiliate Admin Center</span>
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Control rates, approvals, audits, and payouts.</p>
+          </div>
+          <button className="btn-neon" onClick={() => setViewMode('creator')} style={{ background: 'var(--gradient-neon)' }}>
+            Switch to Creator View
+          </button>
+        </div>
+
+        {/* Tab Selectors */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+          <button 
+            className={adminTab === 'creators' ? 'btn-neon' : 'btn-glass'} 
+            onClick={() => setAdminTab('creators')}
+            style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+          >
+            Creators List
+          </button>
+          <button 
+            className={adminTab === 'sales' ? 'btn-neon' : 'btn-glass'} 
+            onClick={() => setAdminTab('sales')}
+            style={{ padding: '8px 20px', fontSize: '0.85rem' }}
+          >
+            Sales Logs
+          </button>
+        </div>
+
+        {adminLoading ? (
+          <div style={{ padding: '50px 0', textAlign: 'center', color: 'var(--neon-cyan)' }}>Loading admin statistics...</div>
+        ) : adminTab === 'creators' ? (
+          // Tab 1: Creators List
+          <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                  <th style={{ textAlign: 'left', padding: '12px 8px' }}>CREATOR / CODE</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px' }}>EMAIL / SOCIAL</th>
+                  <th style={{ textAlign: 'center', padding: '12px 8px' }}>CLICKS/SIGNS</th>
+                  <th style={{ textAlign: 'right', padding: '12px 8px' }}>EARNINGS</th>
+                  <th style={{ textAlign: 'right', padding: '12px 8px' }}>PAID / PENDING</th>
+                  <th style={{ textAlign: 'center', padding: '12px 8px' }}>STATUS</th>
+                  <th style={{ textAlign: 'center', padding: '12px 8px' }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminCreators.map(a => (
+                  <tr key={a.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                    <td style={{ padding: '12px 8px' }}>
+                      <div style={{ fontWeight: 600 }}>{a.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--neon-cyan)' }}>{a.code}</div>
+                    </td>
+                    <td style={{ padding: '12px 8px' }}>
+                      <div style={{ color: 'var(--text-secondary)' }}>{a.email}</div>
+                      <a href={a.social_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', textDecoration: 'underline' }}>LinkedIn Profile</a>
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <div>Clicks: {a.clicks}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Signups: {a.signups}</div>
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right' }}>
+                      <div style={{ fontWeight: 600 }}>₹{a.total_earnings}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Rate: {(a.commission_rate * 100)}%</div>
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right' }}>
+                      <div style={{ color: 'var(--text-secondary)' }}>Paid: ₹{a.total_paid}</div>
+                      <div style={{ fontWeight: 600, color: a.pending >= a.min_payout ? 'var(--neon-green)' : 'var(--text-muted)' }}>Pend: ₹{a.pending}</div>
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <span style={{ 
+                        padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
+                        background: a.status === 'approved' ? 'rgba(0,230,118,0.15)' : a.status === 'suspended' ? 'rgba(255,0,110,0.15)' : 'rgba(255,234,0,0.15)',
+                        color: a.status === 'approved' ? 'var(--neon-green)' : a.status === 'suspended' ? 'var(--neon-pink)' : '#ffea00'
+                      }}>
+                        {a.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        {a.status === 'pending' && (
+                          <button className="btn-glass" onClick={() => handleApproveCreator(a.id)} style={{ padding: '4px 10px', fontSize: '0.75rem', borderColor: 'var(--neon-green)' }}>
+                            Approve
+                          </button>
+                        )}
+                        <button className="btn-glass" onClick={() => {
+                          setActiveEditCreator(a);
+                          setEditStatus(a.status);
+                          setEditRate(String(a.commission_rate));
+                          setEditMinPayout(String(a.min_payout));
+                          setEditNotes(a.admin_notes || '');
+                        }} style={{ padding: '4px 8px' }}>
+                          <Edit2 size={12} />
+                        </button>
+                        {a.status === 'approved' && (
+                          <button className="btn-glass" onClick={() => {
+                            setActivePayoutCreator(a);
+                            setPayoutAmount(String(a.pending));
+                          }} style={{ padding: '4px 8px', borderColor: 'var(--neon-cyan)', color: 'var(--neon-cyan)', fontSize: '0.75rem' }}>
+                            Payout
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          // Tab 2: Sales Logs
+          <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                  <th style={{ textAlign: 'left', padding: '12px 8px' }}>TX DATE / REF</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px' }}>CREATOR CODE</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px' }}>CUSTOMER EMAIL</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px' }}>PLAN</th>
+                  <th style={{ textAlign: 'right', padding: '12px 8px' }}>AMOUNT</th>
+                  <th style={{ textAlign: 'right', padding: '12px 8px' }}>COMMISSION</th>
+                  <th style={{ textAlign: 'center', padding: '12px 8px' }}>STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {adminSales.map(s => (
+                  <tr key={s.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                    <td style={{ padding: '12px 8px' }}>
+                      <div>{s.date}</div>
+                      <div style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{s.razorpay_id}</div>
+                    </td>
+                    <td style={{ padding: '12px 8px', fontWeight: 600, color: 'var(--neon-cyan)' }}>{s.affiliate_code}</td>
+                    <td style={{ padding: '12px 8px', color: 'var(--text-secondary)' }}>{s.customer_email}</td>
+                    <td style={{ padding: '12px 8px' }}>{s.plan}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', color: 'var(--text-secondary)' }}>₹{s.amount}</td>
+                    <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600, color: s.status === 'refunded' ? 'var(--neon-pink)' : 'var(--neon-green)' }}>
+                      {s.status === 'refunded' ? `-₹${s.commission_clawback}` : `₹${s.commission}`}
+                    </td>
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <span style={{ 
+                        padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600,
+                        background: s.status === 'refunded' ? 'rgba(255,0,110,0.15)' : 'rgba(0,230,118,0.15)',
+                        color: s.status === 'refunded' ? 'var(--neon-pink)' : 'var(--neon-green)'
+                      }}>
+                        {s.status.toUpperCase()}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* MODAL 1: Edit Creator Details */}
+        {activeEditCreator && (
+          <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: '500px' }}>
+              <h3>Edit Creator Settings</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '20px' }}>Adjust configurations for {activeEditCreator.name} ({activeEditCreator.code})</p>
+              
+              <form onSubmit={handleSaveCreatorEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>CREATOR STATUS</label>
+                  <select className="input-glass" value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ background: 'var(--bg-surface)' }}>
+                    <option value="pending">Pending Verification</option>
+                    <option value="approved">Approved / Active</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>COMMISSION RATE (e.g. 0.25 = 25%)</label>
+                  <input type="number" step="0.01" className="input-glass" value={editRate} onChange={(e) => setEditRate(e.target.value)} required />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>MINIMUM PAYOUT LIMIT (INR)</label>
+                  <input type="number" className="input-glass" value={editMinPayout} onChange={(e) => setEditMinPayout(e.target.value)} required />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>ADMIN PRIVATE NOTES</label>
+                  <textarea className="input-glass" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows="3" placeholder="Verify bio credentials..." />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                  <button type="submit" className="btn-neon" style={{ flex: 1 }} disabled={editSubmitting}>
+                    {editSubmitting ? "Saving..." : "Save Settings"}
+                  </button>
+                  <button type="button" className="btn-glass" style={{ flex: 1 }} onClick={() => setActiveEditCreator(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 2: Record Manual Payout */}
+        {activePayoutCreator && (
+          <div className="modal-overlay">
+            <div className="modal-content" style={{ maxWidth: '500px' }}>
+              <h3>Record Creator Payout</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '20px' }}>Record a cash payout for {activePayoutCreator.name} ({activePayoutCreator.code})</p>
+              
+              <form onSubmit={handleSavePayout} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>UPI ID (FROM CREATOR APPLICATION)</label>
+                  <input type="text" className="input-glass" value={activePayoutCreator.upi_id || 'Not Provided'} disabled />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>PAYOUT AMOUNT (INR)</label>
+                  <input type="number" className="input-glass" value={payoutAmount} onChange={(e) => setPayoutAmount(e.target.value)} required />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>PAYOUT METHOD</label>
+                  <select className="input-glass" value={payoutMethod} onChange={(e) => setPayoutMethod(e.target.value)} style={{ background: 'var(--bg-surface)' }}>
+                    <option value="upi">UPI Transfer</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>TRANSACTION REFERENCE ID</label>
+                  <input type="text" className="input-glass" placeholder="e.g. UTR / UPI reference ID" value={payoutTxRef} onChange={(e) => setPayoutTxRef(e.target.value)} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px' }}>PAYOUT NOTES / DESCRIPTION</label>
+                  <textarea className="input-glass" value={payoutNotes} onChange={(e) => setPayoutNotes(e.target.value)} rows="2" placeholder="Reconciled monthly payout..." />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                  <button type="submit" className="btn-neon" style={{ flex: 1 }} disabled={payoutSubmitting}>
+                    {payoutSubmitting ? "Recording..." : "Record Payment"}
+                  </button>
+                  <button type="button" className="btn-glass" style={{ flex: 1 }} onClick={() => setActivePayoutCreator(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+      </div>
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════
-  // 1. APPROVED CREATOR DASHBOARD VIEW (Pure Dashboard)
+  // 2. CREATOR DASHBOARD VIEW (Approved Creator Dashboard)
   // ═══════════════════════════════════════════════════════════
   if (isApprovedCreator) {
     const { affiliate, stats, recent_sales, payouts, click_chart } = affData;
 
     return (
       <div className="section" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
+        
+        {/* Switch to Admin Toggle */}
+        {isAdmin && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+            <button className="btn-glass" onClick={() => setViewMode('admin')} style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Crown size={16} /> Switch to Admin Dashboard
+            </button>
+          </div>
+        )}
+
         {/* Welcome Banner */}
         <div className="glass-card" style={{ padding: '30px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
           <div>
@@ -443,11 +811,20 @@ export default function AffiliatePage() {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 2. GUEST, APPLICANT, OR PENDING STATE VIEW (Landing + Action at bottom)
+  // 3. GUEST, APPLICANT, OR PENDING STATE VIEW (Landing + Action at bottom)
   // ═══════════════════════════════════════════════════════════
   return (
     <div className="section" style={{ paddingTop: '100px', paddingBottom: '80px' }}>
       
+      {/* Switch to Admin Toggle (visible on landing if admin) */}
+      {isAdmin && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+          <button className="btn-glass" onClick={() => setViewMode('admin')} style={{ borderColor: 'var(--neon-purple)', color: 'var(--neon-purple)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Crown size={16} /> Switch to Admin Dashboard
+          </button>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', marginBottom: '80px' }}>
         <span className="badge badge-neon" style={{ marginBottom: '24px', padding: '6px 16px', fontSize: '0.85rem' }}>
