@@ -40,7 +40,8 @@ export default function AffiliatePage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [upiId, setUpiId] = useState('');
-  const [socialUrl, setSocialUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [confirmOwnership, setConfirmOwnership] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -87,12 +88,12 @@ export default function AffiliatePage() {
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!name.trim() || !code.trim() || !socialUrl.trim()) {
+    if (!name.trim() || !code.trim() || !instagramUrl.trim() || !youtubeUrl.trim()) {
       setErrorMsg("All fields are required.");
       return;
     }
     if (!confirmOwnership) {
-      setErrorMsg("You must confirm ownership of the social profile.");
+      setErrorMsg("You must confirm ownership of the social profiles.");
       return;
     }
 
@@ -102,13 +103,15 @@ export default function AffiliatePage() {
       return;
     }
 
+    const combinedSocialUrl = `Instagram: ${instagramUrl.trim()} | YouTube: ${youtubeUrl.trim()}`;
+
     try {
       setSubmitting(true);
       const response = await applyAffiliate({
         name: name.trim(),
         preferredCode: code.trim().toUpperCase(),
         upiId: upiId.trim() || null,
-        socialUrl: socialUrl.trim(),
+        socialUrl: combinedSocialUrl,
         confirmOwnership
       });
 
@@ -117,7 +120,8 @@ export default function AffiliatePage() {
         setName('');
         setCode('');
         setUpiId('');
-        setSocialUrl('');
+        setInstagramUrl('');
+        setYoutubeUrl('');
         setConfirmOwnership(false);
         await loadAffiliateData();
         
@@ -467,11 +471,10 @@ export default function AffiliatePage() {
         <button 
           className="btn-neon" 
           onClick={() => {
-            const applyBlock = document.getElementById('apply-section');
-            if (applyBlock) {
-              applyBlock.scrollIntoView({ behavior: 'smooth' });
-            } else if (isGuest) {
+            if (isGuest) {
               setShowLogin(true);
+            } else {
+              document.getElementById('apply-section')?.scrollIntoView({ behavior: 'smooth' });
             }
           }} 
           style={{ padding: '16px 36px', fontSize: '1.1rem' }}
@@ -578,13 +581,25 @@ export default function AffiliatePage() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>INSTAGRAM / YOUTUBE PROFILE URL</label>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>INSTAGRAM PROFILE URL</label>
                   <input 
                     type="url" 
                     className="input-glass" 
                     placeholder="e.g. https://instagram.com/username" 
-                    value={socialUrl} 
-                    onChange={(e) => setSocialUrl(e.target.value)} 
+                    value={instagramUrl} 
+                    onChange={(e) => setInstagramUrl(e.target.value)} 
+                    required 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', letterSpacing: '0.05em' }}>YOUTUBE CHANNEL URL</label>
+                  <input 
+                    type="url" 
+                    className="input-glass" 
+                    placeholder="e.g. https://youtube.com/@channel" 
+                    value={youtubeUrl} 
+                    onChange={(e) => setYoutubeUrl(e.target.value)} 
                     required 
                   />
                 </div>
@@ -609,7 +624,7 @@ export default function AffiliatePage() {
                   style={{ marginTop: '3px' }}
                   required 
                 />
-                <span>I confirm that the submitted Instagram / YouTube profile belongs to me and represent my authentic public identity.</span>
+                <span>I confirm that the submitted Instagram & YouTube profiles belong to me and represent my authentic public identity.</span>
               </label>
 
               <button type="submit" className="btn-neon" style={{ width: '100%', marginTop: '10px', padding: '14px' }} disabled={submitting}>
