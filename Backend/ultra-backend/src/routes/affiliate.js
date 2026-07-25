@@ -284,37 +284,53 @@ async function verifyProfileBioCode(profileUrl, expectedCode, platform) {
     return { success: true, reason: "Code verified (Simulation Mode)" };
   }
 
-  try {
-    const response = await axios.get(profileUrl, {
-      timeout: 10000,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      },
-      maxRedirects: 5,
-      validateStatus: () => true
-    });
-
-    if (response.status === 404) {
-      return { success: false, reason: `Profile not found (HTTP 404). Please verify your URL: ${profileUrl}` };
-    }
-
-    const finalUrl = response.request?.res?.responseUrl || profileUrl;
-    if (finalUrl.toLowerCase().includes("login") || finalUrl.toLowerCase().includes("/signup") || finalUrl.toLowerCase().includes("authwall")) {
-      return { 
-        success: false, 
-        reason: `${platform} redirected to a login wall/authwall. Scraping is blocked by ${platform}. Please use Simulation Mode by appending '?simulate_success=true' to the profile URL for testing.` 
-      };
-    }
-
-    const htmlContent = response.data;
-    if (typeof htmlContent === 'string' && htmlContent.toUpperCase().includes(expectedCode.toUpperCase())) {
-      return { success: true, reason: "Verification code found successfully." };
-    } else {
-      return { success: false, reason: `Verification code '${expectedCode}' was not found in your ${platform} bio/description.` };
-    }
-  } catch (err) {
-    return { success: false, reason: `Network error during ${platform} bio verification: ${err.message}` };
+  // Construct urls to check
+  const urlsToTry = [profileUrl];
+  if (platform === "Instagram") {
+    // Construct JSON endpoint URL. E.g. https://www.instagram.com/username/?__a=1&__d=1
+    const separator = profileUrl.includes("?") ? "&" : "?";
+    urlsToTry.unshift(`${profileUrl}${separator}__a=1&__d=1`);
   }
+
+  for (const url of urlsToTry) {
+    try {
+      console.log(`[Scrape] Attempting ${platform} check on: ${url}`);
+      const response = await axios.get(url, {
+        timeout: 10000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        },
+        maxRedirects: 5,
+        validateStatus: () => true
+      });
+
+      console.log(`[Scrape] ${platform} status: ${response.status} for URL: ${url}`);
+
+      if (response.status === 404) {
+        continue;
+      }
+
+      const finalUrl = response.request?.res?.responseUrl || url;
+      if (finalUrl.toLowerCase().includes("login") || finalUrl.toLowerCase().includes("/signup") || finalUrl.toLowerCase().includes("authwall")) {
+        console.log(`[Scrape] Blocked by login wall/authwall on ${url}`);
+        continue;
+      }
+
+      const htmlContent = response.data;
+      const contentStr = typeof htmlContent === 'object' ? JSON.stringify(htmlContent) : String(htmlContent);
+
+      if (contentStr.toUpperCase().includes(expectedCode.toUpperCase())) {
+        return { success: true, reason: `Verification code found successfully on ${url}` };
+      }
+    } catch (err) {
+      console.error(`[Scrape] Error fetching ${url}:`, err.message);
+    }
+  }
+
+  return { 
+    success: false, 
+    reason: `Verification code '${expectedCode}' was not found on your ${platform} profile. (Datacenter IP blocks or login-walls might prevent direct checks. Please retry or contact support if the code is present).` 
+  };
 }
 
 // POST /verify/instagram-bio - Instagram bio check
