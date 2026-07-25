@@ -106,7 +106,7 @@ export default function AffiliatePage() {
 
     if (otherUrl.trim()) {
       const lowerOther = otherUrl.trim().toLowerCase();
-      if (!lowerOther.includes("xhamster.com") && !lowerOther.includes("faphouse.com")) {
+      if (!lowerOther.includes("xhamster") && !lowerOther.includes("faphouse")) {
         setErrorMsg("Other platform URL must be a valid xHamster or Faphouse profile link.");
         return;
       }

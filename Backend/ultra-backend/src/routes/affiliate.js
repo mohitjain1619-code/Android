@@ -22,11 +22,7 @@ const router = express.Router();
     `);
     console.log("✅ Database schema migrated for Instagram/YouTube verification");
 
-    // Fresh start: truncate all existing affiliate tables
-    await query(`
-      TRUNCATE TABLE affiliate_clicks, affiliate_signups, affiliate_sales, affiliate_payouts, affiliates CASCADE;
-    `);
-    console.log("✅ Truncated all affiliate tables for fresh start testing");
+
 
 
 
@@ -199,10 +195,10 @@ router.post("/apply", requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Please provide at least one profile URL (Instagram, YouTube, or Other Platform)." });
     }
     
-    // Validate otherUrl strictly to xhamster.com or faphouse.com if provided
+    // Validate otherUrl strictly to xhamster or faphouse if provided (allowing mirrors like xhamster2.com)
     if (otherClean) {
       const lowerOther = otherClean.toLowerCase();
-      if (!lowerOther.includes("xhamster.com") && !lowerOther.includes("faphouse.com")) {
+      if (!lowerOther.includes("xhamster") && !lowerOther.includes("faphouse")) {
         return res.status(400).json({ error: "Other platform profile URL must be a valid xHamster or Faphouse link." });
       }
     }
