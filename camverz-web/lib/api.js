@@ -301,18 +301,18 @@ export async function applyAffiliate(details) {
   return data;
 }
 
-export async function verifyAffiliateBio(simulate = false) {
-  const { data } = await api.post(`/affiliate/linkedin/verify-bio?simulate=${simulate}`);
+export async function verifyAffiliateBio() {
+  const { data } = await api.post('/affiliate/linkedin/verify-bio');
   return data;
 }
 
-export async function verifyInstagramBio(simulate = false) {
-  const { data } = await api.post(`/affiliate/verify/instagram-bio?simulate=${simulate}`);
+export async function verifyInstagramBio() {
+  const { data } = await api.post('/affiliate/verify/instagram-bio');
   return data;
 }
 
-export async function verifyYoutubeBio(simulate = false) {
-  const { data } = await api.post(`/affiliate/verify/youtube-bio?simulate=${simulate}`);
+export async function verifyYoutubeBio() {
+  const { data } = await api.post('/affiliate/verify/youtube-bio');
   return data;
 }
 

@@ -156,11 +156,11 @@ export default function AffiliatePage() {
     }
   };
 
-  const handleVerifyInstagram = async (simulate = false) => {
+  const handleVerifyInstagram = async () => {
     setErrorMsg('');
     try {
       setVerifyingInstagram(true);
-      const response = await verifyInstagramBio(simulate);
+      const response = await verifyInstagramBio();
       if (response.status === 'success') {
         alert(response.message);
         await loadAffiliateData();
@@ -172,11 +172,11 @@ export default function AffiliatePage() {
     }
   };
 
-  const handleVerifyYoutube = async (simulate = false) => {
+  const handleVerifyYoutube = async () => {
     setErrorMsg('');
     try {
       setVerifyingYoutube(true);
-      const response = await verifyYoutubeBio(simulate);
+      const response = await verifyYoutubeBio();
       if (response.status === 'success') {
         alert(response.message);
         await loadAffiliateData();
@@ -724,12 +724,9 @@ export default function AffiliatePage() {
                         <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button className="btn-neon" style={{ flex: 1, padding: '12px' }} onClick={() => handleVerifyInstagram(false)} disabled={verifyingInstagram}>
+                    <div>
+                      <button className="btn-neon" style={{ width: '100%', padding: '14px' }} onClick={() => handleVerifyInstagram()} disabled={verifyingInstagram}>
                         {verifyingInstagram ? "Checking Bio..." : "✓ Verify Instagram"}
-                      </button>
-                      <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px 14px' }} onClick={() => handleVerifyInstagram(true)} disabled={verifyingInstagram}>
-                        Test
                       </button>
                     </div>
                   </div>
@@ -769,12 +766,9 @@ export default function AffiliatePage() {
                         <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
                       </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button className="btn-neon" style={{ flex: 1, padding: '12px' }} onClick={() => handleVerifyYoutube(false)} disabled={verifyingYoutube}>
+                    <div>
+                      <button className="btn-neon" style={{ width: '100%', padding: '14px' }} onClick={() => handleVerifyYoutube()} disabled={verifyingYoutube}>
                         {verifyingYoutube ? "Checking Description..." : "✓ Verify YouTube"}
-                      </button>
-                      <button className="btn-glass" style={{ borderColor: 'var(--neon-purple)', fontSize: '0.75rem', padding: '10px 14px' }} onClick={() => handleVerifyYoutube(true)} disabled={verifyingYoutube}>
-                        Test
                       </button>
                     </div>
                   </div>

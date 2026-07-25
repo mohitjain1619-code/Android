@@ -313,19 +313,12 @@ async function verifyProfileBioCode(profileUrl, expectedCode, platform) {
 router.post("/verify/instagram-bio", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const simulate = req.query.simulate === "true";
     const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
     if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+    if (!aff.instagram_url || !aff.instagram_bio_code) return res.status(400).json({ error: "Instagram URL or verification code missing." });
 
-    let success, reason;
-    if (simulate) {
-      success = true;
-      reason = "Verified via Simulation";
-    } else {
-      const checkResult = await verifyProfileBioCode(aff.instagram_url, aff.instagram_bio_code, "Instagram");
-      success = checkResult.success;
-      reason = checkResult.reason;
-    }
+    const checkResult = await verifyProfileBioCode(aff.instagram_url, aff.instagram_bio_code, "Instagram");
+    const { success, reason } = checkResult;
 
     if (success) {
       await query("UPDATE affiliates SET instagram_verified = true WHERE id = $1", [aff.id]);
@@ -343,19 +336,12 @@ router.post("/verify/instagram-bio", requireAuth, async (req, res) => {
 router.post("/verify/youtube-bio", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const simulate = req.query.simulate === "true";
     const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
     if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+    if (!aff.youtube_url || !aff.youtube_bio_code) return res.status(400).json({ error: "YouTube URL or verification code missing." });
 
-    let success, reason;
-    if (simulate) {
-      success = true;
-      reason = "Verified via Simulation";
-    } else {
-      const checkResult = await verifyProfileBioCode(aff.youtube_url, aff.youtube_bio_code, "YouTube");
-      success = checkResult.success;
-      reason = checkResult.reason;
-    }
+    const checkResult = await verifyProfileBioCode(aff.youtube_url, aff.youtube_bio_code, "YouTube");
+    const { success, reason } = checkResult;
 
     if (success) {
       await query("UPDATE affiliates SET youtube_verified = true WHERE id = $1", [aff.id]);
