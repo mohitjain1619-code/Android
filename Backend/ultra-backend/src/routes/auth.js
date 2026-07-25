@@ -14,7 +14,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // ============================================
 router.post("/google", async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, affiliateRef } = req.body;
     if (!idToken) {
       return res.status(400).json({ error: "Missing idToken" });
     }
@@ -51,6 +51,33 @@ router.post("/google", async (req, res) => {
         [googleId, email, name, photoUrl, googleId.substring(0, 8)]
       );
       console.log(`✅ New user created: ${user.id} (${email})`);
+
+      // Track affiliate signup if referred
+      if (affiliateRef) {
+        try {
+          const refCode = affiliateRef.trim().toUpperCase();
+          const aff = await queryOne(
+            "SELECT * FROM affiliates WHERE code = $1 AND status = 'approved'",
+            [refCode]
+          );
+          if (aff) {
+            const existingSignup = await queryOne(
+              "SELECT * FROM affiliate_signups WHERE referred_user_id = $1",
+              [user.id]
+            );
+            if (!existingSignup) {
+              await queryOne(
+                `INSERT INTO affiliate_signups (affiliate_id, referred_user_id, ref_code_used)
+                 VALUES ($1, $2, $3)`,
+                [aff.id, user.id, refCode]
+              );
+              console.log(`[Affiliate] Referral Signup: User ${user.id} referred by code ${refCode}`);
+            }
+          }
+        } catch (affErr) {
+          console.error("[Affiliate] Signup attribution failed:", affErr);
+        }
+      }
     } else {
       console.log(`✅ Existing user logged in: ${user.id} (${email})`);
     }

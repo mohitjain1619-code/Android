@@ -10,10 +10,17 @@ import OnboardingModal from './OnboardingModal';
 import GenderVerificationModal from './GenderVerificationModal';
 import AppRedirectModal from './AppRedirectModal';
 
+import { captureFromURL } from '../lib/affiliateTracker';
+
 export default function ClientLayoutWrapper({ children }) {
   const { user, userData, showLogin, setShowLogin, showVerification, setShowVerification, showOnboarding, setShowOnboarding, showAppRedirect } = useAuth();
   const pathname = usePathname();
   const isCallPage = pathname?.startsWith('/call');
+
+  // Capture affiliate referral code if present in URL query
+  useEffect(() => {
+    captureFromURL();
+  }, []);
 
   // Auto-trigger onboarding if user is logged in but profile is not completed
   useEffect(() => {

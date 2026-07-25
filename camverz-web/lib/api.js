@@ -57,8 +57,11 @@ api.interceptors.response.use(
 // ============================================
 // AUTH API
 // ============================================
+import { getReferral } from './affiliateTracker';
+
 export async function authWithGoogle(idToken) {
-  const { data } = await api.post('/auth/google', { idToken });
+  const affiliateRef = getReferral();
+  const { data } = await api.post('/auth/google', { idToken, affiliateRef });
   if (data.token) setToken(data.token);
   return data;
 }
@@ -282,6 +285,29 @@ export async function verifyGender(imageFile) {
 // ============================================
 export async function getIceServers(useTurn = false) {
   const { data } = await api.get('/webrtc/ice', { params: { useTurn } });
+  return data;
+}
+
+// ============================================
+// AFFILIATE API
+// ============================================
+export async function getAffiliateMe() {
+  const { data } = await api.get('/affiliate/me');
+  return data;
+}
+
+export async function applyAffiliate(details) {
+  const { data } = await api.post('/affiliate/apply', details);
+  return data;
+}
+
+export async function verifyAffiliateBio(simulate = false) {
+  const { data } = await api.post(`/affiliate/linkedin/verify-bio?simulate=${simulate}`);
+  return data;
+}
+
+export async function resetAffiliateVerification() {
+  const { data } = await api.post('/affiliate/reset-verification');
   return data;
 }
 

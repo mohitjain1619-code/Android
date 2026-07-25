@@ -20,6 +20,7 @@ const chatRoutes = require("./src/routes/chats");
 const notificationRoutes = require("./src/routes/notifications");
 const verificationRoutes = require("./src/routes/verification");
 const friendRoutes = require("./src/routes/friends");
+const affiliateRoutes = require("./src/routes/affiliate");
 
 // Services
 const { startCleanupCron } = require("./src/services/cleanup");
@@ -75,6 +76,7 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/verify", verificationRoutes);
 app.use("/api/friends", friendRoutes);
+app.use("/api/affiliate", affiliateRoutes);
 
 // ============================================
 // ICE SERVERS ENDPOINT (WebRTC)
