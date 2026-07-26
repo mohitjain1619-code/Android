@@ -81,6 +81,10 @@ export default function AffiliatePage() {
   const [loadingAdmin, setLoadingAdmin] = useState(false);
   const [updatingAdminId, setUpdatingAdminId] = useState('');
   const [activeAdminTab, setActiveAdminTab] = useState('creators'); // 'creators' or 'affiliates'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [planFilter, setPlanFilter] = useState('all'); // 'all', 'paid', 'free'
+  const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female'
+  const [verificationFilter, setVerificationFilter] = useState('all'); // 'all', 'verified', 'unverified'
 
   // Fetch Affiliate Data
   const loadAffiliateData = async () => {
@@ -590,6 +594,25 @@ export default function AffiliatePage() {
   if (isApprovedCreator) {
     const { affiliate, stats, recent_sales, payouts, click_chart } = affData;
 
+    const filteredReferredUsers = (affData.referred_users || []).filter(su => {
+      const matchesSearch = (su.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            (su.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesPlan = planFilter === 'all' || (su.plan || '').toLowerCase() === planFilter.toLowerCase();
+      
+      const g = (su.gender || '').toLowerCase();
+      const isFemale = g.includes("female") || g.includes("girl") || g.includes("woman");
+      const isMale = g.includes("male") || g.includes("boy") || g.includes("man");
+      const matchesGender = genderFilter === 'all' ||
+                            (genderFilter === 'female' && isFemale) ||
+                            (genderFilter === 'male' && isMale);
+                            
+      const matchesVerification = verificationFilter === 'all' ||
+                                  (verificationFilter === 'verified' && su.verified) ||
+                                  (verificationFilter === 'unverified' && !su.verified);
+                                  
+      return matchesSearch && matchesPlan && matchesGender && matchesVerification;
+    });
+
     return (
       <div className="section" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
         {/* Welcome Banner */}
@@ -1031,9 +1054,115 @@ export default function AffiliatePage() {
 
           {/* Referred Users Table List */}
           <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
-            <h4 style={{ marginBottom: '16px', color: '#fff' }}>Referred Users Details</h4>
-            {affData.referred_users && affData.referred_users.length > 0 ? (
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '600px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <h4 style={{ margin: 0, color: '#fff' }}>Referred Users Details</h4>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Showing {filteredReferredUsers.length} of {(affData.referred_users || []).length} signups
+              </span>
+            </div>
+
+            {/* Search and Filters */}
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '12px', 
+              marginBottom: '20px', 
+              paddingBottom: '16px', 
+              borderBottom: '1px solid var(--glass-border)' 
+            }}>
+              {/* Search Bar */}
+              <div style={{ flex: '1 1 200px' }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 Search referred user by name or email..." 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--glass-border)',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                />
+              </div>
+
+              {/* Plan Filter */}
+              <div style={{ minWidth: '120px' }}>
+                <select 
+                  value={planFilter} 
+                  onChange={(e) => setPlanFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--glass-border)',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="all" style={{ background: '#1c103a' }}>💳 Plan: All</option>
+                  <option value="paid" style={{ background: '#1c103a' }}>💳 Paid</option>
+                  <option value="free" style={{ background: '#1c103a' }}>💳 Free</option>
+                </select>
+              </div>
+
+              {/* Gender Filter */}
+              <div style={{ minWidth: '130px' }}>
+                <select 
+                  value={genderFilter} 
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--glass-border)',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="all" style={{ background: '#1c103a' }}>⚥ Gender: All</option>
+                  <option value="male" style={{ background: '#1c103a' }}>♂️ Male</option>
+                  <option value="female" style={{ background: '#1c103a' }}>♀️ Female</option>
+                </select>
+              </div>
+
+              {/* Verification Filter */}
+              <div style={{ minWidth: '150px' }}>
+                <select 
+                  value={verificationFilter} 
+                  onChange={(e) => setVerificationFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid var(--glass-border)',
+                    color: '#fff',
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="all" style={{ background: '#1c103a' }}>👑 Verification: All</option>
+                  <option value="verified" style={{ background: '#1c103a' }}>👑 Verified</option>
+                  <option value="unverified" style={{ background: '#1c103a' }}>👑 Unverified</option>
+                </select>
+              </div>
+            </div>
+
+            {filteredReferredUsers.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
                     <th style={{ textAlign: 'left', padding: '12px 8px' }}>USER</th>
@@ -1041,11 +1170,13 @@ export default function AffiliatePage() {
                     <th style={{ textAlign: 'center', padding: '12px 8px' }}>PROFILE VERIFICATION</th>
                     <th style={{ textAlign: 'center', padding: '12px 8px' }}>PLAN STATUS</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px' }}>7D TALK TIME</th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px' }}>ACCOUNT STATUS</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px' }}>DATE JOINED</th>
+                    {user?.email === 'mohitjain1619@gmail.com' && <th style={{ textAlign: 'center', padding: '12px 8px' }}>ACTIONS</th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {affData.referred_users.map((su, idx) => (
+                  {filteredReferredUsers.map((su, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                       <td style={{ padding: '12px 8px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -1086,16 +1217,47 @@ export default function AffiliatePage() {
                       <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600, color: su.talkTimeMins7d > 0 ? 'var(--neon-green)' : 'var(--text-muted)' }}>
                         {su.talkTimeMins7d} mins
                       </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          fontSize: '0.7rem', 
+                          fontWeight: 600, 
+                          background: 'rgba(0, 230, 118, 0.12)',
+                          color: 'var(--neon-green)'
+                        }}>
+                          ACTIVE
+                        </span>
+                      </td>
                       <td style={{ padding: '12px 8px', textAlign: 'right', color: 'var(--text-secondary)' }}>
                         {su.joinedAt}
                       </td>
+                      {user?.email === 'mohitjain1619@gmail.com' && (
+                        <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                          <button
+                            className="btn-glass"
+                            style={{ 
+                              padding: '6px 12px', 
+                              fontSize: '0.72rem', 
+                              borderColor: '#ef4444', 
+                              color: '#ef4444',
+                              background: 'rgba(239, 68, 68, 0.05)'
+                            }}
+                            onClick={() => handleAdminDeleteUser(su.userId, su.email)}
+                            disabled={updatingAdminId === su.userId}
+                          >
+                            🗑️ Delete User
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
               <div style={{ color: 'var(--text-secondary)', padding: '24px 0', textAlign: 'center' }}>
-                No referrals signups recorded yet.
+                No matching referral signups found.
               </div>
             )}
           </div>
