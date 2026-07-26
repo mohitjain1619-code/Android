@@ -38,6 +38,22 @@ const router = express.Router();
       ADD COLUMN IF NOT EXISTS other_bio_code TEXT;
     `);
     console.log("✅ Added other_url schema updates for adult creator profiles");
+
+    // Create call_logs table for call minutes analytics
+    await query(`
+      CREATE TABLE IF NOT EXISTS call_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        room_id TEXT NOT NULL,
+        caller_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        receiver_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        duration_seconds INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_call_logs_caller ON call_logs(caller_id);
+      CREATE INDEX IF NOT EXISTS idx_call_logs_receiver ON call_logs(receiver_id);
+      CREATE INDEX IF NOT EXISTS idx_call_logs_created ON call_logs(created_at);
+    `);
+    console.log("✅ Database schema migrated for call_logs");
   } catch (err) {
     console.error("❌ Database migration error during startup:", err.message);
   }
@@ -684,6 +700,62 @@ router.get("/me", requireAuth, async (req, res) => {
       clicks: d.count
     }));
 
+    // Detailed Referred Users Analytics
+    const signupsList = await queryMany(
+      `SELECT s.referred_user_id, u.name, u.email, u.gender, u.verified, u.created_at,
+              (SELECT plan_purchased FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed' ORDER BY created_at DESC LIMIT 1) as plan_purchased,
+              (SELECT COALESCE(SUM(amount_paid), 0) FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed') as total_paid,
+              (SELECT COALESCE(SUM(duration_seconds), 0) FROM call_logs WHERE (caller_id = u.id OR receiver_id = u.id) AND created_at >= NOW() - INTERVAL '7 days') as call_seconds_7d
+       FROM affiliate_signups s
+       JOIN users u ON s.referred_user_id = u.id
+       WHERE s.affiliate_id = $1
+       ORDER BY s.created_at DESC`,
+      [aff.id]
+    );
+
+    const referredUsers = signupsList.map(su => ({
+      userId: su.referred_user_id,
+      name: su.name || "Anonymous User",
+      email: su.email || "N/A",
+      gender: su.gender || "Unspecified",
+      verified: !!su.verified,
+      plan: su.plan_purchased ? "Paid" : "Free",
+      planName: su.plan_purchased || "N/A",
+      totalPaid: parseFloat(parseFloat(su.total_paid).toFixed(2)),
+      talkTimeMins7d: Math.round(su.call_seconds_7d / 60),
+      joinedAt: su.created_at ? su.created_at.toISOString().split("T")[0] : "N/A"
+    }));
+
+    let totalSeconds = 0;
+    let totalBoys = 0;
+    let totalGirls = 0;
+    let verifiedGirls = 0;
+
+    referredUsers.forEach(u => {
+      const originalSu = signupsList.find(item => item.referred_user_id === u.userId);
+      if (originalSu) {
+        totalSeconds += originalSu.call_seconds_7d;
+      }
+      const g = u.gender.toLowerCase();
+      if (g.includes("female") || g.includes("girl") || g.includes("woman")) {
+        totalGirls++;
+        if (u.verified) verifiedGirls++;
+      } else if (g.includes("male") || g.includes("boy") || g.includes("man")) {
+        totalBoys++;
+      }
+    });
+
+    const average7dTalktimeMins = referredUsers.length > 0 
+      ? Math.round((totalSeconds / 60) / referredUsers.length) 
+      : 0;
+
+    const analyticsSummary = {
+      total_boys: totalBoys,
+      total_girls: totalGirls,
+      verified_girls: verifiedGirls,
+      average_7d_talktime_mins: average7dTalktimeMins
+    };
+
     return res.json({
       has_affiliate: true,
       affiliate: {
@@ -721,7 +793,9 @@ router.get("/me", requireAuth, async (req, res) => {
       },
       recent_sales: salesList,
       payouts: payoutList,
-      click_chart: clickChart
+      click_chart: clickChart,
+      referred_users: referredUsers,
+      analytics_summary: analyticsSummary
     });
   } catch (err) {
     console.error("GET /me error:", err);

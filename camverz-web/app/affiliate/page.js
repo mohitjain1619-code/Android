@@ -771,6 +771,123 @@ export default function AffiliatePage() {
           </div>
         </div>
 
+        {/* Referred Signups & Activity Section */}
+        <div style={{ marginTop: '40px' }}>
+          <h3 style={{ marginBottom: '20px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <Users size={20} color="var(--neon-purple)" />
+            <span>Referred Signups & Activity</span>
+          </h3>
+
+          {/* Referred User Analytics Summary Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+            <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>GENDER RATIO (BOYS / GIRLS)</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-cyan)' }}>
+                  {affData.analytics_summary?.total_boys || 0}
+                </h2>
+                <span style={{ color: 'var(--text-muted)' }}>boys</span>
+                <span style={{ color: 'var(--glass-border)' }}>/</span>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-pink)' }}>
+                  {affData.analytics_summary?.total_girls || 0}
+                </h2>
+                <span style={{ color: 'var(--text-muted)' }}>girls</span>
+              </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid rgba(0, 230, 118, 0.15)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>VERIFIED GIRLS PROFILE COUNT</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-green)' }}>
+                  {affData.analytics_summary?.verified_girls || 0}
+                </h2>
+                <span style={{ fontSize: '0.8rem', color: 'var(--neon-green)', fontWeight: 600 }}>verified 👑</span>
+              </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>AVG TALK TIME (LAST 7 DAYS)</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-cyan)' }}>
+                  {affData.analytics_summary?.average_7d_talktime_mins || 0}
+                </h2>
+                <span style={{ color: 'var(--text-muted)' }}>minutes / user</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Referred Users Table List */}
+          <div className="glass-card" style={{ padding: '24px', overflowX: 'auto' }}>
+            <h4 style={{ marginBottom: '16px', color: '#fff' }}>Referred Users Details</h4>
+            {affData.referred_users && affData.referred_users.length > 0 ? (
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '600px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 8px' }}>USER</th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px' }}>GENDER</th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px' }}>PROFILE VERIFICATION</th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px' }}>PLAN STATUS</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px' }}>7D TALK TIME</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px' }}>DATE JOINED</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {affData.referred_users.map((su, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                      <td style={{ padding: '12px 8px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600, color: '#fff' }}>{su.name}</span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{su.email}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                        {(() => {
+                          const g = su.gender.toLowerCase();
+                          if (g.includes("female") || g.includes("girl")) return <span style={{ color: 'var(--neon-pink)' }}>♀️ Female</span>;
+                          if (g.includes("male") || g.includes("boy")) return <span style={{ color: 'var(--neon-cyan)' }}>♂️ Male</span>;
+                          return <span style={{ color: 'var(--text-muted)' }}>{su.gender}</span>;
+                        })()}
+                      </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                        {su.verified ? (
+                          <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.75rem', border: '1px solid rgba(0, 230, 118, 0.25)', padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 230, 118, 0.05)' }}>
+                            Verified 👑
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Unverified</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          padding: '2px 8px', 
+                          borderRadius: '4px', 
+                          fontSize: '0.75rem', 
+                          fontWeight: 600, 
+                          background: su.plan === 'Paid' ? 'rgba(0, 229, 255, 0.15)' : 'rgba(255,255,255,0.05)',
+                          color: su.plan === 'Paid' ? 'var(--neon-cyan)' : 'var(--text-secondary)'
+                        }}>
+                          {su.plan.toUpperCase()} {su.plan === 'Paid' && `(${su.planName})`}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600, color: su.talkTimeMins7d > 0 ? 'var(--neon-green)' : 'var(--text-muted)' }}>
+                        {su.talkTimeMins7d} mins
+                      </td>
+                      <td style={{ padding: '12px 8px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                        {su.joinedAt}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ color: 'var(--text-secondary)', padding: '24px 0', textAlign: 'center' }}>
+                No referrals signups recorded yet.
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Admin Panel inside Approved Creator Dashboard */}
         {user?.email === 'mohitjain1619@gmail.com' && (
           <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)' }}>

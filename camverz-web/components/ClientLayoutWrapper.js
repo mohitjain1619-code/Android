@@ -19,7 +19,14 @@ export default function ClientLayoutWrapper({ children }) {
 
   // Capture affiliate referral code if present in URL query
   useEffect(() => {
-    captureFromURL();
+    const code = captureFromURL();
+    if (code) {
+      import('../lib/api').then(({ trackAffiliateClick }) => {
+        trackAffiliateClick(code, document.referrer, navigator.userAgent)
+          .then((res) => console.log('Click tracked successfully:', res))
+          .catch((err) => console.error('Failed to track click:', err));
+      });
+    }
   }, []);
 
   // Auto-trigger onboarding if user is logged in but profile is not completed

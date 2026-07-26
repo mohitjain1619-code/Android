@@ -331,6 +331,11 @@ export async function updateAffiliateLinks(links) {
   return data;
 }
 
+export async function trackAffiliateClick(code, referrer = '', userAgent = '') {
+  const { data } = await api.post('/affiliate/track-click', { code, referrer, userAgent });
+  return data;
+}
+
 export async function adminListAffiliates() {
   const { data } = await api.get('/affiliate/admin/list');
   return data;

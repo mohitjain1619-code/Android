@@ -8,7 +8,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 // Config
-const { healthCheck: dbHealthCheck } = require("./src/config/database");
+const { healthCheck: dbHealthCheck, query } = require("./src/config/database");
 const redisModule = require("./src/config/redis");
 const { healthCheck: redisHealthCheck } = redisModule;
 
@@ -115,6 +115,28 @@ app.get("/api/webrtc/ice", (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// Helper: Log WebRTC call room logs to Postgres database
+async function logCallIfNeeded(room, state) {
+  try {
+    if (state && state.start_time && state.participants && state.participants.length >= 2) {
+      const durationSeconds = Math.round((Date.now() - state.start_time) / 1000);
+      const [callerId, receiverId] = state.participants;
+      
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (uuidRegex.test(callerId) && uuidRegex.test(receiverId) && durationSeconds > 0) {
+        await query(
+          `INSERT INTO call_logs (room_id, caller_id, receiver_id, duration_seconds) 
+           VALUES ($1, $2, $3, $4)`,
+          [room, callerId, receiverId, durationSeconds]
+        );
+        console.log(`📞 [Call Logged] Room: ${room}, Caller: ${callerId}, Receiver: ${receiverId}, Duration: ${durationSeconds}s`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error logging call to database:", err);
+  }
+}
+
 // ============================================
 // SOCKET EVENTS (Redis-backed)
 // ============================================
@@ -206,6 +228,8 @@ io.on("connection", (socket) => {
 
     if (state.users.length === 2 && !state.ready) {
       state.ready = true;
+      state.start_time = Date.now();
+      state.participants = [...state.users];
       await redisModule.setRoomState(room, state);
       console.log("⚡ Both ready in room:", room);
       io.to(room).emit("peer-ready", { room });
@@ -223,6 +247,7 @@ io.on("connection", (socket) => {
     if (state) {
       state.users = state.users.filter((u) => u !== uid);
       if (state.users.length === 0) {
+        await logCallIfNeeded(room, state);
         await redisModule.deleteRoom(room);
         console.log("🗑️ Room deleted:", room);
       } else {
@@ -335,6 +360,7 @@ io.on("connection", (socket) => {
           io.to(room).emit("peer-disconnected", { uid: disconnectedUid });
 
           if (state.users.length === 0) {
+            await logCallIfNeeded(room, state);
             await redisModule.deleteRoom(room);
             console.log("🗑️ Room auto-deleted on disconnect:", room);
           } else {
