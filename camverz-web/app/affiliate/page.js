@@ -827,7 +827,28 @@ export default function AffiliatePage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
-                          <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Profile Bio/Description</strong>:
+                          {(() => {
+                            const url = (affData.affiliate.other_url || "").toLowerCase();
+                            if (url.includes("xhamster")) {
+                              return (
+                                <>
+                                  <strong style={{ color: '#fff' }}>Step 1:</strong> Switch your browser to <strong>Desktop Mode</strong>, go to your <strong>xHamster Creator Profile's About/Description section</strong>, and temporarily paste this code there:
+                                </>
+                              );
+                            }
+                            if (url.includes("faphouse")) {
+                              return (
+                                <>
+                                  <strong style={{ color: '#fff' }}>Step 1:</strong> Switch your browser to <strong>Desktop Mode</strong>, go to your <strong>Faphouse Creator Profile's Bio/About section</strong>, and temporarily paste this code there:
+                                </>
+                              );
+                            }
+                            return (
+                              <>
+                                <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Profile Bio/Description</strong>:
+                              </>
+                            );
+                          })()}
                         </p>
                         <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
                           onClick={() => { navigator.clipboard.writeText(affData.affiliate.other_bio_code); alert('Code copied!'); }}
