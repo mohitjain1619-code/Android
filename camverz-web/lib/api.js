@@ -351,4 +351,14 @@ export async function adminUpdateAffiliate(id, updates) {
   return data;
 }
 
+export async function adminDeleteUser(userId) {
+  const { data } = await api.delete(`/affiliate/admin/user/${userId}`);
+  return data;
+}
+
+export async function adminWipeTrialData() {
+  const { data } = await api.post('/affiliate/admin/wipe-trial-data');
+  return data;
+}
+
 export default api;

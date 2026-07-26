@@ -13,7 +13,9 @@ import {
   updateAffiliateLinks,
   adminListAffiliates,
   adminApproveAffiliate,
-  adminUpdateAffiliate
+  adminUpdateAffiliate,
+  adminDeleteUser,
+  adminWipeTrialData
 } from '../../lib/api';
 import { 
   Zap, 
@@ -78,6 +80,7 @@ export default function AffiliatePage() {
   const [adminList, setAdminList] = useState([]);
   const [loadingAdmin, setLoadingAdmin] = useState(false);
   const [updatingAdminId, setUpdatingAdminId] = useState('');
+  const [activeAdminTab, setActiveAdminTab] = useState('creators'); // 'creators' or 'affiliates'
 
   // Fetch Affiliate Data
   const loadAffiliateData = async () => {
@@ -330,6 +333,216 @@ export default function AffiliatePage() {
     } finally {
       setUpdatingAdminId('');
     }
+  };
+
+  const handleAdminDeleteUser = async (userId, userEmail) => {
+    if (!window.confirm(`WARNING: Are you sure you want to delete ${userEmail}'s account? This will permanently erase their profile, social configurations, referrals, and all database data using ON DELETE CASCADE.`)) return;
+    try {
+      setUpdatingAdminId(userId);
+      const res = await adminDeleteUser(userId);
+      if (res.status === 'success') {
+        alert(res.message);
+        await loadAdminData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || err.message || "Failed to delete user account.");
+    } finally {
+      setUpdatingAdminId('');
+    }
+  };
+
+  const handleAdminWipeTrialData = async () => {
+    if (!window.confirm("DANGER WIPE: Are you sure you want to delete ALL database trial accounts? This will keep ONLY mohitjain1619@gmail.com and delete everyone else (cascade wipes clicks, signups, logs).")) return;
+    try {
+      setLoadingAdmin(true);
+      const res = await adminWipeTrialData();
+      if (res.status === 'success') {
+        alert(res.message);
+        await loadAdminData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || err.message || "Failed to wipe database.");
+    } finally {
+      setLoadingAdmin(false);
+    }
+  };
+
+  const renderAdminPanel = () => {
+    // Filter adminList into Creators (have social links) and Affiliates (no social links)
+    const creators = adminList.filter(c => c.instagram_url || c.youtube_url || c.other_url);
+    const affiliates = adminList.filter(c => !c.instagram_url && !c.youtube_url && !c.other_url);
+
+    const activeList = activeAdminTab === 'creators' ? creators : affiliates;
+
+    return (
+      <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+          <div>
+            <h3 style={{ fontSize: '1.4rem', margin: '0 0 8px 0', color: 'var(--neon-purple)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span>🔐 Admin Panel (Applications Control)</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.85rem' }}>
+              Review applications, delete dummy user accounts, and wipe database trials.
+            </p>
+          </div>
+          <button 
+            className="btn-glass" 
+            onClick={handleAdminWipeTrialData}
+            style={{ 
+              borderColor: '#ef4444', 
+              color: '#ef4444', 
+              padding: '8px 16px', 
+              fontSize: '0.8rem',
+              background: 'rgba(239, 68, 68, 0.05)'
+            }}
+          >
+            🔥 Wipe Trial Data (Admin Only)
+          </button>
+        </div>
+
+        {/* Tab Selection */}
+        <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '20px' }}>
+          <button 
+            onClick={() => setActiveAdminTab('creators')}
+            style={{
+              background: activeAdminTab === 'creators' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+              color: activeAdminTab === 'creators' ? 'var(--neon-purple)' : 'var(--text-secondary)',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            🎬 Creators ({creators.length})
+          </button>
+          <button 
+            onClick={() => setActiveAdminTab('affiliates')}
+            style={{
+              background: activeAdminTab === 'affiliates' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+              color: activeAdminTab === 'affiliates' ? 'var(--neon-purple)' : 'var(--text-secondary)',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            🤝 Affiliates ({affiliates.length})
+          </button>
+        </div>
+
+        {loadingAdmin ? (
+          <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading records list...</p>
+        ) : activeList.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            No {activeAdminTab} found in the database.
+          </p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '800px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                  <th style={{ textAlign: 'left', padding: '10px' }}>NAME</th>
+                  <th style={{ textAlign: 'left', padding: '10px' }}>EMAIL</th>
+                  <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
+                  {activeAdminTab === 'creators' && <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>}
+                  <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
+                  <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeList.map((c) => (
+                  <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                    <td style={{ padding: '12px 10px', fontWeight: 600 }}>{c.name}</td>
+                    <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>{c.email}</td>
+                    <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>{c.code}</td>
+                    {activeAdminTab === 'creators' && (
+                      <td style={{ padding: '12px 10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {c.instagram_url && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '0.9rem' }}>📸</span>
+                              <a href={c.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Instagram</a>
+                              <span style={{ fontSize: '0.7rem', color: c.instagram_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                ({c.instagram_verified ? 'Verified' : 'Pending'})
+                              </span>
+                            </div>
+                          )}
+                          {c.youtube_url && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '0.9rem' }}>🎬</span>
+                              <a href={c.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>YouTube</a>
+                              <span style={{ fontSize: '0.7rem', color: c.youtube_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                ({c.youtube_verified ? 'Verified' : 'Pending'})
+                              </span>
+                            </div>
+                          )}
+                          {c.other_url && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '0.9rem' }}>🌐</span>
+                              <a href={c.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Other Profile</a>
+                              <span style={{ fontSize: '0.7rem', color: c.other_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                ({c.other_verified ? 'Verified' : 'Pending'})
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                    <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 8px', 
+                        borderRadius: '4px', 
+                        fontSize: '0.7rem', 
+                        fontWeight: 600, 
+                        background: c.status === 'approved' ? 'rgba(0, 230, 118, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                        color: c.status === 'approved' ? 'var(--neon-green)' : '#f59e0b'
+                      }}>
+                        {c.status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                        {c.status === 'pending' && (
+                          <button 
+                            className="btn-neon" 
+                            style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
+                            onClick={() => handleAdminApprove(c.id)}
+                            disabled={updatingAdminId === c.id}
+                          >
+                            {updatingAdminId === c.id ? "Approving..." : "✓ Approve"}
+                          </button>
+                        )}
+                        <button
+                          className="btn-glass"
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: '0.75rem', 
+                            borderColor: '#ef4444', 
+                            color: '#ef4444',
+                            background: 'rgba(239, 68, 68, 0.05)'
+                          }}
+                          onClick={() => handleAdminDeleteUser(c.user_id, c.email)}
+                          disabled={updatingAdminId === c.user_id}
+                        >
+                          🗑️ Delete Account
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://camverz-nine.vercel.app';
@@ -889,104 +1102,7 @@ export default function AffiliatePage() {
         </div>
 
         {/* Admin Panel inside Approved Creator Dashboard */}
-        {user?.email === 'mohitjain1619@gmail.com' && (
-          <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '8px', color: 'var(--neon-purple)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span>🔐 Admin Panel (Creator Applications)</span>
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.85rem' }}>
-              Review pending applications, inspect bio codes, and approve creators.
-            </p>
-
-            {loadingAdmin ? (
-              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading creator list...</p>
-            ) : adminList.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No creator applications found in the database.</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '800px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>CREATOR NAME</th>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>EMAIL</th>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>
-                      <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
-                      <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adminList.map((c) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td style={{ padding: '12px 10px', fontWeight: 600 }}>{c.name}</td>
-                        <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>{c.email}</td>
-                        <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>{c.code}</td>
-                        <td style={{ padding: '12px 10px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {c.instagram_url && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '0.9rem' }}>📸</span>
-                                <a href={c.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Instagram</a>
-                                <span style={{ fontSize: '0.7rem', color: c.instagram_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
-                                  ({c.instagram_verified ? 'Verified' : 'Pending'})
-                                </span>
-                              </div>
-                            )}
-                            {c.youtube_url && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '0.9rem' }}>🎬</span>
-                                <a href={c.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>YouTube</a>
-                                <span style={{ fontSize: '0.7rem', color: c.youtube_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
-                                  ({c.youtube_verified ? 'Verified' : 'Pending'})
-                                </span>
-                              </div>
-                            )}
-                            {c.other_url && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '0.9rem' }}>🌐</span>
-                                <a href={c.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Other Profile</a>
-                                <span style={{ fontSize: '0.7rem', color: c.other_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
-                                  ({c.other_verified ? 'Verified' : 'Pending'})
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                          <span style={{ 
-                            display: 'inline-block',
-                            padding: '2px 8px', 
-                            borderRadius: '4px', 
-                            fontSize: '0.7rem', 
-                            fontWeight: 600, 
-                            background: c.status === 'approved' ? 'rgba(0, 230, 118, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                            color: c.status === 'approved' ? 'var(--neon-green)' : '#f59e0b'
-                          }}>
-                            {c.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                          {c.status === 'pending' ? (
-                            <button 
-                              className="btn-neon" 
-                              style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
-                              onClick={() => handleAdminApprove(c.id)}
-                              disabled={updatingAdminId === c.id}
-                            >
-                              {updatingAdminId === c.id ? "Approving..." : "✓ Approve"}
-                            </button>
-                          ) : (
-                            <span style={{ color: 'var(--text-muted)' }}>No actions</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+        {user?.email === 'mohitjain1619@gmail.com' && renderAdminPanel()}
       </div>
     );
   }
@@ -1408,102 +1524,7 @@ export default function AffiliatePage() {
       {/* Admin Panel inside Guest / Pending Creator view */}
       {user?.email === 'mohitjain1619@gmail.com' && (
         <div style={{ maxWidth: '800px', margin: '60px auto 0' }}>
-          <div className="glass-card" style={{ padding: '30px', border: '1px solid var(--neon-purple)' }}>
-            <h3 style={{ fontSize: '1.4rem', marginBottom: '8px', color: 'var(--neon-purple)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span>🔐 Admin Panel (Creator Applications)</span>
-            </h3>
-            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.85rem' }}>
-              Review pending applications, inspect bio codes, and approve creators.
-            </p>
-
-            {loadingAdmin ? (
-              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading creator list...</p>
-            ) : adminList.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No creator applications found in the database.</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '800px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>CREATOR NAME</th>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>EMAIL</th>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
-                      <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>
-                      <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
-                      <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adminList.map((c) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                        <td style={{ padding: '12px 10px', fontWeight: 600 }}>{c.name}</td>
-                        <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>{c.email}</td>
-                        <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>{c.code}</td>
-                        <td style={{ padding: '12px 10px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {c.instagram_url && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '0.9rem' }}>📸</span>
-                                <a href={c.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Instagram</a>
-                                <span style={{ fontSize: '0.7rem', color: c.instagram_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
-                                  ({c.instagram_verified ? 'Verified' : 'Pending'})
-                                </span>
-                              </div>
-                            )}
-                            {c.youtube_url && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '0.9rem' }}>🎬</span>
-                                <a href={c.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>YouTube</a>
-                                <span style={{ fontSize: '0.7rem', color: c.youtube_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
-                                  ({c.youtube_verified ? 'Verified' : 'Pending'})
-                                </span>
-                              </div>
-                            )}
-                            {c.other_url && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span style={{ fontSize: '0.9rem' }}>🌐</span>
-                                <a href={c.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Other Profile</a>
-                                <span style={{ fontSize: '0.7rem', color: c.other_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
-                                  ({c.other_verified ? 'Verified' : 'Pending'})
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                          <span style={{ 
-                            display: 'inline-block',
-                            padding: '2px 8px', 
-                            borderRadius: '4px', 
-                            fontSize: '0.7rem', 
-                            fontWeight: 600, 
-                            background: c.status === 'approved' ? 'rgba(0, 230, 118, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                            color: c.status === 'approved' ? 'var(--neon-green)' : '#f59e0b'
-                          }}>
-                            {c.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                          {c.status === 'pending' ? (
-                            <button 
-                              className="btn-neon" 
-                              style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
-                              onClick={() => handleAdminApprove(c.id)}
-                              disabled={updatingAdminId === c.id}
-                            >
-                              {updatingAdminId === c.id ? "Approving..." : "✓ Approve"}
-                            </button>
-                          ) : (
-                            <span style={{ color: 'var(--text-muted)' }}>No actions</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          {renderAdminPanel()}
         </div>
       )}
 

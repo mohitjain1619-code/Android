@@ -1136,4 +1136,44 @@ router.post("/admin/payout", requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// DELETE /admin/user/:user_id - admin delete user completely from database
+router.delete("/admin/user/:user_id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { user_id } = req.params;
+    
+    // Check if user exists
+    const user = await queryOne("SELECT * FROM users WHERE id = $1", [user_id]);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Do not allow deleting the admin user itself
+    if (user.email === "mohitjain1619@gmail.com") {
+      return res.status(400).json({ error: "Cannot delete the admin account." });
+    }
+
+    // Delete user (cascade handles the rest)
+    await query("DELETE FROM users WHERE id = $1", [user_id]);
+    console.log(`🗑️ [Admin Cleanup] Deleted user account: ${user_id} (${user.email})`);
+
+    return res.json({ status: "success", message: `User account ${user.email} successfully deleted from database.` });
+  } catch (err) {
+    console.error("Admin delete user error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST /admin/wipe-trial-data - wipe all database data keeping only admin user/affiliate
+router.post("/admin/wipe-trial-data", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    // Delete all users except admin (cascade cleans up all referenced creator profiles/affiliates)
+    const result = await query("DELETE FROM users WHERE email != 'mohitjain1619@gmail.com'");
+    console.log(`🔥 [Admin Wipe] Cleaned up trial accounts. Rows affected: ${result.rowCount}`);
+    return res.json({ status: "success", message: `Database wiped successfully. Cleaned up ${result.rowCount} trial accounts.` });
+  } catch (err) {
+    console.error("Admin wipe error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 module.exports = router;
