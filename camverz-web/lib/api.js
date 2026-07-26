@@ -326,4 +326,24 @@ export async function resetAffiliateVerification() {
   return data;
 }
 
+export async function updateAffiliateLinks(links) {
+  const { data } = await api.post('/affiliate/update-links', links);
+  return data;
+}
+
+export async function adminListAffiliates() {
+  const { data } = await api.get('/affiliate/admin/list');
+  return data;
+}
+
+export async function adminApproveAffiliate(id) {
+  const { data } = await api.put(`/affiliate/admin/${id}/approve`);
+  return data;
+}
+
+export async function adminUpdateAffiliate(id, updates) {
+  const { data } = await api.put(`/affiliate/admin/${id}/update`, updates);
+  return data;
+}
+
 export default api;

@@ -464,6 +464,94 @@ router.post("/reset-verification", requireAuth, async (req, res) => {
   }
 });
 
+// POST /update-links - update/edit creator profile URLs
+router.post("/update-links", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { instagramUrl, youtubeUrl, otherUrl } = req.body;
+
+    const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
+    if (!aff) return res.status(400).json({ error: "Affiliate profile not found." });
+
+    const igClean = instagramUrl ? instagramUrl.trim() : "";
+    const ytClean = youtubeUrl ? youtubeUrl.trim() : "";
+    const otherClean = otherUrl ? otherUrl.trim() : "";
+
+    // Validate otherUrl strictly to xhamster or faphouse if provided
+    if (otherClean) {
+      const lowerOther = otherClean.toLowerCase();
+      if (!lowerOther.includes("xhamster") && !lowerOther.includes("faphouse")) {
+        return res.status(400).json({ error: "Other platform profile URL must be a valid xHamster or Faphouse link." });
+      }
+    }
+
+    // Reset verified flags for any updated URL
+    let instagramVerified = aff.instagram_verified;
+    let youtubeVerified = aff.youtube_verified;
+    let otherVerified = aff.other_verified;
+
+    if (igClean !== (aff.instagram_url || "")) {
+      instagramVerified = !igClean; // true if cleared, false if new URL is set
+    }
+    if (ytClean !== (aff.youtube_url || "")) {
+      youtubeVerified = !ytClean;
+    }
+    if (otherClean !== (aff.other_url || "")) {
+      otherVerified = !otherClean;
+    }
+
+    // Generate new random codes for updated URLs
+    let igCode = aff.instagram_bio_code;
+    let ytCode = aff.youtube_bio_code;
+    let otherCode = aff.other_bio_code;
+
+    if (igClean && igClean !== (aff.instagram_url || "")) {
+      const igChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+      igCode = `CAMVERZ-IG-${igChars}`;
+    }
+    if (ytClean && ytClean !== (aff.youtube_url || "")) {
+      const ytChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+      ytCode = `CAMVERZ-YT-${ytChars}`;
+    }
+    if (otherClean && otherClean !== (aff.other_url || "")) {
+      const otherChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+      otherCode = `CAMVERZ-AD-${otherChars}`;
+    }
+
+    // Rebuild combined socialUrl for backward compatibility
+    const parts = [];
+    if (igClean) parts.push(`Instagram: ${igClean}`);
+    if (ytClean) parts.push(`YouTube: ${ytClean}`);
+    if (otherClean) parts.push(`Other: ${otherClean}`);
+    const socialUrl = parts.join(" | ");
+
+    await query(
+      `UPDATE affiliates 
+       SET instagram_url = $1, youtube_url = $2, other_url = $3, 
+           instagram_verified = $4, youtube_verified = $5, other_verified = $6,
+           instagram_bio_code = $7, youtube_bio_code = $8, other_bio_code = $9,
+           social_url = $10
+       WHERE id = $11`,
+      [
+        igClean || null, ytClean || null, otherClean || null,
+        instagramVerified, youtubeVerified, otherVerified,
+        igCode, ytCode, otherCode,
+        socialUrl, aff.id
+      ]
+    );
+
+    const updatedAff = await queryOne("SELECT * FROM affiliates WHERE id = $1", [aff.id]);
+    return res.json({
+      status: "success",
+      message: "Links updated successfully. Please verify any newly added profiles.",
+      affiliate: updatedAff
+    });
+  } catch (err) {
+    console.error("Update links error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // GET /me - dashboard stats
 router.get("/me", requireAuth, async (req, res) => {
   try {
@@ -797,6 +885,15 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         commission_rate: a.commission_rate,
         upi_id: a.upi_id,
         social_url: a.social_url,
+        instagram_url: a.instagram_url,
+        youtube_url: a.youtube_url,
+        other_url: a.other_url,
+        instagram_verified: a.instagram_verified,
+        youtube_verified: a.youtube_verified,
+        other_verified: a.other_verified,
+        instagram_bio_code: a.instagram_bio_code,
+        youtube_bio_code: a.youtube_bio_code,
+        other_bio_code: a.other_bio_code,
         clicks: a.clicks,
         signups: a.signups,
         sales: a.sales,

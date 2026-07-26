@@ -9,7 +9,11 @@ import {
   resetAffiliateVerification,
   verifyInstagramBio,
   verifyYoutubeBio,
-  verifyOtherBio
+  verifyOtherBio,
+  updateAffiliateLinks,
+  adminListAffiliates,
+  adminApproveAffiliate,
+  adminUpdateAffiliate
 } from '../../lib/api';
 import { 
   Zap, 
@@ -61,6 +65,20 @@ export default function AffiliatePage() {
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState(null);
 
+  // Editing Links states
+  const [isEditingLinks, setIsEditingLinks] = useState(false);
+  const [editInstagramUrl, setEditInstagramUrl] = useState('');
+  const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
+  const [editOtherUrl, setEditOtherUrl] = useState('');
+  const [updatingLinks, setUpdatingLinks] = useState(false);
+  const [editErrorMsg, setEditErrorMsg] = useState('');
+  const [editSuccessMsg, setEditSuccessMsg] = useState('');
+
+  // Admin Panel states
+  const [adminList, setAdminList] = useState([]);
+  const [loadingAdmin, setLoadingAdmin] = useState(false);
+  const [updatingAdminId, setUpdatingAdminId] = useState('');
+
   // Fetch Affiliate Data
   const loadAffiliateData = async () => {
     if (!user) {
@@ -78,8 +96,25 @@ export default function AffiliatePage() {
     }
   };
 
+  const loadAdminData = async () => {
+    if (user?.email === 'mohitjain1619@gmail.com') {
+      try {
+        setLoadingAdmin(true);
+        const list = await adminListAffiliates();
+        setAdminList(list);
+      } catch (err) {
+        console.error("Failed to load admin list:", err);
+      } finally {
+        setLoadingAdmin(false);
+      }
+    }
+  };
+
   useEffect(() => {
     loadAffiliateData();
+    if (user && user.email === 'mohitjain1619@gmail.com') {
+      loadAdminData();
+    }
   }, [user]);
 
   // Copy to clipboard handler
@@ -229,6 +264,74 @@ export default function AffiliatePage() {
     }
   };
 
+  const handleStartEditing = () => {
+    if (affData?.affiliate) {
+      setEditInstagramUrl(affData.affiliate.instagram_url || '');
+      setEditYoutubeUrl(affData.affiliate.youtube_url || '');
+      setEditOtherUrl(affData.affiliate.other_url || '');
+      setEditErrorMsg('');
+      setEditSuccessMsg('');
+      setIsEditingLinks(true);
+    }
+  };
+
+  const handleUpdateLinksSubmit = async (e) => {
+    e.preventDefault();
+    setEditErrorMsg('');
+    setEditSuccessMsg('');
+
+    if (!editInstagramUrl.trim() && !editYoutubeUrl.trim() && !editOtherUrl.trim()) {
+      setEditErrorMsg("Please provide at least one platform link.");
+      return;
+    }
+
+    if (editOtherUrl.trim()) {
+      const lower = editOtherUrl.trim().toLowerCase();
+      if (!lower.includes("xhamster") && !lower.includes("faphouse")) {
+        setEditErrorMsg("Other platform URL must be a valid xHamster or Faphouse profile link.");
+        return;
+      }
+    }
+
+    try {
+      setUpdatingLinks(true);
+      const res = await updateAffiliateLinks({
+        instagramUrl: editInstagramUrl.trim() || null,
+        youtubeUrl: editYoutubeUrl.trim() || null,
+        otherUrl: editOtherUrl.trim() || null
+      });
+
+      if (res.status === 'success') {
+        setEditSuccessMsg(res.message);
+        await loadAffiliateData();
+        setTimeout(() => {
+          setIsEditingLinks(false);
+        }, 1500);
+      }
+    } catch (err) {
+      setEditErrorMsg(err.response?.data?.error || err.message || "Failed to update links.");
+    } finally {
+      setUpdatingLinks(false);
+    }
+  };
+
+  const handleAdminApprove = async (id) => {
+    if (!window.confirm("Are you sure you want to approve this creator?")) return;
+    try {
+      setUpdatingAdminId(id);
+      const res = await adminApproveAffiliate(id);
+      if (res.status === 'success') {
+        alert(res.message);
+        await loadAdminData();
+        await loadAffiliateData(); // Refresh current page state too
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || err.message || "Failed to approve creator.");
+    } finally {
+      setUpdatingAdminId('');
+    }
+  };
+
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://camverz-nine.vercel.app';
   const referralLink = affData?.affiliate ? `${siteUrl}?ref=${affData.affiliate.code}` : '';
 
@@ -280,9 +383,16 @@ export default function AffiliatePage() {
         <div className="glass-card" style={{ padding: '30px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
           <div>
             <h2 style={{ marginBottom: '6px' }}>Welcome, {affiliate.name}!</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '12px' }}>
               Code: <strong style={{ color: 'var(--neon-green)' }}>{affiliate.code}</strong> | Status: <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>Active</span>
             </p>
+            <button 
+              className="btn-glass" 
+              onClick={handleStartEditing}
+              style={{ padding: '8px 16px', fontSize: '0.8rem' }}
+            >
+              ✏️ Edit Profile Links
+            </button>
           </div>
           
           {/* Copy Referral Link */}
@@ -311,6 +421,159 @@ export default function AffiliatePage() {
             </button>
           </div>
         </div>
+
+        {/* Edit Links Form */}
+        {isEditingLinks && (
+          <div className="glass-card" style={{ padding: '30px', marginBottom: '32px', border: '1px solid var(--neon-cyan)' }}>
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '8px' }}>Update Profile Links</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.85rem' }}>
+              Modify your social profile URLs below. Note: if you change any URL, you must re-verify that profile using a new verification code.
+            </p>
+
+            {editErrorMsg && (
+              <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '10px 14px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '16px', fontSize: '0.85rem' }}>
+                {editErrorMsg}
+              </div>
+            )}
+            {editSuccessMsg && (
+              <div style={{ background: 'rgba(0, 230, 118, 0.1)', border: '1px solid rgba(0, 230, 118, 0.3)', padding: '10px 14px', borderRadius: '8px', color: 'var(--neon-green)', marginBottom: '16px', fontSize: '0.85rem' }}>
+                {editSuccessMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateLinksSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>INSTAGRAM PROFILE URL</label>
+                  <input 
+                    type="url" 
+                    className="input-glass" 
+                    placeholder="https://instagram.com/username" 
+                    value={editInstagramUrl} 
+                    onChange={(e) => setEditInstagramUrl(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>YOUTUBE CHANNEL URL</label>
+                  <input 
+                    type="url" 
+                    className="input-glass" 
+                    placeholder="https://youtube.com/@channel" 
+                    value={editYoutubeUrl} 
+                    onChange={(e) => setEditYoutubeUrl(e.target.value)} 
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>OTHER PLATFORM URL</label>
+                  <input 
+                    type="url" 
+                    className="input-glass" 
+                    placeholder="https://example.com/profile" 
+                    value={editOtherUrl} 
+                    onChange={(e) => setEditOtherUrl(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button type="submit" className="btn-neon" style={{ padding: '10px 24px', fontSize: '0.85rem' }} disabled={updatingLinks}>
+                  {updatingLinks ? "Saving..." : "Save & Verify"}
+                </button>
+                <button type="button" className="btn-glass" onClick={() => setIsEditingLinks(false)} style={{ padding: '10px 24px', fontSize: '0.85rem' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Verification Grid for Unverified Updated URLs */}
+        {(() => {
+          const hasUnverified = 
+            (affiliate.instagram_url && !affiliate.instagram_verified) ||
+            (affiliate.youtube_url && !affiliate.youtube_verified) ||
+            (affiliate.other_url && !affiliate.other_verified);
+
+          if (!hasUnverified) return null;
+
+          return (
+            <div className="glass-card" style={{ padding: '30px', marginBottom: '32px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '8px', color: '#f59e0b' }}>⚠️ Verification Action Required</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.85rem' }}>
+                You have updated profile links that are not yet verified. Please verify them below to complete validation.
+              </p>
+
+              {errorMsg && (
+                <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '12px 16px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '20px', fontSize: '0.9rem' }}>
+                  {errorMsg}
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                {affiliate.instagram_url && !affiliate.instagram_verified && (
+                  <div className="glass-card" style={{ padding: '20px' }}>
+                    <h4 style={{ margin: '0 0 10px 0' }}>📸 Instagram</h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px', wordBreak: 'break-all' }}>{affiliate.instagram_url}</p>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Paste this code in your Instagram bio:</span>
+                      <div style={{ background: 'rgba(255,0,110,0.08)', padding: '8px', borderRadius: '6px', margin: '6px 0', fontFamily: 'monospace', fontWeight: 700, color: 'var(--neon-pink)', textAlign: 'center', cursor: 'pointer' }}
+                        onClick={() => { navigator.clipboard.writeText(affiliate.instagram_bio_code); alert('Instagram code copied!'); }}
+                      >
+                        {affiliate.instagram_bio_code} 📋
+                      </div>
+                    </div>
+                    <button className="btn-neon" style={{ width: '100%', padding: '10px' }} onClick={handleVerifyInstagram} disabled={verifyingInstagram}>
+                      {verifyingInstagram ? "Verifying..." : "Verify Instagram"}
+                    </button>
+                  </div>
+                )}
+
+                {affiliate.youtube_url && !affiliate.youtube_verified && (
+                  <div className="glass-card" style={{ padding: '20px' }}>
+                    <h4 style={{ margin: '0 0 10px 0' }}>🎬 YouTube</h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px', wordBreak: 'break-all' }}>{affiliate.youtube_url}</p>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Paste this code in your YouTube description:</span>
+                      <div style={{ background: 'rgba(255,0,110,0.08)', padding: '8px', borderRadius: '6px', margin: '6px 0', fontFamily: 'monospace', fontWeight: 700, color: 'var(--neon-pink)', textAlign: 'center', cursor: 'pointer' }}
+                        onClick={() => { navigator.clipboard.writeText(affiliate.youtube_bio_code); alert('YouTube code copied!'); }}
+                      >
+                        {affiliate.youtube_bio_code} 📋
+                      </div>
+                    </div>
+                    <button className="btn-neon" style={{ width: '100%', padding: '10px' }} onClick={handleVerifyYoutube} disabled={verifyingYoutube}>
+                      {verifyingYoutube ? "Verifying..." : "Verify YouTube"}
+                    </button>
+                  </div>
+                )}
+
+                {affiliate.other_url && !affiliate.other_verified && (
+                  <div className="glass-card" style={{ padding: '20px' }}>
+                    <h4 style={{ margin: '0 0 10px 0' }}>🌐 Other Platform</h4>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '12px', wordBreak: 'break-all' }}>{affiliate.other_url}</p>
+                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid var(--glass-border)', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        {(() => {
+                          const url = affiliate.other_url.toLowerCase();
+                          if (url.includes("xhamster")) return "Switch browser to Desktop Mode, go to xHamster profile's About, and paste this code:";
+                          if (url.includes("faphouse")) return "Switch browser to Desktop Mode, go to Faphouse profile's Bio, and paste this code:";
+                          return "Paste this code in your profile description/bio:";
+                        })()}
+                      </span>
+                      <div style={{ background: 'rgba(255,0,110,0.08)', padding: '8px', borderRadius: '6px', margin: '6px 0', fontFamily: 'monospace', fontWeight: 700, color: 'var(--neon-pink)', textAlign: 'center', cursor: 'pointer' }}
+                        onClick={() => { navigator.clipboard.writeText(affiliate.other_bio_code); alert('Other platform code copied!'); }}
+                      >
+                        {affiliate.other_bio_code} 📋
+                      </div>
+                    </div>
+                    <button className="btn-neon" style={{ width: '100%', padding: '10px' }} onClick={handleVerifyOther} disabled={verifyingOther}>
+                      {verifyingOther ? "Verifying..." : "Verify Profile"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Metrics Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', marginBottom: '32px' }}>
@@ -507,6 +770,106 @@ export default function AffiliatePage() {
             )}
           </div>
         </div>
+
+        {/* Admin Panel inside Approved Creator Dashboard */}
+        {user?.email === 'mohitjain1619@gmail.com' && (
+          <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)' }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '8px', color: 'var(--neon-purple)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span>🔐 Admin Panel (Creator Applications)</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.85rem' }}>
+              Review pending applications, inspect bio codes, and approve creators.
+            </p>
+
+            {loadingAdmin ? (
+              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading creator list...</p>
+            ) : adminList.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No creator applications found in the database.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '800px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>CREATOR NAME</th>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>EMAIL</th>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>
+                      <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
+                      <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminList.map((c) => (
+                      <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                        <td style={{ padding: '12px 10px', fontWeight: 600 }}>{c.name}</td>
+                        <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>{c.email}</td>
+                        <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>{c.code}</td>
+                        <td style={{ padding: '12px 10px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {c.instagram_url && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem' }}>📸</span>
+                                <a href={c.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Instagram</a>
+                                <span style={{ fontSize: '0.7rem', color: c.instagram_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                  ({c.instagram_verified ? 'Verified' : 'Pending'})
+                                </span>
+                              </div>
+                            )}
+                            {c.youtube_url && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem' }}>🎬</span>
+                                <a href={c.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>YouTube</a>
+                                <span style={{ fontSize: '0.7rem', color: c.youtube_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                  ({c.youtube_verified ? 'Verified' : 'Pending'})
+                                </span>
+                              </div>
+                            )}
+                            {c.other_url && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem' }}>🌐</span>
+                                <a href={c.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Other Profile</a>
+                                <span style={{ fontSize: '0.7rem', color: c.other_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                  ({c.other_verified ? 'Verified' : 'Pending'})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                          <span style={{ 
+                            display: 'inline-block',
+                            padding: '2px 8px', 
+                            borderRadius: '4px', 
+                            fontSize: '0.7rem', 
+                            fontWeight: 600, 
+                            background: c.status === 'approved' ? 'rgba(0, 230, 118, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            color: c.status === 'approved' ? 'var(--neon-green)' : '#f59e0b'
+                          }}>
+                            {c.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                          {c.status === 'pending' ? (
+                            <button 
+                              className="btn-neon" 
+                              style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
+                              onClick={() => handleAdminApprove(c.id)}
+                              disabled={updatingAdminId === c.id}
+                            >
+                              {updatingAdminId === c.id ? "Approving..." : "✓ Approve"}
+                            </button>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>No actions</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -924,6 +1287,108 @@ export default function AffiliatePage() {
           ))}
         </div>
       </div>
+
+      {/* Admin Panel inside Guest / Pending Creator view */}
+      {user?.email === 'mohitjain1619@gmail.com' && (
+        <div style={{ maxWidth: '800px', margin: '60px auto 0' }}>
+          <div className="glass-card" style={{ padding: '30px', border: '1px solid var(--neon-purple)' }}>
+            <h3 style={{ fontSize: '1.4rem', marginBottom: '8px', color: 'var(--neon-purple)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span>🔐 Admin Panel (Creator Applications)</span>
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.85rem' }}>
+              Review pending applications, inspect bio codes, and approve creators.
+            </p>
+
+            {loadingAdmin ? (
+              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading creator list...</p>
+            ) : adminList.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No creator applications found in the database.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '800px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>CREATOR NAME</th>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>EMAIL</th>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
+                      <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>
+                      <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
+                      <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminList.map((c) => (
+                      <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                        <td style={{ padding: '12px 10px', fontWeight: 600 }}>{c.name}</td>
+                        <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>{c.email}</td>
+                        <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>{c.code}</td>
+                        <td style={{ padding: '12px 10px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {c.instagram_url && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem' }}>📸</span>
+                                <a href={c.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Instagram</a>
+                                <span style={{ fontSize: '0.7rem', color: c.instagram_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                  ({c.instagram_verified ? 'Verified' : 'Pending'})
+                                </span>
+                              </div>
+                            )}
+                            {c.youtube_url && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem' }}>🎬</span>
+                                <a href={c.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>YouTube</a>
+                                <span style={{ fontSize: '0.7rem', color: c.youtube_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                  ({c.youtube_verified ? 'Verified' : 'Pending'})
+                                </span>
+                              </div>
+                            )}
+                            {c.other_url && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.9rem' }}>🌐</span>
+                                <a href={c.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Other Profile</a>
+                                <span style={{ fontSize: '0.7rem', color: c.other_verified ? 'var(--neon-green)' : '#f59e0b', fontWeight: 600 }}>
+                                  ({c.other_verified ? 'Verified' : 'Pending'})
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                          <span style={{ 
+                            display: 'inline-block',
+                            padding: '2px 8px', 
+                            borderRadius: '4px', 
+                            fontSize: '0.7rem', 
+                            fontWeight: 600, 
+                            background: c.status === 'approved' ? 'rgba(0, 230, 118, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            color: c.status === 'approved' ? 'var(--neon-green)' : '#f59e0b'
+                          }}>
+                            {c.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 10px', textAlign: 'center' }}>
+                          {c.status === 'pending' ? (
+                            <button 
+                              className="btn-neon" 
+                              style={{ padding: '6px 12px', fontSize: '0.75rem' }} 
+                              onClick={() => handleAdminApprove(c.id)}
+                              disabled={updatingAdminId === c.id}
+                            >
+                              {updatingAdminId === c.id ? "Approving..." : "✓ Approve"}
+                            </button>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>No actions</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );
