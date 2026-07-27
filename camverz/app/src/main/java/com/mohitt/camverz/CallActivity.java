@@ -150,7 +150,8 @@ public class CallActivity extends AppCompatActivity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
-        // Preload AppLovin MAX Interstitial Ad
+        // Preload AppLovin MAX Interstitial Ad (Disabled for now)
+        /*
         interstitialAd = new MaxInterstitialAd("YOUR_INTERSTITIAL_AD_UNIT_ID", this);
         interstitialAd.setListener(new MaxAdListener() {
             @Override
@@ -186,6 +187,7 @@ public class CallActivity extends AppCompatActivity {
             }
         });
         interstitialAd.loadAd();
+        */
 
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
@@ -437,39 +439,29 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void fetchIceServersWithTurn(boolean useTurn) {
-        String iceUrl = "https://fuzzy-eggs-send.loca.lt/webrtc/ice";
-        if (useTurn) {
-            iceUrl += "?useTurn=true";
-        }
-        
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url(iceUrl)
-                .build();
-
-        client.newCall(request).enqueue(new Callback() {
+        api.getIceServers(useTurn).enqueue(new retrofit2.Callback<JsonObject>() {
             @Override
-            public void onFailure(Call call, java.io.IOException e) {
-                Log.e(TAG, "Failed to fetch ICE servers: " + e.getMessage());
-                runOnUiThread(() -> {
-                    Toast.makeText(CallActivity.this, "Failed to fetch ICE servers", Toast.LENGTH_LONG).show();
-                    finish();
-                });
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws java.io.IOException {
-                if (!response.isSuccessful()) {
+            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    String body = response.body().toString();
+                    List<PeerConnection.IceServer> iceServers = parseIceServers(body);
+                    runOnUiThread(() -> startCallWithIceServers(iceServers));
+                } else {
+                    Log.e(TAG, "Failed to fetch ICE servers: " + response.code());
                     runOnUiThread(() -> {
                         Toast.makeText(CallActivity.this, "Failed to fetch ICE servers", Toast.LENGTH_LONG).show();
                         finish();
                     });
-                    return;
                 }
+            }
 
-                String body = response.body().string();
-                List<PeerConnection.IceServer> iceServers = parseIceServers(body);
-                runOnUiThread(() -> startCallWithIceServers(iceServers));
+            @Override
+            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
+                Log.e(TAG, "Failed to fetch ICE servers: " + t.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(CallActivity.this, "Failed to fetch ICE servers", Toast.LENGTH_LONG).show();
+                    finish();
+                });
             }
         });
     }
@@ -961,13 +953,7 @@ public class CallActivity extends AppCompatActivity {
             eglBase = null;
         }
 
-        runOnUiThread(() -> {
-            if (interstitialAd != null && interstitialAd.isReady()) {
-                interstitialAd.showAd();
-            } else {
-                finish();
-            }
-        });
+        runOnUiThread(this::finish);
     }
 
     private void loadPeerUserInfo() {

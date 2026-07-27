@@ -60,11 +60,13 @@ public class MainScreenActivity extends BaseActivity {
         api = ApiClient.getInstance(this).getApi();
         socket = SocketManager.getInstance();
 
-        // Initialize AppLovin MAX SDK for ads
+        // Initialize AppLovin MAX SDK for ads (Disabled for now)
+        /*
         AppLovinSdk.getInstance(this).setMediationProvider("max");
         AppLovinSdk.initializeSdk(this, configuration -> {
             runOnUiThread(this::loadBannerAd);
         });
+        */
 
         if (tokenManager.isLoggedIn()) {
             // Register current user on socket for private calls
@@ -154,7 +156,8 @@ public class MainScreenActivity extends BaseActivity {
                 logout();
                 return true;
             } else if (item.getItemId() == R.id.action_mediation_debugger) {
-                AppLovinSdk.getInstance(this).showMediationDebugger();
+                // AppLovinSdk.getInstance(this).showMediationDebugger();
+                Toast.makeText(this, "Mediation debugger is disabled", Toast.LENGTH_SHORT).show();
                 return true;
             }
             return false;
@@ -280,6 +283,8 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
+        // Disabled for now
+        /*
         adView = new MaxAdView("YOUR_BANNER_AD_UNIT_ID", this);
 
         // Set size (Match parent width, 50dp height for phones)
@@ -299,6 +304,7 @@ public class MainScreenActivity extends BaseActivity {
             // Load the ad
             adView.loadAd();
         }
+        */
     }
 
     @Override

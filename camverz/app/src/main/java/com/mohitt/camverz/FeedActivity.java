@@ -105,7 +105,7 @@ public class FeedActivity extends BaseActivity {
 
         updateFilterButtons();
         fetchPosts();
-        loadBannerAd();
+        // loadBannerAd();
     }
 
     private void setCategory(String category) {
@@ -176,6 +176,8 @@ public class FeedActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
+        // Disabled for now
+        /*
         adView = new MaxAdView("YOUR_BANNER_AD_UNIT_ID", this);
 
         // Set size (Match parent width, 50dp height for phones)
@@ -195,6 +197,7 @@ public class FeedActivity extends BaseActivity {
             // Load the ad
             adView.loadAd();
         }
+        */
     }
 
     @Override

@@ -4,6 +4,17 @@ plugins {
     // google-services plugin removed — no longer using Firebase
 }
 
+// Load local.properties safely to read production configuration variables
+Properties properties = new Properties()
+if (project.rootProject.file('local.properties').exists()) {
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+}
+
+def fallbackBaseUrl = '"https://android-9t8m.onrender.com"'
+def prodBaseUrl = properties.getProperty("production.base.url") ? '"' + properties.getProperty("production.base.url") + '"' : fallbackBaseUrl
+def admobAppId = properties.getProperty("admob.app.id", "ca-app-pub-3940256099942544~3347511713")
+def applovinSdkKey = properties.getProperty("applovin.sdk.key", "YOUR_APPLOVIN_SDK_KEY_HERE")
+
 android {
     namespace 'com.mohitt.camverz'
     compileSdk = 36
@@ -18,7 +29,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         // Define BASE_URL for all API calls
-        buildConfigField "String", "BASE_URL", '"http://localhost:3000"'
+        buildConfigField "String", "BASE_URL", prodBaseUrl
+
+        // Inject variables into AndroidManifest.xml dynamically
+        manifestPlaceholders = [
+            admobAppId: admobAppId,
+            applovinSdkKey: applovinSdkKey
+        ]
     }
 
     buildFeatures {
