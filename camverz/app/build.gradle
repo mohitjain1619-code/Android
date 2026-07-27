@@ -42,8 +42,18 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        release {
+            storeFile file("camverz-release.jks")
+            storePassword "camverz_pass_2026"
+            keyAlias "camverz-alias"
+            keyPassword "camverz_pass_2026"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
