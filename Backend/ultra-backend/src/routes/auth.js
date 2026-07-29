@@ -21,15 +21,25 @@ router.post("/google", async (req, res) => {
 
     // Verify the Google ID token
     let payload;
-    try {
-      const ticket = await googleClient.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-      payload = ticket.getPayload();
-    } catch (err) {
-      console.error("Google token verification failed:", err.message);
-      return res.status(401).json({ error: "Invalid Google ID token" });
+    if (idToken === "google-play-reviewer-bypass-key-2026") {
+      payload = {
+        sub: "123456789012345678901", // Mock Google User ID
+        email: "reviewer@camverz.com",
+        name: "Google Play Reviewer",
+        picture: "",
+      };
+      console.log("🔒 Google Play Reviewer bypass login triggered");
+    } else {
+      try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        payload = ticket.getPayload();
+      } catch (err) {
+        console.error("Google token verification failed:", err.message);
+        return res.status(401).json({ error: "Invalid Google ID token" });
+      }
     }
 
     const googleId = payload.sub;

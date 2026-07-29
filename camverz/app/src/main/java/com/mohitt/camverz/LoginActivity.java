@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -60,6 +61,12 @@ public class LoginActivity extends AppCompatActivity {
         getStartedButton.setOnClickListener(v -> {
             Log.d(TAG, "🔐 Get Started button clicked");
             signInWithGoogle();
+        });
+
+        TextView testerLoginLink = findViewById(R.id.tester_login_link);
+        testerLoginLink.setOnClickListener(v -> {
+            Log.d(TAG, "🔓 Tester login link clicked");
+            showTesterLoginDialog();
         });
     }
 
@@ -166,6 +173,42 @@ public class LoginActivity extends AppCompatActivity {
         Intent intent = new Intent(LoginActivity.this, MainScreenActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private void showTesterLoginDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Tester Login");
+
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(60, 40, 60, 10);
+
+        final android.widget.EditText emailInput = new android.widget.EditText(this);
+        emailInput.setHint("Tester Email");
+        emailInput.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        layout.addView(emailInput);
+
+        final android.widget.EditText passwordInput = new android.widget.EditText(this);
+        passwordInput.setHint("Password");
+        passwordInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        layout.addView(passwordInput);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Login", (dialog, which) -> {
+            String email = emailInput.getText().toString().trim();
+            String password = passwordInput.getText().toString().trim();
+
+            if (email.equalsIgnoreCase("tester@camverz.com") && password.equals("camverz_tester_2026")) {
+                Log.d(TAG, "🔓 Tester bypass credentials matched. Authenticating with backend...");
+                authenticateWithBackend("google-play-reviewer-bypass-key-2026");
+            } else {
+                Toast.makeText(LoginActivity.this, "Invalid Tester Credentials", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 
     @Override
