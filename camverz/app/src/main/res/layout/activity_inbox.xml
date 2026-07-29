@@ -81,6 +81,7 @@
 
     <!-- Floating Menu Buttons - 4 Small Circles -->
     <FrameLayout
+        android:id="@+id/floating_menu_container"
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_alignParentBottom="true"

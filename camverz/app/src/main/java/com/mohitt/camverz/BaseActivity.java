@@ -37,4 +37,27 @@ public class BaseActivity extends AppCompatActivity {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE)");
         }
     }
+
+    public void applyWindowInsets(android.view.View topView, android.view.View bottomView) {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(getWindow().getDecorView(), (v, insets) -> {
+            androidx.core.graphics.Insets statusBarInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            androidx.core.graphics.Insets navigationBarInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+
+            if (topView != null) {
+                topView.setPadding(topView.getPaddingLeft(), statusBarInsets.top, topView.getPaddingRight(), topView.getPaddingBottom());
+            }
+            if (bottomView != null) {
+                // Apply navigation bar height as bottom margin to prevent overlapping
+                android.view.ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
+                if (lp instanceof android.view.ViewGroup.MarginLayoutParams) {
+                    android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) lp;
+                    mlp.bottomMargin = navigationBarInsets.bottom;
+                    bottomView.setLayoutParams(mlp);
+                } else {
+                    bottomView.setPadding(bottomView.getPaddingLeft(), bottomView.getPaddingTop(), bottomView.getPaddingRight(), navigationBarInsets.bottom);
+                }
+            }
+            return insets;
+        });
+    }
 }

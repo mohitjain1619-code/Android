@@ -44,6 +44,9 @@ public class InboxActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inbox);
 
+        // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
+        applyWindowInsets(findViewById(R.id.toolbar), findViewById(R.id.floating_menu_container));
+
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
 

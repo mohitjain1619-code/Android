@@ -52,6 +52,9 @@ public class FeedActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_feed);
 
+        // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
+        applyWindowInsets(findViewById(R.id.top_bar), findViewById(R.id.floating_menu_container));
+
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
 

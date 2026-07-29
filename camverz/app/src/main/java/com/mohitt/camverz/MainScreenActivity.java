@@ -56,6 +56,9 @@ public class MainScreenActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_screen);
 
+        // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
+        applyWindowInsets(findViewById(R.id.top_nav_bar), findViewById(R.id.bottom_nav_bar));
+
         tokenManager = TokenManager.getInstance(this);
         api = ApiClient.getInstance(this).getApi();
         socket = SocketManager.getInstance();

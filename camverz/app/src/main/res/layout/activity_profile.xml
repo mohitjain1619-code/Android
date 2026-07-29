@@ -23,6 +23,7 @@
             android:padding="16dp">
 
             <RelativeLayout
+                android:id="@+id/profile_header_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -353,6 +354,7 @@
 
     <!-- Floating Menu Buttons - 4 Small Circles -->
     <FrameLayout
+        android:id="@+id/floating_menu_container"
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:layout_gravity="bottom"

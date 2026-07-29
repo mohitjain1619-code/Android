@@ -76,6 +76,9 @@ public class ProfileActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
+
+        // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
+        applyWindowInsets(findViewById(R.id.profile_header_layout), findViewById(R.id.floating_menu_container));
         
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
