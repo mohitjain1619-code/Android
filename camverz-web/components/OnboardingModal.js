@@ -21,7 +21,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
 
-  // Auto-detect location with instant IP Geolocation Fallback (Works 100% on iOS Chrome/Safari)
+  // Auto-detect high-accuracy location (GPS hardware enabled like Google Maps)
   const detectLocation = async () => {
     setLocating(true);
 
@@ -52,10 +52,29 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=en`);
-            const data = await res.json();
-            const detectedCity = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
-            const detectedCountry = data.address?.country || '';
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            // 1st Priority: BigDataCloud High-Precision Reverse Geocoder (Google Maps precision)
+            const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
+            if (bdcRes.ok) {
+              const bdcData = await bdcRes.json();
+              const detectedCity = bdcData.city || bdcData.locality || bdcData.principalSubdivision || '';
+              const detectedCountry = bdcData.countryName || '';
+
+              if (detectedCity && detectedCountry) {
+                setCity(detectedCity);
+                setCountry(detectedCountry);
+                setLocating(false);
+                return;
+              }
+            }
+
+            // 2nd Priority: OpenStreetMap Nominatim
+            const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
+            const nomData = await nomRes.json();
+            const detectedCity = nomData.address?.city || nomData.address?.town || nomData.address?.village || nomData.address?.county || nomData.address?.state_district || '';
+            const detectedCountry = nomData.address?.country || '';
 
             if (detectedCity && detectedCountry) {
               setCity(detectedCity);
@@ -68,15 +87,14 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           }
           setLocating(false);
         },
-        async () => {
-          // GPS Permission denied or timed out (Common on Chrome iOS / iPhone Safari)
+        async (err) => {
+          console.warn('GPS error / denied:', err.message);
           await tryIpLocation();
           setLocating(false);
         },
-        { enableHighAccuracy: false, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
       );
     } else {
-      // Insecure HTTP or browser without GPS -> Use IP Geolocation directly
       await tryIpLocation();
       setLocating(false);
     }
@@ -184,10 +202,10 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (100% Automatic GPS + IP Fallback) */}
+        {/* Step 1: Location (High-Accuracy GPS + BigDataCloud Geocoder) */}
         {step === 1 && (
           <div className={styles.stepContent} style={{ textAlign: 'center' }}>
-            <p className={styles.stepDesc}>Auto-detecting your location...</p>
+            <p className={styles.stepDesc}>Detecting your exact location...</p>
             
             <button className="btn-glass" onClick={detectLocation} disabled={locating} style={{ width: '100%', marginBottom: 16 }}>
               <MapPin size={16} />
@@ -212,7 +230,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
               </div>
             ) : (
               <p style={{ marginTop: '16px', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
-                {locating ? 'Finding your city & country...' : 'Location auto-detection ready.'}
+                {locating ? 'Acquiring GPS location...' : 'Location detection ready.'}
               </p>
             )}
           </div>
