@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { updateUser } from '../lib/firestore';
-import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft, AlertCircle, Info } from 'lucide-react';
 import styles from './OnboardingModal.module.css';
 
 const AVATARS = Array.from({ length: 15 }, (_, i) => `av${i + 1}`);
@@ -17,6 +17,8 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   const [avatar, setAvatar] = useState('av1');
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [gpsDenied, setGpsDenied] = useState(false);
+  const [gpsErrorMsg, setGpsErrorMsg] = useState('');
   const [dobError, setDobError] = useState('');
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
@@ -45,15 +47,19 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
     }
   };
 
-  // High-Accuracy GPS Request with Fail-Safe Auto-Fallback (Never blocks user)
+  // Rule 3 & 4: Direct synchronous click handler (User gesture mandatory on iOS Safari/Chrome)
   const handleDetectLocationClick = () => {
     setLocating(true);
+    setGpsDenied(false);
+    setGpsErrorMsg('');
 
     if (!navigator.geolocation) {
+      setGpsErrorMsg('Geolocation is not supported by your browser.');
       fallbackIpLocation().then(() => setLocating(false));
       return;
     }
 
+    // Direct call inside click listener prompts native browser permission popup on iPhone
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
@@ -96,19 +102,27 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           });
       },
       (err) => {
-        console.warn('GPS permission denied or unavailable, auto-filling network location:', err.message);
-        fallbackIpLocation().then(() => setLocating(false));
+        console.warn('GPS error / denied on Safari:', err.code, err.message);
+        setLocating(false);
+        if (err.code === 1) {
+          // Rule 5: Safari / iPhone Permission Denied
+          setGpsDenied(true);
+        } else if (err.code === 3) {
+          setGpsErrorMsg('GPS request timed out. Please make sure Location Services is ON in your iPhone settings and tap again.');
+        } else {
+          setGpsErrorMsg('Could not retrieve GPS location. Tap again to retry.');
+        }
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
-  // Auto-detect when step 1 opens
-  useEffect(() => {
-    if (step === 1 && (!city || !country)) {
-      handleDetectLocationClick();
-    }
-  }, [step]);
+  const handleUseNetworkFallback = async () => {
+    setLocating(true);
+    await fallbackIpLocation();
+    setLocating(false);
+    setGpsDenied(false);
+  };
 
   const isAdult = (dateStr) => {
     if (!dateStr) return false;
@@ -206,10 +220,10 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (100% Automatic Only - Zero Manual Inputs) */}
+        {/* Step 1: Location (Strictly adhering to Safari/iOS rules) */}
         {step === 1 && (
           <div className={styles.stepContent} style={{ textAlign: 'center' }}>
-            <p className={styles.stepDesc}>Auto-detecting your location...</p>
+            <p className={styles.stepDesc}>Tap below to allow GPS location permission</p>
             
             <button
               className="btn-neon"
@@ -218,7 +232,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
               style={{ width: '100%', padding: '14px 20px', fontSize: '1rem', marginBottom: 16 }}
             >
               <MapPin size={18} />
-              {locating ? 'Detecting Location...' : '📍 Auto Detect My Location'}
+              {locating ? 'Requesting GPS Location...' : '📍 Detect My Location (GPS)'}
             </button>
 
             {city && country ? (
@@ -235,11 +249,47 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
                 justifyContent: 'center'
               }}>
                 <Check size={18} />
-                <span>Auto Detected: <strong>{city}, {country}</strong></span>
+                <span>Detected: <strong>{city}, {country}</strong></span>
               </div>
+            ) : gpsDenied ? (
+              <div style={{
+                marginTop: '12px',
+                padding: '14px 16px',
+                borderRadius: '12px',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#FCA5A5',
+                textAlign: 'left',
+                fontSize: '0.85rem',
+                lineHeight: '1.4'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold', color: '#EF4444', marginBottom: '8px' }}>
+                  <AlertCircle size={18} />
+                  <span>iPhone Location Permission Denied</span>
+                </div>
+                <p style={{ margin: '0 0 8px 0' }}>Safari/Chrome location is turned off for camverz.com on your iPhone.</p>
+                <div style={{ background: 'rgba(0,0,0,0.3)', padding: '10px 12px', borderRadius: '8px', marginBottom: '12px' }}>
+                  <strong>How to enable on iPhone:</strong>
+                  <ol style={{ margin: '6px 0 0 16px', padding: 0 }}>
+                    <li>Open <strong>Settings</strong> → <strong>Privacy & Security</strong> → <strong>Location Services</strong></li>
+                    <li>Select <strong>Safari Websites</strong> (or <strong>Chrome</strong>)</li>
+                    <li>Select <strong>"While Using the App"</strong> & turn <strong>"Precise Location" ON</strong></li>
+                  </ol>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button className="btn-glass" onClick={handleDetectLocationClick} style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem' }}>
+                    Try GPS Again
+                  </button>
+                  <button className="btn-glass" onClick={handleUseNetworkFallback} style={{ flex: 1, padding: '8px 12px', fontSize: '0.8rem' }}>
+                    Use Network Location
+                  </button>
+                </div>
+              </div>
+            ) : gpsErrorMsg ? (
+              <p style={{ marginTop: '12px', color: '#EF4444', fontSize: '0.88rem' }}>{gpsErrorMsg}</p>
             ) : (
               <p style={{ marginTop: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
-                {locating ? 'Detecting location via GPS/Network...' : 'Tap above to detect location.'}
+                Tapping the button opens the native browser location permission prompt.
               </p>
             )}
           </div>
