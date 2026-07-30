@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { updateUser } from '../lib/firestore';
 import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
@@ -22,8 +22,8 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
 
-  // 100% PURE HARDWARE GPS LOCATION ONLY (No IP lookup APIs)
-  const requestPureGpsLocation = () => {
+  // Direct synchronous click handler forces native browser permission popup (iOS & Android)
+  const handleDetectLocationClick = () => {
     setLocating(true);
     setGpsError('');
 
@@ -33,16 +33,15 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
       return;
     }
 
+    // Direct call triggers browser native "Allow Location" popup prompt
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
 
-          // 1st Priority: BigDataCloud High-Precision Hardware GPS Geocoder
-          const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
-          if (bdcRes.ok) {
-            const bdcData = await bdcRes.json();
+        fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`)
+          .then((res) => res.json())
+          .then((bdcData) => {
             const detectedCity = bdcData.city || bdcData.locality || bdcData.principalSubdivision || '';
             const detectedCountry = bdcData.countryName || '';
 
@@ -50,39 +49,41 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
               setCity(detectedCity);
               setCountry(detectedCountry);
               setLocating(false);
-              return;
+            } else {
+              // OpenStreetMap Nominatim fallback
+              fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`)
+                .then((r) => r.json())
+                .then((nomData) => {
+                  const city2 = nomData.address?.city || nomData.address?.town || nomData.address?.village || nomData.address?.state_district || '';
+                  const country2 = nomData.address?.country || '';
+                  if (city2 && country2) {
+                    setCity(city2);
+                    setCountry(country2);
+                  } else {
+                    setGpsError('Could not resolve city name from GPS. Please try again.');
+                  }
+                  setLocating(false);
+                })
+                .catch(() => setLocating(false));
             }
-          }
-
-          // 2nd Priority: OpenStreetMap Nominatim
-          const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`);
-          const nomData = await nomRes.json();
-          const detectedCity = nomData.address?.city || nomData.address?.town || nomData.address?.village || nomData.address?.county || nomData.address?.state_district || '';
-          const detectedCountry = nomData.address?.country || '';
-
-          if (detectedCity && detectedCountry) {
-            setCity(detectedCity);
-            setCountry(detectedCountry);
-          } else {
-            setGpsError('Could not resolve city from GPS coordinates. Please tap to retry.');
-          }
-        } catch (e) {
-          setGpsError('GPS reverse geocoding error. Please tap to retry.');
-        }
-        setLocating(false);
+          })
+          .catch(() => {
+            setGpsError('Reverse geocoding error. Please try again.');
+            setLocating(false);
+          });
       },
       (err) => {
-        console.warn('Pure GPS error / denied:', err.code, err.message);
-        if (err.code === 1) {
-          setGpsError('GPS Permission Denied. Please allow location access in your browser/iPhone settings and tap again.');
-        } else if (err.code === 3) {
-          setGpsError('GPS request timed out. Please make sure location/GPS is turned on and tap again.');
-        } else {
-          setGpsError('Unable to get GPS location. Please tap to try again.');
-        }
+        console.warn('GPS permission error:', err.code, err.message);
         setLocating(false);
+        if (err.code === 1) {
+          setGpsError('Location permission denied. Please allow location access when prompted or in browser settings and tap again.');
+        } else if (err.code === 3) {
+          setGpsError('Location request timed out. Please tap again.');
+        } else {
+          setGpsError('Could not get GPS location. Please tap again.');
+        }
       },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
@@ -182,19 +183,19 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (100% Pure GPS - Zero IP APIs) */}
+        {/* Step 1: Location (Synchronous User-Gesture Native Permission Popup) */}
         {step === 1 && (
           <div className={styles.stepContent} style={{ textAlign: 'center' }}>
-            <p className={styles.stepDesc}>Tap below to allow GPS and detect your exact city</p>
+            <p className={styles.stepDesc}>Tap below to prompt native browser location permission</p>
             
             <button
               className="btn-neon"
-              onClick={requestPureGpsLocation}
+              onClick={handleDetectLocationClick}
               disabled={locating}
               style={{ width: '100%', padding: '14px 20px', fontSize: '1rem', marginBottom: 16 }}
             >
               <MapPin size={18} />
-              {locating ? 'Acquiring Pure GPS Location...' : '📍 Detect My Location (GPS)'}
+              {locating ? 'Requesting GPS Location...' : '📍 Detect My Location (GPS)'}
             </button>
 
             {city && country ? (
@@ -232,7 +233,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
               </div>
             ) : (
               <p style={{ marginTop: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
-                Tap the button to request pure device GPS location.
+                Tapping the button opens the browser location permission prompt.
               </p>
             )}
           </div>
