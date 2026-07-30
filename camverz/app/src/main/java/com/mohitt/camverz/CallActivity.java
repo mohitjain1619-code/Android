@@ -410,6 +410,10 @@ public class CallActivity extends AppCompatActivity {
                 if (transceiver.getReceiver().track() instanceof VideoTrack) {
                     VideoTrack remoteVideoTrack = (VideoTrack) transceiver.getReceiver().track();
                     runOnUiThread(() -> remoteVideoTrack.addSink(remoteView));
+                } else if (transceiver.getReceiver().track() instanceof AudioTrack) {
+                    AudioTrack remoteAudioTrack = (AudioTrack) transceiver.getReceiver().track();
+                    remoteAudioTrack.setEnabled(true);
+                    remoteAudioTrack.setVolume(1.0);
                 }
             }
             
