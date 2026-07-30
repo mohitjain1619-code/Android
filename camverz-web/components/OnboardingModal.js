@@ -21,24 +21,72 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
 
-  // Auto-detect location
-  const detectLocation = () => {
-    if (!navigator.geolocation) return;
+  // Auto-detect location with instant IP Geolocation Fallback (Works 100% on iOS Chrome/Safari)
+  const detectLocation = async () => {
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=en`);
+
+    const tryIpLocation = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
           const data = await res.json();
-          setCity(data.address?.city || data.address?.town || data.address?.village || '');
-          setCountry(data.address?.country || '');
-        } catch (e) { console.error(e); }
-        setLocating(false);
-      },
-      () => setLocating(false),
-      { enableHighAccuracy: false, timeout: 10000 }
-    );
+          if (data.city) setCity(data.city);
+          if (data.country_name) setCountry(data.country_name);
+          return;
+        }
+      } catch (err) {}
+
+      try {
+        const res2 = await fetch('https://ip-api.com/json/');
+        if (res2.ok) {
+          const data2 = await res2.json();
+          if (data2.city) setCity(data2.city);
+          if (data2.country) setCountry(data2.country);
+        }
+      } catch (e) {
+        console.error('IP Geolocation fallback error:', e);
+      }
+    };
+
+    if (navigator.geolocation && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=en`);
+            const data = await res.json();
+            const detectedCity = data.address?.city || data.address?.town || data.address?.village || data.address?.county || '';
+            const detectedCountry = data.address?.country || '';
+
+            if (detectedCity && detectedCountry) {
+              setCity(detectedCity);
+              setCountry(detectedCountry);
+            } else {
+              await tryIpLocation();
+            }
+          } catch (e) {
+            await tryIpLocation();
+          }
+          setLocating(false);
+        },
+        async () => {
+          // GPS Permission denied or timed out (Common on Chrome iOS / iPhone Safari)
+          await tryIpLocation();
+          setLocating(false);
+        },
+        { enableHighAccuracy: false, timeout: 5000 }
+      );
+    } else {
+      // Insecure HTTP or browser without GPS -> Use IP Geolocation directly
+      await tryIpLocation();
+      setLocating(false);
+    }
   };
+
+  useEffect(() => {
+    if (step === 1 && (!city || !country)) {
+      detectLocation();
+    }
+  }, [step]);
 
   const isAdult = (dateStr) => {
     if (!dateStr) return false;
@@ -136,21 +184,35 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location */}
+        {/* Step 1: Location (100% Automatic GPS + IP Fallback) */}
         {step === 1 && (
-          <div className={styles.stepContent}>
-            <p className={styles.stepDesc}>Where are you located?</p>
+          <div className={styles.stepContent} style={{ textAlign: 'center' }}>
+            <p className={styles.stepDesc}>Auto-detecting your location...</p>
+            
             <button className="btn-glass" onClick={detectLocation} disabled={locating} style={{ width: '100%', marginBottom: 16 }}>
               <MapPin size={16} />
-              {locating ? 'Detecting...' : 'Detect My Location'}
+              {locating ? 'Detecting Location...' : 'Re-detect Location'}
             </button>
+
             {city && country ? (
-              <p style={{ marginTop: '16px', color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                <Check size={16} /> Detected: <strong>{city}, {country}</strong>
-              </p>
+              <div style={{
+                marginTop: '16px',
+                padding: '14px 18px',
+                borderRadius: '12px',
+                background: 'rgba(0, 229, 255, 0.08)',
+                border: '1px solid rgba(0, 229, 255, 0.25)',
+                color: 'var(--neon-cyan)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                justifyContent: 'center'
+              }}>
+                <Check size={18} />
+                <span>Detected: <strong>{city}, {country}</strong></span>
+              </div>
             ) : (
-              <p style={{ marginTop: '16px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontSize: '0.9rem' }}>
-                Click the button to automatically detect your location.
+              <p style={{ marginTop: '16px', color: 'rgba(255,255,255,0.5)', fontSize: '0.9rem' }}>
+                {locating ? 'Finding your city & country...' : 'Location auto-detection ready.'}
               </p>
             )}
           </div>
