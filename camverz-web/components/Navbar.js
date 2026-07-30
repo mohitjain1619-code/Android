@@ -40,7 +40,7 @@ export default function Navbar() {
       <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
         <div className={styles.inner}>
           <Link href="/" className={styles.logo}>
-            <img src="/logo.png" alt="Camverz Logo" className={styles.logoImg} />
+            <span className={styles.logoIcon}>⚡</span>
             <span className={styles.logoText}>Camverz</span>
           </Link>
 

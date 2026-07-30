@@ -9,7 +9,7 @@ export default function Footer() {
         <div className={styles.grid}>
           <div className={styles.brand}>
             <div className={styles.logo}>
-              <img src="/logo.png" alt="Camverz Logo" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'cover' }} />
+              <span>⚡</span>
               <span className={styles.logoText}>Camverz</span>
             </div>
             <p className={styles.tagline}>Connect with real people through random video calls. Safe, verified, and fun.</p>
