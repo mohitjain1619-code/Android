@@ -63,7 +63,7 @@ public class BaseActivity extends AppCompatActivity {
             if (topView != null) {
                 topView.setPadding(
                     topView.getPaddingLeft(),
-                    topMargin + initialTopPadding,
+                    topMargin + Math.max(initialTopPadding, dpToPx(16)),
                     topView.getPaddingRight(),
                     topView.getPaddingBottom()
                 );
