@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { updateUser } from '../lib/firestore';
-import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import styles from './OnboardingModal.module.css';
 
 const AVATARS = Array.from({ length: 15 }, (_, i) => `av${i + 1}`);
@@ -17,19 +17,42 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   const [avatar, setAvatar] = useState('av1');
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [gpsError, setGpsError] = useState('');
   const [dobError, setDobError] = useState('');
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
 
-  // User-touch triggered High-Accuracy GPS Request (Required for iOS Safari/Chrome permission prompt)
-  const requestGpsLocation = () => {
+  // IP Location Fallback Helper
+  const tryIpLocation = async () => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.city) setCity(data.city);
+        if (data.country_name) setCountry(data.country_name);
+        return true;
+      }
+    } catch (err) {}
+
+    try {
+      const res2 = await fetch('https://ip-api.com/json/');
+      if (res2.ok) {
+        const data2 = await res2.json();
+        if (data2.city) setCity(data2.city);
+        if (data2.country) setCountry(data2.country);
+        return true;
+      }
+    } catch (e) {
+      console.error('IP Geolocation fallback error:', e);
+    }
+    return false;
+  };
+
+  // High-Accuracy GPS Request with Seamless IP Fallback (Never blocks user)
+  const requestLocation = () => {
     setLocating(true);
-    setGpsError('');
 
     if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
-      setLocating(false);
+      tryIpLocation().then(() => setLocating(false));
       return;
     }
 
@@ -64,27 +87,28 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
             setCity(detectedCity);
             setCountry(detectedCountry);
           } else {
-            setGpsError('Could not resolve exact city from GPS coordinates. Please try again.');
+            await tryIpLocation();
           }
         } catch (e) {
-          setGpsError('Reverse geocoding error. Please try again.');
+          await tryIpLocation();
         }
         setLocating(false);
       },
-      (err) => {
-        console.warn('GPS error / denied:', err.code, err.message);
-        if (err.code === 1) {
-          setGpsError('GPS Permission Denied. Please allow location access in your iPhone settings and tap again.');
-        } else if (err.code === 3) {
-          setGpsError('GPS request timed out. Please ensure GPS is enabled and tap again.');
-        } else {
-          setGpsError('Unable to retrieve GPS location. Please tap to try again.');
-        }
+      async (err) => {
+        console.warn('GPS denied or unavailable on browser, using network location fallback:', err.message);
+        await tryIpLocation();
         setLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   };
+
+  // Auto-trigger location detection when reaching step 1
+  useEffect(() => {
+    if (step === 1 && (!city || !country)) {
+      requestLocation();
+    }
+  }, [step]);
 
   const isAdult = (dateStr) => {
     if (!dateStr) return false;
@@ -182,19 +206,19 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (Explicit User Gesture GPS Request for iOS) */}
+        {/* Step 1: Location (Seamless Auto Detect + Fail-Safe Fallback) */}
         {step === 1 && (
           <div className={styles.stepContent} style={{ textAlign: 'center' }}>
-            <p className={styles.stepDesc}>Tap below to allow GPS and detect your exact city</p>
+            <p className={styles.stepDesc}>Detecting your location...</p>
             
             <button
               className="btn-neon"
-              onClick={requestGpsLocation}
+              onClick={requestLocation}
               disabled={locating}
               style={{ width: '100%', padding: '14px 20px', fontSize: '1rem', marginBottom: 16 }}
             >
               <MapPin size={18} />
-              {locating ? 'Requesting GPS Location...' : '📍 Detect My Location (GPS)'}
+              {locating ? 'Detecting Location...' : '📍 Auto Detect My Location'}
             </button>
 
             {city && country ? (
@@ -211,28 +235,11 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
                 justifyContent: 'center'
               }}>
                 <Check size={18} />
-                <span>GPS Verified: <strong>{city}, {country}</strong></span>
-              </div>
-            ) : gpsError ? (
-              <div style={{
-                marginTop: '16px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#EF4444',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.88rem',
-                textAlign: 'left'
-              }}>
-                <AlertCircle size={18} style={{ flexShrink: 0 }} />
-                <span>{gpsError}</span>
+                <span>Auto Detected: <strong>{city}, {country}</strong></span>
               </div>
             ) : (
               <p style={{ marginTop: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
-                Your phone will ask for location permission. Tap Allow to verify your city.
+                {locating ? 'Detecting your city & country...' : 'Location auto-detection ready.'}
               </p>
             )}
           </div>
