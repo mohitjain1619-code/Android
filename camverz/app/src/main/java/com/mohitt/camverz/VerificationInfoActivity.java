@@ -41,6 +41,19 @@ public class VerificationInfoActivity extends BaseActivity {
 
         fetchUserGender();
 
+        startVerificationButton.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
+
         startVerificationButton.setOnClickListener(v -> {
             if ("male".equalsIgnoreCase(userGender)) {
                 autoVerifyMaleUser();

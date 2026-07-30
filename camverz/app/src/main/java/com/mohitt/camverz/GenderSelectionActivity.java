@@ -7,9 +7,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-
 public class GenderSelectionActivity extends BaseActivity {
 
     private LinearLayout cardMale, cardFemale;
@@ -31,6 +28,19 @@ public class GenderSelectionActivity extends BaseActivity {
         cardMale.setOnClickListener(v -> selectGender("male"));
         cardFemale.setOnClickListener(v -> selectGender("female"));
 
+        btnContinue.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    if (btnContinue.isEnabled()) v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    if (btnContinue.isEnabled()) v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
+
         btnContinue.setOnClickListener(v -> {
             if (selectedGender.isEmpty()) {
                 Toast.makeText(GenderSelectionActivity.this, "Please select a gender", Toast.LENGTH_SHORT).show();
@@ -41,24 +51,25 @@ public class GenderSelectionActivity extends BaseActivity {
             i.putExtra("userName", userName);
             i.putExtra("gender", selectedGender);
             startActivity(i);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
     }
 
     private void selectGender(String gender) {
         selectedGender = gender;
         btnContinue.setEnabled(true);
-        btnContinue.setAlpha(1.0f);
+        btnContinue.animate().alpha(1.0f).setDuration(250).start();
 
-        if (gender.equals("male")) {
-            cardMale.setBackgroundResource(R.drawable.bg_gender_selection); 
-            cardFemale.setBackgroundResource(R.drawable.bg_glass_item);
-            cardMale.setAlpha(1.0f);
-            cardFemale.setAlpha(0.6f);
+        if ("male".equals(gender)) {
+            cardMale.setBackgroundResource(R.drawable.bg_gender_card_selected);
+            cardFemale.setBackgroundResource(R.drawable.bg_gender_card_unselected);
+            cardMale.animate().scaleX(1.04f).scaleY(1.04f).translationY(-8f).alpha(1.0f).setDuration(200).start();
+            cardFemale.animate().scaleX(0.96f).scaleY(0.96f).translationY(0f).alpha(0.6f).setDuration(200).start();
         } else {
-            cardFemale.setBackgroundResource(R.drawable.bg_gender_selection);
-            cardMale.setBackgroundResource(R.drawable.bg_glass_item);
-            cardFemale.setAlpha(1.0f);
-            cardMale.setAlpha(0.6f);
+            cardFemale.setBackgroundResource(R.drawable.bg_gender_card_selected);
+            cardMale.setBackgroundResource(R.drawable.bg_gender_card_unselected);
+            cardFemale.animate().scaleX(1.04f).scaleY(1.04f).translationY(-8f).alpha(1.0f).setDuration(200).start();
+            cardMale.animate().scaleX(0.96f).scaleY(0.96f).translationY(0f).alpha(0.6f).setDuration(200).start();
         }
     }
 }

@@ -58,6 +58,39 @@ public class LoginActivity extends AppCompatActivity {
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         Button getStartedButton = findViewById(R.id.get_started_button);
+        android.view.View logoHero = findViewById(R.id.logo_hero_container);
+        android.view.View appTitle = findViewById(R.id.app_title);
+        android.view.View appSubtitle = findViewById(R.id.app_subtitle);
+
+        // Entrance Animations
+        if (logoHero != null) {
+            logoHero.setAlpha(0f);
+            logoHero.setTranslationY(-30f);
+            logoHero.animate().alpha(1f).translationY(0f).setDuration(600).start();
+        }
+        if (appTitle != null) {
+            appTitle.setAlpha(0f);
+            appTitle.animate().alpha(1f).setDuration(800).setStartDelay(200).start();
+        }
+        if (appSubtitle != null) {
+            appSubtitle.setAlpha(0f);
+            appSubtitle.animate().alpha(1f).setDuration(800).setStartDelay(350).start();
+        }
+
+        // Button Micro-interaction
+        getStartedButton.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
+
         getStartedButton.setOnClickListener(v -> {
             Log.d(TAG, "🔐 Get Started button clicked");
             signInWithGoogle();

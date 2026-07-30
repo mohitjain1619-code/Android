@@ -7,12 +7,13 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -31,6 +32,7 @@ public class CityActivity extends BaseActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private Button btnContinue;
     private TextView backBtn, tvCity, tvCountry;
+    private ImageView locationIcon;
 
     private String userName, gender, city, country;
 
@@ -43,17 +45,35 @@ public class CityActivity extends BaseActivity {
         backBtn = findViewById(R.id.backBtnCity);
         tvCity = findViewById(R.id.tvCity);
         tvCountry = findViewById(R.id.tvCountry);
+        locationIcon = findViewById(R.id.location_icon);
 
         userName = getIntent().getStringExtra("userName");
         gender = getIntent().getStringExtra("gender");
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        backBtn.setOnClickListener(v -> finish());
+        if (backBtn != null) backBtn.setOnClickListener(v -> finish());
+
+        // Location Icon Pulse Animation
+        if (locationIcon != null) {
+            startPulseAnimation(locationIcon);
+        }
+
+        btnContinue.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
 
         btnContinue.setOnClickListener(v -> {
             if (city == null || city.isEmpty() || country == null || country.isEmpty()) {
-                // Fallback default to prevent blocking reviewer/users if GPS is off/unavailable
                 city = "New York";
                 country = "United States";
             }
@@ -63,9 +83,18 @@ public class CityActivity extends BaseActivity {
             i.putExtra("city", city);
             i.putExtra("country", country);
             startActivity(i);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
 
         requestLocationPermission();
+    }
+
+    private void startPulseAnimation(View v) {
+        v.animate().scaleX(1.15f).scaleY(1.15f).alpha(0.8f).setDuration(800).withEndAction(() -> {
+            v.animate().scaleX(1.0f).scaleY(1.0f).alpha(1.0f).setDuration(800).withEndAction(() -> {
+                if (!isFinishing()) startPulseAnimation(v);
+            }).start();
+        }).start();
     }
 
     private void requestLocationPermission() {

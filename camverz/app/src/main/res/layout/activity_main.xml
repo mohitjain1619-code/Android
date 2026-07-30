@@ -3,144 +3,276 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_primary"
+    android:background="@drawable/bg_ambient_mesh"
     android:fillViewport="true"
     android:scrollbars="none">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:paddingStart="28dp"
-        android:paddingEnd="28dp"
-        android:paddingTop="80dp"
-        android:paddingBottom="40dp">
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="56dp"
+        android:paddingBottom="36dp">
 
-        <!-- Minimal Logo -->
-        <ImageView
-            android:id="@+id/app_icon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:src="@drawable/ic_video"
-            app:tint="@color/accent_primary" />
-
-        <!-- Headline -->
-        <TextView
-            android:id="@+id/app_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="Meet New People"
-            android:textColor="@color/text_primary"
-            android:textSize="32sp"
-            android:textStyle="bold" />
-
-        <!-- Subtext -->
-        <TextView
-            android:id="@+id/app_subtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Video chat with real people around the world."
-            android:textColor="@color/text_secondary"
-            android:textSize="16sp"
-            android:gravity="center" />
-
-        <!-- Feature Pills Row -->
+        <!-- Top Content Container -->
         <LinearLayout
-            android:id="@+id/features_container"
-            android:layout_width="wrap_content"
+            android:id="@+id/top_content_container"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
+            <!-- Hero Animated Logo Container -->
+            <FrameLayout
+                android:id="@+id/logo_hero_container"
+                android:layout_width="104dp"
+                android:layout_height="104dp"
+                android:layout_marginBottom="24dp">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/avatar_glowing_ring"
+                    android:alpha="0.8" />
+
+                <ImageView
+                    android:id="@+id/app_icon"
+                    android:layout_width="76dp"
+                    android:layout_height="76dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_app_logo" />
+            </FrameLayout>
+
+            <!-- Brand Headline -->
             <TextView
+                android:id="@+id/app_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_glass_card_luxury"
-                android:text="✓ Verified"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp" />
+                android:text="Meet Real People, Not Just Profiles"
+                android:textColor="#FFFFFF"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:lineSpacingExtra="4dp" />
 
+            <!-- Subtitle -->
             <TextView
+                android:id="@+id/app_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_glass_card_luxury"
-                android:text="⚡ Fast Matching"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp" />
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:lineSpacingMultiplier="1.3"
+                android:text="Video chat, make friends, discover nearby people and build meaningful connections."
+                android:textColor="#E2E8F0"
+                android:textSize="15sp" />
 
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Floating Feature Chips Grid -->
+            <LinearLayout
+                android:id="@+id/features_container"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_glass_card_luxury"
-                android:text="♥ Interest Based"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp" />
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <!-- Row 1 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_feature_chip"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:text="✓ Verified Users"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_feature_chip"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:text="🎥 HD Video Calls"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Row 2 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_feature_chip"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:text="📍 Nearby Discovery"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_feature_chip"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:text="🛡️ Safe Community"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
         </LinearLayout>
 
-        <Space
+        <!-- Bottom Sign-In Hero Card -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <!-- Primary CTA -->
-        <Button
-            android:id="@+id/get_started_button"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="48dp"
-            android:background="@drawable/bg_btn_primary_gradient"
-            android:drawableStart="@drawable/ic_google"
-            android:drawablePadding="12dp"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:text="Continue with Google"
-            android:textAllCaps="false"
-            android:textColor="@color/text_white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:elevation="2dp"
-            android:stateListAnimator="@null"
-            app:backgroundTint="@null" />
-
-        <!-- Tester Login -->
-        <TextView
-            android:id="@+id/tester_login_link"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Sign in with Tester Account"
-            android:textColor="@color/accent_primary"
-            android:textSize="14sp"
-            android:clickable="true"
-            android:focusable="true" />
+            android:layout_below="@id/top_content_container"
+            android:layout_marginTop="32dp"
+            android:background="@drawable/bg_hero_card_glass"
+            android:elevation="8dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <!-- Privacy / Terms -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:gravity="center"
-            android:text="By continuing, you agree to our Terms &amp; Privacy Policy"
-            android:textColor="@color/text_muted"
-            android:textSize="12sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Continue your journey with Camverz"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:gravity="center" />
 
-    </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="Join thousands of verified users discovering new people every day."
+                android:textColor="#CBD5E1"
+                android:textSize="13sp" />
+
+            <!-- Primary Google Sign-In Button -->
+            <Button
+                android:id="@+id/get_started_button"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_btn_primary_gradient"
+                android:drawableStart="@drawable/ic_google"
+                android:drawablePadding="14dp"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:stateListAnimator="@null"
+                android:text="Continue with Google"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
+
+            <!-- Privacy Reassurance -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="🔒 We never post anything without your permission."
+                android:textColor="#E2E8F0"
+                android:textSize="12sp"
+                android:gravity="center" />
+
+            <!-- Trust Indicators -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Encrypted"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="•"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="🛡️ Secure"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="•"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="✓ Verified Community"
+                    android:textColor="#94A3B8"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Tester Account Link -->
+            <TextView
+                android:id="@+id/tester_login_link"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:padding="6dp"
+                android:text="Sign in with Tester Account"
+                android:textColor="#00FFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
 </ScrollView>

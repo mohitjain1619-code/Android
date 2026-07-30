@@ -9,12 +9,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
 import java.util.Calendar;
-import java.util.Objects;
 
 public class BirthdayActivity extends BaseActivity {
 
@@ -36,9 +33,22 @@ public class BirthdayActivity extends BaseActivity {
         gender = getIntent().getStringExtra("gender");
         city = getIntent().getStringExtra("city");
 
-        backBtn.setOnClickListener(v -> finish());
+        if (backBtn != null) backBtn.setOnClickListener(v -> finish());
 
         birthdayInput.setOnClickListener(v -> openDatePicker());
+
+        btnContinue.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
 
         btnContinue.setOnClickListener(v -> {
             if (dob == null || dob.isEmpty()) {
@@ -51,6 +61,7 @@ public class BirthdayActivity extends BaseActivity {
             i.putExtra("city", city);
             i.putExtra("dob", dob);
             startActivity(i);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
     }
 
@@ -63,13 +74,14 @@ public class BirthdayActivity extends BaseActivity {
                     if (isUserAdult(year, month, day)) {
                         dob = day + "/" + (month + 1) + "/" + year;
                         birthdayInput.setText(dob);
+                        birthdayInput.setError(null);
                     } else {
                         showAgeErrorDialog();
                         birthdayInput.setText("");
                         dob = "";
                     }
                 },
-                cal.get(Calendar.YEAR),
+                cal.get(Calendar.YEAR) - 18,
                 cal.get(Calendar.MONTH),
                 cal.get(Calendar.DAY_OF_MONTH)
         );
@@ -97,13 +109,14 @@ public class BirthdayActivity extends BaseActivity {
 
         final AlertDialog dialog = builder.create();
 
-        // Make the dialog background transparent
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
         Button btnUnderstood = dialogView.findViewById(R.id.btnUnderstood);
-        btnUnderstood.setOnClickListener(v -> dialog.dismiss());
+        if (btnUnderstood != null) {
+            btnUnderstood.setOnClickListener(v -> dialog.dismiss());
+        }
 
         dialog.show();
     }

@@ -32,7 +32,7 @@ public class FinishActivity extends BaseActivity {
     EditText finalName;
     TextView finalGender, finalCity, finalDob;
     Button btnStart;
-    RelativeLayout rootLayout;
+    android.view.View rootLayout;
 
     private String userName, gender, city, dob;
     private ApiService api;
@@ -64,6 +64,19 @@ public class FinishActivity extends BaseActivity {
         finalGender.setText("Gender: " + (gender != null ? capitalizeFirst(gender) : "N/A"));
         finalCity.setText("City: " + (city != null ? city : "N/A"));
         finalDob.setText("Birthday: " + (dob != null ? dob : "N/A"));
+
+        btnStart.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (btnStart.isEnabled()) v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                    break;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (btnStart.isEnabled()) v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                    break;
+            }
+            return false;
+        });
 
         btnStart.setOnClickListener(v -> saveProfileAndGoToHome());
 

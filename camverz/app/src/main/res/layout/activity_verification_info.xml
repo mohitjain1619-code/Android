@@ -1,114 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_primary">
+    android:background="@drawable/bg_ambient_mesh"
+    android:fillViewport="true"
+    android:scrollbars="none">
 
-    <!-- Back Button -->
-    <FrameLayout
-        android:id="@+id/back_button"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_margin="20dp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:background="@drawable/bg_glass_card_luxury"
-        android:clickable="true"
-        android:focusable="true">
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="@color/text_primary"
-            android:contentDescription="Back" />
-    </FrameLayout>
-
-    <!-- Main Content -->
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="28dp">
+        android:layout_height="wrap_content"
+        android:padding="24dp">
 
-        <!-- Title -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Identity Verification"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginBottom="28dp" />
+        <!-- Back Button -->
+        <FrameLayout
+            android:id="@+id/back_button"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_floating_glass"
+            android:clickable="true"
+            android:elevation="4dp"
+            android:focusable="true">
 
-        <!-- Info Card -->
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_gravity="center"
+                android:contentDescription="Back"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="#FFFFFF" />
+        </FrameLayout>
+
+        <!-- Main Container -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/bg_glass_card_luxury"
-            android:orientation="vertical"
-            android:padding="24dp"
-            android:gravity="center">
+            android:layout_below="@id/back_button"
+            android:layout_marginTop="28dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical">
 
-            <!-- Gender Info Label -->
+            <!-- Title -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Your Profile Information"
-                android:textSize="13sp"
-                android:textColor="@color/text_muted"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Gender Display -->
-            <TextView
-                android:id="@+id/gender_display"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Selected Gender: -"
-                android:textSize="18sp"
+                android:gravity="center"
+                android:text="A Safe Community Starts With Real People"
+                android:textColor="#FFFFFF"
+                android:textSize="26sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="10dp" />
+                android:lineSpacingExtra="2dp" />
 
-            <!-- Description -->
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:text="Verification helps us keep Camverz authentic, respectful, and 100% secure."
+                android:textColor="#E2E8F0"
+                android:textSize="15sp"
+                android:lineSpacingMultiplier="1.2" />
+
+            <!-- Profile Info Glass Card -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Your identity will be verified based on this information. Please ensure details match your photo."
-                android:textSize="13sp"
-                android:textColor="@color/text_secondary"
+                android:layout_marginTop="28dp"
+                android:background="@drawable/bg_hero_card_glass"
+                android:elevation="6dp"
                 android:gravity="center"
-                android:layout_marginTop="8dp" />
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="YOUR PROFILE INFORMATION"
+                    android:textColor="#00FFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Gender Display -->
+                <TextView
+                    android:id="@+id/gender_display"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_feature_chip"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:text="Selected Gender: -"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:gravity="center"
+                    android:lineSpacingMultiplier="1.2"
+                    android:text="Your identity will be verified based on this information. Please ensure your details match your photo."
+                    android:textColor="#CBD5E1"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Verification Benefits -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_floating_glass"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WHY VERIFY YOUR PROFILE?"
+                    android:textColor="#00FFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✓ Verified Badge: Stand out with an authentic profile badge"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🛡️ Safer Matches: Filter out fake accounts and bots"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:layout_marginBottom="6dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Faster Trust: Enjoy 3x higher response rates in video calls"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Start Button -->
+            <Button
+                android:id="@+id/start_verification_button"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_btn_primary_gradient"
+                android:stateListAnimator="@null"
+                android:text="Start Verification"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
 
         </LinearLayout>
 
-        <!-- Instructions -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Verification steps:\n• Align face inside the camera oval\n• Ensure good lighting\n• Follow instructions on screen"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:gravity="center"
-            android:layout_marginBottom="32dp"
-            android:lineSpacingMultiplier="1.4" />
-
-        <!-- Start Button -->
-        <Button
-            android:id="@+id/start_verification_button"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Start Verification"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textAllCaps="false"
-            android:textColor="@color/text_white"
-            android:background="@drawable/bg_btn_primary_gradient"
-            app:backgroundTint="@null" />
-
-    </LinearLayout>
-
-</RelativeLayout>
+    </RelativeLayout>
+</ScrollView>
