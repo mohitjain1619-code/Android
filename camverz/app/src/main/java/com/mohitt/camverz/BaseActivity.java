@@ -46,24 +46,35 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void applyWindowInsets(final View topView, final View bottomView) {
-        final View decorView = getWindow().getDecorView();
-        
-        final int initialTopPadding = (topView != null) ? topView.getPaddingTop() : 0;
-        final int initialBottomPadding = (bottomView != null) ? bottomView.getPaddingBottom() : 0;
-
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        final int fallbackStatusBar = (resourceId > 0) ? getResources().getDimensionPixelSize(resourceId) : dpToPx(36);
+        int statusBarHeight = (resourceId > 0) ? getResources().getDimensionPixelSize(resourceId) : dpToPx(38);
+        if (statusBarHeight < dpToPx(24)) {
+            statusBarHeight = dpToPx(38);
+        }
+
+        // Apply immediately synchronously so topView is pushed down below status bar instantly
+        if (topView != null) {
+            topView.setPadding(
+                topView.getPaddingLeft(),
+                statusBarHeight + dpToPx(12),
+                topView.getPaddingRight(),
+                topView.getPaddingBottom()
+            );
+        }
+
+        final View decorView = getWindow().getDecorView();
+        final int finalStatusBarHeight = statusBarHeight;
 
         ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
             Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             Insets navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
 
-            int topMargin = Math.max(statusBarInsets.top, fallbackStatusBar);
+            int topMargin = Math.max(statusBarInsets.top, finalStatusBarHeight);
 
             if (topView != null) {
                 topView.setPadding(
                     topView.getPaddingLeft(),
-                    topMargin + Math.max(initialTopPadding, dpToPx(16)),
+                    topMargin + dpToPx(12),
                     topView.getPaddingRight(),
                     topView.getPaddingBottom()
                 );
@@ -79,7 +90,7 @@ public class BaseActivity extends AppCompatActivity {
                         bottomView.getPaddingLeft(),
                         bottomView.getPaddingTop(),
                         bottomView.getPaddingRight(),
-                        initialBottomPadding + navigationBarInsets.bottom
+                        dpToPx(16) + navigationBarInsets.bottom
                     );
                 }
             }
