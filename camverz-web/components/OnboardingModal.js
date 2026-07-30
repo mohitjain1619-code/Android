@@ -54,7 +54,6 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
       return;
     }
 
-    // Call triggers native browser "Allow Location" permission popup if available
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
@@ -207,46 +206,42 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (GPS + Auto Network Fallback + Editable Inputs) */}
+        {/* Step 1: Location (100% Automatic Only - Zero Manual Inputs) */}
         {step === 1 && (
-          <div className={styles.stepContent}>
-            <p className={styles.stepDesc}>Where are you located?</p>
+          <div className={styles.stepContent} style={{ textAlign: 'center' }}>
+            <p className={styles.stepDesc}>Auto-detecting your location...</p>
             
             <button
               className="btn-neon"
               onClick={handleDetectLocationClick}
               disabled={locating}
-              style={{ width: '100%', padding: '12px 18px', fontSize: '0.95rem', marginBottom: 14 }}
+              style={{ width: '100%', padding: '14px 20px', fontSize: '1rem', marginBottom: 16 }}
             >
-              <MapPin size={16} />
-              {locating ? 'Detecting Location...' : '📍 Auto Detect Location (GPS)'}
+              <MapPin size={18} />
+              {locating ? 'Detecting Location...' : '📍 Auto Detect My Location'}
             </button>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', display: 'block' }}>City</label>
-                <input
-                  type="text"
-                  className="input-glass"
-                  placeholder="Enter or verify city (e.g. Gwalior)"
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  style={{ width: '100%' }}
-                />
+            {city && country ? (
+              <div style={{
+                marginTop: '16px',
+                padding: '14px 18px',
+                borderRadius: '12px',
+                background: 'rgba(0, 229, 255, 0.08)',
+                border: '1px solid rgba(0, 229, 255, 0.3)',
+                color: 'var(--neon-cyan)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                justifyContent: 'center'
+              }}>
+                <Check size={18} />
+                <span>Auto Detected: <strong>{city}, {country}</strong></span>
               </div>
-
-              <div>
-                <label style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', display: 'block' }}>Country</label>
-                <input
-                  type="text"
-                  className="input-glass"
-                  placeholder="Enter or verify country (e.g. India)"
-                  value={country}
-                  onChange={e => setCountry(e.target.value)}
-                  style={{ width: '100%' }}
-                />
-              </div>
-            </div>
+            ) : (
+              <p style={{ marginTop: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
+                {locating ? 'Detecting location via GPS/Network...' : 'Tap above to detect location.'}
+              </p>
+            )}
           </div>
         )}
 
