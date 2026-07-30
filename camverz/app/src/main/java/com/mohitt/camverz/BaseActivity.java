@@ -21,7 +21,7 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Enable edge-to-edge so window insets can be handled consistently across Android versions
+        // Enable edge-to-edge window insets
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         if (ENABLE_SCREENSHOT_PROTECTION) {
@@ -43,19 +43,24 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void applyWindowInsets(final View topView, final View bottomView) {
-        View targetView = (topView != null) ? topView : (bottomView != null ? bottomView : getWindow().getDecorView());
+        final View decorView = getWindow().getDecorView();
         
         final int initialTopPadding = (topView != null) ? topView.getPaddingTop() : 0;
         final int initialBottomPadding = (bottomView != null) ? bottomView.getPaddingBottom() : 0;
 
-        ViewCompat.setOnApplyWindowInsetsListener(targetView, (v, insets) -> {
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        final int fallbackStatusBar = (resourceId > 0) ? getResources().getDimensionPixelSize(resourceId) : dpToPx(36);
+
+        ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
             Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             Insets navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+
+            int topMargin = Math.max(statusBarInsets.top, fallbackStatusBar);
 
             if (topView != null) {
                 topView.setPadding(
                     topView.getPaddingLeft(),
-                    initialTopPadding + statusBarInsets.top,
+                    topMargin + initialTopPadding,
                     topView.getPaddingRight(),
                     topView.getPaddingBottom()
                 );
@@ -64,7 +69,7 @@ public class BaseActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
                 if (lp instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
-                    mlp.bottomMargin = navigationBarInsets.bottom;
+                    mlp.bottomMargin = Math.max(navigationBarInsets.bottom, dpToPx(16));
                     bottomView.setLayoutParams(mlp);
                 } else {
                     bottomView.setPadding(
@@ -78,7 +83,10 @@ public class BaseActivity extends AppCompatActivity {
             return insets;
         });
 
-        // Request insets dispatch
-        ViewCompat.requestApplyInsets(targetView);
+        ViewCompat.requestApplyInsets(decorView);
+    }
+
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
     }
 }
