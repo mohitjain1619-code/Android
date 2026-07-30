@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { updateUser } from '../lib/firestore';
-import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import styles from './OnboardingModal.module.css';
 
 const AVATARS = Array.from({ length: 15 }, (_, i) => `av${i + 1}`);
@@ -17,42 +17,19 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   const [avatar, setAvatar] = useState('av1');
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [gpsError, setGpsError] = useState('');
   const [dobError, setDobError] = useState('');
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
 
-  // IP Location Fallback Helper
-  const tryIpLocation = async () => {
-    try {
-      const res = await fetch('https://ipapi.co/json/');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.city) setCity(data.city);
-        if (data.country_name) setCountry(data.country_name);
-        return true;
-      }
-    } catch (err) {}
-
-    try {
-      const res2 = await fetch('https://ip-api.com/json/');
-      if (res2.ok) {
-        const data2 = await res2.json();
-        if (data2.city) setCity(data2.city);
-        if (data2.country) setCountry(data2.country);
-        return true;
-      }
-    } catch (e) {
-      console.error('IP Geolocation fallback error:', e);
-    }
-    return false;
-  };
-
-  // High-Accuracy GPS Request with Seamless IP Fallback (Never blocks user)
-  const requestLocation = () => {
+  // 100% PURE HARDWARE GPS LOCATION ONLY (No IP lookup APIs)
+  const requestPureGpsLocation = () => {
     setLocating(true);
+    setGpsError('');
 
     if (!navigator.geolocation) {
-      tryIpLocation().then(() => setLocating(false));
+      setGpsError('Geolocation is not supported by your browser.');
+      setLocating(false);
       return;
     }
 
@@ -62,7 +39,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
 
-          // 1st Priority: BigDataCloud High-Precision Reverse Geocoder (Google Maps precision)
+          // 1st Priority: BigDataCloud High-Precision Hardware GPS Geocoder
           const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
           if (bdcRes.ok) {
             const bdcData = await bdcRes.json();
@@ -87,28 +64,27 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
             setCity(detectedCity);
             setCountry(detectedCountry);
           } else {
-            await tryIpLocation();
+            setGpsError('Could not resolve city from GPS coordinates. Please tap to retry.');
           }
         } catch (e) {
-          await tryIpLocation();
+          setGpsError('GPS reverse geocoding error. Please tap to retry.');
         }
         setLocating(false);
       },
-      async (err) => {
-        console.warn('GPS denied or unavailable on browser, using network location fallback:', err.message);
-        await tryIpLocation();
+      (err) => {
+        console.warn('Pure GPS error / denied:', err.code, err.message);
+        if (err.code === 1) {
+          setGpsError('GPS Permission Denied. Please allow location access in your browser/iPhone settings and tap again.');
+        } else if (err.code === 3) {
+          setGpsError('GPS request timed out. Please make sure location/GPS is turned on and tap again.');
+        } else {
+          setGpsError('Unable to get GPS location. Please tap to try again.');
+        }
         setLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
     );
   };
-
-  // Auto-trigger location detection when reaching step 1
-  useEffect(() => {
-    if (step === 1 && (!city || !country)) {
-      requestLocation();
-    }
-  }, [step]);
 
   const isAdult = (dateStr) => {
     if (!dateStr) return false;
@@ -206,19 +182,19 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (Seamless Auto Detect + Fail-Safe Fallback) */}
+        {/* Step 1: Location (100% Pure GPS - Zero IP APIs) */}
         {step === 1 && (
           <div className={styles.stepContent} style={{ textAlign: 'center' }}>
-            <p className={styles.stepDesc}>Detecting your location...</p>
+            <p className={styles.stepDesc}>Tap below to allow GPS and detect your exact city</p>
             
             <button
               className="btn-neon"
-              onClick={requestLocation}
+              onClick={requestPureGpsLocation}
               disabled={locating}
               style={{ width: '100%', padding: '14px 20px', fontSize: '1rem', marginBottom: 16 }}
             >
               <MapPin size={18} />
-              {locating ? 'Detecting Location...' : '📍 Auto Detect My Location'}
+              {locating ? 'Acquiring Pure GPS Location...' : '📍 Detect My Location (GPS)'}
             </button>
 
             {city && country ? (
@@ -235,11 +211,28 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
                 justifyContent: 'center'
               }}>
                 <Check size={18} />
-                <span>Auto Detected: <strong>{city}, {country}</strong></span>
+                <span>GPS Verified: <strong>{city}, {country}</strong></span>
+              </div>
+            ) : gpsError ? (
+              <div style={{
+                marginTop: '16px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.88rem',
+                textAlign: 'left'
+              }}>
+                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <span>{gpsError}</span>
               </div>
             ) : (
               <p style={{ marginTop: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
-                {locating ? 'Detecting your city & country...' : 'Location auto-detection ready.'}
+                Tap the button to request pure device GPS location.
               </p>
             )}
           </div>
