@@ -27,7 +27,7 @@
                 <RelativeLayout
                     android:id="@+id/profile_header_layout"
                     android:layout_width="match_parent"
-                    android:layout_height="140dp"
+                    android:layout_height="150dp"
                     android:background="@drawable/bg_profile_cover"
                     android:paddingHorizontal="20dp"
                     android:paddingTop="12dp">
@@ -38,7 +38,7 @@
                         android:layout_height="40dp"
                         android:layout_alignParentStart="true"
                         android:layout_alignParentTop="true"
-                        android:background="@drawable/bg_glass_card_premium"
+                        android:background="@drawable/bg_feature_chip"
                         android:clickable="true"
                         android:focusable="true">
 
@@ -48,7 +48,7 @@
                             android:layout_gravity="center"
                             android:contentDescription="Back"
                             android:src="@drawable/ic_arrow_back"
-                            app:tint="@color/text_primary" />
+                            app:tint="#FFFFFF" />
                     </FrameLayout>
 
                     <ImageView
@@ -57,12 +57,12 @@
                         android:layout_height="40dp"
                         android:layout_alignParentEnd="true"
                         android:layout_alignParentTop="true"
-                        android:background="@drawable/bg_glass_card_premium"
+                        android:background="@drawable/bg_feature_chip"
                         android:clickable="true"
                         android:focusable="true"
                         android:padding="10dp"
                         android:src="@drawable/ic_more_vert"
-                        app:tint="@color/text_primary" />
+                        app:tint="#FFFFFF" />
                 </RelativeLayout>
 
                 <!-- Profile Card Grouping (Overlaps Cover Header) -->
@@ -71,8 +71,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
                     android:layout_marginTop="-50dp"
-                    android:background="@drawable/bg_glass_card_premium"
-                    android:elevation="6dp"
+                    android:background="@drawable/bg_floating_glass"
+                    android:elevation="8dp"
                     android:gravity="center_horizontal"
                     android:orientation="vertical"
                     android:padding="24dp">
@@ -88,7 +88,7 @@
                             android:layout_width="104dp"
                             android:layout_height="104dp"
                             android:src="@drawable/av1"
-                            app:civ_border_color="@color/accent_primary"
+                            app:civ_border_color="#00FFFF"
                             app:civ_border_width="3dp" />
 
                         <!-- Verification Badge Overlay -->
@@ -132,7 +132,7 @@
                                 android:gravity="center"
                                 android:inputType="textPersonName"
                                 android:singleLine="true"
-                                android:textColor="@color/text_primary"
+                                android:textColor="#FFFFFF"
                                 android:textSize="22sp"
                                 android:textStyle="bold"
                                 tools:text="User Name" />
@@ -152,7 +152,7 @@
                                 android:paddingHorizontal="8dp"
                                 android:paddingVertical="4dp"
                                 android:text="Change"
-                                android:textColor="@color/text_white"
+                                android:textColor="#FFFFFF"
                                 android:textSize="10sp"
                                 android:textStyle="bold"
                                 android:visibility="gone" />
@@ -165,7 +165,7 @@
                                 android:clickable="true"
                                 android:focusable="true"
                                 android:src="@drawable/ic_edit"
-                                app:tint="@color/text_secondary" />
+                                app:tint="#00FFFF" />
                         </LinearLayout>
 
                         <TextView
@@ -173,7 +173,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="#E2E8F0"
                             android:textSize="14sp"
                             tools:text="24, Mumbai" />
 
@@ -182,7 +182,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:textColor="@color/text_muted"
+                            android:textColor="#CBD5E1"
                             android:textSize="12sp"
                             tools:text="ID: mohitjain" />
                     </LinearLayout>
@@ -192,11 +192,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
                         android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_btn_primary_glossy"
+                        android:background="@drawable/bg_btn_primary_gradient"
                         android:paddingHorizontal="20dp"
                         android:text="Verify Identity"
                         android:textAllCaps="false"
-                        android:textColor="@color/text_white"
+                        android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold"
                         android:visibility="gone"
@@ -207,7 +207,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="24dp"
-                        android:background="@drawable/bg_glass_card_premium"
+                        android:background="@drawable/bg_feature_chip"
                         android:gravity="center"
                         android:orientation="horizontal"
                         android:paddingVertical="12dp">
@@ -223,7 +223,7 @@
                                 android:id="@+id/followers_count"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/text_primary"
+                                android:textColor="#FFFFFF"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
                                 tools:text="1.2k" />
@@ -233,14 +233,14 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="Followers"
-                                android:textColor="@color/text_muted"
+                                android:textColor="#E2E8F0"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
                         <View
                             android:layout_width="1dp"
                             android:layout_height="28dp"
-                            android:background="@color/divider" />
+                            android:background="#40FFFFFF" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -253,7 +253,7 @@
                                 android:id="@+id/following_count"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@color/text_primary"
+                                android:textColor="#FFFFFF"
                                 android:textSize="18sp"
                                 android:textStyle="bold"
                                 tools:text="340" />
@@ -263,7 +263,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="Following"
-                                android:textColor="@color/text_muted"
+                                android:textColor="#E2E8F0"
                                 android:textSize="12sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -284,10 +284,10 @@
                         android:layout_width="0dp"
                         android:layout_height="48dp"
                         android:layout_weight="1"
-                        android:background="@drawable/bg_btn_primary_glossy"
+                        android:background="@drawable/bg_btn_primary_gradient"
                         android:text="Follow"
                         android:textAllCaps="false"
-                        android:textColor="@color/text_white"
+                        android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         app:backgroundTint="@null" />
@@ -298,16 +298,16 @@
                         android:layout_height="48dp"
                         android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:background="@drawable/bg_glass_card_premium"
+                        android:background="@drawable/bg_floating_glass"
                         android:drawableStart="@drawable/ic_message"
-                        android:drawableTint="@color/accent_primary"
+                        android:drawableTint="#00FFFF"
                         android:paddingHorizontal="16dp"
                         android:text="Message"
                         android:textAllCaps="false"
-                        android:textColor="@color/text_primary"
+                        android:textColor="#FFFFFF"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        app:iconTint="@color/accent_primary" />
+                        app:iconTint="#00FFFF" />
                 </LinearLayout>
 
                 <!-- Bio Section Card -->
@@ -316,7 +316,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="20dp"
                     android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_glass_card_premium"
+                    android:background="@drawable/bg_floating_glass"
                     android:orientation="vertical"
                     android:padding="20dp">
 
@@ -330,7 +330,7 @@
                             android:layout_alignParentStart="true"
                             android:layout_centerVertical="true"
                             android:text="Bio"
-                            android:textColor="@color/text_primary"
+                            android:textColor="#FFFFFF"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
@@ -343,7 +343,7 @@
                             android:clickable="true"
                             android:focusable="true"
                             android:src="@drawable/ic_edit"
-                            app:tint="@color/text_secondary" />
+                            app:tint="#00FFFF" />
                     </RelativeLayout>
 
                     <EditText
@@ -353,7 +353,7 @@
                         android:layout_marginTop="10dp"
                         android:background="@android:color/transparent"
                         android:inputType="textMultiLine"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#E2E8F0"
                         android:textSize="14sp"
                         tools:text="Write your bio..." />
                 </LinearLayout>
@@ -365,8 +365,8 @@
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="24dp"
                     android:text="Posts"
-                    android:textColor="@color/text_primary"
-                    android:textSize="18sp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <!-- User Posts List -->

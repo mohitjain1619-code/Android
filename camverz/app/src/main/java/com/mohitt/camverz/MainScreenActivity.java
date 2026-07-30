@@ -150,6 +150,8 @@ public class MainScreenActivity extends BaseActivity {
 
         menuIcon.setOnClickListener(this::showPopupMenu);
 
+        addTouchScaleFeedback(cardStraight, cardGay, cardLesbian, chipCommunityHub, chipFriends, videoNav, profileNav, imageNav, messageNav);
+
         cardGay.setOnClickListener(v -> {
             if (!"male".equalsIgnoreCase(tokenManager.getUserGender())) {
                 Toast.makeText(MainScreenActivity.this, "Only males can join Gay section", Toast.LENGTH_SHORT).show();
@@ -165,6 +167,24 @@ public class MainScreenActivity extends BaseActivity {
             goToConnecting("lesbian");
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
+    }
+
+    private void addTouchScaleFeedback(View... views) {
+        for (View v : views) {
+            if (v == null) continue;
+            v.setOnTouchListener((view, event) -> {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        view.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                        break;
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        view.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                        break;
+                }
+                return false;
+            });
+        }
     }
 
     private void showPopupMenu(View view) {

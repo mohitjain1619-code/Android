@@ -46,7 +46,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Good Evening 👋"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#E2E8F0"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -56,7 +56,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="Mohit"
-                        android:textColor="@color/text_primary"
+                        android:textColor="#FFFFFF"
                         android:textSize="26sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -67,25 +67,25 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:background="@drawable/bg_glass_card_luxury"
+                    android:background="@drawable/bg_feature_chip"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp">
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="8dp">
 
                     <View
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
+                        android:layout_width="10dp"
+                        android:layout_height="10dp"
                         android:background="@drawable/bg_connection_dot" />
 
                     <TextView
                         android:id="@+id/tvLiveCount"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
+                        android:layout_marginStart="8dp"
                         android:text="Live Online"
-                        android:textColor="@color/text_primary"
-                        android:textSize="12sp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </RelativeLayout>
@@ -96,7 +96,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 android:text="Quick Actions"
-                android:textColor="@color/text_primary"
+                android:textColor="#FFFFFF"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
@@ -118,31 +118,31 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="10dp"
-                        android:background="@drawable/bg_glass_card_premium"
+                        android:background="@drawable/bg_floating_glass"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="💬 Community, Real Meet, Fantasy "
-                            android:textColor="@color/text_primary"
-                            android:textSize="13sp"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_btn_primary_gradient"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="2dp"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp"
                             android:text="SOON"
-                            android:textColor="@color/text_white"
-                            android:textSize="9sp"
+                            android:textColor="#FFFFFF"
+                            android:textSize="10sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -152,20 +152,20 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="10dp"
-                        android:background="@drawable/bg_glass_card_premium"
+                        android:background="@drawable/bg_floating_glass"
                         android:clickable="true"
                         android:focusable="true"
                         android:gravity="center_vertical"
                         android:orientation="horizontal"
-                        android:paddingHorizontal="14dp"
-                        android:paddingVertical="10dp">
+                        android:paddingHorizontal="16dp"
+                        android:paddingVertical="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="👥 Friends &amp; Chats"
-                            android:textColor="@color/text_primary"
-                            android:textSize="13sp"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
@@ -176,8 +176,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Choose Your Interest"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -185,8 +185,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Select a category to start matching"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textColor="#CBD5E1"
+                android:textSize="14sp" />
 
             <!-- Straight Card -->
             <LinearLayout
@@ -196,19 +196,19 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/bg_interest_straight"
                 android:clickable="true"
-                android:elevation="4dp"
+                android:elevation="6dp"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="20dp">
 
                 <TextView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_glass_card_premium"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_feature_chip"
                     android:gravity="center"
                     android:text="🔥"
-                    android:textSize="26sp" />
+                    android:textSize="28sp" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -221,25 +221,25 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Straight"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:text="Meet people looking for meaningful conversations"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#E2E8F0"
                         android:textSize="13sp" />
                 </LinearLayout>
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:rotation="180"
                     android:src="@drawable/ic_arrow_back"
-                    app:tint="@color/accent_orange" />
+                    app:tint="#FF9F43" />
             </LinearLayout>
 
             <!-- Gay Card -->
@@ -247,22 +247,22 @@
                 android:id="@+id/cardGay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_interest_gay"
                 android:clickable="true"
-                android:elevation="4dp"
+                android:elevation="6dp"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="20dp">
 
                 <TextView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_glass_card_premium"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_feature_chip"
                     android:gravity="center"
                     android:text="🏳️‍🌈"
-                    android:textSize="26sp" />
+                    android:textSize="28sp" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -275,25 +275,25 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Gay"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:text="Connect with verified male users"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#E2E8F0"
                         android:textSize="13sp" />
                 </LinearLayout>
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:rotation="180"
                     android:src="@drawable/ic_arrow_back"
-                    app:tint="@color/accent_primary" />
+                    app:tint="#00FFFF" />
             </LinearLayout>
 
             <!-- Lesbian Card -->
@@ -301,22 +301,22 @@
                 android:id="@+id/cardLesbian"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="16dp"
                 android:background="@drawable/bg_interest_lesbian"
                 android:clickable="true"
-                android:elevation="4dp"
+                android:elevation="6dp"
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:padding="20dp">
 
                 <TextView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/bg_glass_card_premium"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/bg_feature_chip"
                     android:gravity="center"
                     android:text="💗"
-                    android:textSize="26sp" />
+                    android:textSize="28sp" />
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -329,25 +329,25 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Lesbian"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:layout_marginTop="3dp"
                         android:text="Meet verified female users"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#E2E8F0"
                         android:textSize="13sp" />
                 </LinearLayout>
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
                     android:rotation="180"
                     android:src="@drawable/ic_arrow_back"
-                    app:tint="@color/accent_rose" />
+                    app:tint="#FF007F" />
             </LinearLayout>
 
         </LinearLayout>
