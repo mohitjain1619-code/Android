@@ -5,12 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:minHeight="56dp"
-    android:background="@color/bg_primary"
+    android:background="@android:color/transparent"
     android:gravity="center_vertical"
     android:paddingStart="20dp"
-    android:paddingTop="10dp"
+    android:paddingTop="12dp"
     android:paddingEnd="20dp"
-    android:paddingBottom="10dp">
+    android:paddingBottom="12dp">
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -25,14 +25,14 @@
             android:layout_height="34dp"
             android:layout_marginEnd="10dp"
             android:src="@drawable/ic_app_logo"
-            app:civ_border_color="@color/accent_primary"
+            app:civ_border_color="#00FFFF"
             app:civ_border_width="1.5dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Camverz"
-            android:textColor="@color/text_primary"
+            android:textColor="#FFFFFF"
             android:textSize="22sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -49,6 +49,6 @@
         android:focusable="true"
         android:padding="8dp"
         android:src="@drawable/ic_menu"
-        app:tint="@color/text_primary" />
+        app:tint="#FFFFFF" />
 
 </RelativeLayout>

@@ -23,6 +23,9 @@ public class BaseActivity extends AppCompatActivity {
 
         // Enable edge-to-edge window insets
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        
+        // Ensure status bar icons are white on dark ambient backgrounds
+        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
 
         if (ENABLE_SCREENSHOT_PROTECTION) {
             getWindow().setFlags(
