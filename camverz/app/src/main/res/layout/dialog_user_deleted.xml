@@ -4,9 +4,9 @@
     android:layout_width="300dp"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    app:cardBackgroundColor="#1A1A1A"
+    app:cardBackgroundColor="@color/bg_card"
     app:cardCornerRadius="20dp"
-    app:cardElevation="10dp">
+    app:cardElevation="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,41 +16,41 @@
         android:padding="24dp">
 
         <ImageView
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginBottom="16dp"
             android:src="@drawable/ic_user_placeholder"
-            app:tint="#888888" />
+            app:tint="@color/text_muted" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:text="Account Deleted"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="20dp"
             android:gravity="center"
-            android:text="This user has deleted their account."
-            android:textColor="#BBBBBB"
-            android:textSize="16sp" />
+            android:text="This user account is no longer available."
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
 
         <Button
             android:id="@+id/btn_ok"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:backgroundTint="#00D9FF"
+            android:background="@drawable/bg_btn_primary_gradient"
             android:text="OK"
             android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textColor="@color/text_white"
+            android:textSize="15sp"
             android:textStyle="bold"
-            app:cornerRadius="24dp" />
+            app:backgroundTint="@null" />
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

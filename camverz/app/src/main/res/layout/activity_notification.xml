@@ -4,41 +4,56 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_feed_shiny"
+    android:background="@color/bg_primary"
     tools:context=".NotificationActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+        android:layout_height="wrap_content"
+        android:background="@color/bg_card"
+        app:contentInsetStart="0dp">
 
-        <FrameLayout
-            android:id="@+id/back_button_container"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_arrow_back"
-                android:tint="#00D9FF"
-                android:contentDescription="Back" />
-        </FrameLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Notifications"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:minHeight="56dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
 
+            <FrameLayout
+                android:id="@+id/back_button_container"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_glass_card_luxury"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="@color/text_primary"
+                    android:contentDescription="Back" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Notifications"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/back_button_container"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:layout_marginStart="16dp" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -46,7 +61,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar"
-        android:padding="8dp" />
+        android:layout_above="@id/floating_menu_container"
+        android:padding="16dp"
+        android:clipToPadding="false"/>
 
     <TextView
         android:id="@+id/no_notifications_text"
@@ -54,99 +71,16 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="No notifications yet"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
+        android:textColor="@color/text_muted"
+        android:textSize="15sp"
         android:visibility="gone" />
 
-    <!-- Floating Menu Buttons - 4 Small Circles -->
-    <FrameLayout
+    <!-- Floating Menu Buttons -->
+    <include
+        android:id="@+id/floating_menu_container"
+        layout="@layout/bottom_nav_menu_messages"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_alignParentBottom="true"
-        android:background="@android:color/transparent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:spacing="8dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp">
-
-            <!-- Home -->
-            <FrameLayout
-                android:id="@+id/menu_home_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_flash"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Home" />
-            </FrameLayout>
-
-            <!-- Explore -->
-            <FrameLayout
-                android:id="@+id/menu_explore_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_comment"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Explore" />
-            </FrameLayout>
-
-            <!-- Messages -->
-            <FrameLayout
-                android:id="@+id/menu_messages_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_chat"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Messages" />
-            </FrameLayout>
-
-            <!-- Profile -->
-            <FrameLayout
-                android:id="@+id/menu_profile_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_heart"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Profile" />
-            </FrameLayout>
-
-        </LinearLayout>
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

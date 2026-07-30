@@ -4,112 +4,154 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
-    android:background="@drawable/bg_glassy_post"
-    android:padding="16dp">
+    android:layout_marginBottom="16dp"
+    android:background="@drawable/bg_glass_card_premium"
+    android:elevation="4dp"
+    android:padding="20dp">
 
-    <!-- User Info Header -->
+    <!-- User Header Avatar -->
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/profile_image"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:src="@drawable/ic_user_placeholder" />
+        android:src="@drawable/ic_user_placeholder"
+        app:civ_border_color="@color/accent_primary"
+        app:civ_border_width="2dp" />
 
     <TextView
         android:id="@+id/username_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/profile_image"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="14dp"
         android:layout_toEndOf="@id/profile_image"
-        android:textColor="@android:color/white"
+        android:textColor="@color/text_primary"
         android:textSize="16sp"
         android:textStyle="bold"
         tools:text="username" />
 
-    <!-- Verification badge next to username -->
     <ImageView
         android:id="@+id/post_verification_badge"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
         android:layout_alignTop="@id/username_text_view"
-        android:layout_marginStart="4dp"
+        android:layout_marginStart="6dp"
         android:layout_toEndOf="@id/username_text_view"
+        android:contentDescription="User Verified"
         android:src="@drawable/ic_verified_badge"
         android:visibility="gone"
-        android:contentDescription="User Verified" />
+        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/timestamp_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/username_text_view"
         android:layout_alignStart="@id/username_text_view"
-        android:textColor="#B3FFFFFF"
+        android:layout_below="@id/username_text_view"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/text_muted"
         android:textSize="12sp"
         tools:text="2 hours ago" />
 
     <ImageView
         android:id="@+id/post_menu_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
         android:src="@drawable/ic_more_vert"
         android:visibility="gone"
-        tools:visibility="visible"/>
+        app:tint="@color/text_secondary"
+        tools:visibility="visible" />
 
-    <!-- Post Content -->
     <TextView
         android:id="@+id/post_text_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/profile_image"
         android:layout_marginTop="16dp"
-        android:textColor="@android:color/white"
-        android:textSize="18sp"
-        tools:text="This is a sample post text that is long enough to wrap to multiple lines." />
+        android:lineSpacingExtra="4dp"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        tools:text="This is a sample post text showing how clean typography and generous whitespace feel premium." />
 
-    <!-- Action Buttons -->
+    <!-- Action Bar -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/post_text_view"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="20dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_glass_input"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp">
+
+            <ImageView
+                android:id="@+id/like_button"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_like_outline"
+                app:tint="@color/accent_rose" />
+
+            <TextView
+                android:id="@+id/like_count_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="12" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_glass_input"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp">
+
+            <ImageView
+                android:id="@+id/comment_button"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_comment"
+                app:tint="@color/accent_cyan" />
+
+            <TextView
+                android:id="@+id/comment_count_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                tools:text="5" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Bookmark action icon -->
         <ImageView
-            android:id="@+id/like_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_like_outline" />
-
-        <TextView
-            android:id="@+id/like_count_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:textColor="#B3FFFFFF"
-            tools:text="12" />
-
-        <ImageView
-            android:id="@+id/comment_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:src="@drawable/ic_comment" />
-
-        <TextView
-            android:id="@+id/comment_count_text_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:textColor="#B3FFFFFF"
-            tools:text="12" />
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_save"
+            app:tint="@color/text_muted" />
 
     </LinearLayout>
 

@@ -4,171 +4,194 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_feed_shiny"
+    android:background="@drawable/bg_page_ambient_gradient"
     tools:context=".InboxActivity">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_glass_card_premium"
+        android:elevation="4dp"
+        app:contentInsetStart="0dp">
 
-        <FrameLayout
-            android:id="@+id/back_button_container"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_arrow_back"
-                android:tint="#00D9FF"
-                android:contentDescription="Back" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/notification_layout"
-            android:layout_width="wrap_content"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end">
+            android:minHeight="60dp"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
 
-            <ImageView
-                android:id="@+id/notification_bell"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:src="@drawable/ic_notification_bell" />
+            <FrameLayout
+                android:id="@+id/back_button_container"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="@color/text_primary" />
+            </FrameLayout>
 
             <TextView
-                android:id="@+id/notification_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end|top"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/notification_badge_background"
-                android:gravity="center"
-                android:padding="4dp"
-                android:textColor="@android:color/white"
-                android:textSize="10sp"
+                android:layout_marginStart="16dp"
+                android:text="Messages"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
                 android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="1" />
-        </FrameLayout>
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/back_button_container"
+                app:layout_constraintTop_toTopOf="parent" />
 
+            <FrameLayout
+                android:id="@+id/notification_layout"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/notification_bell"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_notification_bell"
+                    app:tint="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/notification_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|top"
+                    android:background="@drawable/message_badge_background"
+                    android:gravity="center"
+                    android:paddingHorizontal="5dp"
+                    android:paddingVertical="2dp"
+                    android:textColor="@color/text_white"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="1" />
+            </FrameLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.appcompat.widget.Toolbar>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/inboxRecyclerView"
+    <!-- Scrollable Content Section -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@id/floating_menu_container"
         android:layout_below="@id/toolbar"
-        android:padding="8dp" />
+        android:orientation="vertical">
+
+        <!-- Interactive Search Input Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_glass_card_premium"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_search_pulse"
+                app:tint="@color/text_muted" />
+
+            <EditText
+                android:id="@+id/search_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:background="@android:color/transparent"
+                android:hint="Search messages &amp; people..."
+                android:imeOptions="actionSearch"
+                android:inputType="textPersonName"
+                android:singleLine="true"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_muted"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Active Stories / Users Bar (Hidden when empty) -->
+        <LinearLayout
+            android:id="@+id/active_now_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="Active Now"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/active_users_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <!-- Messages List -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/inboxRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="16dp" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/no_messages_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="No messages yet"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
+        android:gravity="center"
+        android:text="No messages yet\nStart chatting after your video call"
+        android:textColor="@color/text_muted"
+        android:textSize="15sp"
         android:visibility="gone" />
 
-    <!-- Floating Menu Buttons - 4 Small Circles -->
-    <FrameLayout
+    <!-- Floating Menu Container -->
+    <include
         android:id="@+id/floating_menu_container"
+        layout="@layout/bottom_nav_menu_messages"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_alignParentBottom="true"
-        android:background="@android:color/transparent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:spacing="8dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp">
-
-            <!-- Home -->
-            <FrameLayout
-                android:id="@+id/menu_home_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_flash"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Home" />
-            </FrameLayout>
-
-            <!-- Explore -->
-            <FrameLayout
-                android:id="@+id/menu_explore_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_comment"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Explore" />
-            </FrameLayout>
-
-            <!-- Messages -->
-            <FrameLayout
-                android:id="@+id/menu_messages_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_chat"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Messages" />
-            </FrameLayout>
-
-            <!-- Profile -->
-            <FrameLayout
-                android:id="@+id/menu_profile_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_heart"
-                    android:tint="#FFFFFF"
-                    android:contentDescription="Profile" />
-            </FrameLayout>
-
-        </LinearLayout>
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

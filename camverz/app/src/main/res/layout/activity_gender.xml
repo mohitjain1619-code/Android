@@ -1,152 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F0C29">
+    android:background="@drawable/bg_page_ambient_gradient"
+    android:padding="28dp">
 
-    <!-- Background Shine -->
-    <ImageView
+    <!-- Progress -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@drawable/bg_premium_shine"
-        android:alpha="0.8" />
+        android:layout_height="6dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/divider"
+        android:max="100"
+        android:progress="33"
+        android:progressTint="@color/accent_primary" />
 
-    <RelativeLayout
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/progressBar"
+        android:layout_marginTop="40dp"
+        android:text="What's your gender?"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvTitle"
+        android:layout_marginTop="8dp"
+        android:text="This helps us match you with the right people"
+        android:textColor="@color/text_secondary"
+        android:textSize="15sp" />
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="24dp">
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvSubtitle"
+        android:layout_marginTop="40dp"
+        android:orientation="horizontal"
+        android:weightSum="2">
 
+        <!-- Male Card -->
         <LinearLayout
-            android:id="@+id/topBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:id="@+id/cardMale"
+            android:layout_width="0dp"
+            android:layout_height="180dp"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_interest_gay"
+            android:clickable="true"
+            android:elevation="4dp"
+            android:focusable="true"
+            android:gravity="center"
             android:orientation="vertical"
-            android:layout_marginTop="20dp">
+            android:padding="16dp">
 
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="6dp"
-                android:layout_marginTop="24dp"
-                android:progress="33"
-                android:progressTint="#00D9FF"
-                android:backgroundTint="#33FFFFFF" />
+            <ImageView
+                android:id="@+id/iconMale"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_male_blue"
+                app:tint="@color/accent_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Male"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/topBar"
-            android:layout_marginTop="40dp"
-            android:text="Select Your Gender"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:shadowColor="#8000D9FF"
-            android:shadowRadius="20" />
-
-        <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tvTitle"
-            android:layout_marginTop="8dp"
-            android:text="To find your perfect match"
-            android:textColor="#CCFFFFFF"
-            android:textSize="16sp" />
-
+        <!-- Female Card -->
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/tvSubtitle"
-            android:layout_marginTop="40dp"
-            android:orientation="horizontal"
-            android:weightSum="2">
+            android:id="@+id/cardFemale"
+            android:layout_width="0dp"
+            android:layout_height="180dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_interest_lesbian"
+            android:clickable="true"
+            android:elevation="4dp"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-            <!-- Male Card -->
-            <LinearLayout
-                android:id="@+id/cardMale"
-                android:layout_width="0dp"
-                android:layout_height="180dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_glass_item"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true">
+            <ImageView
+                android:id="@+id/iconFemale"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_female_symbol_pink"
+                app:tint="@color/accent_rose" />
 
-                <ImageView
-                    android:id="@+id/iconMale"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:src="@drawable/ic_male_blue"
-                    android:contentDescription="Male" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Male"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:shadowColor="#00D9FF"
-                    android:shadowRadius="10" />
-            </LinearLayout>
-
-            <!-- Female Card -->
-            <LinearLayout
-                android:id="@+id/cardFemale"
-                android:layout_width="0dp"
-                android:layout_height="180dp"
-                android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:background="@drawable/bg_glass_item"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:id="@+id/iconFemale"
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:src="@drawable/ic_female_symbol_pink"
-                    android:contentDescription="Female" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Female"
-                    android:textColor="#FFFFFF"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:shadowColor="#FF00FF"
-                    android:shadowRadius="10" />
-            </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Female"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
         </LinearLayout>
+    </LinearLayout>
 
-        <Button
-            android:id="@+id/btnContinue"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/bg_neon_button_pill"
-            android:text="Continue"
-            android:textAllCaps="false"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:backgroundTint="@null"
-            android:alpha="0.5"
-            android:enabled="false" />
+    <Button
+        android:id="@+id/btnContinue"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp"
+        android:alpha="0.4"
+        android:background="@drawable/bg_btn_primary_glossy"
+        android:enabled="false"
+        android:text="Continue"
+        android:textAllCaps="false"
+        android:textColor="@color/text_white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null" />
 
-    </RelativeLayout>
-</FrameLayout>
+</RelativeLayout>

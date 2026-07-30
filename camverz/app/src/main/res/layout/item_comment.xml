@@ -4,26 +4,28 @@
     android:id="@+id/comment_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
-    android:background="@drawable/bg_glassy_post"
-    android:padding="16dp">
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_glass_card_luxury"
+    android:padding="14dp">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/comment_profile_image"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_image" />
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:src="@drawable/ic_user_placeholder"
+        app:civ_border_width="1dp"
+        app:civ_border_color="@color/accent_primary" />
 
     <TextView
         android:id="@+id/comment_username"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/comment_profile_image"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="12dp"
         android:text="username"
         android:textStyle="bold"
-        android:textColor="@android:color/white" />
+        android:textSize="14sp"
+        android:textColor="@color/text_primary" />
 
     <TextView
         android:id="@+id/comment_text"
@@ -31,17 +33,19 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/comment_username"
         android:layout_toEndOf="@id/comment_profile_image"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="3dp"
         android:text="This is a comment"
-        android:textColor="@android:color/white" />
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/comment_text"
         android:layout_toEndOf="@id/comment_profile_image"
-        android.layout_marginStart="8dp"
-        android:layout_marginTop="4dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
         <TextView
@@ -49,49 +53,49 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="1h"
-            android:textColor="#B3FFFFFF"
-            android:textSize="12sp" />
+            android:textColor="@color/text_muted"
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/comment_like_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Like"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#B3FFFFFF"
-            android:layout_marginStart="16dp"/>
+            android:textColor="@color/text_muted"
+            android:layout_marginStart="14dp"/>
 
         <TextView
             android:id="@+id/comment_reply_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Reply"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="#B3FFFFFF"
-            android:layout_marginStart="16dp"/>
+            android:textColor="@color/text_muted"
+            android:layout_marginStart="14dp"/>
 
         <TextView
             android:id="@+id/comment_delete_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Delete"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="@android:color/holo_red_dark"
-            android:layout_marginStart="16dp"
+            android:textColor="@color/accent_rose"
+            android:layout_marginStart="14dp"
             android:visibility="gone"/>
     </LinearLayout>
 
     <ImageView
         android:id="@+id/comment_like_icon"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:src="@drawable/ic_like"
-        app:tint="@android:color/white"
+        app:tint="@color/accent_rose"
         android:visibility="gone"/>
 
 </RelativeLayout>

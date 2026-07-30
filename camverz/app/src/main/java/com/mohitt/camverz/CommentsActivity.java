@@ -48,6 +48,12 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comments);
 
+        // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
+        applyWindowInsets(findViewById(R.id.toolbar), findViewById(R.id.comment_input_layout));
+
+        // Back button
+        findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
+
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
 

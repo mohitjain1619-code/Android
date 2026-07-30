@@ -3,66 +3,59 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_call_gradient">
+    android:background="@drawable/bg_page_ambient_gradient">
 
-    <TextView
-        android:id="@+id/searchingTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Finding Your Perfect Match 🔍"
-        android:textSize="24sp"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="80dp" />
-
-    <!-- Animated Pulse Circle -->
-    <FrameLayout
-        android:layout_width="150dp"
-        android:layout_height="150dp"
         android:layout_centerInParent="true"
-        android:id="@+id/pulseContainer">
+        android:layout_marginHorizontal="24dp"
+        android:background="@drawable/bg_glass_card_premium"
+        android:elevation="8dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="36dp">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/ic_search_pulse"
-            app:tint="#FFFFFF"
-            android:alpha="0.6" />
-    </FrameLayout>
+        <!-- Animated Search Indicator -->
+        <ProgressBar
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:indeterminateTint="@color/accent_primary" />
 
-    <TextView
-        android:id="@+id/waitingText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Waiting for someone..."
-        android:textColor="#DDFFFFFF"
-        android:textSize="16sp"
-        android:layout_below="@id/pulseContainer"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp" />
+        <TextView
+            android:id="@+id/waitingText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Finding your match..."
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/categoryText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Category: Straight"
-        android:textColor="#AAFFFFFF"
-        android:textSize="14sp"
-        android:layout_below="@id/waitingText"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="10dp" />
+        <TextView
+            android:id="@+id/categoryText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Category: Straight"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/cancelButton"
         android:layout_width="200dp"
-        android:layout_height="55dp"
-        android:text="Cancel Search"
-        android:textSize="16sp"
-        android:textColor="#FFFFFF"
-        android:background="@drawable/bg_end_btn"
+        android:layout_height="52dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="80dp" />
+        android:layout_marginBottom="48dp"
+        android:background="@drawable/bg_glass_card_premium"
+        android:elevation="6dp"
+        android:text="Cancel"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:backgroundTint="@null" />
 
 </RelativeLayout>

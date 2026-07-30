@@ -1,27 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_container_top"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:minHeight="60dp"
+    android:background="@color/bg_primary"
+    android:gravity="center_vertical"
+    android:paddingStart="20dp"
+    android:paddingTop="14dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="14dp">
 
-    <!-- Glass Container with Premium Background -->
-    <RelativeLayout
-        android:id="@+id/nav_container_top"
-        android:layout_width="match_parent"
-        android:layout_height="65dp"
-        android:background="@drawable/premium_nav_bg_rectangular"
-        android:gravity="center_vertical">
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <!-- Menu Icon -->
-        <ImageView
-            android:id="@+id/menu_icon"
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_app_logo"
+            app:civ_border_color="@color/accent_primary"
+            app:civ_border_width="1.5dp" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:paddingEnd="20dp"
-            android:src="@drawable/ic_menu"
-            android:contentDescription="Menu" />
+            android:text="Camverz"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
-    </RelativeLayout>
+    <ImageView
+        android:id="@+id/menu_icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:contentDescription="Menu"
+        android:focusable="true"
+        android:padding="8dp"
+        android:src="@drawable/ic_menu"
+        app:tint="@color/text_primary" />
 
-</FrameLayout>
+</RelativeLayout>

@@ -12,7 +12,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_profile_post_card"
+        android:background="@drawable/bg_glass_card_luxury"
         android:padding="16dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
@@ -20,7 +20,9 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_alignParentStart="true"
-            android:layout_centerVertical="true" />
+            android:layout_centerVertical="true"
+            app:civ_border_width="1.5dp"
+            app:civ_border_color="@color/accent_primary"/>
 
         <TextView
             android:id="@+id/post_preview"
@@ -28,8 +30,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textColor="@color/accent_primary"
+            android:textSize="15sp"
             android:textStyle="bold"
             tools:text="Hello!" />
 
@@ -47,8 +49,8 @@
                 android:id="@+id/notification_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
                 tools:text="Mohit Jain liked your post" />
 
             <TextView
@@ -56,7 +58,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#CCCCCC"
+                android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 tools:text="2 hours ago" />
         </LinearLayout>

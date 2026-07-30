@@ -1,11 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
+    <!-- Premium Glassmorphism & Material 3 Color System -->
+
+    <!-- Ambient & Page Backgrounds -->
+    <color name="bg_primary">#F8FAFC</color>
+    <color name="bg_ambient_start">#EEF2FF</color> <!-- Soft Blue Tint -->
+    <color name="bg_ambient_end">#F5F3FF</color>   <!-- Soft Purple Tint -->
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_glass_card">#F2FFFFFF</color> <!-- 95% White Translucent -->
+    <color name="bg_glass_input">#0D000000</color>
+    <color name="bg_elevated">#F1F5F9</color>
+    <color name="bg_dark">#0F172A</color>
+    <color name="surface_dark">#1E293B</color>
+    <color name="surface_elevated">#334155</color>
+
+    <!-- Navigation & Capsule Tints -->
+    <color name="nav_active_pill">#E0E7FF</color>
+    <color name="nav_active_icon">#4F46E5</color>
+    <color name="nav_inactive_icon">#94A3B8</color>
+    <color name="nav_glass_bg">#EDFFFFFF</color>
+
+    <!-- Text -->
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_muted">#94A3B8</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- Brand Accents -->
+    <color name="accent_primary">#6366F1</color>  <!-- Indigo / Violet -->
+    <color name="accent_indigo">#4F46E5</color>
+    <color name="accent_purple">#8B5CF6</color>
+    <color name="accent_emerald">#10B981</color>
+    <color name="accent_rose">#F43F5E</color>
+    <color name="accent_pink">#EC4899</color>
+    <color name="accent_cyan">#0EA5E9</color>
+    <color name="accent_amber">#F59E0B</color>
+    <color name="accent_orange">#FF6B00</color>
+
+    <!-- Gradient Accents for Cards -->
+    <color name="card_straight_start">#FFF7ED</color>
+    <color name="card_straight_end">#FFEDD5</color>
+    <color name="card_gay_start">#EEF2FF</color>
+    <color name="card_gay_end">#E0E7FF</color>
+    <color name="card_lesbian_start">#FDF2F8</color>
+    <color name="card_lesbian_end">#FCE7F3</color>
+
+    <!-- Borders, Hairlines & Dividers -->
+    <color name="divider">#E2E8F0</color>
+    <color name="border">#CBD5E1</color>
+    <color name="glass_stroke">#1A4F46E5</color>
+    <color name="hairline_border">#12000000</color>
+    <color name="hairline_light">#20FFFFFF</color>
+
+    <!-- Skeleton Loading -->
+    <color name="skeleton_bg">#E2E8F0</color>
+    <color name="skeleton_shimmer">#F1F5F9</color>
+
+    <!-- Compatibility Aliases -->
+    <color name="purple_200">#C7D2FE</color>
+    <color name="purple_500">#6366F1</color>
+    <color name="purple_700">#4338CA</color>
+    <color name="teal_200">#38BDF8</color>
+    <color name="teal_700">#0284C7</color>
+    <color name="black">#0F172A</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="light_gray">#CCCCCC</color>
+    <color name="light_gray">#CBD5E1</color>
 </resources>

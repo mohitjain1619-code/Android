@@ -5,40 +5,41 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="12dp"
-    android:background="@drawable/bg_glass_item"
-    android:layout_marginBottom="8dp">
+    android:padding="16dp"
+    android:background="@drawable/bg_glass_card_luxury"
+    android:layout_marginBottom="12dp">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/user_avatar"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
         android:src="@drawable/av1"
-        app:civ_border_width="1dp"
-        app:civ_border_color="#FFFFFF"/>
+        app:civ_border_width="1.5dp"
+        app:civ_border_color="@color/accent_primary"/>
 
     <TextView
         android:id="@+id/user_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="14dp"
         android:text="Username"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:shadowColor="#8000D9FF"
-        android:shadowRadius="5"/>
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
 
     <Button
         android:id="@+id/btn_unblock"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:background="@drawable/bg_neon_button_pill"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_btn_primary_gradient"
         android:text="Unblock"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:textColor="@color/text_white"
+        android:textSize="13sp"
+        android:textStyle="bold"
         android:textAllCaps="false"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         app:backgroundTint="@null"/>
 
 </LinearLayout>

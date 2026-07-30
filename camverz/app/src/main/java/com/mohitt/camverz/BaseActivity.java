@@ -3,29 +3,33 @@ package com.mohitt.camverz;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 public class BaseActivity extends AppCompatActivity {
 
-    // ⚙️ DEBUG MODE: Change to false to disable screenshot/recording protection
-    private static final boolean ENABLE_SCREENSHOT_PROTECTION = false; // record = off (for testing)
-    // When you need production: change to true                          // record = on
-
+    private static final boolean ENABLE_SCREENSHOT_PROTECTION = false;
     private static final String TAG = "BaseActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Enable edge-to-edge so window insets can be handled consistently across Android versions
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
         if (ENABLE_SCREENSHOT_PROTECTION) {
-            // 🚫 Disable Screenshot + Screen Recording (FLAG_SECURE)
             getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE
             );
 
-            // Extra protection for WebRTC/Video calls (Block secure surface)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 getWindow().setFlags(
                     WindowManager.LayoutParams.FLAG_SECURE,
@@ -38,26 +42,43 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public void applyWindowInsets(android.view.View topView, android.view.View bottomView) {
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(getWindow().getDecorView(), (v, insets) -> {
-            androidx.core.graphics.Insets statusBarInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
-            androidx.core.graphics.Insets navigationBarInsets = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+    public void applyWindowInsets(final View topView, final View bottomView) {
+        View targetView = (topView != null) ? topView : (bottomView != null ? bottomView : getWindow().getDecorView());
+        
+        final int initialTopPadding = (topView != null) ? topView.getPaddingTop() : 0;
+        final int initialBottomPadding = (bottomView != null) ? bottomView.getPaddingBottom() : 0;
+
+        ViewCompat.setOnApplyWindowInsetsListener(targetView, (v, insets) -> {
+            Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            Insets navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
 
             if (topView != null) {
-                topView.setPadding(topView.getPaddingLeft(), statusBarInsets.top, topView.getPaddingRight(), topView.getPaddingBottom());
+                topView.setPadding(
+                    topView.getPaddingLeft(),
+                    initialTopPadding + statusBarInsets.top,
+                    topView.getPaddingRight(),
+                    topView.getPaddingBottom()
+                );
             }
             if (bottomView != null) {
-                // Apply navigation bar height as bottom margin to prevent overlapping
-                android.view.ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
-                if (lp instanceof android.view.ViewGroup.MarginLayoutParams) {
-                    android.view.ViewGroup.MarginLayoutParams mlp = (android.view.ViewGroup.MarginLayoutParams) lp;
+                ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
+                if (lp instanceof ViewGroup.MarginLayoutParams) {
+                    ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
                     mlp.bottomMargin = navigationBarInsets.bottom;
                     bottomView.setLayoutParams(mlp);
                 } else {
-                    bottomView.setPadding(bottomView.getPaddingLeft(), bottomView.getPaddingTop(), bottomView.getPaddingRight(), navigationBarInsets.bottom);
+                    bottomView.setPadding(
+                        bottomView.getPaddingLeft(),
+                        bottomView.getPaddingTop(),
+                        bottomView.getPaddingRight(),
+                        initialBottomPadding + navigationBarInsets.bottom
+                    );
                 }
             }
             return insets;
         });
+
+        // Request insets dispatch
+        ViewCompat.requestApplyInsets(targetView);
     }
 }

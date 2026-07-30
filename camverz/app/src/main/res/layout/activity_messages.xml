@@ -4,25 +4,47 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_feed_shiny"
+    android:background="@color/bg_primary"
     tools:context=".MessagesActivity">
 
-    <FrameLayout
-        android:id="@+id/back_button_container"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_margin="12dp"
-        android:clickable="true"
-        android:focusable="true">
+    <!-- Top Bar -->
+    <RelativeLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:background="@color/bg_card"
+        android:elevation="1dp"
+        android:paddingHorizontal="16dp">
 
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_arrow_back"
-            android:tint="#00D9FF"
-            android:contentDescription="Back" />
-    </FrameLayout>
+        <FrameLayout
+            android:id="@+id/back_button_container"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_glass_card_luxury">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/text_primary"
+                android:contentDescription="Back" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/back_button_container"
+            android:layout_marginStart="16dp"
+            android:text="Chat History"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/no_messages_text"
@@ -30,14 +52,16 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="No messages yet"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
+        android:textColor="@color/text_muted"
+        android:textSize="15sp"
         android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/messages_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp" />
+        android:layout_below="@id/top_bar"
+        android:padding="16dp"
+        android:clipToPadding="false"/>
 
 </RelativeLayout>

@@ -2,6 +2,7 @@ package com.mohitt.camverz;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -95,6 +96,14 @@ public class FeedActivity extends BaseActivity {
         filterFemale = findViewById(R.id.filter_female);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
+        // Hide opposite gender filter tab dynamically based on current user gender
+        String userGender = tokenManager.getUserGender();
+        if ("male".equalsIgnoreCase(userGender)) {
+            filterFemale.setVisibility(View.GONE);
+        } else if ("female".equalsIgnoreCase(userGender)) {
+            filterMale.setVisibility(View.GONE);
+        }
+
         postsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         postList = new ArrayList<>();
         adapter = new PostAdapter(this, postList);
@@ -153,6 +162,18 @@ public class FeedActivity extends BaseActivity {
                                 post.setLikedByMe(postObj.has("likedByMe") && postObj.get("likedByMe").getAsBoolean());
                                 post.setCreatedAt(postObj.has("createdAt") ? postObj.get("createdAt").getAsString() : "");
                                 
+                                // Enforce post privacy based on current user's gender
+                                String postCat = post.getCategory();
+                                String myGender = tokenManager.getUserGender();
+                                if ("male".equalsIgnoreCase(myGender) && "female".equalsIgnoreCase(postCat)) {
+                                    // Skip female-only post for male user
+                                    continue;
+                                }
+                                if ("female".equalsIgnoreCase(myGender) && "male".equalsIgnoreCase(postCat)) {
+                                    // Skip male-only post for female user
+                                    continue;
+                                }
+
                                 postList.add(post);
                             }
                         }

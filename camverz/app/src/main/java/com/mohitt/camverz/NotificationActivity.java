@@ -41,6 +41,8 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
 
+        applyWindowInsets(findViewById(R.id.toolbar), findViewById(R.id.floating_menu_container));
+
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
 

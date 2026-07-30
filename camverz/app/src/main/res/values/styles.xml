@@ -5,15 +5,20 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@drawable/bg_filter_selector</item>
-        <item name="android:textColor">@android:color/white</item>
-        <item name="android:padding">12dp</item>
+        <item name="android:textColor">@color/filter_text_color</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
         <item name="android:layout_margin">4dp</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
     </style>
 
     <style name="CustomPopupStyle" parent="Widget.AppCompat.PopupMenu">
-        <!-- You can add custom attributes here if needed in the future -->
+        <item name="android:popupBackground">@color/bg_card</item>
     </style>
 
 </resources>

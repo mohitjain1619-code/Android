@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp">
@@ -17,10 +18,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toEndOf="@id/image_message_profile"
-        android:background="@drawable/glass_bg"
-        android:padding="8dp"
+        android:background="@drawable/bg_glass_input"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp"
         android:text="Hello"
-        android:textColor="@android:color/white" />
+        android:textSize="15sp"
+        android:textColor="@color/text_primary"
+        android:maxWidth="260dp" />
 
     <TextView
         android:id="@+id/text_message_time"
@@ -29,6 +33,8 @@
         android:layout_below="@+id/text_message_body"
         android:layout_alignStart="@+id/text_message_body"
         android:layout_marginTop="4dp"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
         android:text="11:40" />
 
 </RelativeLayout>

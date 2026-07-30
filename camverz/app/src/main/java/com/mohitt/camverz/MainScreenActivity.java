@@ -43,6 +43,8 @@ public class MainScreenActivity extends BaseActivity {
     private ApiService api;
 
     private LinearLayout cardGay, cardLesbian, cardStraight;
+    private LinearLayout chipCommunityHub, chipFriends;
+    private TextView tvUserName, tvLiveCount;
     private ImageView menuIcon;
 
     private FrameLayout videoNav, profileNav, imageNav, messageNav;
@@ -63,14 +65,6 @@ public class MainScreenActivity extends BaseActivity {
         api = ApiClient.getInstance(this).getApi();
         socket = SocketManager.getInstance();
 
-        // Initialize AppLovin MAX SDK for ads (Disabled for now)
-        /*
-        AppLovinSdk.getInstance(this).setMediationProvider("max");
-        AppLovinSdk.initializeSdk(this, configuration -> {
-            runOnUiThread(this::loadBannerAd);
-        });
-        */
-
         if (tokenManager.isLoggedIn()) {
             // Register current user on socket for private calls
             try {
@@ -83,7 +77,29 @@ public class MainScreenActivity extends BaseActivity {
         cardGay = findViewById(R.id.cardGay);
         cardLesbian = findViewById(R.id.cardLesbian);
         cardStraight = findViewById(R.id.cardStraight);
+        tvUserName = findViewById(R.id.tvUserName);
+        tvLiveCount = findViewById(R.id.tvLiveCount);
         menuIcon = findViewById(R.id.menu_icon);
+
+        chipCommunityHub = findViewById(R.id.chip_community_hub);
+        chipFriends = findViewById(R.id.chip_friends);
+
+        if (tvUserName != null && tokenManager.getUserName() != null && !tokenManager.getUserName().isEmpty()) {
+            tvUserName.setText(tokenManager.getUserName());
+        }
+
+        if (chipCommunityHub != null) {
+            chipCommunityHub.setOnClickListener(v -> 
+                Toast.makeText(MainScreenActivity.this, "💬 Community, Real Meet & Fantasy features are coming soon!", Toast.LENGTH_LONG).show());
+        }
+
+        if (chipFriends != null) {
+            chipFriends.setOnClickListener(v -> {
+                Intent intent = new Intent(this, InboxActivity.class);
+                startActivity(intent);
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            });
+        }
 
         videoNav = findViewById(R.id.nav_video);
         profileNav = findViewById(R.id.nav_profile);
@@ -102,28 +118,29 @@ public class MainScreenActivity extends BaseActivity {
 
         videoNav.setOnClickListener(v -> {
             iconVideo.startAnimation(pop);
-            // Already on this screen, no navigation needed.
         });
 
         imageNav.setOnClickListener(v -> {
             iconImage.startAnimation(pop);
             Intent intent = new Intent(this, FeedActivity.class);
             startActivity(intent);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
 
         messageNav.setOnClickListener(v -> {
             iconMessage.startAnimation(pop);
             Intent intent = new Intent(this, InboxActivity.class);
             startActivity(intent);
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
 
         profileNav.setOnClickListener(v -> {
             iconProfile.startAnimation(pop);
 
-            // Set active for immediate feedback before navigating
-            iconProfile.setColorFilter(Color.WHITE);
-            iconVideo.setColorFilter(Color.parseColor("#AAAAAA"));
-            iconImage.setColorFilter(Color.parseColor("#AAAAAA"));
+            iconProfile.setColorFilter(Color.parseColor("#4F46E5"));
+            iconVideo.setColorFilter(Color.parseColor("#9CA3AF"));
+            iconImage.setColorFilter(Color.parseColor("#9CA3AF"));
+            iconMessage.setColorFilter(Color.parseColor("#9CA3AF"));
 
             Intent i = new Intent(this, ProfileActivity.class);
             i.putExtra("userId", tokenManager.getUserId());
@@ -159,7 +176,6 @@ public class MainScreenActivity extends BaseActivity {
                 logout();
                 return true;
             } else if (item.getItemId() == R.id.action_mediation_debugger) {
-                // AppLovinSdk.getInstance(this).showMediationDebugger();
                 Toast.makeText(this, "Mediation debugger is disabled", Toast.LENGTH_SHORT).show();
                 return true;
             }
@@ -171,18 +187,17 @@ public class MainScreenActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Reset the icon state to ensure Video tab is always active here
-        iconVideo.setColorFilter(Color.WHITE);
-        iconProfile.setColorFilter(Color.parseColor("#AAAAAA"));
-        iconImage.setColorFilter(Color.parseColor("#AAAAAA"));
-        iconMessage.setColorFilter(Color.parseColor("#AAAAAA"));
+        iconVideo.setColorFilter(Color.parseColor("#4F46E5"));
+        iconProfile.setColorFilter(Color.parseColor("#9CA3AF"));
+        iconImage.setColorFilter(Color.parseColor("#9CA3AF"));
+        iconMessage.setColorFilter(Color.parseColor("#9CA3AF"));
 
-        // Ensure user is registered on socket
         if (tokenManager.isLoggedIn()) {
             try {
                 JSONObject obj = new JSONObject();
                 obj.put("uid", tokenManager.getUserId());
                 socket.emit("register-user", obj);
+                socket.emit("get-online-count");
             } catch (JSONException e) { e.printStackTrace(); }
             fetchUnreadMessages();
         }
@@ -221,6 +236,34 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void setupSocketListeners() {
+        socket.on(Socket.EVENT_CONNECT, args -> runOnUiThread(() -> {
+            if (tvLiveCount != null) {
+                tvLiveCount.setText("Live Online");
+            }
+        }));
+
+        socket.on("online-users", args -> {
+            if (args != null && args.length > 0 && tvLiveCount != null) {
+                try {
+                    int count = Integer.parseInt(args[0].toString());
+                    runOnUiThread(() -> tvLiveCount.setText(count + " Online"));
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing online count", e);
+                }
+            }
+        });
+
+        socket.on("online_count", args -> {
+            if (args != null && args.length > 0 && tvLiveCount != null) {
+                try {
+                    int count = Integer.parseInt(args[0].toString());
+                    runOnUiThread(() -> tvLiveCount.setText(count + " Online"));
+                } catch (Exception e) {
+                    Log.e(TAG, "Error parsing online count", e);
+                }
+            }
+        });
+
         socket.on("match-found", args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
@@ -234,7 +277,6 @@ public class MainScreenActivity extends BaseActivity {
             }
         });
 
-        // Listener for incoming private calls
         socket.on("incoming-private-call", args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
@@ -245,13 +287,12 @@ public class MainScreenActivity extends BaseActivity {
                 String roomName = data.getString("room");
 
                 runOnUiThread(() -> {
-                    // Start ChatCallActivity as Receiver
                     Intent intent = new Intent(MainScreenActivity.this, CallActivity.class);
                     intent.putExtra("targetUserId", callerId);
                     intent.putExtra("targetUserName", callerName);
                     intent.putExtra("targetUserAvatar", callerAvatar);
                     intent.putExtra("isVideoCall", isVideo);
-                    intent.putExtra("isCaller", false); // I am the receiver
+                    intent.putExtra("isCaller", false);
                     intent.putExtra("roomName", roomName);
                     startActivity(intent);
                 });
@@ -285,30 +326,7 @@ public class MainScreenActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    private void loadBannerAd() {
-        // Disabled for now
-        /*
-        adView = new MaxAdView("YOUR_BANNER_AD_UNIT_ID", this);
-
-        // Set size (Match parent width, 50dp height for phones)
-        int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
-        adView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                heightPx
-        ));
-
-        // Background color is required for banners to function properly
-        adView.setBackgroundColor(Color.TRANSPARENT);
-
-        // Add to your layout
-        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
-        if (adContainer != null) {
-            adContainer.addView(adView);
-            // Load the ad
-            adView.loadAd();
-        }
-        */
-    }
+    private void loadBannerAd() {}
 
     @Override
     protected void onDestroy() {
@@ -317,6 +335,9 @@ public class MainScreenActivity extends BaseActivity {
             adView.destroy();
             adView = null;
         }
+        socket.off(Socket.EVENT_CONNECT);
+        socket.off("online-users");
+        socket.off("online_count");
         socket.off("match-found");
         socket.off("incoming-private-call");
         socket.off("new_message");

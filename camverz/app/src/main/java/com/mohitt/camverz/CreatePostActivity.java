@@ -39,6 +39,12 @@ public class CreatePostActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_post);
 
+        // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
+        applyWindowInsets(findViewById(R.id.toolbar), findViewById(R.id.post_button));
+
+        // Back button
+        findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
+
         api = ApiClient.getInstance(this).getApi();
 
         postText = findViewById(R.id.post_text);

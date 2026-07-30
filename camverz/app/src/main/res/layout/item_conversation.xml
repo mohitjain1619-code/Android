@@ -4,14 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardBackgroundColor="#00000000"
-    app:cardCornerRadius="18dp"
-    app:cardElevation="8dp">
+    app:cardBackgroundColor="@android:color/transparent"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/neon_card"
+        android:background="@drawable/bg_glass_card_luxury"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="16dp">
@@ -20,7 +20,9 @@
             android:id="@+id/conversation_user_avatar"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/ic_launcher_background" />
+            android:src="@drawable/ic_user_placeholder"
+            app:civ_border_width="1.5dp"
+            app:civ_border_color="@color/accent_primary"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -34,7 +36,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="User Name"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -43,8 +45,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="This was the last message..."
-                android:textColor="#CCCCCC"
-                android:textSize="14sp" />
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:layout_marginTop="2dp" />
 
         </LinearLayout>
 

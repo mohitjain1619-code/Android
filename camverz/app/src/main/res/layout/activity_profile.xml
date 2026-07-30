@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_page_ambient_gradient"
     tools:context=".ProfileActivity">
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -12,435 +13,380 @@
         android:layout_height="match_parent">
 
         <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/bg_feed_shiny">
-
-        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent"
+            android:scrollbars="none">
 
-            <RelativeLayout
-                android:id="@+id/profile_header_layout"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="100dp">
 
-                <FrameLayout
-                    android:id="@+id/back_button_container"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:layout_alignParentStart="true">
+                <!-- Header Actions & Cover Banner -->
+                <RelativeLayout
+                    android:id="@+id/profile_header_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="140dp"
+                    android:background="@drawable/bg_profile_cover"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="12dp">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center"
-                        android:src="@drawable/ic_arrow_back"
-                        app:tint="#00D9FF"
-                        android:contentDescription="Back" />
-                </FrameLayout>
-                
-                <de.hdodenhof.circleimageview.CircleImageView
-                    android:id="@+id/profile_image"
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="30dp"
-                    android:src="@drawable/av1"
-                    app:civ_border_color="@android:color/white"
-                    app:civ_border_width="2dp" />
-
-                <ImageView
-                    android:id="@+id/menu_icon"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_marginTop="8dp"
-                    android:src="@drawable/ic_more_vert"
-                    app:tint="#FFFFFF"
-                    android:padding="4dp"
-                    android:background="@drawable/bg_shiny_fab"
-                    android:clickable="true"
-                    android:focusable="true" />
-
-                <!-- Verification Badge (✓ checkmark icon) - positioned at bottom-right of avatar -->
-                <FrameLayout
-                    android:id="@+id/badge_container"
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="30dp"
-                    android:layout_alignTop="@id/profile_image">
-
-                    <ImageView
-                        android:id="@+id/verification_badge"
+                    <FrameLayout
+                        android:id="@+id/back_button_container"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:layout_gravity="bottom|end"
-                        android:src="@drawable/ic_verified_badge"
-                        android:visibility="gone"
-                        android:contentDescription="Verified Badge"
-                        android:scaleType="centerInside" />
-                </FrameLayout>
-
-                <Button
-                    android:id="@+id/verify_identity_button"
-                    android:layout_width="200dp"
-                    android:layout_height="48dp"
-                    android:layout_below="@id/profile_image"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="20dp"
-                    android:background="@drawable/bg_neon_button_pill"
-                    android:text="Verify Identity"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:shadowColor="#00D9FF"
-                    android:shadowRadius="8"
-                    android:letterSpacing="0.05"
-                    android:visibility="gone"
-                    app:backgroundTint="@null" />
-
-            </RelativeLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:background="@drawable/bg_glass_item"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <EditText
-                            android:id="@+id/profile_name"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@android:color/transparent"
-                            tools:text="User Name"
-                            android:textColor="@android:color/white"
-                            android:textSize="26sp"
-                            android:textStyle="bold"
-                            android:shadowColor="#8000D9FF"
-                            android:shadowRadius="10" />
+                        android:layout_alignParentStart="true"
+                        android:layout_alignParentTop="true"
+                        android:background="@drawable/bg_glass_card_premium"
+                        android:clickable="true"
+                        android:focusable="true">
 
                         <ImageView
-                            android:id="@+id/gender_icon"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
-                            android:layout_marginStart="10dp" />
-
-                        <TextView
-                            android:id="@+id/change_gender_text"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:background="@drawable/bg_neon_button_pill"
-                            android:text="Change"
-                            android:textColor="#FFFFFF"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="4dp"
-                            android:visibility="gone" />
-
-                    </LinearLayout>
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Back"
+                            android:src="@drawable/ic_arrow_back"
+                            app:tint="@color/text_primary" />
+                    </FrameLayout>
 
                     <ImageView
-                        android:id="@+id/edit_name_icon"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:src="@drawable/ic_edit"
-                        app:tint="#FFFFFF"/>
+                        android:id="@+id/menu_icon"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentTop="true"
+                        android:background="@drawable/bg_glass_card_premium"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_more_vert"
+                        app:tint="@color/text_primary" />
+                </RelativeLayout>
 
+                <!-- Profile Card Grouping (Overlaps Cover Header) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="-50dp"
+                    android:background="@drawable/bg_glass_card_premium"
+                    android:elevation="6dp"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="24dp">
+
+                    <!-- Avatar + Badge Container -->
+                    <RelativeLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp">
+
+                        <de.hdodenhof.circleimageview.CircleImageView
+                            android:id="@+id/profile_image"
+                            android:layout_width="104dp"
+                            android:layout_height="104dp"
+                            android:src="@drawable/av1"
+                            app:civ_border_color="@color/accent_primary"
+                            app:civ_border_width="3dp" />
+
+                        <!-- Verification Badge Overlay -->
+                        <FrameLayout
+                            android:id="@+id/badge_container"
+                            android:layout_width="34dp"
+                            android:layout_height="34dp"
+                            android:layout_alignBottom="@id/profile_image"
+                            android:layout_alignEnd="@id/profile_image"
+                            android:layout_marginBottom="-4dp"
+                            android:layout_marginEnd="-4dp">
+
+                            <ImageView
+                                android:id="@+id/verification_badge"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:contentDescription="Verified Badge"
+                                android:src="@drawable/ic_verified_badge"
+                                android:visibility="gone" />
+                        </FrameLayout>
+                    </RelativeLayout>
+
+                    <!-- User Identity Details -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <EditText
+                                android:id="@+id/profile_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/transparent"
+                                android:gravity="center"
+                                android:inputType="textPersonName"
+                                android:singleLine="true"
+                                android:textColor="@color/text_primary"
+                                android:textSize="22sp"
+                                android:textStyle="bold"
+                                tools:text="User Name" />
+
+                            <ImageView
+                                android:id="@+id/gender_icon"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="6dp" />
+
+                            <TextView
+                                android:id="@+id/change_gender_text"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_btn_primary_gradient"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="4dp"
+                                android:text="Change"
+                                android:textColor="@color/text_white"
+                                android:textSize="10sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <ImageView
+                                android:id="@+id/edit_name_icon"
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_marginStart="8dp"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:src="@drawable/ic_edit"
+                                app:tint="@color/text_secondary" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/profile_details"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="14sp"
+                            tools:text="24, Mumbai" />
+
+                        <TextView
+                            android:id="@+id/user_id"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/text_muted"
+                            android:textSize="12sp"
+                            tools:text="ID: mohitjain" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/verify_identity_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_btn_primary_glossy"
+                        android:paddingHorizontal="20dp"
+                        android:text="Verify Identity"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_white"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        app:backgroundTint="@null" />
+
+                    <!-- Stats Section Pills -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="24dp"
+                        android:background="@drawable/bg_glass_card_premium"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:paddingVertical="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/followers_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                tools:text="1.2k" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Followers"
+                                android:textColor="@color/text_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="28dp"
+                            android:background="@color/divider" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/following_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/text_primary"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                tools:text="340" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Following"
+                                android:textColor="@color/text_muted"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
 
+                <!-- Actions Container for Other Users -->
+                <LinearLayout
+                    android:id="@+id/other_user_actions_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/follow_button"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_btn_primary_glossy"
+                        android:text="Follow"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_white"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@null" />
+
+                    <Button
+                        android:id="@+id/message_button"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_glass_card_premium"
+                        android:drawableStart="@drawable/ic_message"
+                        android:drawableTint="@color/accent_primary"
+                        android:paddingHorizontal="16dp"
+                        android:text="Message"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:iconTint="@color/accent_primary" />
+                </LinearLayout>
+
+                <!-- Bio Section Card -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@drawable/bg_glass_card_premium"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
+                            android:text="Bio"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:id="@+id/edit_bio_icon"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:src="@drawable/ic_edit"
+                            app:tint="@color/text_secondary" />
+                    </RelativeLayout>
+
+                    <EditText
+                        android:id="@+id/bio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@android:color/transparent"
+                        android:inputType="textMultiLine"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        tools:text="Write your bio..." />
+                </LinearLayout>
+
+                <!-- Posts Section Header -->
                 <TextView
-                    android:id="@+id/profile_details"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:textColor="#E0E0E0"
-                    android:textSize="16sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
                     android:layout_marginTop="24dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/followers_count"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            tools:text="0"
-                            android:textColor="#FFFFFF"
-                            android:textSize="22sp"
-                            android:textStyle="bold"
-                            android:shadowColor="#00D9FF"
-                            android:shadowRadius="10" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Followers"
-                            android:textColor="#CCFFFFFF"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="1dp"
-                        android:layout_height="40dp"
-                        android:background="#44FFFFFF" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/following_count"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            tools:text="0"
-                            android:textColor="#FFFFFF"
-                            android:textSize="22sp"
-                            android:textStyle="bold"
-                            android:shadowColor="#00D9FF"
-                            android:shadowRadius="10" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Following"
-                            android:textColor="#CCFFFFFF"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/other_user_actions_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal"
-                android:visibility="gone">
-
-                <Button
-                    android:id="@+id/follow_button"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_neon_button_pill"
-                    android:text="Follow"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    app:backgroundTint="@null"/>
-
-                <Button
-                    android:id="@+id/message_button"
-                    android:layout_width="0dp"
-                    android:layout_height="56dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_glass_item"
-                    android:drawableStart="@drawable/ic_chat"
-                    android:drawableTint="#FFFFFF"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="20dp"
-                    android:text="Message"
-                    android:textAllCaps="false"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:text="Posts"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/bg_glass_item"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <LinearLayout
+                <!-- User Posts List -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/posts_recycler_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="8dp" />
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Bio"
-                        android:textColor="#FFFFFF"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:shadowColor="#FF00FF"
-                        android:shadowRadius="10" />
-
-                    <ImageView
-                        android:id="@+id/edit_bio_icon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_edit"
-                        app:tint="#FFFFFF"/>
-                </LinearLayout>
-
-                <EditText
-                    android:id="@+id/bio"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@android:color/transparent"
-                    tools:text="Bio..."
-                    android:textColor="#E0E0E0"
-                    android:textSize="16sp"
-                    android:lineSpacingExtra="4dp"/>
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/user_id"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="30dp"
-                tools:text="ID: ..."
-                android:textColor="#88FFFFFF"
-                android:textSize="14sp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/posts_recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp" />
-
-        </LinearLayout>
         </ScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <!-- Floating Menu Buttons - 4 Small Circles -->
-    <FrameLayout
+    <!-- Floating Menu Container -->
+    <include
         android:id="@+id/floating_menu_container"
+        layout="@layout/bottom_nav_menu_profile"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_gravity="bottom"
-        android:background="@android:color/transparent">
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:spacing="8dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp">
-
-            <!-- Home -->
-            <FrameLayout
-                android:id="@+id/menu_home_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_flash"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Home" />
-            </FrameLayout>
-
-            <!-- Explore -->
-            <FrameLayout
-                android:id="@+id/menu_explore_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_comment"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Explore" />
-            </FrameLayout>
-
-            <!-- Messages -->
-            <FrameLayout
-                android:id="@+id/menu_messages_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_chat"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Messages" />
-            </FrameLayout>
-
-            <!-- Profile -->
-            <FrameLayout
-                android:id="@+id/menu_profile_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_heart"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Profile" />
-            </FrameLayout>
-
-        </LinearLayout>
-    </FrameLayout>
 </FrameLayout>

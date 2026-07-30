@@ -1,35 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_primary"
     tools:context=".CommentActivity">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/comments_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/comment_input_layout"/>
+        android:layout_above="@+id/comment_input_layout"
+        android:padding="16dp"
+        android:clipToPadding="false"/>
 
     <RelativeLayout
         android:id="@+id/comment_input_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="true"
+        android:background="@color/bg_card"
+        android:padding="12dp"
+        android:elevation="4dp">
 
         <EditText
             android:id="@+id/comment_edit_text"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_toStartOf="@+id/post_comment_button"
-            android:hint="Add a comment..."/>
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_glass_input"
+            android:hint="Add a comment..."
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted"
+            android:textSize="14sp"
+            android:inputType="textMultiLine"
+            android:maxLines="3"/>
 
         <Button
             android:id="@+id/post_comment_button"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_alignParentEnd="true"
-            android:text="Post"/>
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_btn_primary_gradient"
+            android:text="Post"
+            android:textAllCaps="false"
+            android:textColor="@color/text_white"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            app:backgroundTint="@null"/>
     </RelativeLayout>
 
 </RelativeLayout>

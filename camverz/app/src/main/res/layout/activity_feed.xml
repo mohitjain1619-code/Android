@@ -4,64 +4,52 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_feed_shiny"
+    android:background="@drawable/bg_page_ambient_gradient"
     tools:context=".FeedActivity">
 
-    <RelativeLayout
+    <!-- Top Navigation Header with Glass Surface -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:padding="8dp"
-        android:elevation="16dp"
-        android:background="@android:color/transparent">
+        android:minHeight="60dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:background="@drawable/bg_glass_card_premium"
+        android:elevation="4dp">
 
         <FrameLayout
             android:id="@+id/back_button_container"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="4dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:clickable="true"
             android:focusable="true"
-            android:layout_alignParentStart="true">
+            android:background="@drawable/bg_glass_card_premium"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_arrow_back"
-                app:tint="#00D9FF"
+                app:tint="@color/text_primary"
                 android:contentDescription="Back" />
-        </FrameLayout>
-
-        <!-- Plus Icon for Create Post -->
-        <FrameLayout
-            android:id="@+id/fab_create_post"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="4dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:layout_alignParentEnd="true"
-            android:background="@drawable/bg_neon_button_pill"
-            android:elevation="8dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_add"
-                app:tint="#FFFFFF"
-                android:contentDescription="Create Post" />
         </FrameLayout>
 
         <LinearLayout
             android:id="@+id/filter_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
             android:orientation="horizontal"
-            android:padding="4dp">
+            android:padding="2dp"
+            app:layout_constraintStart_toEndOf="@id/back_button_container"
+            app:layout_constraintEnd_toStartOf="@id/fab_create_post"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <TextView
                 android:id="@+id/filter_all"
@@ -86,19 +74,44 @@
 
         </LinearLayout>
 
-    </RelativeLayout>
+        <!-- Plus Icon Button to Create Post -->
+        <FrameLayout
+            android:id="@+id/fab_create_post"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="@drawable/bg_btn_primary_glossy"
+            android:elevation="6dp"
+            app:backgroundTint="@null"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_add"
+                app:tint="@color/text_white"
+                android:contentDescription="Create Post" />
+        </FrameLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/top_bar"
-        android:layout_above="@id/banner_ad_container">
+        android:layout_above="@id/floating_menu_container">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/posts_recycler_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:clipToPadding="false"/>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -109,96 +122,12 @@
         android:layout_above="@id/floating_menu_container"
         android:background="@android:color/transparent" />
 
-    <!-- Floating Menu Buttons - 4 Small Circles -->
-    <FrameLayout
+    <!-- Floating Dock Navigation Bar -->
+    <include
         android:id="@+id/floating_menu_container"
+        layout="@layout/bottom_nav_menu_explore"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:layout_alignParentBottom="true"
-        android:background="@android:color/transparent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:spacing="8dp"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp">
-
-            <!-- Home -->
-            <FrameLayout
-                android:id="@+id/menu_home_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_flash"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Home" />
-            </FrameLayout>
-
-            <!-- Explore -->
-            <FrameLayout
-                android:id="@+id/menu_explore_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_comment"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Explore" />
-            </FrameLayout>
-
-            <!-- Messages -->
-            <FrameLayout
-                android:id="@+id/menu_messages_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_chat"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Messages" />
-            </FrameLayout>
-
-            <!-- Profile -->
-            <FrameLayout
-                android:id="@+id/menu_profile_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="@drawable/bg_floating_menu_button"
-                android:elevation="8dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_heart"
-                    app:tint="#FFFFFF"
-                    android:contentDescription="Profile" />
-            </FrameLayout>
-
-        </LinearLayout>
-    </FrameLayout>
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

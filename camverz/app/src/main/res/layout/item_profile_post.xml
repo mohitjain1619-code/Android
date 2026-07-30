@@ -12,14 +12,14 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_profile_post_card"
+        android:background="@drawable/bg_glass_card_luxury"
         android:padding="16dp">
 
         <TextView
             android:id="@+id/post_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_primary"
             android:textSize="16sp"
             app:layout_constraintEnd_toStartOf="@+id/post_menu_button"
             app:layout_constraintStart_toStartOf="parent"
@@ -38,31 +38,33 @@
 
             <ImageView
                 android:id="@+id/like_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_like_outline" />
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_like_outline"
+                app:tint="@color/accent_rose" />
 
             <TextView
                 android:id="@+id/like_count_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:textColor="#B3FFFFFF"
+                android:textColor="@color/text_secondary"
                 tools:text="12" />
 
             <ImageView
                 android:id="@+id/comment_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:layout_marginStart="24dp"
-                android:src="@drawable/ic_comment" />
+                android:src="@drawable/ic_comment"
+                app:tint="@color/accent_cyan" />
 
             <TextView
                 android:id="@+id/comment_count_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:textColor="#B3FFFFFF"
+                android:textColor="@color/text_secondary"
                 tools:text="12" />
 
         </LinearLayout>
@@ -71,7 +73,7 @@
             android:id="@+id/timestamp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#CCCCCC"
+            android:textColor="@color/text_muted"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="@id/action_buttons_layout"
             app:layout_constraintEnd_toEndOf="parent"
@@ -80,12 +82,12 @@
 
         <ImageView
             android:id="@+id/post_menu_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:src="@drawable/ic_more_vert"
+            app:tint="@color/text_secondary"
             app:layout_constraintEnd_toEndOf="parent"
-            app.layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
