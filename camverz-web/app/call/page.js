@@ -54,6 +54,14 @@ function CallPageInner() {
     return () => clearTimeout(controlTimerRef.current);
   }, [state]);
 
+  // Ensure remote video stream is attached & played when video element mounts in DOM
+  useEffect(() => {
+    if (state === 'in-call' && remoteVideoRef.current && webrtcRef.current?.remoteStream) {
+      remoteVideoRef.current.srcObject = webrtcRef.current.remoteStream;
+      remoteVideoRef.current.play().catch(e => console.warn('Remote video play error:', e));
+    }
+  }, [state]);
+
   const resetControlTimer = () => {
     setShowControls(true);
     clearTimeout(controlTimerRef.current);
@@ -123,12 +131,14 @@ function CallPageInner() {
           myUid: user.uid,
           peerId,
           onRemoteStream: (remoteStream) => {
-            if (remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = remoteStream;
-              remoteVideoRef.current.play().catch(() => {});
-            }
             setState('in-call');
             setTimer(0);
+            setTimeout(() => {
+              if (remoteVideoRef.current && remoteStream) {
+                remoteVideoRef.current.srcObject = remoteStream;
+                remoteVideoRef.current.play().catch(e => console.warn('Remote video play:', e));
+              }
+            }, 50);
           },
           onConnectionChange: setConnectionState,
           onDisconnect: () => {
