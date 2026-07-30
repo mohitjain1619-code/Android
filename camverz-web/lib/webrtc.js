@@ -24,7 +24,11 @@ export class WebRTCManager {
     try {
       this.localStream = await navigator.mediaDevices.getUserMedia({
         video: videoEnabled ? { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } } : false,
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       return this.localStream;
     } catch (err) {
@@ -146,7 +150,10 @@ export class WebRTCManager {
   async createOffer() {
     if (!this.peerConnection) return;
     try {
-      const offer = await this.peerConnection.createOffer();
+      const offer = await this.peerConnection.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      });
       await this.peerConnection.setLocalDescription(offer);
       this.socket.emit('send-offer', {
         to: this.peerId,
@@ -161,7 +168,10 @@ export class WebRTCManager {
   async createAnswer() {
     if (!this.peerConnection) return;
     try {
-      const answer = await this.peerConnection.createAnswer();
+      const answer = await this.peerConnection.createAnswer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      });
       await this.peerConnection.setLocalDescription(answer);
       this.socket.emit('send-answer', {
         to: this.peerId,

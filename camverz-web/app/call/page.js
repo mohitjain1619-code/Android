@@ -54,10 +54,12 @@ function CallPageInner() {
     return () => clearTimeout(controlTimerRef.current);
   }, [state]);
 
-  // Ensure remote video stream is attached & played when video element mounts in DOM
+  // Ensure remote video & audio stream is attached & unmuted when video element mounts in DOM
   useEffect(() => {
     if (state === 'in-call' && remoteVideoRef.current && webrtcRef.current?.remoteStream) {
       remoteVideoRef.current.srcObject = webrtcRef.current.remoteStream;
+      remoteVideoRef.current.muted = false;
+      remoteVideoRef.current.volume = 1.0;
       remoteVideoRef.current.play().catch(e => console.warn('Remote video play error:', e));
     }
   }, [state]);
@@ -96,7 +98,11 @@ function CallPageInner() {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } },
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
 
       if (localVideoRef.current) {
@@ -136,6 +142,8 @@ function CallPageInner() {
             setTimeout(() => {
               if (remoteVideoRef.current && remoteStream) {
                 remoteVideoRef.current.srcObject = remoteStream;
+                remoteVideoRef.current.muted = false;
+                remoteVideoRef.current.volume = 1.0;
                 remoteVideoRef.current.play().catch(e => console.warn('Remote video play:', e));
               }
             }, 50);
