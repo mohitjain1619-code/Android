@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth-context';
 import { updateUser } from '../lib/firestore';
-import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react';
+import { X, MapPin, Calendar, User, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import styles from './OnboardingModal.module.css';
 
 const AVATARS = Array.from({ length: 15 }, (_, i) => `av${i + 1}`);
@@ -17,23 +17,44 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   const [avatar, setAvatar] = useState('av1');
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
-  const [gpsError, setGpsError] = useState('');
   const [dobError, setDobError] = useState('');
 
   const steps = ['Gender', 'Location', 'Birthday', 'Avatar'];
 
-  // Direct synchronous click handler forces native browser permission popup (iOS & Android)
+  // Network IP Location Fallback Helper
+  const fallbackIpLocation = async () => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.city) setCity(data.city);
+        if (data.country_name) setCountry(data.country_name);
+        return;
+      }
+    } catch (err) {}
+
+    try {
+      const res2 = await fetch('https://ip-api.com/json/');
+      if (res2.ok) {
+        const data2 = await res2.json();
+        if (data2.city) setCity(data2.city);
+        if (data2.country) setCountry(data2.country);
+      }
+    } catch (e) {
+      console.error('IP location error:', e);
+    }
+  };
+
+  // High-Accuracy GPS Request with Fail-Safe Auto-Fallback (Never blocks user)
   const handleDetectLocationClick = () => {
     setLocating(true);
-    setGpsError('');
 
     if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser.');
-      setLocating(false);
+      fallbackIpLocation().then(() => setLocating(false));
       return;
     }
 
-    // Direct call triggers browser native "Allow Location" popup prompt
+    // Call triggers native browser "Allow Location" permission popup if available
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const lat = pos.coords.latitude;
@@ -60,32 +81,35 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
                     setCity(city2);
                     setCountry(country2);
                   } else {
-                    setGpsError('Could not resolve city name from GPS. Please try again.');
+                    fallbackIpLocation();
                   }
                   setLocating(false);
                 })
-                .catch(() => setLocating(false));
+                .catch(() => {
+                  fallbackIpLocation();
+                  setLocating(false);
+                });
             }
           })
           .catch(() => {
-            setGpsError('Reverse geocoding error. Please try again.');
+            fallbackIpLocation();
             setLocating(false);
           });
       },
       (err) => {
-        console.warn('GPS permission error:', err.code, err.message);
-        setLocating(false);
-        if (err.code === 1) {
-          setGpsError('Location permission denied. Please allow location access when prompted or in browser settings and tap again.');
-        } else if (err.code === 3) {
-          setGpsError('Location request timed out. Please tap again.');
-        } else {
-          setGpsError('Could not get GPS location. Please tap again.');
-        }
+        console.warn('GPS permission denied or unavailable, auto-filling network location:', err.message);
+        fallbackIpLocation().then(() => setLocating(false));
       },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   };
+
+  // Auto-detect when step 1 opens
+  useEffect(() => {
+    if (step === 1 && (!city || !country)) {
+      handleDetectLocationClick();
+    }
+  }, [step]);
 
   const isAdult = (dateStr) => {
     if (!dateStr) return false;
@@ -100,7 +124,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   const canProceed = () => {
     switch (step) {
       case 0: return !!gender;
-      case 1: return city && country;
+      case 1: return !!(city && country);
       case 2: return dob && isAdult(dob);
       case 3: return !!avatar;
       default: return false;
@@ -183,59 +207,46 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           </div>
         )}
 
-        {/* Step 1: Location (Synchronous User-Gesture Native Permission Popup) */}
+        {/* Step 1: Location (GPS + Auto Network Fallback + Editable Inputs) */}
         {step === 1 && (
-          <div className={styles.stepContent} style={{ textAlign: 'center' }}>
-            <p className={styles.stepDesc}>Tap below to prompt native browser location permission</p>
+          <div className={styles.stepContent}>
+            <p className={styles.stepDesc}>Where are you located?</p>
             
             <button
               className="btn-neon"
               onClick={handleDetectLocationClick}
               disabled={locating}
-              style={{ width: '100%', padding: '14px 20px', fontSize: '1rem', marginBottom: 16 }}
+              style={{ width: '100%', padding: '12px 18px', fontSize: '0.95rem', marginBottom: 14 }}
             >
-              <MapPin size={18} />
-              {locating ? 'Requesting GPS Location...' : '📍 Detect My Location (GPS)'}
+              <MapPin size={16} />
+              {locating ? 'Detecting Location...' : '📍 Auto Detect Location (GPS)'}
             </button>
 
-            {city && country ? (
-              <div style={{
-                marginTop: '16px',
-                padding: '14px 18px',
-                borderRadius: '12px',
-                background: 'rgba(0, 229, 255, 0.08)',
-                border: '1px solid rgba(0, 229, 255, 0.3)',
-                color: 'var(--neon-cyan)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                justifyContent: 'center'
-              }}>
-                <Check size={18} />
-                <span>GPS Verified: <strong>{city}, {country}</strong></span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', display: 'block' }}>City</label>
+                <input
+                  type="text"
+                  className="input-glass"
+                  placeholder="Enter or verify city (e.g. Gwalior)"
+                  value={city}
+                  onChange={e => setCity(e.target.value)}
+                  style={{ width: '100%' }}
+                />
               </div>
-            ) : gpsError ? (
-              <div style={{
-                marginTop: '16px',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#EF4444',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.88rem',
-                textAlign: 'left'
-              }}>
-                <AlertCircle size={18} style={{ flexShrink: 0 }} />
-                <span>{gpsError}</span>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', display: 'block' }}>Country</label>
+                <input
+                  type="text"
+                  className="input-glass"
+                  placeholder="Enter or verify country (e.g. India)"
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                  style={{ width: '100%' }}
+                />
               </div>
-            ) : (
-              <p style={{ marginTop: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem' }}>
-                Tapping the button opens the browser location permission prompt.
-              </p>
-            )}
+            </div>
           </div>
         )}
 
