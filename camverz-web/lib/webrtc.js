@@ -3,8 +3,6 @@
  * Handles peer connections, ICE servers, SDP negotiation
  */
 
-const ICE_SERVER_URL = 'https://camverzbackend-production.up.railway.app/webrtc/ice';
-
 export class WebRTCManager {
   constructor({ socket, myUid, peerId, onRemoteStream, onConnectionChange, onDisconnect }) {
     this.socket = socket;
@@ -20,7 +18,6 @@ export class WebRTCManager {
     this.roomName = myUid < peerId ? `${myUid}_${peerId}` : `${peerId}_${myUid}`;
     this.isInitiator = myUid < peerId;
     this.callEnded = false;
-    this.turnFallbackAttempted = false;
   }
 
   async startLocalStream(videoEnabled = true) {
@@ -37,7 +34,22 @@ export class WebRTCManager {
   }
 
   async initPeerConnection() {
-    const iceServers = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+    const iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      { urls: 'stun:stun3.l.google.com:19302' },
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      {
+        urls: [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp'
+        ],
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      }
+    ];
     const config = { iceServers, sdpSemantics: 'unified-plan' };
 
     this.peerConnection = new RTCPeerConnection(config);
@@ -61,11 +73,15 @@ export class WebRTCManager {
     };
 
     this.peerConnection.ontrack = (event) => {
-      if (!this.remoteStream) {
-        this.remoteStream = new MediaStream();
-        this.onRemoteStream?.(this.remoteStream);
+      if (event.streams && event.streams[0]) {
+        this.remoteStream = event.streams[0];
+      } else {
+        if (!this.remoteStream) {
+          this.remoteStream = new MediaStream();
+        }
+        this.remoteStream.addTrack(event.track);
       }
-      this.remoteStream.addTrack(event.track);
+      this.onRemoteStream?.(this.remoteStream);
     };
 
     this.peerConnection.onconnectionstatechange = () => {
@@ -75,45 +91,38 @@ export class WebRTCManager {
         this.disconnect();
       }
     };
-
-    this.peerConnection.oniceconnectionstatechange = () => {
-      const state = this.peerConnection?.iceConnectionState;
-      if (state === 'failed' && !this.turnFallbackAttempted) {
-        this.turnFallbackAttempted = true;
-        this.fetchTurnAndReconnect();
-      }
-    };
-  }
-
-  async fetchTurnAndReconnect() {
-    try {
-      const res = await fetch(`${ICE_SERVER_URL}?useTurn=true`);
-      const data = await res.json();
-      if (data.iceServers) {
-        this.peerConnection.setConfiguration({ iceServers: data.iceServers });
-        this.peerConnection.restartIce();
-      }
-    } catch (e) {
-      console.error('TURN fallback failed:', e);
-    }
   }
 
   setupSocketListeners() {
+    this.socket.off('peer-ready');
+    this.socket.off('receive-offer');
+    this.socket.off('receive-answer');
+    this.socket.off('receive-ice');
+    this.socket.off('peer-disconnected');
+
     this.socket.on('peer-ready', () => {
       if (this.isInitiator) this.createOffer();
     });
 
     this.socket.on('receive-offer', async (data) => {
       if (!this.peerConnection) return;
-      const sdp = new RTCSessionDescription({ type: 'offer', sdp: data.offer });
-      await this.peerConnection.setRemoteDescription(sdp);
-      this.createAnswer();
+      try {
+        const sdp = new RTCSessionDescription({ type: 'offer', sdp: data.offer });
+        await this.peerConnection.setRemoteDescription(sdp);
+        this.createAnswer();
+      } catch (e) {
+        console.error('Error handling offer:', e);
+      }
     });
 
     this.socket.on('receive-answer', async (data) => {
       if (!this.peerConnection) return;
-      const sdp = new RTCSessionDescription({ type: 'answer', sdp: data.answer });
-      await this.peerConnection.setRemoteDescription(sdp);
+      try {
+        const sdp = new RTCSessionDescription({ type: 'answer', sdp: data.answer });
+        await this.peerConnection.setRemoteDescription(sdp);
+      } catch (e) {
+        console.error('Error handling answer:', e);
+      }
     });
 
     this.socket.on('receive-ice', async (data) => {
@@ -125,7 +134,7 @@ export class WebRTCManager {
           sdpMLineIndex: data.sdpMLineIndex,
         }));
       } catch (e) {
-        console.error('Error adding ICE:', e);
+        console.error('Error adding ICE candidate:', e);
       }
     });
 
@@ -136,24 +145,32 @@ export class WebRTCManager {
 
   async createOffer() {
     if (!this.peerConnection) return;
-    const offer = await this.peerConnection.createOffer();
-    await this.peerConnection.setLocalDescription(offer);
-    this.socket.emit('send-offer', {
-      to: this.peerId,
-      offer: offer.sdp,
-      room: this.roomName,
-    });
+    try {
+      const offer = await this.peerConnection.createOffer();
+      await this.peerConnection.setLocalDescription(offer);
+      this.socket.emit('send-offer', {
+        to: this.peerId,
+        offer: offer.sdp,
+        room: this.roomName,
+      });
+    } catch (e) {
+      console.error('Create offer error:', e);
+    }
   }
 
   async createAnswer() {
     if (!this.peerConnection) return;
-    const answer = await this.peerConnection.createAnswer();
-    await this.peerConnection.setLocalDescription(answer);
-    this.socket.emit('send-answer', {
-      to: this.peerId,
-      answer: answer.sdp,
-      room: this.roomName,
-    });
+    try {
+      const answer = await this.peerConnection.createAnswer();
+      await this.peerConnection.setLocalDescription(answer);
+      this.socket.emit('send-answer', {
+        to: this.peerId,
+        answer: answer.sdp,
+        room: this.roomName,
+      });
+    } catch (e) {
+      console.error('Create answer error:', e);
+    }
   }
 
   joinRoom() {
@@ -211,21 +228,26 @@ export class WebRTCManager {
     if (this.callEnded) return;
     this.callEnded = true;
 
-    this.socket.emit('leave-call-room', { room: this.roomName, uid: this.myUid });
+    try {
+      this.socket.emit('leave-call-room', { room: this.roomName, uid: this.myUid });
 
-    this.socket.off('peer-ready');
-    this.socket.off('receive-offer');
-    this.socket.off('receive-answer');
-    this.socket.off('receive-ice');
+      this.socket.off('peer-ready');
+      this.socket.off('receive-offer');
+      this.socket.off('receive-answer');
+      this.socket.off('receive-ice');
+      this.socket.off('peer-disconnected');
 
-    if (this.localStream) {
-      this.localStream.getTracks().forEach(t => t.stop());
-      this.localStream = null;
-    }
+      if (this.localStream) {
+        this.localStream.getTracks().forEach(t => t.stop());
+        this.localStream = null;
+      }
 
-    if (this.peerConnection) {
-      this.peerConnection.close();
-      this.peerConnection = null;
+      if (this.peerConnection) {
+        this.peerConnection.close();
+        this.peerConnection = null;
+      }
+    } catch (e) {
+      console.error('Disconnect error:', e);
     }
 
     this.onDisconnect?.();

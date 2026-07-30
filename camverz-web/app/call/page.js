@@ -78,6 +78,9 @@ function CallPageInner() {
       return;
     }
 
+    // Clean up previous call & listeners before starting new connection
+    cleanupCall();
+
     setState('connecting');
     try {
       const socket = getSocket();
@@ -90,6 +93,7 @@ function CallPageInner() {
 
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
+        localVideoRef.current.play().catch(() => {});
       }
 
       socket.emit('register-user', {
@@ -105,6 +109,10 @@ function CallPageInner() {
         category,
       });
 
+      socket.off('match-found');
+      socket.off('call-control');
+      socket.off('queue-position');
+
       socket.on('match-found', async (data) => {
         const peerId = data.peerId || data.peer;
         const peerInfo = await getUser(peerId);
@@ -117,15 +125,14 @@ function CallPageInner() {
           onRemoteStream: (remoteStream) => {
             if (remoteVideoRef.current) {
               remoteVideoRef.current.srcObject = remoteStream;
+              remoteVideoRef.current.play().catch(() => {});
             }
             setState('in-call');
             setTimer(0);
           },
           onConnectionChange: setConnectionState,
           onDisconnect: () => {
-            setState('idle');
-            setPeerData(null);
-            stream.getTracks().forEach(t => t.stop());
+            endCall();
           },
         });
 
@@ -141,10 +148,6 @@ function CallPageInner() {
           setIsRemoteVideoOff(!data.enabled);
         }
       });
-
-      socket.on('queue-position', (data) => {
-        // Optional: show queue position
-      });
     } catch (err) {
       console.error('Error starting call:', err);
       alert('Camera/Microphone access is required for video calling.');
@@ -154,6 +157,7 @@ function CallPageInner() {
 
   const cleanupCall = () => {
     webrtcRef.current?.disconnect();
+    webrtcRef.current = null;
     socketRef.current?.emit('leave-queue', { uid: user?.uid });
     socketRef.current?.off('match-found');
     socketRef.current?.off('queue-position');
@@ -171,6 +175,11 @@ function CallPageInner() {
     setState('idle');
     setPeerData(null);
     setTimer(0);
+  };
+
+  const nextCall = () => {
+    cleanupCall();
+    startConnecting();
   };
 
   // PIP Drag
@@ -315,6 +324,9 @@ function CallPageInner() {
           </button>
           <button className={`${styles.controlBtn} ${styles.endBtn}`} onClick={endCall} title="End Call">
             <PhoneOff size={22} />
+          </button>
+          <button className={`${styles.controlBtn} ${styles.nextBtn}`} onClick={nextCall} title="Next Partner">
+            <SkipForward size={22} />
           </button>
           <button className={styles.controlBtn} onClick={() => webrtcRef.current?.switchCamera()} title="Switch Camera">
             <SwitchCamera size={22} />
