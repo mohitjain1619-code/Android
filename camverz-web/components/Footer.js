@@ -27,6 +27,7 @@ export default function Footer() {
 
           <div className={styles.linkGroup}>
             <h4>Legal</h4>
+            <Link href="/legal/child-safety">Child Safety Policy</Link>
             <Link href="/legal/privacy-policy">Privacy Policy</Link>
             <Link href="/legal/terms-and-conditions">Terms & Conditions</Link>
             <Link href="/legal/refund-policy">Refund Policy</Link>

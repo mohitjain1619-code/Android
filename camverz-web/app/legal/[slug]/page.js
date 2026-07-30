@@ -1,10 +1,33 @@
 'use client';
 import { use } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Scale, Shield, Landmark, Cookie, HeartHandshake, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Scale, Shield, Landmark, Cookie, HeartHandshake, AlertTriangle, ShieldCheck } from 'lucide-react';
 import styles from './page.module.css';
 
 const legalDocs = {
+  'child-safety': {
+    title: 'Child Safety & Protection Standards',
+    lastUpdated: 'July 30, 2026',
+    icon: ShieldCheck,
+    themeColor: '#FF0055',
+    content: (
+      <>
+        <p>Camverz is committed to providing a safe environment. We enforce a zero-tolerance policy against any form of Child Sexual Abuse Material (CSAM) and Child Sexual Exploitation and Abuse (CSAE).</p>
+
+        <h2>1. Zero Tolerance Policy for CSAM & CSAE</h2>
+        <p>Camverz strictly prohibits the creation, upload, sharing, or transmission of any content depicting child sexual abuse or exploitation. Any account found attempting to share or engage in such material will be permanently banned immediately, and reported to relevant legal authorities.</p>
+
+        <h2>2. Age Restrictions & Minor Protection</h2>
+        <p>Camverz is strictly for users aged 18 and older. Minors are strictly prohibited from creating accounts or using our video matching services. We employ age-verification prompts and automated moderation filters to detect and remove unauthorized minor accounts.</p>
+
+        <h2>3. Reporting to Law Enforcement & NCMEC</h2>
+        <p>In accordance with federal and international child protection laws, Camverz reports all instances of CSAM/CSAE content or child safety violations directly to the National Center for Missing & Exploited Children (NCMEC) and appropriate regional law enforcement agencies.</p>
+
+        <h2>4. In-App Reporting & Contact Information</h2>
+        <p>Users can report child safety concerns directly within the app using the in-video report button. For urgent child safety inquiries or compliance matters, please reach our designated Child Safety Officer at: <strong>jainmohit.cr007@gmail.com</strong>.</p>
+      </>
+    )
+  },
   'privacy-policy': {
     title: 'Privacy Policy',
     lastUpdated: 'June 24, 2026',
@@ -131,7 +154,6 @@ const legalDocs = {
 };
 
 export default function LegalPage({ params }) {
-  // Resolve params using React.use() wrapper to satisfy React 19 rules in Next.js
   const resolvedParams = use(params);
   const slug = resolvedParams.slug;
   
