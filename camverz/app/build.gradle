@@ -23,8 +23,8 @@ android {
         applicationId = "com.mohitt.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 22
-        versionName = "1.1.4"
+        versionCode = 23
+        versionName = "1.1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -139,7 +139,7 @@ dependencies {
     implementation 'com.applovin.mediation:google-adapter:+'
     implementation 'com.applovin.mediation:facebook-adapter:+'
     implementation 'com.applovin.mediation:inmobi-adapter:+'
-    implementation 'com.applovin.mediation:bytedance-adapter:+'
+    // implementation 'com.applovin.mediation:bytedance-adapter:+'
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

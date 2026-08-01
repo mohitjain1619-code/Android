@@ -70,3 +70,10 @@
 # ==============================================================================
 -keep class com.google.android.gms.auth.api.signin.** { *; }
 -keep class com.google.android.gms.common.api.** { *; }
+
+# ==============================================================================
+# Meta Audience Network (Facebook)
+# ==============================================================================
+-dontwarn com.facebook.ads.**
+-dontwarn com.facebook.infer.annotation.**
+-keep class com.facebook.ads.** { *; }
