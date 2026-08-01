@@ -60,4 +60,8 @@
 
     <!-- Feed -->
     <string name="create_post">Create a new post</string>
+
+    <!-- AppLovin Ad Unit IDs -->
+    <string name="applovin_banner_ad_unit_id">YOUR_BANNER_AD_UNIT_ID</string>
+    <string name="applovin_interstitial_ad_unit_id">YOUR_INTERSTITIAL_AD_UNIT_ID</string>
 </resources>

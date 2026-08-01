@@ -13,12 +13,12 @@
         <!-- Application Window Background — Clean Light -->
         <item name="android:windowBackground">@color/bg_primary</item>
 
-        <!-- Status Bar — Light with dark icons -->
-        <item name="android:statusBarColor">@color/bg_primary</item>
+        <!-- Status Bar — transparent for edge-to-edge -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
 
-        <!-- Navigation Bar — Light -->
-        <item name="android:navigationBarColor">@color/bg_primary</item>
+        <!-- Navigation Bar — transparent for edge-to-edge -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
 
         <!-- Text Colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>

@@ -167,6 +167,12 @@ public class MainScreenActivity extends BaseActivity {
             goToConnecting("lesbian");
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
+
+        // Initialize AppLovin MAX SDK for ads
+        AppLovinSdk.getInstance(this).setMediationProvider("max");
+        AppLovinSdk.initializeSdk(this, configuration -> {
+            runOnUiThread(this::loadBannerAd);
+        });
     }
 
     private void addTouchScaleFeedback(View... views) {
@@ -346,7 +352,29 @@ public class MainScreenActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    private void loadBannerAd() {}
+    private void loadBannerAd() {
+        adView = new MaxAdView(getString(R.string.applovin_banner_ad_unit_id), this);
+
+        // Set size (Match parent width, 50dp height for phones)
+        int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
+        adView.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                heightPx
+        ));
+
+        // Background color is required for banners to function properly
+        adView.setBackgroundColor(Color.TRANSPARENT);
+
+        // Add to your layout
+        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
+        if (adContainer != null) {
+            adContainer.removeAllViews();
+            adContainer.addView(adView);
+            // Load the ad
+            adView.loadAd();
+            Log.d(TAG, "✅ AppLovin Banner Ad requested for MainScreen");
+        }
+    }
 
     @Override
     protected void onDestroy() {

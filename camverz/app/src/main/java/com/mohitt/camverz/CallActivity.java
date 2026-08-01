@@ -150,9 +150,8 @@ public class CallActivity extends AppCompatActivity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
-        // Preload AppLovin MAX Interstitial Ad (Disabled for now)
-        /*
-        interstitialAd = new MaxInterstitialAd("YOUR_INTERSTITIAL_AD_UNIT_ID", this);
+        // Preload AppLovin MAX Interstitial Ad
+        interstitialAd = new MaxInterstitialAd(getString(R.string.applovin_interstitial_ad_unit_id), this);
         interstitialAd.setListener(new MaxAdListener() {
             @Override
             public void onAdLoaded(MaxAd ad) {
@@ -187,7 +186,6 @@ public class CallActivity extends AppCompatActivity {
             }
         });
         interstitialAd.loadAd();
-        */
 
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
@@ -976,7 +974,14 @@ public class CallActivity extends AppCompatActivity {
             eglBase = null;
         }
 
-        runOnUiThread(this::finish);
+        runOnUiThread(() -> {
+            if (interstitialAd != null && interstitialAd.isReady()) {
+                Log.d(TAG, "📺 Showing Interstitial Ad on disconnect");
+                interstitialAd.showAd();
+            } else {
+                finish();
+            }
+        });
     }
 
     private void loadPeerUserInfo() {

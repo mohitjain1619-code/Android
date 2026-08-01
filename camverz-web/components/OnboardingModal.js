@@ -33,7 +33,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
         if (data.country_name) setCountry(data.country_name);
         return;
       }
-    } catch (err) {}
+    } catch (err) { }
 
     try {
       const res2 = await fetch('https://ip-api.com/json/');
@@ -224,7 +224,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
         {step === 1 && (
           <div className={styles.stepContent} style={{ textAlign: 'center' }}>
             <p className={styles.stepDesc}>Tap below to allow GPS location permission</p>
-            
+
             <button
               className="btn-neon"
               onClick={handleDetectLocationClick}

@@ -117,7 +117,7 @@ public class FeedActivity extends BaseActivity {
 
         updateFilterButtons();
         fetchPosts();
-        // loadBannerAd();
+        loadBannerAd();
     }
 
     private void setCategory(String category) {
@@ -200,9 +200,7 @@ public class FeedActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
-        // Disabled for now
-        /*
-        adView = new MaxAdView("YOUR_BANNER_AD_UNIT_ID", this);
+        adView = new MaxAdView(getString(R.string.applovin_banner_ad_unit_id), this);
 
         // Set size (Match parent width, 50dp height for phones)
         int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
@@ -217,11 +215,12 @@ public class FeedActivity extends BaseActivity {
         // Add to your layout
         FrameLayout adContainer = findViewById(R.id.banner_ad_container);
         if (adContainer != null) {
+            adContainer.removeAllViews();
             adContainer.addView(adView);
             // Load the ad
             adView.loadAd();
+            Log.d(TAG, "✅ AppLovin Banner Ad requested for FeedActivity");
         }
-        */
     }
 
     @Override

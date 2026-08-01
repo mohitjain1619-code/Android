@@ -46,30 +46,28 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void applyWindowInsets(final View topView, final View bottomView) {
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        int statusBarHeight = (resourceId > 0) ? getResources().getDimensionPixelSize(resourceId) : dpToPx(38);
-        if (statusBarHeight < dpToPx(24)) {
-            statusBarHeight = dpToPx(38);
-        }
-
-        // Apply immediately synchronously so topView is pushed down below status bar instantly
+        // Set default padding to avoid layout jump before insets are applied
         if (topView != null) {
             topView.setPadding(
                 topView.getPaddingLeft(),
-                statusBarHeight + dpToPx(12),
+                dpToPx(50),
                 topView.getPaddingRight(),
                 topView.getPaddingBottom()
             );
         }
 
         final View decorView = getWindow().getDecorView();
-        final int finalStatusBarHeight = statusBarHeight;
 
         ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
             Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            Insets displayCutoutInsets = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
             Insets navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
 
-            int topMargin = Math.max(statusBarInsets.top, finalStatusBarHeight);
+            // Merge status bar and cutout top insets
+            int topMargin = Math.max(statusBarInsets.top, displayCutoutInsets.top);
+            if (topMargin <= 0) {
+                topMargin = dpToPx(38); // Safe fallback
+            }
 
             if (topView != null) {
                 topView.setPadding(
