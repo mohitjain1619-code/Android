@@ -1,0 +1,24 @@
+# Ignore directories to speed up Antigravity indexing and resolve autocomplete lag
+
+# Node packages
+**/node_modules/
+
+# Next.js build output
+**/.next/
+**/out/
+
+# Android build outputs and caches
+**/build/
+**/.gradle/
+**/.idea/
+**/*.iml
+**/*.ap_
+**/*.apk
+**/*.aab
+
+# SSH Keys and secrets
+*.key
+*.pub
+**/.env
+**/.env.local
+**/.env.production
