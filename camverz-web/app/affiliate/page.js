@@ -558,7 +558,7 @@ export default function AffiliatePage() {
 
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://camverz-nine.vercel.app';
   const referralLink = affData?.affiliate ? `${siteUrl}?ref=${affData.affiliate.code}` : '';
-  const appReferralLink = affData?.affiliate ? `https://play.google.com/store/apps/details?id=com.mohitt.camverz&referrer=${affData.affiliate.code}` : '';
+  const appReferralLink = affData?.affiliate ? `${siteUrl}/download?ref=${affData.affiliate.code}` : '';
 
   const faqs = [
     {
