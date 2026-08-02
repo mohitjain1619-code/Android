@@ -43,7 +43,10 @@ export default function Footer() {
         </div>
 
         <div className={styles.bottom}>
-          <p>© {new Date().getFullYear()} Camverz. All rights reserved.</p>
+          <div>
+            <p>© {new Date().getFullYear()} Camverz. All rights reserved.</p>
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', opacity: 0.8 }}>Proprietor: Mohit Jain</p>
+          </div>
           <div className={styles.badges}>
             <span className={styles.badge}><Shield size={14} /> Verified Users</span>
             <span className={styles.badge}><Heart size={14} /> Safe Space</span>

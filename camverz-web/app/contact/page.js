@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Mail, MessageSquare, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { Mail, MessageSquare, Phone, MapPin, Send, CheckCircle, FileText } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function ContactPage() {
@@ -75,6 +75,16 @@ export default function ContactPage() {
                   <div>
                     <span>Office Location</span>
                     <strong>New Delhi, India</strong>
+                  </div>
+                </div>
+
+                <div className={styles.infoItem}>
+                  <div className={styles.iconBox}>
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <span>Merchant Name</span>
+                    <strong>Mohit Jain</strong>
                   </div>
                 </div>
               </div>

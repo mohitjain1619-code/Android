@@ -35,7 +35,7 @@ const legalDocs = {
     themeColor: '#00E5FF',
     content: (
       <>
-        <p>At Camverz, your privacy is our highest commitment. This policy describes how we collect, process, and protect your information when using both our Android Mobile Application and our Web Application.</p>
+        <p>At Camverz, your privacy is our highest commitment. This policy describes how we collect, process, and protect your information when using both our Android Mobile Application and our Web Application, operated by proprietor Mohit Jain.</p>
 
         <h2>1. Information We Collect</h2>
         <p>We collect details necessary to operate our service, including:</p>
@@ -63,7 +63,7 @@ const legalDocs = {
     themeColor: '#BD00FF',
     content: (
       <>
-        <p>Welcome to Camverz. By accessing our website, mobile app, or using our video matching services, you agree to comply with the terms and conditions outlined below.</p>
+        <p>Welcome to Camverz. By accessing our website, mobile app, or using our video matching services, you agree to comply with the terms and conditions outlined below. These terms govern the relationship between you and the registered proprietor, Mohit Jain.</p>
 
         <h2>1. Eligibility Requirements</h2>
         <p>You must be at least 18 years old to use Camverz. By registering an account, you represent and warrant that you are of legal age. If we find accounts belonging to minors, they are terminated immediately without prior notice.</p>
