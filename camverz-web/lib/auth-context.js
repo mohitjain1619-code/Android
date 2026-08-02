@@ -46,6 +46,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authStage, setAuthStage] = useState('idle'); // 'idle' | 'popup' | 'authenticating'
   const [showLogin, setShowLogin] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -88,6 +89,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    setAuthStage('popup');
     try {
       // Use Google OAuth popup flow (without Firebase)
       const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
@@ -123,6 +125,7 @@ export function AuthProvider({ children }) {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             
+            setAuthStage('authenticating');
             try {
               const result = await authWithGoogle(event.data.idToken);
               if (result.ok) {
@@ -132,9 +135,11 @@ export function AuthProvider({ children }) {
                 if ((result.isNewUser || !result.user.gender) && window.location.pathname !== '/affiliate') {
                   setShowOnboarding(true);
                 }
+                setAuthStage('idle');
                 resolve(result);
               }
             } catch (err) {
+              setAuthStage('idle');
               reject(err);
             }
           }
@@ -147,10 +152,13 @@ export function AuthProvider({ children }) {
           if (popup?.closed) {
             clearInterval(checkClosed);
             window.removeEventListener('message', handleMessage);
+            setAuthStage('idle');
+            reject('Google sign in popup closed');
           }
         }, 1000);
       });
     } catch (error) {
+      setAuthStage('idle');
       console.error('Google Sign-In Error:', error);
       throw error;
     }
@@ -170,7 +178,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ 
-      user, userData, loading, 
+      user, userData, loading, authStage,
       signInWithGoogle, signOut, refreshUserData, 
       showLogin, setShowLogin, 
       showVerification, setShowVerification, 
