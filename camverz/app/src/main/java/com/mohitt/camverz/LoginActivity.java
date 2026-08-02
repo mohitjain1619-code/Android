@@ -161,6 +161,12 @@ public class LoginActivity extends AppCompatActivity {
                         String token = data.get("token").getAsString();
                         tokenManager.saveToken(token);
 
+                        // Clear saved referrer code once successfully registered
+                        getSharedPreferences("camverz_prefs", MODE_PRIVATE)
+                                .edit()
+                                .remove("affiliate_ref")
+                                .apply();
+
                         // Save user data
                         JsonObject user = data.getAsJsonObject("user");
                         tokenManager.saveUser(

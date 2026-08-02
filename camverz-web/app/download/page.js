@@ -13,28 +13,37 @@ function DownloadRedirectContent() {
   useEffect(() => {
     const destinationCode = ref ? ref.trim().toUpperCase() : '';
 
-    // 1. Capture referral code if present
-    if (destinationCode) {
-      captureReferral(destinationCode);
-      // Track the click in the background
-      trackAffiliateClick(destinationCode, document.referrer, navigator.userAgent)
-        .catch(err => console.error("Click tracking failed:", err));
-    }
-
-    // 2. Detect User Agent
+    // Detect User Agent
     const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
     const isAndroid = /android/i.test(ua);
 
-    // 3. Resolve destination
-    if (isAndroid) {
-      // Redirect to Google Play Store with referrerr
-      const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz&referrer=${destinationCode}`;
-      window.location.href = playStoreUrl;
+    const handleRedirect = () => {
+      if (isAndroid) {
+        // Redirect to Google Play Store with referrer
+        const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz&referrer=${destinationCode}`;
+        window.location.href = playStoreUrl;
+      } else {
+        // Redirect iOS or Desktop users to the website main page (referral is already stored in localStorage)
+        router.replace('/');
+      }
+    };
+
+    if (destinationCode) {
+      // 1. Capture referral code locally
+      captureReferral(destinationCode);
+      
+      // 2. Track click and wait for response before routing to ensure browser sends request
+      trackAffiliateClick(destinationCode, document.referrer, navigator.userAgent)
+        .then(() => {
+          console.log("Click tracked successfully");
+          handleRedirect();
+        })
+        .catch(err => {
+          console.error("Click tracking failed:", err);
+          handleRedirect(); // Redirect anyway on error
+        });
     } else {
-      // Redirect iOS or Desktop users to the website main page
-      const webUrl = destinationCode ? `/?ref=${destinationCode}` : '/';
-      router.replace(webUrl);
+      handleRedirect();
     }
   }, [ref, router]);
 

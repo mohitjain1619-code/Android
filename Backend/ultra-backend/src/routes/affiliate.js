@@ -178,6 +178,16 @@ router.post("/track-click", async (req, res) => {
     const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
     const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
 
+    // Check if this device has already clicked this affiliate's link
+    const existingClick = await queryOne(
+      "SELECT 1 FROM affiliate_clicks WHERE affiliate_id = $1 AND ip_hash = $2 LIMIT 1",
+      [aff.id, ipHash]
+    );
+
+    if (existingClick) {
+      return res.json({ tracked: false, reason: "Click already registered from this device" });
+    }
+
     await query(
       `INSERT INTO affiliate_clicks (affiliate_id, ip_hash, user_agent, referrer)
        VALUES ($1, $2, $3, $4)`,
