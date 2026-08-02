@@ -28,7 +28,7 @@ function DownloadRedirectContent() {
 
     // 3. Resolve destination
     if (isAndroid) {
-      // Redirect to Google Play Store with referrer
+      // Redirect to Google Play Store with referrerr
       const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz&referrer=${destinationCode}`;
       window.location.href = playStoreUrl;
     } else {
@@ -58,7 +58,8 @@ function DownloadRedirectContent() {
         animation: 'spin 1s linear infinite',
         marginBottom: '20px'
       }} />
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
