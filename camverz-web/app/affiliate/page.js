@@ -639,60 +639,34 @@ export default function AffiliatePage() {
             </button>
           </div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px' }}>
-            {/* Website Referral Link */}
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>WEBSITE REFERRAL LINK</span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{referralLink}</span>
-              </div>
-              <button 
-                onClick={() => handleCopyWeb(referralLink)} 
-                style={{ 
-                  width: '36px', 
-                  height: '36px', 
-                  borderRadius: '8px', 
-                  background: copiedWeb ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
-                  border: `1px solid ${copiedWeb ? 'var(--neon-green)' : 'var(--glass-border)'}`,
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  color: copiedWeb ? 'var(--neon-green)' : 'var(--neon-cyan)',
-                  cursor: 'pointer',
-                  transition: 'all 200ms ease',
-                  flexShrink: 0
-                }}
-              >
-                {copiedWeb ? <Check size={16} /> : <Copy size={16} />}
-              </button>
+          {/* Copy Referral Link */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', minWidth: '320px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>YOUR REFERRAL LINK (SMART REDIRECT)</span>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{appReferralLink}</span>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Auto-detects device: Android redirects to Play Store, iOS & PC redirect to Web.
+              </span>
             </div>
-
-            {/* Play Store Direct Link */}
-            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>PLAY STORE REFERRAL LINK (DIRECT)</span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{appReferralLink}</span>
-              </div>
-              <button 
-                onClick={() => handleCopyApp(appReferralLink)} 
-                style={{ 
-                  width: '36px', 
-                  height: '36px', 
-                  borderRadius: '8px', 
-                  background: copiedApp ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
-                  border: `1px solid ${copiedApp ? 'var(--neon-green)' : 'var(--glass-border)'}`,
-                  display: 'flex', 
-                  justifyContent: 'center', 
-                  alignItems: 'center',
-                  color: copiedApp ? 'var(--neon-green)' : 'var(--neon-cyan)',
-                  cursor: 'pointer',
-                  transition: 'all 200ms ease',
-                  flexShrink: 0
-                }}
-              >
-                {copiedApp ? <Check size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
+            <button 
+              onClick={() => handleCopyApp(appReferralLink)} 
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                borderRadius: '8px', 
+                background: copiedApp ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
+                border: `1px solid ${copiedApp ? 'var(--neon-green)' : 'var(--glass-border)'}`,
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                color: copiedApp ? 'var(--neon-green)' : 'var(--neon-cyan)',
+                cursor: 'pointer',
+                transition: 'all 200ms ease',
+                flexShrink: 0
+              }}
+            >
+              {copiedApp ? <Check size={18} /> : <Copy size={18} />}
+            </button>
           </div>
         </div>
 
