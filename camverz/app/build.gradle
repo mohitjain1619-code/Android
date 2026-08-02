@@ -23,8 +23,8 @@ android {
         applicationId = "com.mohitt.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 23
-        versionName = "1.1.5"
+        versionCode = 24
+        versionName = "1.1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -140,6 +140,9 @@ dependencies {
     implementation 'com.applovin.mediation:facebook-adapter:+'
     implementation 'com.applovin.mediation:inmobi-adapter:+'
     // implementation 'com.applovin.mediation:bytedance-adapter:+'
+
+    // Google Play Install Referrer (for direct Play Store affiliate tracking)
+    implementation 'com.android.installreferrer:installreferrer:2.2'
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

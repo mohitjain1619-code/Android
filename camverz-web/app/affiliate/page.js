@@ -43,7 +43,8 @@ export default function AffiliatePage() {
   // App States
   const [affData, setAffData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
+  const [copiedWeb, setCopiedWeb] = useState(false);
+  const [copiedApp, setCopiedApp] = useState(false);
   
   // Application Form States
   const [name, setName] = useState('');
@@ -125,10 +126,16 @@ export default function AffiliatePage() {
   }, [user]);
 
   // Copy to clipboard handler
-  const handleCopyLink = (text) => {
+  const handleCopyWeb = (text) => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedWeb(true);
+    setTimeout(() => setCopiedWeb(false), 2000);
+  };
+
+  const handleCopyApp = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedApp(true);
+    setTimeout(() => setCopiedApp(false), 2000);
   };
 
   // Submit Creator Application
@@ -551,6 +558,7 @@ export default function AffiliatePage() {
 
   const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://camverz-nine.vercel.app';
   const referralLink = affData?.affiliate ? `${siteUrl}?ref=${affData.affiliate.code}` : '';
+  const appReferralLink = affData?.affiliate ? `https://play.google.com/store/apps/details?id=com.mohitt.camverz&referrer=${affData.affiliate.code}` : '';
 
   const faqs = [
     {
@@ -631,30 +639,60 @@ export default function AffiliatePage() {
             </button>
           </div>
           
-          {/* Copy Referral Link */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>YOUR REFERRAL LINK</span>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{referralLink}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px' }}>
+            {/* Website Referral Link */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>WEBSITE REFERRAL LINK</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{referralLink}</span>
+              </div>
+              <button 
+                onClick={() => handleCopyWeb(referralLink)} 
+                style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  borderRadius: '8px', 
+                  background: copiedWeb ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
+                  border: `1px solid ${copiedWeb ? 'var(--neon-green)' : 'var(--glass-border)'}`,
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  color: copiedWeb ? 'var(--neon-green)' : 'var(--neon-cyan)',
+                  cursor: 'pointer',
+                  transition: 'all 200ms ease',
+                  flexShrink: 0
+                }}
+              >
+                {copiedWeb ? <Check size={16} /> : <Copy size={16} />}
+              </button>
             </div>
-            <button 
-              onClick={() => handleCopyLink(referralLink)} 
-              style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '8px', 
-                background: copied ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
-                border: `1px solid ${copied ? 'var(--neon-green)' : 'var(--glass-border)'}`,
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                color: copied ? 'var(--neon-green)' : 'var(--neon-cyan)',
-                cursor: 'pointer',
-                transition: 'all 200ms ease'
-              }}
-            >
-              {copied ? <Check size={18} /> : <Copy size={18} />}
-            </button>
+
+            {/* Play Store Direct Link */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>PLAY STORE REFERRAL LINK (DIRECT)</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{appReferralLink}</span>
+              </div>
+              <button 
+                onClick={() => handleCopyApp(appReferralLink)} 
+                style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  borderRadius: '8px', 
+                  background: copiedApp ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
+                  border: `1px solid ${copiedApp ? 'var(--neon-green)' : 'var(--glass-border)'}`,
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  color: copiedApp ? 'var(--neon-green)' : 'var(--neon-cyan)',
+                  cursor: 'pointer',
+                  transition: 'all 200ms ease',
+                  flexShrink: 0
+                }}
+              >
+                {copiedApp ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+            </div>
           </div>
         </div>
 
