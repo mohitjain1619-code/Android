@@ -8,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://android-9t8m.onrende
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 15000,
+  timeout: 90000,
   headers: { 'Content-Type': 'application/json' },
 });
 
