@@ -23,6 +23,7 @@ CREATE TABLE users (
   city TEXT DEFAULT '',
   custom_id TEXT DEFAULT '',
   photo_url TEXT DEFAULT '',
+  has_free_trial BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -30,6 +31,23 @@ CREATE TABLE users (
 CREATE INDEX idx_users_google_id ON users(google_id);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_custom_id ON users(custom_id);
+
+-- ============================================
+-- Device Tracking & Anti-Abuse
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_devices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  device_id TEXT NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  platform TEXT NOT NULL, -- 'android' or 'web'
+  ip_address TEXT DEFAULT '',
+  user_agent TEXT DEFAULT '',
+  first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(device_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_devices_device_id ON user_devices(device_id);
 
 -- ============================================
 -- Posts (text-only — no imageUrl, voiceUrl)

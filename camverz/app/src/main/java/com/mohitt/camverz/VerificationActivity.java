@@ -416,6 +416,34 @@ public class VerificationActivity extends BaseActivity {
         }
     }
 
+    private Bitmap decodeSampledBitmapFromFile(String pathName, int reqWidth, int reqHeight) {
+        final android.graphics.BitmapFactory.Options options = new android.graphics.BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        android.graphics.BitmapFactory.decodeFile(pathName, options);
+
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        options.inJustDecodeBounds = false;
+        return android.graphics.BitmapFactory.decodeFile(pathName, options);
+    }
+
+    private int calculateInSampleSize(android.graphics.BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
     private void captureImage() {
         countdownContainer.setVisibility(View.GONE);
         countdownInProgress = false;
@@ -440,7 +468,7 @@ public class VerificationActivity extends BaseActivity {
         imageCapture.takePicture(outputOptions, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
             @Override
             public void onImageSaved(ImageCapture.OutputFileResults output) {
-                Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(photoFile.getAbsolutePath());
+                Bitmap bitmap = decodeSampledBitmapFromFile(photoFile.getAbsolutePath(), 1080, 1080);
                 if (bitmap != null) {
                     // Apply EXIF rotation to fix sideways/rotated images
                     bitmap = applyExifRotation(bitmap, photoFile.getAbsolutePath());

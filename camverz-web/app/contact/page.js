@@ -60,21 +60,11 @@ export default function ContactPage() {
 
                 <div className={styles.infoItem}>
                   <div className={styles.iconBox}>
-                    <MessageSquare size={20} />
-                  </div>
-                  <div>
-                    <span>Live Chat</span>
-                    <strong>Available inside the mobile app</strong>
-                  </div>
-                </div>
-
-                <div className={styles.infoItem}>
-                  <div className={styles.iconBox}>
                     <MapPin size={20} />
                   </div>
                   <div>
                     <span>Office Location</span>
-                    <strong>New Delhi, India</strong>
+                    <strong>India</strong>
                   </div>
                 </div>
 
@@ -84,7 +74,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <span>Merchant Name</span>
-                    <strong>Mohit Jain</strong>
+                    <strong>camverz</strong>
                   </div>
                 </div>
               </div>

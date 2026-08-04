@@ -14,7 +14,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // ============================================
 router.post("/google", async (req, res) => {
   try {
-    const { idToken, affiliateRef } = req.body;
+    const { idToken, affiliateRef, deviceId, platform = "web" } = req.body;
     if (!idToken) {
       return res.status(400).json({ error: "Missing idToken" });
     }
@@ -51,16 +51,43 @@ router.post("/google", async (req, res) => {
     let user = await queryOne("SELECT * FROM users WHERE google_id = $1", [googleId]);
 
     let isNewUser = false;
+    let deviceAccountWarning = false;
+
+    // Check device reuse if deviceId provided
+    if (deviceId) {
+      try {
+        // Find if this device was previously registered under ANY OTHER user account
+        const existingDeviceOwner = await queryOne(
+          `SELECT u.id, u.email FROM user_devices ud
+           JOIN users u ON ud.user_id = u.id
+           WHERE ud.device_id = $1 AND u.google_id != $2
+           LIMIT 1`,
+          [deviceId, googleId]
+        );
+
+        if (existingDeviceOwner) {
+          deviceAccountWarning = true;
+          console.warn(
+            `⚠️ Anti-Abuse Triggered: Device ${deviceId} already registered under user ${existingDeviceOwner.email}. New login/signup: ${email}`
+          );
+        }
+      } catch (devErr) {
+        console.error("[DeviceTracking] Error checking existing device:", devErr.message);
+      }
+    }
+
     if (!user) {
-      // Create new user
+      // Create new user (If device was reused, deny free trial)
       isNewUser = true;
+      const initialFreeTrial = !deviceAccountWarning;
+
       user = await queryOne(
-        `INSERT INTO users (google_id, email, name, photo_url, custom_id)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial)
+         VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [googleId, email, name, photoUrl, googleId.substring(0, 8)]
+        [googleId, email, name, photoUrl, googleId.substring(0, 8), initialFreeTrial]
       );
-      console.log(`✅ New user created: ${user.id} (${email})`);
+      console.log(`✅ New user created: ${user.id} (${email}) | FreeTrial: ${initialFreeTrial}`);
 
       // Track affiliate signup if referred
       if (affiliateRef) {
@@ -92,6 +119,24 @@ router.post("/google", async (req, res) => {
       console.log(`✅ Existing user logged in: ${user.id} (${email})`);
     }
 
+    // Record / Update device tracking mapping
+    if (deviceId && user) {
+      try {
+        const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+        const userAgent = req.headers["user-agent"] || "";
+
+        await queryOne(
+          `INSERT INTO user_devices (device_id, user_id, platform, ip_address, user_agent, last_seen_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (device_id, user_id)
+           DO UPDATE SET last_seen_at = NOW(), ip_address = EXCLUDED.ip_address, user_agent = EXCLUDED.user_agent`,
+          [deviceId, user.id, platform, clientIp, userAgent]
+        );
+      } catch (devSaveErr) {
+        console.error("[DeviceTracking] Error saving device mapping:", devSaveErr.message);
+      }
+    }
+
     // Generate JWT
     const token = generateToken(user);
 
@@ -99,6 +144,8 @@ router.post("/google", async (req, res) => {
       ok: true,
       token,
       isNewUser,
+      deviceAccountWarning,
+      hasFreeTrial: user.has_free_trial !== false,
       user: {
         id: user.id,
         googleId: user.google_id,
@@ -112,6 +159,7 @@ router.post("/google", async (req, res) => {
         city: user.city,
         customId: user.custom_id,
         photoUrl: user.photo_url,
+        hasFreeTrial: user.has_free_trial !== false,
         createdAt: user.created_at,
       },
     });

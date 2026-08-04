@@ -142,6 +142,18 @@ public class LoginActivity extends AppCompatActivity {
         Map<String, String> body = new HashMap<>();
         body.put("idToken", idToken);
 
+        // Include unique device ID (ANDROID_ID) & platform
+        try {
+            String androidId = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+            if (androidId != null && !androidId.trim().isEmpty()) {
+                body.put("deviceId", androidId);
+                body.put("platform", "android");
+                Log.d(TAG, "Sending deviceId: " + androidId);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting ANDROID_ID", e);
+        }
+
         // Fetch saved referrer code
         String affiliateRef = getSharedPreferences("camverz_prefs", MODE_PRIVATE)
                 .getString("affiliate_ref", null);
@@ -179,11 +191,17 @@ public class LoginActivity extends AppCompatActivity {
                         );
 
                         boolean isNewUser = data.has("isNewUser") && data.get("isNewUser").getAsBoolean();
+                        boolean deviceAccountWarning = data.has("deviceAccountWarning") && data.get("deviceAccountWarning").getAsBoolean();
 
-                        Log.d(TAG, "✅ Backend authentication successful. New user: " + isNewUser);
-                        runOnUiThread(() ->
-                                Toast.makeText(LoginActivity.this, "Sign in successful!", Toast.LENGTH_SHORT).show()
-                        );
+                        Log.d(TAG, "✅ Backend authentication successful. New user: " + isNewUser + " | DeviceReused: " + deviceAccountWarning);
+
+                        runOnUiThread(() -> {
+                            if (deviceAccountWarning) {
+                                Toast.makeText(LoginActivity.this, "Notice: Multiple accounts detected on this device. Free trial is restricted to 1 per device.", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(LoginActivity.this, "Sign in successful!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
 
                         // Navigate based on profile completeness
                         String gender = user.has("gender") ? user.get("gender").getAsString() : "";

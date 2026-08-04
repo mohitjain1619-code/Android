@@ -48,10 +48,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("camverz-release.jks")
-            storePassword "camverz_pass_2026"
-            keyAlias "camverz-alias"
-            keyPassword "camverz_pass_2026"
+            storeFile file("camverz-release")
+            storePassword "Mohit__8120__"
+            keyAlias "key0"
+            keyPassword "Mohit__8120__"
         }
     }
 

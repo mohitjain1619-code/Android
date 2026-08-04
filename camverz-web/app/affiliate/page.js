@@ -39,6 +39,35 @@ import {
 
 export default function AffiliatePage() {
   const { user, loading: authLoading, setShowLogin } = useAuth();
+
+  const globalStyles = (
+    <style dangerouslySetInnerHTML={{__html: `
+      @keyframes spin-gradient {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes pageFadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .loader-ring {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        padding: 3px;
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple), #ff007f);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        animation: spin-gradient 1.2s linear infinite;
+        margin: 0 auto 24px;
+        filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.4));
+      }
+      .fade-in-container {
+        animation: pageFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+    `}} />
+  );
   
   // App States
   const [affData, setAffData] = useState(null);
@@ -582,9 +611,20 @@ export default function AffiliatePage() {
   if (authLoading || (loading && user)) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh', color: 'var(--neon-cyan)' }}>
+        {globalStyles}
         <div style={{ textAlign: 'center' }}>
-          <div className="skeleton" style={{ width: '60px', height: '60px', borderRadius: '50%', margin: '0 auto 20px' }} />
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>Loading Creator Dashboard...</p>
+          <div className="loader-ring" />
+          <p style={{ 
+            fontFamily: 'var(--font-display)', 
+            fontSize: '1rem', 
+            fontWeight: 600, 
+            letterSpacing: '0.05em',
+            color: 'var(--text-primary)',
+            opacity: 0.9,
+            textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+          }}>
+            {user ? 'Loading Creator Dashboard...' : 'Connecting to Camverz...'}
+          </p>
         </div>
       </div>
     );
@@ -622,7 +662,8 @@ export default function AffiliatePage() {
     });
 
     return (
-      <div className="section" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
+      <div className="section fade-in-container" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
+        {globalStyles}
         {/* Welcome Banner */}
         <div className="glass-card" style={{ padding: '30px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
           <div>
@@ -1285,7 +1326,8 @@ export default function AffiliatePage() {
   // 2. GUEST, PENDING OR NEW APPLICANT LANDING VIEW (Shared Promo Layout)
   // ═══════════════════════════════════════════════════════════
   return (
-    <div className="section" style={{ paddingTop: '100px', paddingBottom: '80px' }}>
+    <div className="section fade-in-container" style={{ paddingTop: '100px', paddingBottom: '80px' }}>
+      {globalStyles}
       
       {/* Hero Section */}
       <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto', marginBottom: '80px' }}>

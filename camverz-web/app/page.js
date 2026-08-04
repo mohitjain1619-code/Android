@@ -10,8 +10,43 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showLaunchModal, setShowLaunchModal] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const featuresRef = useRef(null);
   const statsRef = useRef(null);
+
+  useEffect(() => {
+    if (searchParams.get('launch') === 'true') {
+      setShowLaunchModal(true);
+      router.replace('/');
+    }
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    // Launch Date: August 15, 2026 00:00:00 IST
+    const launchDate = new Date("August 15, 2026 00:00:00 GMT+0530").getTime();
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const difference = launchDate - now;
+
+      if (difference <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      setTimeLeft({ days, hours, minutes, seconds });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (searchParams.get('login') === 'true' && !user) setShowLogin(true);
@@ -77,20 +112,7 @@ function HomeContent() {
   }, []);
 
   const handleCategoryClick = (category) => {
-    if (loading) return;
-    if (!user) { setShowLogin(true); return; }
-    if (!userData?.gender) {
-      setShowOnboarding(true);
-      return;
-    }
-
-    if (category === 'gay' && userData.gender !== 'male') {
-      alert('Only males can join the Gay section'); return;
-    }
-    if (category === 'lesbian' && userData.gender !== 'female') {
-      alert('Only females can join the Lesbian section'); return;
-    }
-    router.push(`/call?category=${category}`);
+    setShowLaunchModal(true);
   };
 
   const features = [
@@ -119,17 +141,10 @@ function HomeContent() {
             Get matched randomly and start video calling. Find dates, make friends, or just chat with strangers from around the world.
           </p>
           <div className={styles.heroBtns}>
-            <button className="btn-neon" onClick={() => user ? router.push('/call') : setShowLogin(true)}>
+            <button className="btn-neon" onClick={() => setShowLaunchModal(true)}>
               <Video size={18} /> Start Calling <ArrowRight size={16} />
             </button>
             <a href="#features" className="btn-glass">Learn More</a>
-          </div>
-          <div className={styles.heroStats}>
-            <div><strong>50K+</strong><span>Active Users</span></div>
-            <div className={styles.divider} />
-            <div><strong>1M+</strong><span>Video Calls</span></div>
-            <div className={styles.divider} />
-            <div><strong>190+</strong><span>Countries</span></div>
           </div>
         </div>
         <div className={styles.heroVisual}>
@@ -191,25 +206,7 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className={styles.stats} ref={statsRef}>
-        <div className="section">
-          <div className={styles.statsGrid}>
-            {[
-              { value: '50K+', label: 'Active Users', icon: Users },
-              { value: '1M+', label: 'Video Calls Made', icon: Video },
-              { value: '190+', label: 'Countries', icon: Globe },
-              { value: '4.8', label: 'App Rating', icon: Star },
-            ].map((s, i) => (
-              <div key={i} className={styles.statItem}>
-                <s.icon size={24} className={styles.statIcon} />
-                <div className={styles.statValue}>{s.value}</div>
-                <div className={styles.statLabel}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* CTA */}
       <section className={styles.cta}>
@@ -218,11 +215,160 @@ function HomeContent() {
           <p style={{ color: 'var(--text-secondary)', margin: '12px 0 24px', maxWidth: 500, marginInline: 'auto' }}>
             Join thousands of people who are already making real connections through video calls.
           </p>
-          <button className="btn-neon" onClick={() => user ? router.push('/call') : setShowLogin(true)} style={{ fontSize: '1.1rem', padding: '14px 36px' }}>
+          <button className="btn-neon" onClick={() => setShowLaunchModal(true)} style={{ fontSize: '1.1rem', padding: '14px 36px' }}>
             <Video size={20} /> Start Video Calling
           </button>
         </div>
       </section>
+
+      {/* Custom Launch Modal */}
+      {showLaunchModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(5, 5, 12, 0.85)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          padding: '20px',
+          animation: 'modalFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+        }} onClick={() => setShowLaunchModal(false)}>
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes modalFadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes contentScaleUp {
+              from { transform: scale(0.92) translateY(10px); opacity: 0; }
+              to { transform: scale(1) translateY(0); opacity: 1; }
+            }
+            @keyframes tricolorGlow {
+              0%, 100% { border-color: rgba(255, 103, 31, 0.25); box-shadow: 0 0 25px rgba(255, 103, 31, 0.1); }
+              33% { border-color: rgba(255, 255, 255, 0.25); box-shadow: 0 0 25px rgba(255, 255, 255, 0.1); }
+              66% { border-color: rgba(18, 136, 37, 0.25); box-shadow: 0 0 25px rgba(18, 136, 37, 0.1); }
+            }
+            .modal-content-box {
+              background: rgba(15, 15, 25, 0.9);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              border-radius: 24px;
+              width: 100%;
+              max-width: 500px;
+              padding: 40px;
+              text-align: center;
+              position: relative;
+              animation: contentScaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards, tricolorGlow 8s infinite alternate;
+            }
+            .countdown-segment {
+              background: rgba(255, 255, 255, 0.03);
+              border: 1px solid rgba(255, 255, 255, 0.05);
+              border-radius: 12px;
+              padding: 12px 10px;
+              min-width: 70px;
+            }
+            .countdown-value {
+              font-size: 1.8rem;
+              font-weight: 800;
+              font-family: var(--font-display);
+              background: linear-gradient(135deg, #FF671F, #FFFFFF, #128837);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+            }
+            .countdown-label {
+              font-size: 0.7rem;
+              color: var(--text-muted);
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin-top: 4px;
+              font-weight: 600;
+            }
+          `}} />
+          <div className="modal-content-box" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', fontSize: '2.5rem', marginBottom: '20px' }}>
+              <span>🇮🇳</span>
+              <span style={{ animation: 'float 3s ease-in-out infinite' }}>🚀</span>
+            </div>
+
+            <span style={{
+              background: 'rgba(255, 103, 31, 0.1)',
+              border: '1px solid rgba(255, 103, 31, 0.25)',
+              color: '#FF671F',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              padding: '4px 12px',
+              borderRadius: '50px',
+              display: 'inline-block',
+              marginBottom: '16px'
+            }}>
+              Grand Opening
+            </span>
+
+            <h2 style={{
+              fontSize: '2rem',
+              fontWeight: 800,
+              color: '#fff',
+              marginBottom: '12px',
+              lineHeight: 1.2,
+              fontFamily: 'var(--font-display)'
+            }}>
+              15 August 2026
+            </h2>
+
+            <p style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.95rem',
+              lineHeight: 1.6,
+              marginBottom: '32px',
+              padding: '0 10px'
+            }}>
+              Camverz is gearing up for a spectacular launch on India's Independence Day! We are preparing the ultimate, ultra-high-definition random video calling experience. Stay tuned!
+            </p>
+
+            {/* Countdown Grid */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '32px' }}>
+              <div className="countdown-segment">
+                <div className="countdown-value">{timeLeft.days}</div>
+                <div className="countdown-label">Days</div>
+              </div>
+              <div className="countdown-segment">
+                <div className="countdown-value">{timeLeft.hours.toString().padStart(2, '0')}</div>
+                <div className="countdown-label">Hours</div>
+              </div>
+              <div className="countdown-segment">
+                <div className="countdown-value">{timeLeft.minutes.toString().padStart(2, '0')}</div>
+                <div className="countdown-label">Mins</div>
+              </div>
+              <div className="countdown-segment">
+                <div className="countdown-value">{timeLeft.seconds.toString().padStart(2, '0')}</div>
+                <div className="countdown-label">Secs</div>
+              </div>
+            </div>
+
+            <button
+              className="btn-neon"
+              onClick={() => setShowLaunchModal(false)}
+              style={{
+                width: '100%',
+                padding: '14px',
+                fontSize: '1rem',
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #FF671F, #128837)',
+                boxShadow: '0 4px 15px rgba(255, 103, 31, 0.25)',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#fff',
+                borderRadius: '8px'
+              }}
+            >
+              Jai Hind! I'll Wait 🇮🇳
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

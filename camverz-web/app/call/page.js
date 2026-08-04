@@ -34,8 +34,7 @@ function CallPageInner() {
   const dragOffsetRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!user) { router.push('/?login=true'); }
-    return () => cleanupCall();
+    router.push('/?launch=true');
   }, []);
 
   // Call timer

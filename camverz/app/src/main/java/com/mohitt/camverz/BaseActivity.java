@@ -22,7 +22,7 @@ public class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Enable edge-to-edge window insets
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.activity.EdgeToEdge.enable(this);
         
         // Ensure status bar icons are white on dark ambient backgrounds
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);

@@ -58,10 +58,17 @@ api.interceptors.response.use(
 // AUTH API
 // ============================================
 import { getReferral } from './affiliateTracker';
+import { getDeviceId } from './deviceFingerprint';
 
 export async function authWithGoogle(idToken) {
   const affiliateRef = getReferral();
-  const { data } = await api.post('/auth/google', { idToken, affiliateRef });
+  const deviceId = getDeviceId();
+  const { data } = await api.post('/auth/google', {
+    idToken,
+    affiliateRef,
+    deviceId,
+    platform: 'web',
+  });
   if (data.token) setToken(data.token);
   return data;
 }

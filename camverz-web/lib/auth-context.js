@@ -132,6 +132,10 @@ export function AuthProvider({ children }) {
                 setUser({ uid: result.user.id, ...result.user });
                 setUserData(result.user);
                 
+                if (result.deviceAccountWarning) {
+                  alert("Notice: Multiple accounts detected on this device. Free trial benefits apply to 1 account per device.");
+                }
+                
                 if ((result.isNewUser || !result.user.gender) && window.location.pathname !== '/affiliate') {
                   setShowOnboarding(true);
                 }

@@ -77,3 +77,14 @@
 -dontwarn com.facebook.ads.**
 -dontwarn com.facebook.infer.annotation.**
 -keep class com.facebook.ads.** { *; }
+
+# ==============================================================================
+# Model classes (kept to prevent R8 minification from breaking Gson serialization)
+# ==============================================================================
+-keep class com.mohitt.camverz.User { *; }
+-keep class com.mohitt.camverz.Post { *; }
+-keep class com.mohitt.camverz.Comment { *; }
+-keep class com.mohitt.camverz.Message { *; }
+-keep class com.mohitt.camverz.Conversation { *; }
+-keep class com.mohitt.camverz.Notification { *; }
+-keep class com.mohitt.camverz.VerificationSession { *; }
