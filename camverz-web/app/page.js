@@ -15,12 +15,27 @@ function HomeContent() {
   const featuresRef = useRef(null);
   const statsRef = useRef(null);
 
+  const TESTER_EMAILS = [
+    'jainmohit.cr007@gmail.com',
+    'mohitj8120@gmail.com',
+    'monishkarai206@gmail.com',
+    'mohitjain1619@gmail.com',
+    'info.meetblis@gmail.com',
+    'wetviapp@gmail.com',
+    'mohitissuingthis@gmail.com'
+  ];
+
   useEffect(() => {
+    if (loading) return;
     if (searchParams.get('launch') === 'true') {
-      setShowLaunchModal(true);
+      const email = user?.email || userData?.email;
+      const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
+      if (!isTester) {
+        setShowLaunchModal(true);
+      }
       router.replace('/');
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, user, userData, loading]);
 
   useEffect(() => {
     // Launch Date: August 15, 2026 00:00:00 IST
@@ -112,7 +127,13 @@ function HomeContent() {
   }, []);
 
   const handleCategoryClick = (category) => {
-    setShowLaunchModal(true);
+    const email = user?.email || userData?.email;
+    const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
+    if (isTester) {
+      router.push(`/call?category=${category}`);
+    } else {
+      setShowLaunchModal(true);
+    }
   };
 
   const features = [
@@ -141,7 +162,15 @@ function HomeContent() {
             Get matched randomly and start video calling. Find dates, make friends, or just chat with strangers from around the world.
           </p>
           <div className={styles.heroBtns}>
-            <button className="btn-neon" onClick={() => setShowLaunchModal(true)}>
+            <button className="btn-neon" onClick={() => {
+              const email = user?.email || userData?.email;
+              const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
+              if (isTester) {
+                router.push('/call');
+              } else {
+                setShowLaunchModal(true);
+              }
+            }}>
               <Video size={18} /> Start Calling <ArrowRight size={16} />
             </button>
             <a href="#features" className="btn-glass">Learn More</a>

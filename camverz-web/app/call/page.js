@@ -8,8 +8,18 @@ import { getUser } from '../../lib/firestore';
 import { Mic, MicOff, Video, VideoOff, PhoneOff, SwitchCamera, SkipForward, ArrowLeft, Loader } from 'lucide-react';
 import styles from './page.module.css';
 
+const TESTER_EMAILS = [
+  'jainmohit.cr007@gmail.com',
+  'mohitj8120@gmail.com',
+  'monishkarai206@gmail.com',
+  'mohitjain1619@gmail.com',
+  'info.meetblis@gmail.com',
+  'wetviapp@gmail.com',
+  'mohitissuingthis@gmail.com'
+];
+
 function CallPageInner() {
-  const { user, userData, setShowOnboarding, setShowVerification } = useAuth();
+  const { user, userData, loading, setShowOnboarding, setShowVerification } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const category = searchParams.get('category') || 'straight';
@@ -34,8 +44,13 @@ function CallPageInner() {
   const dragOffsetRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    router.push('/?launch=true');
-  }, []);
+    if (loading) return;
+    const email = user?.email || userData?.email;
+    const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
+    if (!isTester) {
+      router.push('/?launch=true');
+    }
+  }, [user, userData, loading, router]);
 
   // Call timer
   useEffect(() => {
