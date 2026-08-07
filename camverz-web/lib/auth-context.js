@@ -114,6 +114,7 @@ export function AuthProvider({ children }) {
       // For web, we'll use Google's sign-in button approach
       
       return new Promise((resolve, reject) => {
+        let checkClosed;
         const popup = window.open(authUrl, 'google-signin', 
           `width=${width},height=${height},left=${left},top=${top}`
         );
@@ -123,6 +124,7 @@ export function AuthProvider({ children }) {
           if (event.origin !== window.location.origin) return;
           if (event.data?.type === 'google-auth' && event.data?.idToken) {
             window.removeEventListener('message', handleMessage);
+            if (checkClosed) clearInterval(checkClosed);
             popup?.close();
             
             setAuthStage('authenticating');
@@ -152,7 +154,7 @@ export function AuthProvider({ children }) {
         window.addEventListener('message', handleMessage);
         
         // Cleanup on popup close
-        const checkClosed = setInterval(() => {
+        checkClosed = setInterval(() => {
           if (popup?.closed) {
             clearInterval(checkClosed);
             window.removeEventListener('message', handleMessage);
