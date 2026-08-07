@@ -214,12 +214,11 @@ export class WebRTCManager {
     const videoTrack = this.localStream.getVideoTracks()[0];
     if (!videoTrack) return;
 
-    const currentFacing = videoTrack.getSettings().facingMode;
-    const newFacing = currentFacing === 'user' ? 'environment' : 'user';
+    this.currentFacing = this.currentFacing === 'user' ? 'environment' : 'user';
 
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: newFacing, width: { ideal: 720 }, height: { ideal: 1280 } },
+        video: { facingMode: this.currentFacing, width: { ideal: 720 }, height: { ideal: 1280 } },
       });
       const newVideoTrack = newStream.getVideoTracks()[0];
       const sender = this.peerConnection?.getSenders().find(s => s.track?.kind === 'video');
@@ -229,8 +228,10 @@ export class WebRTCManager {
       videoTrack.stop();
       this.localStream.removeTrack(videoTrack);
       this.localStream.addTrack(newVideoTrack);
+      return this.localStream;
     } catch (e) {
       console.error('Switch camera failed:', e);
+      this.currentFacing = this.currentFacing === 'user' ? 'environment' : 'user';
     }
   }
 

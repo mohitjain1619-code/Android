@@ -360,7 +360,16 @@ function CallPageInner() {
           <button className={`${styles.controlBtn} ${styles.nextBtn}`} onClick={nextCall} title="Next Partner">
             <SkipForward size={22} />
           </button>
-          <button className={styles.controlBtn} onClick={() => webrtcRef.current?.switchCamera()} title="Switch Camera">
+          <button className={styles.controlBtn} onClick={async () => {
+            if (webrtcRef.current) {
+              const updatedStream = await webrtcRef.current.switchCamera();
+              if (updatedStream && localVideoRef.current) {
+                localVideoRef.current.srcObject = null;
+                localVideoRef.current.srcObject = updatedStream;
+                localVideoRef.current.play().catch(e => console.warn('Local preview refresh failed:', e));
+              }
+            }
+          }} title="Switch Camera">
             <SwitchCamera size={22} />
           </button>
         </div>
