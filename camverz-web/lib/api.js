@@ -54,9 +54,9 @@ api.interceptors.response.use(
   }
 );
 
-// ============================================
-// AUTH API
-// ============================================
+// =============================================
+// AUTH APII
+// =============================================
 import { getReferral } from './affiliateTracker';
 import { getDeviceId } from './deviceFingerprint';
 

@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // google-services plugin removed — no longer using Firebase
+    alias(libs.plugins.google.services)
 }
 
 // Load local.properties safely to read production configuration variables
@@ -23,8 +23,8 @@ android {
         applicationId = "com.mohitt.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 24
-        versionName = "1.1.6"
+        versionCode = 28
+        versionName = "1.1.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -53,9 +53,18 @@ android {
             keyAlias "key0"
             keyPassword "Mohit__8120__"
         }
+        debug {
+            storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword "Mohit__8120__"
+            keyAlias "androiddebugkey"
+            keyPassword "Mohit__8120__"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             signingConfig signingConfigs.release
             minifyEnabled = true

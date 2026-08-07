@@ -22,19 +22,19 @@
           }
         },
         {
-          "client_id": "973141718708-9alopk8p5e1qqo50g7r8aiu1dohjinjk.apps.googleusercontent.com",
+          "client_id": "973141718708-g1mckm5tcu3o0qcmk8hbb5m73u77s22m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mohitt.camverz",
+            "certificate_hash": "42fc0efda68aa2928b0e1cb30f819eede5e3514a"
+          }
+        },
+        {
+          "client_id": "973141718708-u33obmd729evgsnbe1u41eb314ejor67.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.mohitt.camverz",
             "certificate_hash": "c257e19e8046d31138b8aa8c3ef6531d6eab837b"
-          }
-        },
-        {
-          "client_id": "973141718708-mpbv6gmdf16gr4qpefh8tu1k6rvq7raf.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.mohitt.camverz",
-            "certificate_hash": "177b07422502fb4f3b009bef7934cc2748db77f9"
           }
         },
         {
