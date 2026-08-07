@@ -102,6 +102,24 @@ function CallPageInner() {
       return;
     }
 
+    // Check for VPN/Proxy before starting stream
+    setState('connecting');
+    try {
+      const ipResponse = await fetch('https://ipapi.co/json/');
+      if (ipResponse.ok) {
+        const ipData = await ipResponse.json();
+        const org = (ipData.org || '').toLowerCase();
+        const isVpn = org.includes('vpn') || org.includes('hosting') || org.includes('cloudflare') || org.includes('mullvad') || org.includes('nord') || org.includes('tor ') || org.includes('datacent') || org.includes('digitalocean') || org.includes('ovh') || org.includes('linode') || org.includes('amazon');
+        if (isVpn) {
+          alert("VPN/Proxy Detected!\n\nPlease turn off your VPN/Proxy for video calling to connect successfully. VPNs block video stream channels.\n\nBehtar video calling ke liye apna VPN/Proxy band karein.");
+          setState('idle');
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("VPN check skipped:", e);
+    }
+
     // Clean up previous call & listeners before starting new connection
     cleanupCall();
 

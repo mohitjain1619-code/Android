@@ -340,7 +340,42 @@ public class MainScreenActivity extends BaseActivity {
         finish();
     }
 
+    private boolean isVpnActive() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                    android.net.Network activeNetwork = cm.getActiveNetwork();
+                    android.net.NetworkCapabilities caps = cm.getNetworkCapabilities(activeNetwork);
+                    return caps != null && caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN);
+                } else {
+                    java.util.List<java.net.NetworkInterface> interfaces = java.util.Collections.list(java.net.NetworkInterface.getNetworkInterfaces());
+                    for (java.net.NetworkInterface networkInterface : interfaces) {
+                        if (networkInterface.isUp()) {
+                            String name = networkInterface.getName().toLowerCase();
+                            if (name.contains("tun") || name.contains("ppp") || name.contains("p2p") || name.contains("tap")) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking VPN connection state", e);
+        }
+        return false;
+    }
+
     private void goToConnecting(String category) {
+        if (isVpnActive()) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("VPN Detected")
+                .setMessage("Please turn off your VPN for video calling to work properly. VPN connections cause calls to fail.\n\nBehtar video call quality ke liye kripya apna VPN/Proxy band kijiye.")
+                .setPositiveButton("OK", null)
+                .show();
+            return;
+        }
+
         if ("female".equalsIgnoreCase(tokenManager.getUserGender()) && !tokenManager.isVerified()) {
             Toast.makeText(this, "Verification is required to start calling", Toast.LENGTH_LONG).show();
             Intent intent = new Intent(MainScreenActivity.this, VerificationInfoActivity.class);
