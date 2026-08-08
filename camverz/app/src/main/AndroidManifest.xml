@@ -42,7 +42,6 @@
         android:theme="@style/Theme.Camverz"
         android:networkSecurityConfig="@xml/network_security_config"
         android:enableOnBackInvokedCallback="true"
-        android:extractNativeLibs="false"
         android:resizeableActivity="true"
         tools:targetApi="31">
 

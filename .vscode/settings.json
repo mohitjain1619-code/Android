@@ -3,8 +3,6 @@
     "gradle.nestedProjects": true,
     "java.import.exclusions": [
         "**/node_modules/**",
-        "**/.metadata/**",
-        "**/Backend/**",
-        "**/camverz-web/**"
+        "**/.metadata/**"
     ]
 }
