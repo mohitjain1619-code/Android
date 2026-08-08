@@ -119,21 +119,20 @@ public class LoginActivity extends AppCompatActivity {
 
     private void printAppSignature() {
         try {
-            android.content.pm.Signature[] signatures;
+            android.content.pm.Signature[] signatures = null;
+            android.content.pm.PackageInfo packageInfo;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                android.content.pm.PackageInfo packageInfo = getPackageManager().getPackageInfo(
+                packageInfo = getPackageManager().getPackageInfo(
                         getPackageName(), android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES);
                 if (packageInfo.signingInfo != null) {
                     signatures = packageInfo.signingInfo.getApkContentsSigners();
-                } else {
-                    return;
                 }
             } else {
-                android.content.pm.PackageInfo packageInfo = getPackageManager().getPackageInfo(
+                packageInfo = getPackageManager().getPackageInfo(
                         getPackageName(), android.content.pm.PackageManager.GET_SIGNATURES);
                 signatures = packageInfo.signatures;
             }
-            if (signatures != null) {
+            if (signatures != null && signatures.length > 0) {
                 for (android.content.pm.Signature signature : signatures) {
                     java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
                     byte[] publicKey = md.digest(signature.toByteArray());
@@ -144,11 +143,15 @@ public class LoginActivity extends AppCompatActivity {
                         hexString.append(appendString).append(":");
                     }
                     if (hexString.length() > 0) hexString.setLength(hexString.length() - 1);
-                    Log.d("CAMVERZ_SIGNATURE", "🔑 CURRENT ACTIVE APP SHA-1: " + hexString.toString().toUpperCase());
+                    String sha1 = hexString.toString().toUpperCase();
+                    Log.e("CAMVERZ_SIGNATURE", "🔑 CURRENT ACTIVE APP SHA-1: " + sha1);
+                    Toast.makeText(this, "🔑 APP SHA-1: " + sha1, Toast.LENGTH_LONG).show();
                 }
+            } else {
+                Log.e("CAMVERZ_SIGNATURE", "❌ Signatures list is null or empty");
             }
         } catch (Exception e) {
-            Log.e("CAMVERZ_SIGNATURE", "Error getting signature", e);
+            Log.e("CAMVERZ_SIGNATURE", "❌ Error getting signature", e);
         }
     }
 
