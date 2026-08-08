@@ -12,7 +12,7 @@ if (project.rootProject.file('local.properties').exists()) {
 
 def fallbackBaseUrl = '"https://android-9t8m.onrender.com"'
 def prodBaseUrl = properties.getProperty("production.base.url") ? '"' + properties.getProperty("production.base.url") + '"' : fallbackBaseUrl
-def admobAppId = properties.getProperty("admob.app.id", "ca-app-pub-3940256099942544~3347511713")
+def admobAppId = properties.getProperty("admob.app.id", "ca-app-pub-7279598390080758~4862996745")
 def applovinSdkKey = properties.getProperty("applovin.sdk.key", "YOUR_APPLOVIN_SDK_KEY_HERE")
 
 android {
