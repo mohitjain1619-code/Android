@@ -117,7 +117,10 @@ public class FeedActivity extends BaseActivity {
 
         updateFilterButtons();
         fetchPosts();
-        loadBannerAd();
+        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
+        if (adContainer != null) {
+            adContainer.setVisibility(android.view.View.GONE);
+        }
     }
 
     private void setCategory(String category) {

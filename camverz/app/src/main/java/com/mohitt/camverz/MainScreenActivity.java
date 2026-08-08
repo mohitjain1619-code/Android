@@ -169,9 +169,12 @@ public class MainScreenActivity extends BaseActivity {
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
 
         // Initialize AdMob SDK for ads
-        com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
-            runOnUiThread(this::loadBannerAd);
-        });
+        com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {});
+
+        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
+        if (adContainer != null) {
+            adContainer.setVisibility(View.GONE);
+        }
     }
 
     private void addTouchScaleFeedback(View... views) {
