@@ -31,9 +31,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import com.applovin.sdk.AppLovinSdk;
-import com.applovin.mediation.ads.MaxAdView;
-import com.applovin.sdk.AppLovinSdkUtils;
+// import com.applovin.sdk.AppLovinSdk;
+// import com.applovin.mediation.ads.MaxAdView;
+// import com.applovin.sdk.AppLovinSdkUtils;
 
 public class MainScreenActivity extends BaseActivity {
 
@@ -51,7 +51,7 @@ public class MainScreenActivity extends BaseActivity {
     private ImageView iconVideo, iconProfile, iconImage, iconMessage;
     private TextView messageBadge;
 
-    private MaxAdView adView;
+    private com.google.android.gms.ads.AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,9 +168,8 @@ public class MainScreenActivity extends BaseActivity {
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
 
-        // Initialize AppLovin MAX SDK for ads
-        AppLovinSdk.getInstance(this).setMediationProvider("max");
-        AppLovinSdk.initializeSdk(this, configuration -> {
+        // Initialize AdMob SDK for ads
+        com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
             runOnUiThread(this::loadBannerAd);
         });
     }
@@ -388,26 +387,17 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
-        adView = new MaxAdView(getString(R.string.applovin_banner_ad_unit_id), this);
+        adView = new com.google.android.gms.ads.AdView(this);
+        adView.setAdUnitId(getString(R.string.admob_banner_ad_unit_id));
+        adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
 
-        // Set size (Match parent width, 50dp height for phones)
-        int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
-        adView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                heightPx
-        ));
-
-        // Background color is required for banners to function properly
-        adView.setBackgroundColor(Color.TRANSPARENT);
-
-        // Add to your layout
         FrameLayout adContainer = findViewById(R.id.banner_ad_container);
         if (adContainer != null) {
             adContainer.removeAllViews();
             adContainer.addView(adView);
-            // Load the ad
-            adView.loadAd();
-            Log.d(TAG, "✅ AppLovin Banner Ad requested for MainScreen");
+            com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+            Log.d(TAG, "✅ AdMob Banner Ad requested for MainScreen");
         }
     }
 

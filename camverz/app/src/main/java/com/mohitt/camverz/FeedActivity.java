@@ -14,8 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.graphics.Color;
 
-import com.applovin.mediation.ads.MaxAdView;
-import com.applovin.sdk.AppLovinSdkUtils;
+// import com.applovin.mediation.ads.MaxAdView;
+// import com.applovin.sdk.AppLovinSdkUtils;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.gson.JsonArray;
@@ -46,7 +46,7 @@ public class FeedActivity extends BaseActivity {
     
     private ApiService api;
     private TokenManager tokenManager;
-    private MaxAdView adView;
+    private com.google.android.gms.ads.AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -200,26 +200,17 @@ public class FeedActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
-        adView = new MaxAdView(getString(R.string.applovin_banner_ad_unit_id), this);
+        adView = new com.google.android.gms.ads.AdView(this);
+        adView.setAdUnitId(getString(R.string.admob_banner_ad_unit_id));
+        adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
 
-        // Set size (Match parent width, 50dp height for phones)
-        int heightPx = AppLovinSdkUtils.dpToPx(this, 50);
-        adView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                heightPx
-        ));
-
-        // Background color is required for banners to function properly
-        adView.setBackgroundColor(Color.TRANSPARENT);
-
-        // Add to your layout
         FrameLayout adContainer = findViewById(R.id.banner_ad_container);
         if (adContainer != null) {
             adContainer.removeAllViews();
             adContainer.addView(adView);
-            // Load the ad
-            adView.loadAd();
-            Log.d(TAG, "✅ AppLovin Banner Ad requested for FeedActivity");
+            com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+            Log.d(TAG, "✅ AdMob Banner Ad requested for FeedActivity");
         }
     }
 

@@ -143,12 +143,17 @@ dependencies {
     // For face detection - using ML Kit (16 KB page size aligned)
     implementation 'com.google.mlkit:face-detection:16.1.7'
 
-    // AppLovin MAX SDK & Mediation Adapters (AdMob, Meta, InMobi, Pangle)
-    implementation 'com.applovin:applovin-sdk:13.0.1'
-    implementation 'com.applovin.mediation:google-adapter:+'
-    implementation 'com.applovin.mediation:facebook-adapter:+'
-    implementation 'com.applovin.mediation:inmobi-adapter:+'
+    // AppLovin MAX SDK & Mediation Adapters (Commented out)
+    // implementation 'com.applovin:applovin-sdk:13.0.1'
+    // implementation 'com.applovin.mediation:google-adapter:+'
+    // implementation 'com.applovin.mediation:facebook-adapter:+'
+    // implementation 'com.applovin.mediation:inmobi-adapter:+'
     // implementation 'com.applovin.mediation:bytedance-adapter:+'
+
+    // Google Mobile Ads (AdMob) SDK & Mediation Adapters (Meta, InMobi)
+    implementation 'com.google.android.gms:play-services-ads:23.2.0'
+    implementation 'com.google.ads.mediation:facebook:+'
+    implementation 'com.google.ads.mediation:inmobi:+'
 
     // Google Play Install Referrer (for direct Play Store affiliate tracking)
     implementation 'com.android.installreferrer:installreferrer:2.2'

@@ -26,10 +26,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
-import com.applovin.mediation.ads.MaxInterstitialAd;
-import com.applovin.mediation.MaxAd;
-import com.applovin.mediation.MaxAdListener;
-import com.applovin.mediation.MaxError;
+// import com.applovin.mediation.ads.MaxInterstitialAd;
+// import com.applovin.mediation.MaxAd;
+// import com.applovin.mediation.MaxAdListener;
+// import com.applovin.mediation.MaxError;
 import com.google.gson.JsonObject;
 import com.mohitt.camverz.api.ApiClient;
 import com.mohitt.camverz.api.ApiService;
@@ -113,7 +113,7 @@ public class CallActivity extends AppCompatActivity {
     private String peerNameValue, peerAvatarUrl;
     private Socket socket;
 
-    private MaxInterstitialAd interstitialAd;
+    private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
     private int retryAttempt;
     private boolean isInitiator = false;
     private boolean callEnded = false;
@@ -160,42 +160,41 @@ public class CallActivity extends AppCompatActivity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
-        // Preload AppLovin MAX Interstitial Ad
-        interstitialAd = new MaxInterstitialAd(getString(R.string.applovin_interstitial_ad_unit_id), this);
-        interstitialAd.setListener(new MaxAdListener() {
-            @Override
-            public void onAdLoaded(MaxAd ad) {
-                retryAttempt = 0;
-            }
+        // Preload AdMob Interstitial Ad
+        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+        com.google.android.gms.ads.interstitial.InterstitialAd.load(this, getString(R.string.admob_interstitial_ad_unit_id), adRequest,
+            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
+                    interstitialAd = ad;
+                    retryAttempt = 0;
+                    interstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {
+                            interstitialAd = null;
+                            finish();
+                        }
 
-            @Override
-            public void onAdLoadFailed(String adUnitId, MaxError error) {
-                retryAttempt++;
-                int delayMillis = (int) Math.min(Math.pow(2, Math.min(6, retryAttempt)) * 1000, 30000);
-                new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                    if (interstitialAd != null) {
-                        interstitialAd.loadAd();
-                    }
-                }, delayMillis);
-            }
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                            interstitialAd = null;
+                            finish();
+                        }
+                    });
+                }
 
-            @Override
-            public void onAdDisplayed(MaxAd ad) {}
-
-            @Override
-            public void onAdClicked(MaxAd ad) {}
-
-            @Override
-            public void onAdHidden(MaxAd ad) {
-                finish();
-            }
-
-            @Override
-            public void onAdDisplayFailed(MaxAd ad, MaxError error) {
-                finish();
-            }
-        });
-        interstitialAd.loadAd();
+                @Override
+                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                    interstitialAd = null;
+                    retryAttempt++;
+                    int delayMillis = (int) Math.min(Math.pow(2, Math.min(6, retryAttempt)) * 1000, 30000);
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // Re-try loading
+                        com.google.android.gms.ads.AdRequest retryRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+                        com.google.android.gms.ads.interstitial.InterstitialAd.load(CallActivity.this, getString(R.string.admob_interstitial_ad_unit_id), retryRequest, this);
+                    }, delayMillis);
+                }
+            });
 
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
@@ -985,9 +984,9 @@ public class CallActivity extends AppCompatActivity {
         }
 
         runOnUiThread(() -> {
-            if (interstitialAd != null && interstitialAd.isReady()) {
+            if (interstitialAd != null) {
                 Log.d(TAG, "📺 Showing Interstitial Ad on disconnect");
-                interstitialAd.showAd();
+                interstitialAd.show(CallActivity.this);
             } else {
                 finish();
             }
@@ -1150,7 +1149,7 @@ public class CallActivity extends AppCompatActivity {
     protected void onDestroy() {
         disconnect();
         if (interstitialAd != null) {
-            interstitialAd.setListener(null);
+            interstitialAd.setFullScreenContentCallback(null);
             interstitialAd = null;
         }
         super.onDestroy();

@@ -153,10 +153,11 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
 
-        <!-- AppLovin SDK Key (Loaded dynamically from properties) -->
+        <!-- AppLovin SDK Key (Commented out)
         <meta-data
             android:name="applovin.sdk.key"
             android:value="${applovinSdkKey}" />
+        -->
 
     </application>
 
