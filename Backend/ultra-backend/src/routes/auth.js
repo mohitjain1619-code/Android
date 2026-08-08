@@ -2,11 +2,63 @@ const express = require("express");
 const { OAuth2Client } = require("google-auth-library");
 const { queryOne } = require("../config/database");
 const { generateToken } = require("../middleware/auth");
+const jwt = require("jsonwebtoken");
+const axios = require("axios");
 
 const router = express.Router();
 
 // Google OAuth client for verifying ID tokens from Android/Web
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Cache the Google public certificates for Firebase ID Token verification
+let firebaseCertsCache = null;
+let firebaseCertsExpiry = 0;
+
+async function getFirebasePublicKeys() {
+  const now = Date.now();
+  if (firebaseCertsCache && now < firebaseCertsExpiry) {
+    return firebaseCertsCache;
+  }
+
+  const response = await axios.get(
+    "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com"
+  );
+  firebaseCertsCache = response.data;
+  
+  // Set cache expiry from Cache-Control max-age header if available, default to 1 hour
+  const cacheControl = response.headers["cache-control"];
+  let maxAge = 3600;
+  if (cacheControl) {
+    const match = cacheControl.match(/max-age=(\d+)/);
+    if (match) {
+      maxAge = parseInt(match[1], 10);
+    }
+  }
+  firebaseCertsExpiry = now + maxAge * 1000;
+  return firebaseCertsCache;
+}
+
+async function verifyFirebaseToken(idToken) {
+  const decodedToken = jwt.decode(idToken, { complete: true });
+  if (!decodedToken || !decodedToken.header || !decodedToken.header.kid) {
+    throw new Error("Invalid JWT token format or missing kid");
+  }
+
+  const publicKeys = await getFirebasePublicKeys();
+  const publicKey = publicKeys[decodedToken.header.kid];
+  if (!publicKey) {
+    throw new Error("Public key not found for kid");
+  }
+
+  const projectId = "camverz"; 
+  const payload = jwt.verify(idToken, publicKey, {
+    algorithms: ["RS256"],
+    audience: projectId,
+    issuer: `https://securetoken.google.com/${projectId}`,
+  });
+
+  return payload;
+}
 
 // ============================================
 // POST /auth/google
@@ -19,33 +71,48 @@ router.post("/google", async (req, res) => {
       return res.status(400).json({ error: "Missing idToken" });
     }
 
-    // Verify the Google ID token
+    // Verify the Google / Firebase ID token
     let payload;
+    let googleId;
+    let email;
+    let name;
+    let photoUrl;
+
     if (idToken === "google-play-reviewer-bypass-key-2026") {
-      payload = {
-        sub: "123456789012345678901", // Mock Google User ID
-        email: "reviewer@camverz.com",
-        name: "Google Play Reviewer",
-        picture: "",
-      };
+      googleId = "123456789012345678901"; // Mock Google User ID
+      email = "reviewer@camverz.com";
+      name = "Google Play Reviewer";
+      photoUrl = "";
       console.log("🔒 Google Play Reviewer bypass login triggered");
     } else {
       try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken,
-          audience: process.env.GOOGLE_CLIENT_ID,
-        });
-        payload = ticket.getPayload();
+        if (platform === "android") {
+          console.log("📱 Verifying Firebase ID Token for Android client...");
+          payload = await verifyFirebaseToken(idToken);
+          
+          // For Firebase logins, Google User ID is present in identities
+          googleId = payload.sub;
+          if (payload.firebase && payload.firebase.identities && payload.firebase.identities["google.com"]) {
+            googleId = payload.firebase.identities["google.com"][0];
+          }
+        } else {
+          console.log("🌐 Verifying Google ID Token for Web client...");
+          const ticket = await googleClient.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+          });
+          payload = ticket.getPayload();
+          googleId = payload.sub;
+        }
+
+        email = payload.email || "";
+        name = payload.name || "";
+        photoUrl = payload.picture || "";
       } catch (err) {
-        console.error("Google token verification failed:", err.message);
-        return res.status(401).json({ error: "Invalid Google ID token" });
+        console.error("Token verification failed:", err.message);
+        return res.status(401).json({ error: `Token verification failed: ${err.message}` });
       }
     }
-
-    const googleId = payload.sub;
-    const email = payload.email || "";
-    const name = payload.name || "";
-    const photoUrl = payload.picture || "";
 
     // Find existing user or create new one
     let user = await queryOne("SELECT * FROM users WHERE google_id = $1", [googleId]);

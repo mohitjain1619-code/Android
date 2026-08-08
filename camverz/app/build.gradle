@@ -102,6 +102,9 @@ dependencies {
 
     // Google Sign-In (still used — authenticates via our backend, not Firebase)
     implementation 'com.google.android.gms:play-services-auth:21.2.0'
+    
+    // Firebase Auth
+    implementation 'com.google.firebase:firebase-auth:23.0.0'
 
     // Retrofit (API client — replaces Firebase Firestore/Auth)
     implementation 'com.squareup.retrofit2:retrofit:2.11.0'

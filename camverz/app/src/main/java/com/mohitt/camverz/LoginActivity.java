@@ -13,6 +13,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.JsonObject;
 import com.mohitt.camverz.api.ApiClient;
 import com.mohitt.camverz.api.ApiService;
@@ -124,14 +128,41 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 if (account != null && account.getIdToken() != null) {
-                    Log.d(TAG, "✅ Google Sign In successful");
-                    authenticateWithBackend(account.getIdToken());
+                    Log.d(TAG, "✅ Google Sign In successful. Authenticating with Firebase...");
+                    firebaseAuthWithGoogle(account.getIdToken());
                 }
             } catch (ApiException e) {
                 Log.w(TAG, "❌ Google sign in failed", e);
                 Toast.makeText(LoginActivity.this, "Sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void firebaseAuthWithGoogle(String googleIdToken) {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        AuthCredential credential = GoogleAuthProvider.getCredential(googleIdToken, null);
+        auth.signInWithCredential(credential)
+            .addOnCompleteListener(this, task -> {
+                if (task.isSuccessful()) {
+                    Log.d(TAG, "✅ Firebase Auth successful. Retrieving Firebase ID token...");
+                    FirebaseUser user = auth.getCurrentUser();
+                    if (user != null) {
+                        user.getIdToken(true).addOnCompleteListener(tokenTask -> {
+                            if (tokenTask.isSuccessful() && tokenTask.getResult() != null) {
+                                String firebaseIdToken = tokenTask.getResult().getToken();
+                                Log.d(TAG, "✅ Firebase ID token retrieved successfully.");
+                                authenticateWithBackend(firebaseIdToken);
+                            } else {
+                                Log.e(TAG, "❌ Failed to retrieve Firebase ID token", tokenTask.getException());
+                                Toast.makeText(LoginActivity.this, "Failed to retrieve authentication token", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+                } else {
+                    Log.e(TAG, "❌ Firebase Auth failed", task.getException());
+                    Toast.makeText(LoginActivity.this, "Authentication failed: " + (task.getException() != null ? task.getException().getMessage() : "Unknown error"), Toast.LENGTH_LONG).show();
+                }
+            });
     }
 
     /**

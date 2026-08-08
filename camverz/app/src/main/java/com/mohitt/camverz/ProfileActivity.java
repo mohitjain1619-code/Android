@@ -27,6 +27,7 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -413,6 +414,9 @@ public class ProfileActivity extends BaseActivity {
                                 .build();
                         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(ProfileActivity.this, gso);
                         googleSignInClient.signOut();
+                        
+                        // Sign out of Firebase Auth
+                        FirebaseAuth.getInstance().signOut();
                         
                         tokenManager.clearToken();
                         
