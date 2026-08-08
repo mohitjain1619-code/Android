@@ -553,10 +553,11 @@ public class ProfileActivity extends BaseActivity {
         followingCount.setText(String.valueOf(visitedUser.getFollowingCount()));
 
         String customId = visitedUser.getCustomId();
-        if (customId == null || customId.isEmpty()) {
-            userId.setText("ID: " + (currentUserId.equals(visitedUserId) ? currentUserId.substring(0, 8) : "N/A"));
+        String idText = "ID: " + ((customId == null || customId.isEmpty()) ? (currentUserId.equals(visitedUserId) ? currentUserId.substring(0, 8) : "N/A") : customId);
+        if (currentUserId.equals(visitedUserId) && visitedUser.getEmail() != null && !visitedUser.getEmail().isEmpty()) {
+            userId.setText(idText + "\n" + visitedUser.getEmail());
         } else {
-            userId.setText("ID: " + customId);
+            userId.setText(idText);
         }
 
         if (!currentUserId.equals(visitedUserId)) {

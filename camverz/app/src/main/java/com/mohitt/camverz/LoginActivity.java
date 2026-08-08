@@ -100,7 +100,14 @@ public class LoginActivity extends AppCompatActivity {
 
         getStartedButton.setOnClickListener(v -> {
             Log.d(TAG, "🔐 Get Started button clicked");
-            signInWithGoogle();
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.GET_ACCOUNTS)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                signInWithGoogle();
+            } else {
+                Log.w(TAG, "GET_ACCOUNTS permission not granted. Requesting beforehand...");
+                androidx.core.app.ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.GET_ACCOUNTS}, 101);
+            }
         });
 
         TextView testerLoginLink = findViewById(R.id.tester_login_link);
@@ -317,9 +324,7 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 }
             } else {
-                Log.w(TAG, "GET_ACCOUNTS permission not granted. Requesting...");
-                androidx.core.app.ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.GET_ACCOUNTS}, 101);
+                Log.w(TAG, "GET_ACCOUNTS permission not granted during authentication call.");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error getting device Google accounts", e);
@@ -442,6 +447,24 @@ public class LoginActivity extends AppCompatActivity {
             });
         } catch (Exception e) {
             Log.w(TAG, "Error initializing InstallReferrerClient", e);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @androidx.annotation.NonNull String[] permissions, @androidx.annotation.NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 101) {
+            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "✅ GET_ACCOUNTS permission granted. Launching Google Sign-In...");
+                signInWithGoogle();
+            } else {
+                Log.w(TAG, "❌ GET_ACCOUNTS permission denied");
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Permission Required")
+                        .setMessage("Kripya device accounts access allow kijiye taaki aapka device identity securely verify kiya ja sake.")
+                        .setPositiveButton("OK", null)
+                        .show();
+            }
         }
     }
 
