@@ -112,6 +112,44 @@ public class LoginActivity extends AppCompatActivity {
             Log.d(TAG, "🔓 Tester login link clicked");
             showTesterLoginDialog();
         });
+
+        // Debug helper to print the actual runtime SHA-1 fingerprint
+        printAppSignature();
+    }
+
+    private void printAppSignature() {
+        try {
+            android.content.pm.Signature[] signatures;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                android.content.pm.PackageInfo packageInfo = getPackageManager().getPackageInfo(
+                        getPackageName(), android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES);
+                if (packageInfo.signingInfo != null) {
+                    signatures = packageInfo.signingInfo.getApkContentsSigners();
+                } else {
+                    return;
+                }
+            } else {
+                android.content.pm.PackageInfo packageInfo = getPackageManager().getPackageInfo(
+                        getPackageName(), android.content.pm.PackageManager.GET_SIGNATURES);
+                signatures = packageInfo.signatures;
+            }
+            if (signatures != null) {
+                for (android.content.pm.Signature signature : signatures) {
+                    java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
+                    byte[] publicKey = md.digest(signature.toByteArray());
+                    StringBuilder hexString = new StringBuilder();
+                    for (byte b : publicKey) {
+                        String appendString = Integer.toHexString(0xFF & b);
+                        if (appendString.length() == 1) hexString.append("0");
+                        hexString.append(appendString).append(":");
+                    }
+                    if (hexString.length() > 0) hexString.setLength(hexString.length() - 1);
+                    Log.d("CAMVERZ_SIGNATURE", "🔑 CURRENT ACTIVE APP SHA-1: " + hexString.toString().toUpperCase());
+                }
+            }
+        } catch (Exception e) {
+            Log.e("CAMVERZ_SIGNATURE", "Error getting signature", e);
+        }
     }
 
     private void signInWithGoogle() {
