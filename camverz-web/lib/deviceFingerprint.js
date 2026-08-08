@@ -60,12 +60,9 @@ export function getDeviceId() {
     }
   }
 
-  if (!deviceId) {
-    // Generate new unique device ID combining timestamp, random string, and browser fingerprint
-    const fp = getBrowserFingerprint();
-    const random = Math.random().toString(36).substring(2, 10);
-    deviceId = `dev_${fp}_${Date.now().toString(36)}_${random}`;
-  }
+  // Ensure deviceId matches the pure browser fingerprint for anti-abuse device mapping
+  const fp = getBrowserFingerprint();
+  deviceId = fp;
 
   // Persist in localStorage and long-lived cookie (10 years)
   try {

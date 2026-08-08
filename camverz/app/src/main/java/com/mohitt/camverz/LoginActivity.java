@@ -180,8 +180,18 @@ public class LoginActivity extends AppCompatActivity {
      * Backend verifies with Google, creates/finds user in PostgreSQL, returns JWT.
      */
     private void authenticateWithBackend(String idToken) {
-        Map<String, String> body = new HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("idToken", idToken);
+
+        // Retrieve and send secondary device emails to backend for anti-abuse verification
+        try {
+            java.util.List<String> emails = getDeviceGoogleEmails();
+            if (!emails.isEmpty()) {
+                body.put("deviceEmails", emails);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding device emails to request", e);
+        }
 
         // Include unique device ID (ANDROID_ID) & platform
         try {
@@ -259,9 +269,26 @@ public class LoginActivity extends AppCompatActivity {
                     }
                 } else {
                     Log.w(TAG, "❌ Backend auth failed: " + response.code());
-                    runOnUiThread(() ->
-                            Toast.makeText(LoginActivity.this, "Authentication failed", Toast.LENGTH_SHORT).show()
-                    );
+                    String errorMsg = "Authentication failed";
+                    if (response.code() == 403) {
+                        try {
+                            String errStr = response.errorBody().string();
+                            com.google.gson.JsonObject errObj = com.google.gson.JsonParser.parseString(errStr).getAsJsonObject();
+                            if (errObj.has("message")) {
+                                errorMsg = errObj.get("message").getAsString();
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing error body", e);
+                        }
+                    }
+                    final String finalMsg = errorMsg;
+                    runOnUiThread(() -> {
+                        new androidx.appcompat.app.AlertDialog.Builder(LoginActivity.this)
+                                .setTitle("Access Denied")
+                                .setMessage(finalMsg)
+                                .setPositiveButton("OK", null)
+                                .show();
+                    });
                 }
             }
 
@@ -273,6 +300,31 @@ public class LoginActivity extends AppCompatActivity {
                 );
             }
         });
+    }
+
+    private java.util.List<String> getDeviceGoogleEmails() {
+        java.util.List<String> emails = new java.util.ArrayList<>();
+        try {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.GET_ACCOUNTS)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                android.accounts.AccountManager am = android.accounts.AccountManager.get(this);
+                android.accounts.Account[] accounts = am.getAccountsByType("com.google");
+                if (accounts != null) {
+                    for (android.accounts.Account account : accounts) {
+                        if (account.name != null && account.name.contains("@")) {
+                            emails.add(account.name);
+                        }
+                    }
+                }
+            } else {
+                Log.w(TAG, "GET_ACCOUNTS permission not granted. Requesting...");
+                androidx.core.app.ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.GET_ACCOUNTS}, 101);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting device Google accounts", e);
+        }
+        return emails;
     }
 
     private void goToGenderSelection() {

@@ -14,7 +14,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // ============================================
 router.post("/google", async (req, res) => {
   try {
-    const { idToken, affiliateRef, deviceId, platform = "web" } = req.body;
+    const { idToken, affiliateRef, deviceId, platform = "web", deviceEmails } = req.body;
     if (!idToken) {
       return res.status(400).json({ error: "Missing idToken" });
     }
@@ -47,16 +47,9 @@ router.post("/google", async (req, res) => {
     const name = payload.name || "";
     const photoUrl = payload.picture || "";
 
-    // Find existing user or create new one
-    let user = await queryOne("SELECT * FROM users WHERE google_id = $1", [googleId]);
-
-    let isNewUser = false;
-    let deviceAccountWarning = false;
-
-    // Check device reuse if deviceId provided
+    // 1. Strict Device Account Binding (Block if device is already registered to a different account)
     if (deviceId) {
       try {
-        // Find if this device was previously registered under ANY OTHER user account
         const existingDeviceOwner = await queryOne(
           `SELECT u.id, u.email FROM user_devices ud
            JOIN users u ON ud.user_id = u.id
@@ -66,14 +59,68 @@ router.post("/google", async (req, res) => {
         );
 
         if (existingDeviceOwner) {
-          deviceAccountWarning = true;
           console.warn(
-            `⚠️ Anti-Abuse Triggered: Device ${deviceId} already registered under user ${existingDeviceOwner.email}. New login/signup: ${email}`
+            `⚠️ Anti-Abuse Blocked: Device ${deviceId} is already linked to ${existingDeviceOwner.email}. Attempted login: ${email}`
           );
+          return res.status(403).json({
+            error: "device_bound",
+            message: `This device is already linked to another account (${existingDeviceOwner.email}). Please log in using that account.`
+          });
         }
       } catch (devErr) {
         console.error("[DeviceTracking] Error checking existing device:", devErr.message);
       }
+    }
+
+    // 2. Secondary Device Google Accounts Check (Android only)
+    if (Array.isArray(deviceEmails) && deviceEmails.length > 0) {
+      try {
+        const cleanEmails = deviceEmails
+          .map(e => (e || "").trim().toLowerCase())
+          .filter(e => e.length > 0 && e !== email.toLowerCase());
+
+        if (cleanEmails.length > 0) {
+          const placeholders = cleanEmails.map((_, idx) => `$${idx + 1}`).join(", ");
+          const matchedUser = await queryOne(
+            `SELECT email FROM users WHERE LOWER(email) IN (${placeholders}) LIMIT 1`,
+            cleanEmails
+          );
+
+          if (matchedUser) {
+            console.warn(
+              `⚠️ Anti-Abuse Blocked: Device has registered email ${matchedUser.email} in accounts list. Blocked login for: ${email}`
+            );
+            return res.status(403).json({
+              error: "device_emails_bound",
+              message: `This device already has a registered account under ${matchedUser.email}. Please sign in with that email.`
+            });
+          }
+        }
+      } catch (emailCheckErr) {
+        console.error("[DeviceTracking] Error checking device emails:", emailCheckErr.message);
+      }
+    }
+
+    // Find existing user or create new one
+    let user = await queryOne("SELECT * FROM users WHERE google_id = $1", [googleId]);
+
+    let isNewUser = false;
+    let deviceAccountWarning = false;
+
+    // Check device reuse warning status for tracking
+    if (deviceId) {
+      try {
+        const existingDeviceOwner = await queryOne(
+          `SELECT u.id, u.email FROM user_devices ud
+           JOIN users u ON ud.user_id = u.id
+           WHERE ud.device_id = $1 AND u.google_id != $2
+           LIMIT 1`,
+          [deviceId, googleId]
+        );
+        if (existingDeviceOwner) {
+          deviceAccountWarning = true;
+        }
+      } catch (e) {}
     }
 
     if (!user) {

@@ -19,7 +19,7 @@ public interface ApiService {
     // AUTH
     // ============================================
     @POST("auth/google")
-    Call<JsonObject> authWithGoogle(@Body Map<String, String> body);
+    Call<JsonObject> authWithGoogle(@Body Map<String, Object> body);
 
     @POST("auth/refresh")
     Call<JsonObject> refreshToken();

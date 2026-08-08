@@ -146,6 +146,8 @@ export function AuthProvider({ children }) {
               }
             } catch (err) {
               setAuthStage('idle');
+              const errMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Authentication failed";
+              alert(errMsg);
               reject(err);
             }
           }
