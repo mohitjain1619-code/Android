@@ -51,6 +51,27 @@ function CallPageInner() {
       router.push('/?launch=true');
     }
   }, [user, userData, loading, router]);
+ 
+  // Security layout: block right-click, screenshot keyboard keys, and developer tool inspector
+  useEffect(() => {
+    const preventAction = (e) => e.preventDefault();
+    const preventKeys = (e) => {
+      // Blocks common inspection/print shortcuts
+      if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) || 
+        (e.ctrlKey && ['U', 'u', 'S', 's', 'P', 'p'].includes(e.key))
+      ) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener('contextmenu', preventAction);
+    document.addEventListener('keydown', preventKeys);
+    return () => {
+      document.removeEventListener('contextmenu', preventAction);
+      document.removeEventListener('keydown', preventKeys);
+    };
+  }, []);
 
   // Call timer
   useEffect(() => {
@@ -109,7 +130,7 @@ function CallPageInner() {
       if (ipResponse.ok) {
         const ipData = await ipResponse.json();
         const org = (ipData.org || '').toLowerCase();
-        const isVpn = org.includes('vpn') || org.includes('hosting') || org.includes('cloudflare') || org.includes('mullvad') || org.includes('nord') || org.includes('tor ') || org.includes('datacent') || org.includes('digitalocean') || org.includes('ovh') || org.includes('linode') || org.includes('amazon');
+        const isVpn = org.includes('vpn') || org.includes('hosting') || org.includes('cloudflare') || org.includes('mullvad') || org.includes('nord') || org.includes('tor ') || org.includes('datacent') || org.includes('digitalocean') || org.includes('ovh') || org.includes('linode') || org.includes('amazon') || org.includes('opera') || org.includes('surfeasy') || org.includes('proxy') || org.includes('vps') || org.includes('server') || org.includes('google') || org.includes('microsoft');
         if (isVpn) {
           alert("VPN/Proxy Detected!\n\nPlease turn off your VPN/Proxy for video calling to connect successfully. VPNs block video stream channels.\n\nBehtar video calling ke liye apna VPN/Proxy band karein.");
           setState('idle');

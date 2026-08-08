@@ -4,6 +4,10 @@
   background: var(--bg-dark);
   z-index: 250;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* ── Idle State ── */
@@ -73,6 +77,7 @@
   height: 100%;
   object-fit: contain;
   background: #060612;
+  pointer-events: none;
 }
 
 /* ── Local PIP ── */
@@ -102,6 +107,7 @@
   height: 100%;
   object-fit: cover;
   transform: scaleX(-1);
+  pointer-events: none;
 }
 
 /* ── Connecting Overlay ── */
