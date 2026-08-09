@@ -169,6 +169,12 @@ public class MainScreenActivity extends BaseActivity {
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
 
         // Initialize AdMob SDK for ads
+        java.util.List<String> testDeviceIds = java.util.Arrays.asList("6FC7D2B1D7C9B618A6D9FDC8114FDEF5");
+        com.google.android.gms.ads.RequestConfiguration requestConfiguration =
+                new com.google.android.gms.ads.RequestConfiguration.Builder()
+                        .setTestDeviceIds(testDeviceIds)
+                        .build();
+        com.google.android.gms.ads.MobileAds.setRequestConfiguration(requestConfiguration);
         com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {});
 
         FrameLayout adContainer = findViewById(R.id.banner_ad_container);
