@@ -984,7 +984,7 @@ public class CallActivity extends AppCompatActivity {
         }
 
         runOnUiThread(() -> {
-            if (interstitialAd != null) {
+            if (interstitialAd != null && !isFinishing() && !isDestroyed()) {
                 Log.d(TAG, "📺 Showing Interstitial Ad on disconnect");
                 interstitialAd.show(CallActivity.this);
             } else {

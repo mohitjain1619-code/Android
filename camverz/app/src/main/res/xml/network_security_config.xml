@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- In production, cleartext (HTTP) traffic is strictly disabled for security -->
-    <base-config cleartextTrafficPermitted="false" />
+    <!-- Permitted cleartext traffic to support mediated ad networks serving HTTP components -->
+    <base-config cleartextTrafficPermitted="true" />
 </network-security-config>
