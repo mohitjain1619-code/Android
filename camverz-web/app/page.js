@@ -127,6 +127,9 @@ function HomeContent() {
   }, []);
 
   const handleCategoryClick = (category) => {
+    // 15th August launch check commented out so users can video call directly
+    router.push(`/call?category=${category}`);
+    /*
     const email = user?.email || userData?.email;
     const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
     if (isTester) {
@@ -134,6 +137,7 @@ function HomeContent() {
     } else {
       setShowLaunchModal(true);
     }
+    */
   };
 
   const features = [
@@ -163,6 +167,9 @@ function HomeContent() {
           </p>
           <div className={styles.heroBtns}>
             <button className="btn-neon" onClick={() => {
+              // 15th August launch check commented out
+              router.push('/call');
+              /*
               const email = user?.email || userData?.email;
               const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
               if (isTester) {
@@ -170,6 +177,7 @@ function HomeContent() {
               } else {
                 setShowLaunchModal(true);
               }
+              */
             }}>
               <Video size={18} /> Start Calling <ArrowRight size={16} />
             </button>

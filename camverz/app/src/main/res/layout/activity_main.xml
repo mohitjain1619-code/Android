@@ -270,7 +270,8 @@
                 android:textSize="13sp"
                 android:textStyle="bold"
                 android:clickable="true"
-                android:focusable="true" />
+                android:focusable="true"
+                android:visibility="gone" />
 
         </LinearLayout>
 

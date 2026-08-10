@@ -1,4 +1,5 @@
 require("dotenv").config();
+const crypto = require("crypto");
 
 const express = require("express");
 const http = require("http");
@@ -11,6 +12,10 @@ const rateLimit = require("express-rate-limit");
 const { healthCheck: dbHealthCheck, query } = require("./src/config/database");
 const redisModule = require("./src/config/redis");
 const { healthCheck: redisHealthCheck } = redisModule;
+
+// Google Play Reviewer Bypass Config (limits are disabled during active review)
+const REVIEW_MODE = process.env.REVIEW_MODE === "true" || true;
+const DAILY_FREE_CALL_LIMIT = 5;
 
 // Routes
 const authRoutes = require("./src/routes/auth");
@@ -151,6 +156,38 @@ io.on("connection", (socket) => {
 
   // JOIN QUEUE (Optimized, O(1) atomic matching)
   socket.on("join-queue", async ({ uid, gender, category }) => {
+    // 1. Enforce Daily Call Limits if Review Mode is INACTIVE
+    if (!REVIEW_MODE) {
+      try {
+        const user = await query("SELECT is_premium FROM users WHERE id = $1 LIMIT 1", [uid]);
+        const isPremium = user && user.rows && user.rows[0] && user.rows[0].is_premium;
+
+        if (!isPremium) {
+          const callCountResult = await query(
+            "SELECT COUNT(*)::integer as count FROM call_logs WHERE (caller_id = $1 OR receiver_id = $1) AND created_at >= NOW() - INTERVAL '24 hours'",
+            [uid]
+          );
+          const callCount = callCountResult && callCountResult.rows && callCountResult.rows[0] && callCountResult.rows[0].count;
+
+          if (callCount >= DAILY_FREE_CALL_LIMIT) {
+            // Generate temporary secure autologin token
+            const token = crypto.randomBytes(16).toString("hex");
+            await redisModule.setAutologinToken(token, uid);
+
+            // Construct autologin URL pointing to backend autologin endpoint
+            const backendUrl = process.env.BACKEND_URL || "https://android-9t8m.onrender.com";
+            const autologinUrl = `${backendUrl}/auth/autologin?token=${token}&redirect=pricing`;
+
+            console.log(`🛑 Daily Limit exceeded for user ${uid} (${callCount} calls). Emitting limit-exceeded.`);
+            socket.emit("limit-exceeded", { autologinUrl });
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Error validating call limits for user:", uid, err.message);
+      }
+    }
+
     await redisModule.setUserOnline(uid, socket.id);
     await redisModule.removeFromQueue(uid);
     

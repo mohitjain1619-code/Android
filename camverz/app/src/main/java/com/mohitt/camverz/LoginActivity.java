@@ -116,6 +116,34 @@ public class LoginActivity extends AppCompatActivity {
             showTesterLoginDialog();
         });
 
+        // Secret Developer Easter Egg: tap logo 5 times to reveal tester login link
+        View logoHeroContainer = findViewById(R.id.logo_hero_container);
+        if (logoHeroContainer != null) {
+            logoHeroContainer.setOnClickListener(new View.OnClickListener() {
+                private int clickCount = 0;
+                private long lastClickTime = 0;
+
+                @Override
+                public void onClick(View v) {
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastClickTime < 1000) {
+                        clickCount++;
+                    } else {
+                        clickCount = 1;
+                    }
+                    lastClickTime = currentTime;
+
+                    if (clickCount >= 5) {
+                        clickCount = 0;
+                        if (testerLoginLink != null) {
+                            testerLoginLink.setVisibility(View.VISIBLE);
+                            Toast.makeText(LoginActivity.this, "Tester Mode Enabled", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+        }
+
         // Debug helper to print the actual runtime SHA-1 fingerprint
         printAppSignature();
     }
@@ -148,7 +176,6 @@ public class LoginActivity extends AppCompatActivity {
                     if (hexString.length() > 0) hexString.setLength(hexString.length() - 1);
                     String sha1 = hexString.toString().toUpperCase();
                     Log.e("CAMVERZ_SIGNATURE", "🔑 CURRENT ACTIVE APP SHA-1: " + sha1);
-                    Toast.makeText(this, "🔑 APP SHA-1: " + sha1, Toast.LENGTH_LONG).show();
                 }
             } else {
                 Log.e("CAMVERZ_SIGNATURE", "❌ Signatures list is null or empty");

@@ -2,6 +2,7 @@ const express = require("express");
 const { OAuth2Client } = require("google-auth-library");
 const { queryOne } = require("../config/database");
 const { generateToken } = require("../middleware/auth");
+const redisModule = require("../config/redis");
 
 const router = express.Router();
 
@@ -240,6 +241,41 @@ router.post("/refresh", async (req, res) => {
     return res.json({ ok: true, token: newToken });
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+// ============================================
+// GET /auth/autologin
+// One-time token login → generates JWT → redirects to Web client
+// ============================================
+router.get("/autologin", async (req, res) => {
+  try {
+    const { token, redirect = "profile" } = req.query;
+    if (!token) {
+      return res.status(400).send("Missing autologin token");
+    }
+
+    // Retrieve user from Redis using the token
+    const userId = await redisModule.getAutologinUser(token);
+    if (!userId) {
+      return res.status(401).send("Invalid or expired autologin token");
+    }
+
+    // Find user in database
+    const user = await queryOne("SELECT * FROM users WHERE id = $1", [userId]);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    // Generate JWT token
+    const jwtToken = generateToken(user);
+
+    // Redirect to front-end auto-login page
+    const frontendUrl = process.env.FRONTEND_URL || "https://camverz-nine.vercel.app";
+    return res.redirect(`${frontendUrl}/auth/autologin?token=${jwtToken}&redirect=${redirect}`);
+  } catch (err) {
+    console.error("Autologin redirect error:", err);
+    return res.status(500).send("Internal server error during autologin redirect");
   }
 });
 

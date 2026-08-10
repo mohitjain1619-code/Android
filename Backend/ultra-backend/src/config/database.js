@@ -84,6 +84,12 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_user_devices_device_id ON user_devices(device_id);
     `);
 
+    // 4. Add is_premium to users if not exists
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS is_premium BOOLEAN NOT NULL DEFAULT false;
+    `);
+
     console.log("✅ Database migrations applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations:", err.message);

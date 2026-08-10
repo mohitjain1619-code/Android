@@ -146,6 +146,23 @@ async function healthCheck() {
   }
 }
 
+// ============================================
+// AUTOLOGIN TOKENS
+// ============================================
+async function setAutologinToken(token, userId) {
+  const key = `camverz:autologin:${token}`;
+  await redis.set(key, userId, "EX", 300); // Expires in 5 minutes (300 seconds)
+}
+
+async function getAutologinUser(token) {
+  const key = `camverz:autologin:${token}`;
+  const userId = await redis.get(key);
+  if (userId) {
+    await redis.del(key); // One-time use token
+  }
+  return userId;
+}
+
 module.exports = {
   redis,
   setUserOnline,
@@ -162,5 +179,7 @@ module.exports = {
   deleteRoom,
   getAllRooms,
   checkRateLimit,
+  setAutologinToken,
+  getAutologinUser,
   healthCheck,
 };
