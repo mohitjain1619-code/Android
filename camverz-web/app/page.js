@@ -141,7 +141,7 @@ function HomeContent() {
   };
 
   const features = [
-    { icon: Video, title: 'Random Video Calls', desc: 'Get matched with real people for live video conversations worldwide.' },
+    { icon: Video, title: 'Live Virtual Calls', desc: 'Get matched with verified members for live virtual networking worldwide.' },
     { icon: Shield, title: 'Gender Verified', desc: 'All female users are verified to ensure authentic connections.' },
     { icon: Users, title: 'Community', desc: 'Join a growing community of like-minded people seeking real connections.' },
     { icon: Globe, title: 'Global Reach', desc: 'Connect with people from over 190 countries around the world.' },
@@ -365,7 +365,7 @@ function HomeContent() {
               marginBottom: '32px',
               padding: '0 10px'
             }}>
-              Camverz is gearing up for a spectacular launch on India's Independence Day! We are preparing the ultimate, ultra-high-definition random video calling experience. Stay tuned!
+              Camverz is gearing up for a spectacular launch on India's Independence Day! We are preparing the ultimate, ultra-high-definition virtual networking experience. Stay tuned!
             </p>
 
             {/* Countdown Grid */}

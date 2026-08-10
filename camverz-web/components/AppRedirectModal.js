@@ -138,10 +138,10 @@ export default function AppRedirectModal() {
             </h2>
             <p className={styles.redirectDescription}>
               {activeTab === 'messages' 
-                ? 'Instantly chat with girls and boys in your city and random people.'
+                ? 'Instantly connect with verified members for direct networking and messaging.'
                 : activeTab === 'notifications'
-                ? 'Get instant notifications for likes, comments, follows, and matches.'
-                : 'Download the app to post your feelings or thoughts, write comments, get direct message requests, and chat. Tell your fantasy and people will DM you, request you, and you can have fun with them!'
+                ? 'Get instant notifications for connections, comments, updates, and matches.'
+                : 'Download the official mobile app to share thoughts, post updates, comment on community threads, and connect with peers worldwide.'
               }
             </p>
 

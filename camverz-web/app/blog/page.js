@@ -18,12 +18,12 @@ export const blogPosts = [
   },
   {
     slug: 'video-chat-online-dating',
-    title: 'How Random Video Chat is Changing Online Dating',
-    description: 'Text profiles are out, live video is in. Discover how real-time, face-to-face random matching is changing how single people find romance.',
-    category: 'Dating',
+    title: 'How Live Video Chat is Changing Online Networking',
+    description: 'Text profiles are out, live video is in. Discover how real-time, face-to-face virtual matching is changing how people build networks.',
+    category: 'Networking',
     date: 'June 18, 2026',
     readTime: '6 min read',
-    image: '💑',
+    image: '🤝',
     gradient: 'linear-gradient(135deg, rgba(255, 0, 110, 0.15) 0%, rgba(189, 0, 255, 0.15) 100%)',
     border: '#FF006E'
   },
@@ -41,7 +41,7 @@ export const blogPosts = [
   {
     slug: 'gender-verification-importance',
     title: 'Understanding Gender Verification: Why It Matters',
-    description: 'Safety, authenticity, and respect form the pillar of modern random video calling. Read about how gender verification keeps communities safe.',
+    description: 'Safety, authenticity, and respect form the pillar of modern virtual video sessions. Read about how gender verification keeps communities safe.',
     category: 'Community',
     date: 'June 10, 2026',
     readTime: '3 min read',

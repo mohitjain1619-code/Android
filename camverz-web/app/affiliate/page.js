@@ -1339,7 +1339,7 @@ export default function AffiliatePage() {
           & Earn <span style={{ color: 'var(--neon-green)' }}>25% Lifetime</span> commission
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', lineHeight: 1.6, marginBottom: '32px' }}>
-          Earn 25% lifetime recurring commissions by recommending the web's premium random video calling platform. Invite users, stream, and get paid directly to your UPI.
+          Earn 25% lifetime recurring commissions by recommending the web's premium virtual networking & video platform. Invite users, stream, and get paid directly to your UPI.
         </p>
         <button 
           className="btn-neon" 

@@ -25,7 +25,7 @@ export default function PricingPage() {
           isFeatured: false,
           features: [
             'Unlimited Video Calls (24 Hours)',
-            'Global Random Matching',
+            'Global Live Matching',
             'Gender Preference Filter',
             'Standard Video Quality',
             'Interstitials & Banner Ads Included',
@@ -69,7 +69,7 @@ export default function PricingPage() {
           isFeatured: false,
           features: [
             'Unlimited Video Calls (10 Days)',
-            'Global Random Matching',
+            'Global Live Matching',
             'Gender & Region Filters',
             'Standard Video Quality',
             'Occasional Ads Included',
