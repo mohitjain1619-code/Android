@@ -1,4 +1,6 @@
 google.com, pub-7279598390080758, DIRECT, f08c47fec0942fa0
+facebook.com, 37612439998399463, DIRECT, c3e20eee3f780d68
+facebook.com, 1385354423725932, DIRECT, c3e20eee3f780d68
 
 # InMobi & Partners (Updated Exhaustive List)
 inmobi.com, cf32cb0f880544468e1a4077d1febf0d, DIRECT, 83e75a7ae333ca9d
