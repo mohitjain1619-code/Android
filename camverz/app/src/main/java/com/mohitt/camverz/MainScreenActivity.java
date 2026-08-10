@@ -176,6 +176,7 @@ public class MainScreenActivity extends BaseActivity {
                         .build();
         com.google.android.gms.ads.MobileAds.setRequestConfiguration(requestConfiguration);
         com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {});
+        com.facebook.ads.AudienceNetworkAds.initialize(this);
 
         FrameLayout adContainer = findViewById(R.id.banner_ad_container);
         if (adContainer != null) {
