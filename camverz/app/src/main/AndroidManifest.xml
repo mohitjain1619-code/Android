@@ -153,6 +153,11 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${admobAppId}" />
 
+        <!-- Meta Audience Network App ID -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+
         <!-- AppLovin SDK Key (Commented out)
         <meta-data
             android:name="applovin.sdk.key"
