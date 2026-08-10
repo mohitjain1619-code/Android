@@ -42,9 +42,9 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- Container for Meta Native Ad -->
-    <com.facebook.ads.NativeAdLayout
-        android:id="@+id/nativeAdLayout"
+    <!-- Container for AdMob Native Ad -->
+    <FrameLayout
+        android:id="@+id/nativeAdContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@id/cancelButton"

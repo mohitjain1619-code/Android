@@ -7,23 +7,22 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.mohitt.camverz.api.TokenManager;
 import org.json.JSONObject;
 import io.socket.client.Socket;
-import java.util.ArrayList;
-import java.util.List;
 
-// Import Facebook Audience Network SDK classes
-import com.facebook.ads.Ad;
-import com.facebook.ads.AdError;
-import com.facebook.ads.InterstitialAd;
-import com.facebook.ads.InterstitialAdListener;
-import com.facebook.ads.NativeAd;
-import com.facebook.ads.NativeAdLayout;
-import com.facebook.ads.NativeAdListener;
-import com.facebook.ads.MediaView;
+// Import Google AdMob classes instead of direct Meta Audience Network classes
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.gms.ads.nativead.NativeAd;
+import com.google.android.gms.ads.nativead.NativeAdView;
 
 public class ConnectingActivity extends BaseActivity {
 
@@ -38,7 +37,7 @@ public class ConnectingActivity extends BaseActivity {
     private boolean isWaiting = false;
     private boolean matchAccepted = false;
 
-    // Meta Audience Network Ads & Delays
+    // Google AdMob (Mediated) Ads & Delays
     private NativeAd nativeAd;
     private InterstitialAd interstitialAd;
     private long searchStartTime = 0;
@@ -62,7 +61,7 @@ public class ConnectingActivity extends BaseActivity {
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
-        // Load Meta Ads
+        // Load AdMob mediated ads
         loadNativeAd();
         loadInterstitialAd();
 
@@ -164,135 +163,124 @@ public class ConnectingActivity extends BaseActivity {
         finish();
     }
 
-    // --- Meta Ads Integration ---
+    // --- Google AdMob Mediated Ads Integration ---
 
     private void loadNativeAd() {
-        nativeAd = new NativeAd(this, "1679167109809598_1679167733142869");
-        NativeAdListener nativeAdListener = new NativeAdListener() {
-            @Override
-            public void onMediaDownloaded(Ad ad) {
-                Log.d(TAG, "Meta Native ad media downloaded.");
-            }
-
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                Log.e(TAG, "Meta Native ad error: " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                Log.d(TAG, "Meta Native ad loaded.");
-                if (nativeAd == null || nativeAd != ad) {
-                    return;
-                }
-                inflateAd(nativeAd);
-            }
-
-            @Override
-            public void onAdClicked(Ad ad) {
-                Log.d(TAG, "Meta Native ad clicked.");
-            }
-
-            @Override
-            public void onLoggingImpression(Ad ad) {
-                Log.d(TAG, "Meta Native ad impression logged.");
-            }
-        };
-
-        nativeAd.loadAd(
-                nativeAd.buildLoadAdConfig()
-                        .withAdListener(nativeAdListener)
-                        .build());
+        AdLoader adLoader = new AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
+                .forNativeAd(new NativeAd.OnNativeAdLoadedListener() {
+                    @Override
+                    public void onNativeAdLoaded(NativeAd ad) {
+                        if (isFinishing() || isDestroyed()) {
+                            ad.destroy();
+                            return;
+                        }
+                        if (nativeAd != null) {
+                            nativeAd.destroy();
+                        }
+                        nativeAd = ad;
+                        inflateAdMobNativeAd(ad);
+                    }
+                })
+                .withAdListener(new com.google.android.gms.ads.AdListener() {
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError adError) {
+                        Log.e(TAG, "AdMob Native ad failed to load: " + adError.toString());
+                    }
+                })
+                .build();
+        adLoader.loadAd(new AdRequest.Builder().build());
     }
 
-    private void inflateAd(NativeAd nativeAd) {
-        nativeAd.unregisterView();
+    private void inflateAdMobNativeAd(NativeAd ad) {
+        FrameLayout adContainer = findViewById(R.id.nativeAdContainer);
+        if (adContainer == null) return;
+        adContainer.removeAllViews();
+        adContainer.setVisibility(View.VISIBLE);
 
-        NativeAdLayout nativeAdLayout = findViewById(R.id.nativeAdLayout);
-        if (nativeAdLayout == null) return;
-        nativeAdLayout.removeAllViews();
-        nativeAdLayout.setVisibility(View.VISIBLE);
+        // Create the NativeAdView container
+        NativeAdView adView = new NativeAdView(this);
+        adView.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT));
 
-        // Build native ad container dynamically
-        LinearLayout adContainer = new LinearLayout(this);
-        adContainer.setOrientation(LinearLayout.VERTICAL);
-        adContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        adContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        // Build native ad components inside a LinearLayout dynamically
+        LinearLayout innerContainer = new LinearLayout(this);
+        innerContainer.setOrientation(LinearLayout.VERTICAL);
+        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
+        innerContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
 
         // Headline
         TextView adHeadline = new TextView(this);
-        adHeadline.setText(nativeAd.getAdHeadline());
+        adHeadline.setText(ad.getHeadline());
         adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
         adHeadline.setTextSize(16);
         adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        adContainer.addView(adHeadline);
+        innerContainer.addView(adHeadline);
+        adView.setHeadlineView(adHeadline);
 
         // Body
         TextView adBody = new TextView(this);
-        adBody.setText(nativeAd.getAdBodyText());
+        adBody.setText(ad.getBody());
         adBody.setTextColor(getResources().getColor(R.color.text_secondary));
         adBody.setTextSize(12);
         adBody.setPadding(0, dpToPx(4), 0, dpToPx(8));
-        adContainer.addView(adBody);
+        innerContainer.addView(adBody);
+        adView.setBodyView(adBody);
 
         // Call to action button
         Button callToAction = new Button(this);
-        callToAction.setText(nativeAd.getAdCallToAction());
+        callToAction.setText(ad.getCallToAction());
         callToAction.setBackgroundResource(R.drawable.bg_glass_card_premium);
         callToAction.setTextColor(getResources().getColor(R.color.accent_primary));
         callToAction.setTextSize(14);
         callToAction.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        adContainer.addView(callToAction);
+        innerContainer.addView(callToAction);
+        adView.setCallToActionView(callToAction);
 
-        nativeAdLayout.addView(adContainer);
+        // Add elements to NativeAdView wrapper
+        adView.addView(innerContainer);
 
-        // Register interactive views
-        List<View> clickableViews = new ArrayList<>();
-        clickableViews.add(adHeadline);
-        clickableViews.add(callToAction);
-        nativeAd.registerViewForInteraction(adContainer, new MediaView(this), clickableViews);
+        // Register native ad object with NativeAdView
+        adView.setNativeAd(ad);
+
+        adContainer.addView(adView);
     }
 
     private void loadInterstitialAd() {
-        interstitialAd = new InterstitialAd(this, "1679167109809598_1679167723142870");
-        InterstitialAdListener interstitialAdListener = new InterstitialAdListener() {
-            @Override
-            public void onInterstitialDisplayed(Ad ad) {
-                Log.d(TAG, "Meta Interstitial displayed.");
-            }
+        AdRequest adRequest = new AdRequest.Builder().build();
+        InterstitialAd.load(this, getString(R.string.admob_interstitial_ad_unit_id), adRequest,
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(InterstitialAd ad) {
+                        interstitialAd = ad;
+                        Log.d(TAG, "AdMob Interstitial loaded.");
+                        
+                        interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                            @Override
+                            public void onAdDismissedFullScreenContent() {
+                                Log.d(TAG, "AdMob Interstitial dismissed.");
+                                finish();
+                            }
 
-            @Override
-            public void onInterstitialDismissed(Ad ad) {
-                Log.d(TAG, "Meta Interstitial dismissed.");
-                finish();
-            }
+                            @Override
+                            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                                Log.e(TAG, "AdMob Interstitial failed to show: " + adError.getMessage());
+                                finish();
+                            }
+                        });
+                    }
 
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                Log.e(TAG, "Meta Interstitial error: " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                Log.d(TAG, "Meta Interstitial loaded.");
-            }
-
-            @Override
-            public void onAdClicked(Ad ad) {}
-
-            @Override
-            public void onLoggingImpression(Ad ad) {}
-        };
-
-        interstitialAd.loadAd(
-                interstitialAd.buildLoadAdConfig()
-                        .withAdListener(interstitialAdListener)
-                        .build());
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError loadAdError) {
+                        Log.e(TAG, "AdMob Interstitial failed to load: " + loadAdError.toString());
+                        interstitialAd = null;
+                    }
+                });
     }
 
     private void showInterstitialAndFinish() {
-        if (interstitialAd != null && interstitialAd.isAdLoaded()) {
-            interstitialAd.show();
+        if (interstitialAd != null) {
+            interstitialAd.show(this);
         } else {
             finish();
         }
@@ -310,12 +298,9 @@ public class ConnectingActivity extends BaseActivity {
         }
         socket.off("match-found");
 
-        // Clean up Meta ads
+        // Clean up AdMob ads
         if (nativeAd != null) {
             nativeAd.destroy();
-        }
-        if (interstitialAd != null) {
-            interstitialAd.destroy();
         }
     }
 }

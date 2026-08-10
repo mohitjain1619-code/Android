@@ -68,4 +68,5 @@
     <!-- AdMob Ad Unit IDs -->
     <string name="admob_banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
     <string name="admob_interstitial_ad_unit_id">ca-app-pub-7279598390080758/9159498237</string>
+    <string name="admob_native_ad_unit_id">ca-app-pub-3940256099942544/2247696110</string>
 </resources>
