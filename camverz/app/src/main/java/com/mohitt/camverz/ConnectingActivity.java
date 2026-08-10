@@ -61,9 +61,13 @@ public class ConnectingActivity extends BaseActivity {
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
-        // Load AdMob mediated ads
-        loadNativeAd();
-        loadInterstitialAd();
+        // Load AdMob mediated ads only after initialization completes to avoid "Unknown" platform/0 bid issues.
+        com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
+            runOnUiThread(() -> {
+                loadNativeAd();
+                loadInterstitialAd();
+            });
+        });
 
         setupSocketListeners();
         loadUserDataAndJoinQueue();
