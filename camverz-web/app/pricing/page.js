@@ -1,11 +1,53 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, Zap, Sparkles, Crown, ShieldCheck, Lock, RefreshCw, ArrowRight, Star, Video, EyeOff } from 'lucide-react';
+import { useAuth } from '../../lib/auth-context';
+import { Check, Zap, Sparkles, Crown, ShieldCheck, Lock, RefreshCw, ArrowRight, Star, Video, EyeOff, MapPin, Globe } from 'lucide-react';
 import styles from './page.module.css';
 
+const REGIONAL_COUNTRIES = ['india', 'pakistan', 'bangladesh', 'thailand', 'in', 'pk', 'bd', 'th'];
+
 export default function PricingPage() {
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const { user, userData, setShowLogin, setShowOnboarding } = useAuth();
+  const [regionMode, setRegionMode] = useState('international'); // 'regional' | 'international'
+  const [detectedLocation, setDetectedLocation] = useState('Detecting location...');
+
+  // Auto-detect user country from userData or IP geolocation
+  useEffect(() => {
+    let userCountry = '';
+    if (userData?.city) {
+      userCountry = userData.city.split(',').pop().trim().toLowerCase();
+    } else if (userData?.country) {
+      userCountry = userData.country.trim().toLowerCase();
+    }
+
+    if (userCountry && REGIONAL_COUNTRIES.some(c => userCountry.includes(c))) {
+      setRegionMode('regional');
+      setDetectedLocation(`Detected: ${userData.city || userCountry.toUpperCase()} (Regional PPP Discount Applied 🏷️)`);
+    } else if (userCountry) {
+      setRegionMode('international');
+      setDetectedLocation(`Detected: ${userData.city || userCountry.toUpperCase()} (International Tier)`);
+    } else {
+      // Fallback: IP Geolocation lookup
+      fetch('https://ipapi.co/json/')
+        ? fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+              const countryName = (data.country_name || data.country_code || '').toLowerCase();
+              if (REGIONAL_COUNTRIES.some(c => countryName.includes(c))) {
+                setRegionMode('regional');
+                setDetectedLocation(`Detected: ${data.country_name || 'Regional'} (Regional PPP Discount Applied 🏷️)`);
+              } else {
+                setRegionMode('international');
+                setDetectedLocation(`Detected: ${data.country_name || 'Global'} (International Tier)`);
+              }
+            })
+            .catch(() => {
+              setDetectedLocation('Global Pricing');
+            })
+        : setDetectedLocation('Global Pricing');
+    }
+  }, [userData]);
 
   const packages = [
     {
@@ -19,7 +61,7 @@ export default function PricingPage() {
       tiers: [
         {
           type: 'With Ads',
-          price: '7',
+          price: regionMode === 'regional' ? '3' : '7',
           tag: 'Standard Access',
           tagClass: styles.tagWithAds,
           isFeatured: false,
@@ -30,12 +72,12 @@ export default function PricingPage() {
             'Standard Video Quality',
             'Interstitials & Banner Ads Included',
           ],
-          btnText: 'Choose 1-Day ($7)',
+          btnText: `Choose 1-Day ($${regionMode === 'regional' ? '3' : '7'})`,
           btnClass: styles.btnStandard,
         },
         {
           type: 'Without Ads (Ad-Free)',
-          price: '10',
+          price: regionMode === 'regional' ? '5' : '10',
           tag: 'Zero Ads + VIP',
           tagClass: styles.tagNoAds,
           isFeatured: true,
@@ -46,7 +88,7 @@ export default function PricingPage() {
             'Full Gender & Country Filters',
             'VIP Badge on Profile',
           ],
-          btnText: 'Go Ad-Free ($10)',
+          btnText: `Go Ad-Free ($${regionMode === 'regional' ? '5' : '10'})`,
           btnClass: styles.btnPro,
         },
       ],
@@ -63,7 +105,7 @@ export default function PricingPage() {
       tiers: [
         {
           type: 'With Ads',
-          price: '15',
+          price: regionMode === 'regional' ? '7' : '15',
           tag: 'Standard Access',
           tagClass: styles.tagWithAds,
           isFeatured: false,
@@ -74,12 +116,12 @@ export default function PricingPage() {
             'Standard Video Quality',
             'Occasional Ads Included',
           ],
-          btnText: 'Choose 10-Days ($15)',
+          btnText: `Choose 10-Days ($${regionMode === 'regional' ? '7' : '15'})`,
           btnClass: styles.btnStandard,
         },
         {
           type: 'Without Ads (Ad-Free)',
-          price: '19',
+          price: regionMode === 'regional' ? '10' : '19',
           tag: 'Ad-Free + VIP Boost',
           tagClass: styles.tagNoAds,
           isFeatured: true,
@@ -90,7 +132,7 @@ export default function PricingPage() {
             'Unlimited Direct Messaging',
             'VIP Gold Badge & Highlighted Avatar',
           ],
-          btnText: 'Go Ad-Free ($19)',
+          btnText: `Go Ad-Free ($${regionMode === 'regional' ? '10' : '19'})`,
           btnClass: styles.btnPro,
         },
       ],
@@ -106,7 +148,7 @@ export default function PricingPage() {
       tiers: [
         {
           type: 'With Ads',
-          price: '25',
+          price: regionMode === 'regional' ? '12' : '25',
           tag: 'Standard VIP',
           tagClass: styles.tagWithAds,
           isFeatured: false,
@@ -117,12 +159,12 @@ export default function PricingPage() {
             'High Quality Video Stream',
             'Standard Ad Stream Included',
           ],
-          btnText: 'Choose 1-Month ($25)',
+          btnText: `Choose 1-Month ($${regionMode === 'regional' ? '12' : '25'})`,
           btnClass: styles.btnStandard,
         },
         {
           type: 'Without Ads (Ad-Free)',
-          price: '35',
+          price: regionMode === 'regional' ? '18' : '35',
           tag: 'Ultimate Platinum',
           tagClass: styles.tagNoAds,
           isFeatured: true,
@@ -133,7 +175,7 @@ export default function PricingPage() {
             'Unlimited Friends & Direct Messaging',
             'Exclusive Platinum VIP Crown Badge',
           ],
-          btnText: 'Go Platinum ($35)',
+          btnText: `Go Platinum ($${regionMode === 'regional' ? '18' : '35'})`,
           btnClass: styles.btnPro,
         },
       ],
@@ -141,8 +183,20 @@ export default function PricingPage() {
   ];
 
   const handlePlanClick = (planName, price) => {
-    setSelectedPlan({ planName, price });
-    alert(`Thank you for choosing ${planName} ($${price}). Payment integration processing...`);
+    // 1. Auth Gatekeeper: Prompt login if not signed in
+    if (!user) {
+      setShowLogin(true);
+      return;
+    }
+
+    // 2. Onboarding Gatekeeper: Prompt onboarding if profile is incomplete
+    if (!userData?.gender || !userData?.city || !userData?.name) {
+      setShowOnboarding(true);
+      return;
+    }
+
+    // 3. Authenticated & Onboarded: Proceed to payment process
+    alert(`Processing VIP Pass: ${planName} ($${price}). Redirecting to Checkout...`);
   };
 
   return (
@@ -160,9 +214,33 @@ export default function PricingPage() {
         <h1 className={styles.title}>
           Choose Your <span className="neon-text">VIP Experience</span>
         </h1>
-        <p className={subtitleText(styles)}>
+        <p className={styles.subtitle}>
           Unlock unlimited live video calls, gender filters, fast queueing, and ad-free streaming. Select from our 3 pass durations below!
         </p>
+
+        {/* Region & Location Selector */}
+        <div className={styles.regionToggleContainer}>
+          <div className={styles.detectedLocationPill}>
+            <MapPin size={14} />
+            <span>{detectedLocation}</span>
+          </div>
+
+          <div className={styles.regionToggleGroup}>
+            <button
+              className={`${styles.regionBtn} ${regionMode === 'regional' ? styles.regionBtnActive : ''}`}
+              onClick={() => setRegionMode('regional')}
+            >
+              <span>🇮🇳 Regional Tier (IN, PK, BD, TH)</span>
+            </button>
+            <button
+              className={`${styles.regionBtn} ${regionMode === 'international' ? styles.regionBtnActive : ''}`}
+              onClick={() => setRegionMode('international')}
+            >
+              <Globe size={14} />
+              <span>Global International Tier</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 3 Stacked Package Sections */}
@@ -267,8 +345,4 @@ export default function PricingPage() {
       </div>
     </div>
   );
-}
-
-function subtitleText(styles) {
-  return styles.subtitle;
 }
