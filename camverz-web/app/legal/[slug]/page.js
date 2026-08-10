@@ -85,22 +85,22 @@ const legalDocs = {
     )
   },
   'refund-policy': {
-    title: 'Refund Policy',
-    lastUpdated: 'June 24, 2026',
+    title: 'Refund & Cancellation Policy',
+    lastUpdated: 'August 10, 2026',
     icon: Landmark,
     themeColor: '#FF6D00',
     content: (
       <>
-        <p>This policy details your refund rights for packages, credits, and premium subscriptions purchased on the Camverz Web Platform.</p>
+        <p>This policy details the strict refund and cancellation terms for all VIP passes and packages purchased on the Camverz Web Platform.</p>
 
-        <h2>1. Premium Web Subscriptions</h2>
-        <p>Subscriptions purchased directly on the web app can be cancelled at any time. Once cancelled, your premium benefits remain active until the end of the current billing cycle. No partial refunds are issued for unused portions of billing cycles.</p>
+        <h2>1. Strict No Refunds Policy</h2>
+        <p>All sales and purchases of digital VIP access passes (1 Day Pass, 10 Days Package, 1 Month VIP Package) on Camverz are final and non-refundable. Once a pass is purchased, digital access is granted instantly to your account and cannot be refunded or cancelled.</p>
 
-        <h2>2. Virtual Coins and Match Passes</h2>
-        <p>Virtual credits or coins are consumed as you use matching preferences. Unused coins are eligible for a full refund within 14 days of purchase, provided none of the coins from the package have been spent. If any portion of the package has been used, the purchase becomes non-refundable.</p>
+        <h2>2. Instant Activation & No Recurring Billing</h2>
+        <p>All purchases are one-time payments for the chosen duration. There are no automatic hidden renewals or recurring subscription charges. Because digital benefits are delivered immediately upon successful payment, no partial or pro-rated refunds will be granted.</p>
 
-        <h2>3. Processing Refunds</h2>
-        <p>To request a refund, please contact billing support at <strong>billing@camverz.com</strong> with your transaction ID, Google Account email, and custom user ID. Refund transactions take 5–10 business days to clear back to your original payment method.</p>
+        <h2>3. Technical Exceptions & Inquiries</h2>
+        <p>In the rare event of a technical issue where a payment was processed but digital access failed to activate, please contact support at <strong>support@camverz.com</strong> with your transaction ID and account details for manual activation.</p>
       </>
     )
   },

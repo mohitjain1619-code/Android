@@ -350,10 +350,10 @@ export default function PricingPage() {
           By clicking any package above to complete your purchase, you agree to Camverz's{' '}
           <Link href="/legal/terms-and-conditions" className={styles.termsLink}>Terms & Conditions</Link>,{' '}
           <Link href="/legal/privacy-policy" className={styles.termsLink}>Privacy Policy</Link>, and{' '}
-          <Link href="/legal/refund-policy" className={styles.termsLink}>Refund & Cancellation Policy</Link>.
+          <Link href="/legal/refund-policy" className={styles.termsLink}>Refund Policy (Strictly No Refunds)</Link>.
         </p>
         <p className={styles.subNotice}>
-          All payments are processed securely via SSL. Pass activation is instant and non-recurring.
+          All digital pass purchases are final, instant, and strictly non-refundable. All payments are processed securely via 256-bit SSL.
         </p>
       </div>
     </div>
