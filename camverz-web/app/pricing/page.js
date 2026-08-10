@@ -220,8 +220,7 @@ export default function PricingPage() {
       if (pkgId === '1-day' && tierType === 'With Ads') {
         return 'https://rzp.io/rzp/0hqC5wl';
       }
-      // Placeholder slots for remaining Indian pricing packages
-      if (pkgId === '1-day' && tierType === 'Without Ads (Ad-Free)') return '';
+      if (pkgId === '1-day' && tierType === 'Without Ads (Ad-Free)') return 'https://rzp.io/rzp/XJPN9Fk';
       if (pkgId === '10-days' && tierType === 'With Ads') return '';
       if (pkgId === '10-days' && tierType === 'Without Ads (Ad-Free)') return '';
       if (pkgId === '1-month' && tierType === 'With Ads') return '';
