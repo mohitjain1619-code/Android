@@ -215,7 +215,22 @@ export default function PricingPage() {
     },
   ];
 
-  const handlePlanClick = (planName, price) => {
+  const getPaymentLink = (pkgId, tierType) => {
+    if (regionMode === 'india') {
+      if (pkgId === '1-day' && tierType === 'With Ads') {
+        return 'https://rzp.io/rzp/0hqC5wl';
+      }
+      // Placeholder slots for remaining Indian pricing packages
+      if (pkgId === '1-day' && tierType === 'Without Ads (Ad-Free)') return '';
+      if (pkgId === '10-days' && tierType === 'With Ads') return '';
+      if (pkgId === '10-days' && tierType === 'Without Ads (Ad-Free)') return '';
+      if (pkgId === '1-month' && tierType === 'With Ads') return '';
+      if (pkgId === '1-month' && tierType === 'Without Ads (Ad-Free)') return '';
+    }
+    return null;
+  };
+
+  const handlePlanClick = (pkgId, tierType, planName, price) => {
     // 1. Auth Gatekeeper
     if (!user) {
       setShowLogin(true);
@@ -229,7 +244,13 @@ export default function PricingPage() {
     }
 
     // 3. Process Checkout
-    alert(`Processing VIP Pass: ${planName} (${currencySymbol}${price}). Redirecting to Checkout...`);
+    const link = getPaymentLink(pkgId, tierType);
+    if (link) {
+      // Append user identifiers to payment page parameters if needed
+      window.location.href = `${link}?email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(userData.name || '')}`;
+    } else {
+      alert(`Processing VIP Pass: ${planName} (${currencySymbol}${price}). Redirecting to Checkout...`);
+    }
   };
 
   return (
@@ -347,7 +368,7 @@ export default function PricingPage() {
 
                       <button
                         className={`${styles.buyBtn} ${tier.btnClass}`}
-                        onClick={() => handlePlanClick(`${pkg.title} - ${tier.type}`, resolvedPrice)}
+                        onClick={() => handlePlanClick(pkg.id, tier.type, `${pkg.title} - ${tier.type}`, resolvedPrice)}
                       >
                         <span>Choose Plan ({currencySymbol}{resolvedPrice})</span>
                         <ArrowRight size={16} />
