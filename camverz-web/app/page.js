@@ -145,7 +145,8 @@ function HomeContent() {
     { icon: Shield, title: 'Gender Verified', desc: 'All female users are verified to ensure authentic connections.' },
     { icon: Users, title: 'Community', desc: 'Join a growing community of like-minded people seeking real connections.' },
     { icon: Globe, title: 'Global Reach', desc: 'Connect with people from over 190 countries around the world.' },
-    { icon: Heart, title: 'Dating & Friends', desc: 'Find dates, make friends, or just have fun conversations.' },
+    // { icon: Heart, title: 'Dating & Friends', desc: 'Find dates, make friends, or just have fun conversations.' },
+    { icon: Heart, title: 'Language & Networking', desc: 'Practice languages, build digital networks, or have interactive live discussions.' },
     { icon: Lock, title: 'Safe & Private', desc: 'Your calls are secure. No recordings, no screenshots.' },
   ];
 
@@ -156,14 +157,16 @@ function HomeContent() {
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
             <Zap size={14} />
-            <span>Live Video Calling Platform</span>
+            {/* <span>Live Video Calling Platform</span> */}
+            <span>Virtual Networking & SaaS Community</span>
           </div>
           <h1 className={styles.heroTitle}>
-            Meet Real People<br />
-            Through <span className="neon-text">Video Calls</span>
+            Meet Verified Peers<br />
+            Through <span className="neon-text">Virtual Networking</span>
           </h1>
+          {/* <p className={styles.heroDesc}>Get matched randomly and start video calling. Find dates, make friends, or just chat with strangers from around the world.</p> */}
           <p className={styles.heroDesc}>
-            Get matched randomly and start video calling. Find dates, make friends, or just chat with strangers from around the world.
+            Connect with verified members worldwide for live virtual networking, skill sharing, language exchange, and digital collaboration.
           </p>
           <div className={styles.heroBtns}>
             <button className="btn-neon" onClick={() => {

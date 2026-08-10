@@ -41,11 +41,19 @@ export default function AboutPage() {
         {/* Story Section */}
         <section className={styles.storyCard}>
           <h2>Our Story</h2>
+          {/*
           <p>
             In a world saturated with superficial dating profiles, messaging delays, and catfishing, we wanted to build something simpler and more human. Camverz was born out of a desire to replicate the excitement of real-world spontaneous encounters.
           </p>
           <p>
             Whether you want to learn a new language, share a laugh with someone from a different continent, make life-long friends, or find a romantic partner, Camverz provides a safe, simple, and exciting platform to match and chat instantly.
+          </p>
+          */}
+          <p>
+            Camverz was created to empower professionals, creators, and individuals across the globe to connect through live virtual networking, real-time video sessions, and interactive social communities.
+          </p>
+          <p>
+            Whether you want to engage in language exchange, build your global professional network, collaborate on digital projects, or participate in verified video discussions, Camverz provides a secure, seamless, and high-performance SaaS platform to connect instantly.
           </p>
         </section>
 
