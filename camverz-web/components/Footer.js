@@ -12,12 +12,14 @@ export default function Footer() {
               <span>⚡</span>
               <span className={styles.logoText}>Camverz</span>
             </div>
-            <p className={styles.tagline}>Connect with real people through random video calls. Safe, verified, and fun.</p>
+            {/* <p className={styles.tagline}>Connect with real people through random video calls. Safe, verified, and fun.</p> */}
+            <p className={styles.tagline}>Virtual networking & SaaS community platform. Connect with verified members worldwide.</p>
           </div>
 
           <div className={styles.linkGroup}>
             <h4>Platform</h4>
             <Link href="/">Home</Link>
+            <Link href="/pricing">Pricing</Link>
             <Link href="/posts">Posts</Link>
             <Link href="/affiliate">Creator Program</Link>
             <Link href="/blog">Blog</Link>
