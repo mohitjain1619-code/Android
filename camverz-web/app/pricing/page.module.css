@@ -441,3 +441,34 @@
     gap: 24px;
   }
 }
+
+/* Razorpay Terms & Compliance Notice */
+.termsNotice {
+  max-width: 900px;
+  margin: 40px auto 0 auto;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.termsLink {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.termsLink:hover {
+  color: #fff;
+}
+
+.subNotice {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}

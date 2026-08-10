@@ -343,6 +343,19 @@ export default function PricingPage() {
           <div className={styles.guaranteeDesc}>Pay once for your chosen package without hidden recurring charges.</div>
         </div>
       </div>
+
+      {/* Razorpay Compliance Terms & Conditions Notice */}
+      <div className={styles.termsNotice}>
+        <p>
+          By clicking any package above to complete your purchase, you agree to Camverz's{' '}
+          <Link href="/legal/terms-and-conditions" className={styles.termsLink}>Terms & Conditions</Link>,{' '}
+          <Link href="/legal/privacy-policy" className={styles.termsLink}>Privacy Policy</Link>, and{' '}
+          <Link href="/legal/refund-policy" className={styles.termsLink}>Refund & Cancellation Policy</Link>.
+        </p>
+        <p className={styles.subNotice}>
+          All payments are processed securely via SSL. Pass activation is instant and non-recurring.
+        </p>
+      </div>
     </div>
   );
 }
