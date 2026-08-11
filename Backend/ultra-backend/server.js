@@ -86,6 +86,40 @@ app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api", adsRoutes);
 
+// Database Auto-Clean Check (Only for debug purposes, to be commented out after run)
+async function clearAllTables() {
+  try {
+    console.log("🧹 DATABASE CLEANUP STARTED...");
+    await query(`
+      TRUNCATE TABLE 
+        users, 
+        user_devices, 
+        posts, 
+        post_likes, 
+        comments, 
+        follows, 
+        chats, 
+        messages, 
+        friend_requests, 
+        notifications, 
+        blocked_users, 
+        reports, 
+        rewarded_ad_logs, 
+        call_logs, 
+        affiliates, 
+        affiliate_clicks, 
+        affiliate_signups, 
+        affiliate_payouts, 
+        affiliate_sales 
+      CASCADE;
+    `);
+    console.log("🧹 DATABASE CLEANUP SUCCESSFUL!");
+  } catch (err) {
+    console.error("❌ Database cleanup failed:", err);
+  }
+}
+clearAllTables();
+
 // ============================================
 // ICE SERVERS ENDPOINT (WebRTC)
 // ============================================
