@@ -123,11 +123,13 @@ public class ConnectingActivity extends BaseActivity {
         socket.off("match-found");
 
         socket.on("match-found", args -> {
+            Log.d(TAG, "📥 match-found socket event received. isWaiting=" + isWaiting);
             if (!isWaiting) return;
 
             try {
                 JSONObject data = (JSONObject) args[0];
                 String peerId = data.getString("peerId");
+                Log.d(TAG, "📥 match-found details -> peerId: " + peerId + ", myUid: " + myUid);
 
                 if (peerId.equals(myUid)) return;
 
@@ -137,6 +139,7 @@ public class ConnectingActivity extends BaseActivity {
 
                     // Calculate elapsed search duration
                     long elapsed = System.currentTimeMillis() - searchStartTime;
+                    Log.d(TAG, "⏱️ elapsed matchmaking time: " + elapsed + "ms, searchStartTime: " + searchStartTime);
                     if (elapsed < MIN_SEARCH_DURATION_MS) {
                         long remainingDelay = MIN_SEARCH_DURATION_MS - elapsed;
                         Log.d(TAG, "⏳ Delaying match transition by " + remainingDelay + "ms to show Native ad");
@@ -145,6 +148,7 @@ public class ConnectingActivity extends BaseActivity {
                             transitionToCall(peerId);
                         }, remainingDelay);
                     } else {
+                        Log.d(TAG, "⚡ Elapsed time is already >= 5s. Transitioning immediately.");
                         transitionToCall(peerId);
                     }
                 });
@@ -156,6 +160,7 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void transitionToCall(String peerId) {
+        Log.d(TAG, "🚀 transitionToCall starting CallActivity with peerId: " + peerId);
         matchAccepted = true;
         Intent i = new Intent(ConnectingActivity.this, CallActivity.class);
         i.putExtra("peer", peerId);
