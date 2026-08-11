@@ -26,6 +26,7 @@ const notificationRoutes = require("./src/routes/notifications");
 const verificationRoutes = require("./src/routes/verification");
 const friendRoutes = require("./src/routes/friends");
 const affiliateRoutes = require("./src/routes/affiliate");
+const adsRoutes = require("./src/routes/ads");
 
 // Services
 const { startCleanupCron } = require("./src/services/cleanup");
@@ -82,6 +83,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/verify", verificationRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/affiliate", affiliateRoutes);
+app.use("/api/ads", adsRoutes);
 
 // ============================================
 // ICE SERVERS ENDPOINT (WebRTC)
@@ -167,9 +169,18 @@ io.on("connection", (socket) => {
             "SELECT COUNT(*)::integer as count FROM call_logs WHERE (caller_id = $1 OR receiver_id = $1) AND created_at >= NOW() - INTERVAL '24 hours'",
             [uid]
           );
-          const callCount = callCountResult && callCountResult.rows && callCountResult.rows[0] && callCountResult.rows[0].count;
+          const callCount = (callCountResult && callCountResult.rows && callCountResult.rows[0] && callCountResult.rows[0].count) || 0;
 
-          if (callCount >= DAILY_FREE_CALL_LIMIT) {
+          // Check rewarded ads watched in the last 24 hours to extend daily allowed calls limit
+          const adCountResult = await query(
+            "SELECT COUNT(*)::integer as count FROM rewarded_ad_logs WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '24 hours'",
+            [uid]
+          );
+          const adCount = (adCountResult && adCountResult.rows && adCountResult.rows[0] && adCountResult.rows[0].count) || 0;
+
+          const allowedCalls = DAILY_FREE_CALL_LIMIT + adCount;
+
+          if (callCount >= allowedCalls) {
             // Generate temporary secure autologin token
             const token = crypto.randomBytes(16).toString("hex");
             await redisModule.setAutologinToken(token, uid);
@@ -178,7 +189,7 @@ io.on("connection", (socket) => {
             const backendUrl = process.env.BACKEND_URL || "https://android-9t8m.onrender.com";
             const autologinUrl = `${backendUrl}/auth/autologin?token=${token}&redirect=pricing`;
 
-            console.log(`🛑 Daily Limit exceeded for user ${uid} (${callCount} calls). Emitting limit-exceeded.`);
+            console.log(`🛑 Daily Limit exceeded for user ${uid} (${callCount}/${allowedCalls} calls). Emitting limit-exceeded.`);
             socket.emit("limit-exceeded", { autologinUrl });
             return;
           }

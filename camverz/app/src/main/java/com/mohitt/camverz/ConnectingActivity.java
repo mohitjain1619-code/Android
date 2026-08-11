@@ -22,6 +22,10 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdView;
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd;
+import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback;
+import com.google.android.gms.ads.OnUserEarnedRewardListener;
+import androidx.annotation.NonNull;
 
 public class ConnectingActivity extends BaseActivity {
 
@@ -38,6 +42,7 @@ public class ConnectingActivity extends BaseActivity {
 
     // Google AdMob Mediated Native Ad & Delay
     private NativeAd nativeAd;
+    private RewardedInterstitialAd rewardedInterstitialAd;
     private long searchStartTime = 0;
     private static final long MIN_SEARCH_DURATION_MS = 5000; // Enforce minimum 5 seconds search duration
 
@@ -59,10 +64,11 @@ public class ConnectingActivity extends BaseActivity {
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
-        // Load AdMob mediated native ads after initialization
+        // Load AdMob mediated native ads and rewarded interstitial ads after initialization
         com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
             runOnUiThread(() -> {
                 loadNativeAd();
+                loadRewardedInterstitialAd();
             });
         });
 
@@ -121,6 +127,14 @@ public class ConnectingActivity extends BaseActivity {
 
     private void setupSocketListeners() {
         socket.off("match-found");
+        socket.off("limit-exceeded");
+
+        socket.on("limit-exceeded", args -> {
+            Log.w(TAG, "⚠️ Received limit-exceeded socket event.");
+            runOnUiThread(() -> {
+                showLimitExceededDialog();
+            });
+        });
 
         socket.on("match-found", args -> {
             Log.d(TAG, "📥 match-found socket event received. isWaiting=" + isWaiting);
@@ -256,6 +270,74 @@ public class ConnectingActivity extends BaseActivity {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
+    private void loadRewardedInterstitialAd() {
+        RewardedInterstitialAd.load(this, getString(R.string.admob_rewarded_interstitial_ad_unit_id),
+                new AdRequest.Builder().build(), new RewardedInterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull RewardedInterstitialAd ad) {
+                        rewardedInterstitialAd = ad;
+                        Log.d(TAG, "✅ Rewarded Interstitial Ad loaded.");
+
+                        // Setup Server-Side Verification (SSV) options using our user ID
+                        com.google.android.gms.ads.rewarded.ServerSideVerificationOptions options =
+                                new com.google.android.gms.ads.rewarded.ServerSideVerificationOptions.Builder()
+                                        .setUserId(myUid)
+                                        .setCustomData(myUid)
+                                        .build();
+                        rewardedInterstitialAd.setServerSideVerificationOptions(options);
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        Log.e(TAG, "❌ Rewarded Interstitial Ad failed to load: " + loadAdError.getMessage());
+                        rewardedInterstitialAd = null;
+                    }
+                });
+    }
+
+    private void showRewardedAd() {
+        if (rewardedInterstitialAd != null) {
+            rewardedInterstitialAd.show(this, new OnUserEarnedRewardListener() {
+                @Override
+                public void onUserEarnedReward(@NonNull com.google.android.gms.ads.rewarded.RewardItem rewardItem) {
+                    Log.d(TAG, "🎉 User earned reward from video ad!");
+                    runOnUiThread(() -> {
+                        android.widget.Toast.makeText(ConnectingActivity.this, "Extra call credited! Resuming matchmaking...", android.widget.Toast.LENGTH_SHORT).show();
+                        // Reset start time and rejoin queue
+                        searchStartTime = System.currentTimeMillis();
+                        setupSocketListeners();
+                        joinQueue();
+                    });
+                }
+            });
+        } else {
+            android.widget.Toast.makeText(this, "Ad is not ready yet. Please try again in a moment.", android.widget.Toast.LENGTH_SHORT).show();
+            loadRewardedInterstitialAd();
+        }
+    }
+
+    private void showLimitExceededDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
+        // Stop waiting state
+        isWaiting = false;
+        socket.off("match-found");
+        socket.off("limit-exceeded");
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Daily Limit Reached")
+                .setMessage("You have reached your daily free video call limit.\n\nWatch a quick video ad to get another free call instantly, or upgrade to premium for unlimited calls!")
+                .setCancelable(false)
+                .setPositiveButton("Watch Video Ad", (dialog, which) -> {
+                    showRewardedAd();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    leaveQueue();
+                    finish();
+                })
+                .show();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -263,6 +345,7 @@ public class ConnectingActivity extends BaseActivity {
             leaveQueue();
         }
         socket.off("match-found");
+        socket.off("limit-exceeded");
 
         // Clean up AdMob ads
         if (nativeAd != null) {
