@@ -114,6 +114,7 @@ public class CallActivity extends AppCompatActivity {
     private Socket socket;
 
     private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
+    private static int callCounter = 0;
     private int retryAttempt;
     private boolean isInitiator = false;
     private boolean callEnded = false;
@@ -983,9 +984,11 @@ public class CallActivity extends AppCompatActivity {
             eglBase = null;
         }
 
+        callCounter++;
         runOnUiThread(() -> {
-            if (interstitialAd != null && !isFinishing() && !isDestroyed()) {
-                Log.d(TAG, "📺 Showing Interstitial Ad on disconnect");
+            // Show mediated interstitial ad on every 2nd completed call to ensure optimal user experience
+            if (callCounter % 2 == 0 && interstitialAd != null && !isFinishing() && !isDestroyed()) {
+                Log.d(TAG, "📺 Showing Interstitial Ad on disconnect (Call #" + callCounter + ")");
                 interstitialAd.show(CallActivity.this);
             } else {
                 finish();

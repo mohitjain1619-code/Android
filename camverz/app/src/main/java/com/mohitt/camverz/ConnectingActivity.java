@@ -13,14 +13,13 @@ import android.widget.TextView;
 import com.mohitt.camverz.api.TokenManager;
 import org.json.JSONObject;
 import io.socket.client.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
-// Import Google AdMob classes instead of direct Meta Audience Network classes
+// Import Google AdMob classes
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdView;
 
@@ -37,9 +36,8 @@ public class ConnectingActivity extends BaseActivity {
     private boolean isWaiting = false;
     private boolean matchAccepted = false;
 
-    // Google AdMob (Mediated) Ads & Delays
+    // Google AdMob Mediated Native Ad & Delay
     private NativeAd nativeAd;
-    private InterstitialAd interstitialAd;
     private long searchStartTime = 0;
     private static final long MIN_SEARCH_DURATION_MS = 5000; // Enforce minimum 5 seconds search duration
 
@@ -61,11 +59,10 @@ public class ConnectingActivity extends BaseActivity {
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
-        // Load AdMob mediated ads only after initialization completes to avoid "Unknown" platform/0 bid issues.
+        // Load AdMob mediated native ads after initialization
         com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
             runOnUiThread(() -> {
                 loadNativeAd();
-                loadInterstitialAd();
             });
         });
 
@@ -74,14 +71,14 @@ public class ConnectingActivity extends BaseActivity {
 
         findViewById(R.id.cancelButton).setOnClickListener(v -> {
             leaveQueue();
-            showInterstitialAndFinish();
+            finish();
         });
     }
 
     @Override
     public void onBackPressed() {
         leaveQueue();
-        showInterstitialAndFinish();
+        finish();
     }
 
     private void loadUserDataAndJoinQueue() {
@@ -167,7 +164,7 @@ public class ConnectingActivity extends BaseActivity {
         finish();
     }
 
-    // --- Google AdMob Mediated Ads Integration ---
+    // --- Google AdMob Mediated Native Ad Integration ---
 
     private void loadNativeAd() {
         AdLoader adLoader = new AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
@@ -248,46 +245,6 @@ public class ConnectingActivity extends BaseActivity {
         adView.setNativeAd(ad);
 
         adContainer.addView(adView);
-    }
-
-    private void loadInterstitialAd() {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        InterstitialAd.load(this, getString(R.string.admob_interstitial_ad_unit_id), adRequest,
-                new InterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(InterstitialAd ad) {
-                        interstitialAd = ad;
-                        Log.d(TAG, "AdMob Interstitial loaded.");
-                        
-                        interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                Log.d(TAG, "AdMob Interstitial dismissed.");
-                                finish();
-                            }
-
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                                Log.e(TAG, "AdMob Interstitial failed to show: " + adError.getMessage());
-                                finish();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError loadAdError) {
-                        Log.e(TAG, "AdMob Interstitial failed to load: " + loadAdError.toString());
-                        interstitialAd = null;
-                    }
-                });
-    }
-
-    private void showInterstitialAndFinish() {
-        if (interstitialAd != null) {
-            interstitialAd.show(this);
-        } else {
-            finish();
-        }
     }
 
     private int dpToPx(int dp) {
