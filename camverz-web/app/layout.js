@@ -24,6 +24,9 @@ export const metadata = {
     description: 'Connect with professionals and creators through virtual networking and live video sessions.',
     type: 'website',
   },
+  verification: {
+    google: 'gDJwrTFx0eAExvQNbZnkCapSCyfkHVT9w30qabdeA1Y',
+  },
 };
 
 export const viewport = {
