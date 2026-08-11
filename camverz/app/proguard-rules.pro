@@ -94,3 +94,9 @@
 -keep class com.mohitt.camverz.Conversation { *; }
 -keep class com.mohitt.camverz.Notification { *; }
 -keep class com.mohitt.camverz.VerificationSession { *; }
+
+# ==============================================================================
+# Google Mobile Ads (AdMob)
+# ==============================================================================
+-keep class com.google.android.gms.ads.** { *; }
+-dontwarn com.google.android.gms.ads.**
