@@ -92,15 +92,15 @@ router.get("/verify-reward", async (req, res) => {
     const adUnit = queryParams.ad_unit || "unknown";
 
     if (!userId) {
-      console.error("❌ AdMob SSV: Missing user identifier (custom_data/user_id)");
-      return res.status(400).send("Missing user identifier");
+      console.warn("⚠️ AdMob SSV: Missing user identifier (custom_data/user_id) - Likely verification test ping");
+      return res.status(200).send("OK");
     }
 
     // Validate if user exists in the database
     const userResult = await query("SELECT id FROM users WHERE id = $1", [userId]);
     if (!userResult.rows || userResult.rows.length === 0) {
-      console.error(`❌ AdMob SSV: User ${userId} not found in database`);
-      return res.status(400).send("User not found");
+      console.warn(`⚠️ AdMob SSV: User ${userId} not found in database - Skipping reward`);
+      return res.status(200).send("OK");
     }
 
     // Record the rewarded ad watch
