@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Package queries for AdMob Service visibility on Android 11+ -->
+    <queries>
+        <intent>
+            <action android:name="com.google.android.gms.ads.service.START" />
+        </intent>
+    </queries>
+
     <!-- Network permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
