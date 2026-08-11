@@ -84,6 +84,7 @@ app.use("/api/verify", verificationRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/ads", adsRoutes);
+app.use("/api", adsRoutes);
 
 // ============================================
 // ICE SERVERS ENDPOINT (WebRTC)
