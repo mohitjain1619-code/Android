@@ -116,6 +116,15 @@ public class CallActivity extends AppCompatActivity {
     private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
     private int retryAttempt;
     private boolean isInitiator = false;
+
+    private final android.content.BroadcastReceiver headsetReceiver = new android.content.BroadcastReceiver() {
+        @Override
+        public void onReceive(android.content.Context context, android.content.Intent intent) {
+            if (android.content.Intent.ACTION_HEADSET_PLUG.equals(intent.getAction())) {
+                updateAudioRouting();
+            }
+        }
+    };
     private boolean callEnded = false;
     private boolean isFollowing = false;
     private boolean isUpdatingFollow = false;
@@ -317,12 +326,20 @@ public class CallActivity extends AppCompatActivity {
         setupSocket();
         initPeerConnection();
 
-        // Route WebRTC call audio to Speakerphone instead of the default silent earpiece
+        // Route WebRTC call audio to Speakerphone or Earphones dynamically
         try {
             audioManager = (android.media.AudioManager) getSystemService(android.content.Context.AUDIO_SERVICE);
             if (audioManager != null) {
                 audioManager.setMode(android.media.AudioManager.MODE_IN_COMMUNICATION);
-                audioManager.setSpeakerphoneOn(true);
+                updateAudioRouting();
+                
+                // Register dynamic listener for earphones plug/unplug events
+                android.content.IntentFilter filter = new android.content.IntentFilter(android.content.Intent.ACTION_HEADSET_PLUG);
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    registerReceiver(headsetReceiver, filter, android.content.Context.RECEIVER_EXPORTED);
+                } else {
+                    registerReceiver(headsetReceiver, filter);
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Error setting up AudioManager: " + e.getMessage());
@@ -1152,9 +1169,30 @@ public class CallActivity extends AppCompatActivity {
         return false;
     }
 
+    private void updateAudioRouting() {
+        try {
+            if (audioManager != null) {
+                // Check if wired headphones or bluetooth headset are connected
+                boolean isHeadsetConnected = audioManager.isWiredHeadsetOn() 
+                        || audioManager.isBluetoothScoOn() 
+                        || audioManager.isBluetoothA2dpOn();
+                
+                Log.d(TAG, "📺 Audio Routing check: Headset connected = " + isHeadsetConnected);
+                audioManager.setSpeakerphoneOn(!isHeadsetConnected);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating audio routing: " + e.getMessage());
+        }
+    }
+
     @Override
     protected void onDestroy() {
         disconnect();
+        try {
+            unregisterReceiver(headsetReceiver);
+        } catch (Exception e) {
+            // Ignore if not registered
+        }
         if (interstitialAd != null) {
             interstitialAd.setFullScreenContentCallback(null);
             interstitialAd = null;
