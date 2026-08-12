@@ -53,16 +53,34 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         setNotificationText(holder, notification);
         holder.timestamp.setText(getFormattedTimestamp(notification.getTimestamp()));
 
-        String avatarUrl = notification.getTriggeringUserAvatar();
-        if (avatarUrl != null && !avatarUrl.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatarUrl, "drawable", context.getPackageName());
+        String photoUrl = notification.getTriggeringUserPhotoUrl();
+        String avatar = notification.getTriggeringUserAvatar();
+
+        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
+            Glide.with(context)
+                    .load(photoUrl)
+                    .placeholder(R.drawable.ic_user_placeholder)
+                    .circleCrop()
+                    .into(holder.userAvatar);
+        } else if (avatar != null && !avatar.isEmpty()) {
+            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
             if (avatarResId != 0) {
-                Glide.with(context).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(holder.userAvatar);
+                Glide.with(context)
+                        .load(avatarResId)
+                        .placeholder(R.drawable.ic_user_placeholder)
+                        .circleCrop()
+                        .into(holder.userAvatar);
             } else {
-                Glide.with(context).load(avatarUrl).placeholder(R.drawable.ic_user_placeholder).into(holder.userAvatar);
+                Glide.with(context)
+                        .load(R.drawable.ic_user_placeholder)
+                        .circleCrop()
+                        .into(holder.userAvatar);
             }
         } else {
-            holder.userAvatar.setImageResource(R.drawable.ic_user_placeholder);
+            Glide.with(context)
+                    .load(R.drawable.ic_user_placeholder)
+                    .circleCrop()
+                    .into(holder.userAvatar);
         }
 
         holder.userAvatar.setOnClickListener(v -> {
@@ -148,7 +166,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
                 ds.setUnderlineText(false);
-                ds.setColor(Color.WHITE);
+                ds.setColor(Color.parseColor("#1F2937"));
                 ds.setFakeBoldText(true);
             }
         };
@@ -165,7 +183,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
                 ds.setUnderlineText(false);
-                ds.setColor(Color.WHITE);
+                ds.setColor(Color.parseColor("#4B5563"));
             }
         };
 

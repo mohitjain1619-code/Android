@@ -95,6 +95,9 @@ public interface ApiService {
     @DELETE("posts/{postId}/comments/{commentId}")
     Call<JsonObject> deleteComment(@Path("postId") String postId, @Path("commentId") String commentId);
 
+    @POST("posts/comments/{id}/like")
+    Call<JsonObject> toggleCommentLike(@Path("id") String commentId);
+
     // ============================================
     // CHATS
     // ============================================

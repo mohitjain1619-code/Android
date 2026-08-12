@@ -90,6 +90,22 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS is_premium BOOLEAN NOT NULL DEFAULT false;
     `);
 
+    // 5. Add parent_id to comments for replies support
+    await pool.query(`
+      ALTER TABLE comments 
+      ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES comments(id) ON DELETE CASCADE;
+    `);
+
+    // 6. Create comment_likes table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS comment_likes (
+        comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (comment_id, user_id)
+      );
+    `);
+
     console.log("✅ Database migrations applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations:", err.message);

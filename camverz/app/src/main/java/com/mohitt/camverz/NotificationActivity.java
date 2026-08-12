@@ -105,13 +105,51 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
                                 Notification notif = new Notification();
                                 notif.setNotificationId(obj.has("id") ? obj.get("id").getAsString() : "");
                                 notif.setType(obj.has("type") ? obj.get("type").getAsString() : "");
-                                notif.setTriggeringUserId(obj.has("triggeringUserId") ? obj.get("triggeringUserId").getAsString() : "");
-                                notif.setTriggeringUserName(obj.has("triggeringUserName") ? obj.get("triggeringUserName").getAsString() : "");
-                                notif.setTriggeringUserAvatar(obj.has("triggeringUserAvatar") ? obj.get("triggeringUserAvatar").getAsString() : "");
                                 notif.setTargetUserId(tokenManager.getUserId());
                                 notif.setPostId(obj.has("postId") && !obj.get("postId").isJsonNull() ? obj.get("postId").getAsString() : "");
                                 notif.setPostText(obj.has("postText") && !obj.get("postText").isJsonNull() ? obj.get("postText").getAsString() : "");
-                                notif.setTimestamp(obj.has("timestamp") ? obj.get("timestamp").getAsLong() : 0);
+                                
+                                // Parse nested triggeringUser object
+                                if (obj.has("triggeringUser") && !obj.get("triggeringUser").isJsonNull()) {
+                                    JsonObject trigUser = obj.getAsJsonObject("triggeringUser");
+                                    notif.setTriggeringUserId(trigUser.has("id") && !trigUser.get("id").isJsonNull() ? trigUser.get("id").getAsString() : "");
+                                    notif.setTriggeringUserName(trigUser.has("name") && !trigUser.get("name").isJsonNull() ? trigUser.get("name").getAsString() : "Someone");
+                                    notif.setTriggeringUserAvatar(trigUser.has("avatar") && !trigUser.get("avatar").isJsonNull() ? trigUser.get("avatar").getAsString() : "");
+                                    notif.setTriggeringUserPhotoUrl(trigUser.has("photoUrl") && !trigUser.get("photoUrl").isJsonNull() ? trigUser.get("photoUrl").getAsString() : "");
+                                } else {
+                                    notif.setTriggeringUserId("");
+                                    notif.setTriggeringUserName("Someone");
+                                    notif.setTriggeringUserAvatar("");
+                                    notif.setTriggeringUserPhotoUrl("");
+                                }
+
+                                // Parse createdAt timestamp from ISO string
+                                if (obj.has("createdAt") && !obj.get("createdAt").isJsonNull()) {
+                                    try {
+                                        String dateStr = obj.get("createdAt").getAsString();
+                                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+                                        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                        java.util.Date parsedDate = sdf.parse(dateStr);
+                                        if (parsedDate != null) {
+                                            notif.setTimestamp(parsedDate.getTime());
+                                        }
+                                    } catch (Exception e) {
+                                        try {
+                                            String dateStr = obj.get("createdAt").getAsString();
+                                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US);
+                                            sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                            java.util.Date parsedDate = sdf.parse(dateStr);
+                                            if (parsedDate != null) {
+                                                notif.setTimestamp(parsedDate.getTime());
+                                            }
+                                        } catch (Exception ex) {
+                                            notif.setTimestamp(System.currentTimeMillis());
+                                        }
+                                    }
+                                } else {
+                                    notif.setTimestamp(System.currentTimeMillis());
+                                }
+                                
                                 notif.setRead(obj.has("read") && obj.get("read").getAsBoolean());
                                 notificationList.add(notif);
                             }

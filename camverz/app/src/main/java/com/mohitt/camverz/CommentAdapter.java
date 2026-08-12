@@ -51,21 +51,33 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         Comment comment = commentList.get(position);
 
         holder.username.setText(comment.getUserName());
-        if (comment.getUserAvatar() != null && !comment.getUserAvatar().isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(comment.getUserAvatar(), "drawable", context.getPackageName());
+        String photoUrl = comment.getUserPhotoUrl();
+        String avatar = comment.getUserAvatar();
+        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
+            Glide.with(context)
+                    .load(photoUrl)
+                    .placeholder(R.drawable.ic_user_placeholder)
+                    .circleCrop()
+                    .into(holder.profileImage);
+        } else if (avatar != null && !avatar.isEmpty()) {
+            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
             if (avatarResId != 0) {
                 Glide.with(context)
                         .load(avatarResId)
                         .placeholder(R.drawable.ic_user_placeholder)
-                        .error(R.drawable.ic_user_placeholder)
+                        .circleCrop()
                         .into(holder.profileImage);
             } else {
                 Glide.with(context)
                         .load(R.drawable.ic_user_placeholder)
+                        .circleCrop()
                         .into(holder.profileImage);
             }
         } else {
-            holder.profileImage.setImageResource(R.drawable.ic_user_placeholder);
+            Glide.with(context)
+                    .load(R.drawable.ic_user_placeholder)
+                    .circleCrop()
+                    .into(holder.profileImage);
         }
 
         holder.commentText.setText(comment.getText());
@@ -74,15 +86,22 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         // Handle indentation for replies
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.root.getLayoutParams();
         if (comment.getParentId() != null) {
-            params.setMarginStart(60); // Indent replies
+            params.setMarginStart(80); // Indent replies slightly more for clear visual offset
         } else {
             params.setMarginStart(0); // Reset for non-replies
         }
         holder.root.setLayoutParams(params);
 
-        // Liking comments is not supported in the API yet, hide or handle gracefully
-        holder.likeButton.setText("Like");
-        holder.likeIcon.setVisibility(View.GONE);
+        // Update comment liking state and count
+        int likeCount = comment.getLikeCount();
+        String likeText = comment.isLikedByMe() ? "Liked" : "Like";
+        if (likeCount > 0) {
+            likeText += " (" + likeCount + ")";
+        }
+        holder.likeButton.setText(likeText);
+        holder.likeButton.setTextColor(comment.isLikedByMe() ? android.graphics.Color.parseColor("#E11D48") : context.getResources().getColor(R.color.text_muted));
+        
+        holder.likeIcon.setVisibility(likeCount > 0 ? View.VISIBLE : View.GONE);
         holder.likeButton.setOnClickListener(v -> listener.onLikeClicked(comment.getCommentId()));
 
         // Reply button

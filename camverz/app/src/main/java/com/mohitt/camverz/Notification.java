@@ -4,6 +4,7 @@ public class Notification {
     private String triggeringUserId;
     private String triggeringUserName;
     private String triggeringUserAvatar;
+    private String triggeringUserPhotoUrl;
     private String targetUserId;
     private String type; // "like", "comment", "follow", "profile_visit"
     private String postId;
@@ -17,6 +18,14 @@ public class Notification {
     }
 
     // Getters and Setters
+    public String getTriggeringUserPhotoUrl() {
+        return triggeringUserPhotoUrl;
+    }
+
+    public void setTriggeringUserPhotoUrl(String triggeringUserPhotoUrl) {
+        this.triggeringUserPhotoUrl = triggeringUserPhotoUrl;
+    }
+
     public String getTriggeringUserId() {
         return triggeringUserId;
     }

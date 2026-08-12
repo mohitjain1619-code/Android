@@ -86,22 +86,70 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
                         commentList.clear();
                         if (data.has("comments")) {
                             JsonArray commentsArray = data.getAsJsonArray("comments");
+                            List<Comment> parsedList = new ArrayList<>();
                             for (JsonElement element : commentsArray) {
                                 JsonObject obj = element.getAsJsonObject();
                                 Comment comment = new Comment();
                                 comment.setCommentId(obj.has("id") ? obj.get("id").getAsString() : "");
                                 comment.setText(obj.has("text") ? obj.get("text").getAsString() : "");
                                 comment.setUserId(obj.has("userId") ? obj.get("userId").getAsString() : "");
-                                comment.setTimestamp(obj.has("timestamp") ? obj.get("timestamp").getAsLong() : 0);
                                 comment.setParentId(obj.has("parentId") && !obj.get("parentId").isJsonNull() ? obj.get("parentId").getAsString() : null);
-                                // Optional user info mapped from backend if available
                                 comment.setUserName(obj.has("username") ? obj.get("username").getAsString() : "User");
                                 comment.setUserAvatar(obj.has("userAvatar") ? obj.get("userAvatar").getAsString() : "");
+                                comment.setUserPhotoUrl(obj.has("userPhotoUrl") && !obj.get("userPhotoUrl").isJsonNull() ? obj.get("userPhotoUrl").getAsString() : "");
+                                comment.setLikeCount(obj.has("likeCount") ? obj.get("likeCount").getAsInt() : 0);
+                                comment.setLikedByMe(obj.has("likedByMe") && obj.get("likedByMe").getAsBoolean());
                                 
-                                commentList.add(comment);
+                                // Parse createdAt timestamp from ISO string
+                                if (obj.has("createdAt") && !obj.get("createdAt").isJsonNull()) {
+                                    try {
+                                        String dateStr = obj.get("createdAt").getAsString();
+                                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+                                        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                        java.util.Date parsedDate = sdf.parse(dateStr);
+                                        if (parsedDate != null) {
+                                            comment.setTimestamp(parsedDate.getTime());
+                                        }
+                                    } catch (Exception e) {
+                                        try {
+                                            String dateStr = obj.get("createdAt").getAsString();
+                                            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US);
+                                            sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                            java.util.Date parsedDate = sdf.parse(dateStr);
+                                            if (parsedDate != null) {
+                                                comment.setTimestamp(parsedDate.getTime());
+                                            }
+                                        } catch (Exception ex) {
+                                            comment.setTimestamp(System.currentTimeMillis());
+                                        }
+                                    }
+                                } else {
+                                    comment.setTimestamp(System.currentTimeMillis());
+                                }
+                                
+                                parsedList.add(comment);
+                            }
+
+                            // Group replies directly below their parent comments
+                            List<Comment> parentComments = new ArrayList<>();
+                            List<Comment> replies = new ArrayList<>();
+                            for (Comment c : parsedList) {
+                                if (c.getParentId() == null || c.getParentId().isEmpty()) {
+                                    parentComments.add(c);
+                                } else {
+                                    replies.add(c);
+                                }
+                            }
+
+                            for (Comment parent : parentComments) {
+                                commentList.add(parent);
+                                for (Comment reply : replies) {
+                                    if (parent.getCommentId().equals(reply.getParentId())) {
+                                        commentList.add(reply);
+                                    }
+                                }
                             }
                         }
-                        // For replies, organize them (simple linear layout for now)
                         adapter.notifyDataSetChanged();
                     }
                 }
@@ -153,8 +201,22 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
 
     @Override
     public void onLikeClicked(String commentId) {
-        // Comment liking is not supported in the new backend yet.
-        Toast.makeText(this, "Liking comments is disabled", Toast.LENGTH_SHORT).show();
+        if (commentId == null) return;
+        api.toggleCommentLike(commentId).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful()) {
+                    loadComments();
+                } else {
+                    Toast.makeText(CommentsActivity.this, "Error toggling comment like", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Toast.makeText(CommentsActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

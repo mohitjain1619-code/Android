@@ -57,6 +57,8 @@ public class MainScreenActivity extends BaseActivity {
     private FrameLayout videoNav, profileNav, imageNav, messageNav;
     private ImageView iconVideo, iconProfile, iconImage, iconMessage;
     private TextView messageBadge;
+    private FrameLayout notificationLayout;
+    private TextView notificationBadge;
 
     private com.google.android.gms.ads.AdView adView;
 
@@ -87,6 +89,15 @@ public class MainScreenActivity extends BaseActivity {
         tvUserName = findViewById(R.id.tvUserName);
         tvLiveCount = findViewById(R.id.tvLiveCount);
         menuIcon = findViewById(R.id.menu_icon);
+        notificationLayout = findViewById(R.id.notification_layout);
+        notificationBadge = findViewById(R.id.notification_badge);
+
+        if (notificationLayout != null) {
+            notificationLayout.setOnClickListener(v -> {
+                Intent intent = new Intent(MainScreenActivity.this, NotificationActivity.class);
+                startActivity(intent);
+            });
+        }
 
         chipCommunityHub = findViewById(R.id.chip_community_hub);
         chipFriends = findViewById(R.id.chip_friends);
@@ -242,7 +253,40 @@ public class MainScreenActivity extends BaseActivity {
                 socket.emit("get-online-count");
             } catch (JSONException e) { e.printStackTrace(); }
             fetchUnreadMessages();
+            fetchUnreadNotificationsCount();
         }
+    }
+
+    private void fetchUnreadNotificationsCount() {
+        if (!tokenManager.isLoggedIn()) return;
+        api.getNotificationUnreadCount().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("unreadCount")) {
+                        int count = data.get("unreadCount").getAsInt();
+                        runOnUiThread(() -> {
+                            if (count > 0 && notificationBadge != null) {
+                                notificationBadge.setVisibility(View.VISIBLE);
+                                if (count > 9) {
+                                    notificationBadge.setText("9+");
+                                } else {
+                                    notificationBadge.setText(String.valueOf(count));
+                                }
+                            } else if (notificationBadge != null) {
+                                notificationBadge.setVisibility(View.GONE);
+                            }
+                        });
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Log.e(TAG, "Failed to fetch notification unread count", t);
+            }
+        });
     }
 
     private void fetchUnreadMessages() {

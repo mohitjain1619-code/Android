@@ -11,6 +11,9 @@ public class Comment {
     private String parentId; // ID of the comment this is a reply to
     private String userName;
     private String userAvatar;
+    private String userPhotoUrl;
+    private int likeCount;
+    private boolean likedByMe;
 
     public Comment() {
         // Default constructor
@@ -78,5 +81,29 @@ public class Comment {
 
     public void setUserAvatar(String userAvatar) {
         this.userAvatar = userAvatar;
+    }
+
+    public String getUserPhotoUrl() {
+        return userPhotoUrl;
+    }
+
+    public void setUserPhotoUrl(String userPhotoUrl) {
+        this.userPhotoUrl = userPhotoUrl;
+    }
+
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public boolean isLikedByMe() {
+        return likedByMe;
+    }
+
+    public void setLikedByMe(boolean likedByMe) {
+        this.likedByMe = likedByMe;
     }
 }

@@ -1403,21 +1403,42 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error checking VPN connection state", e);
         }
         return false;
-    }
-
-    private void updateAudioRouting() {
+    }    private void updateAudioRouting() {
         try {
             if (audioManager != null) {
-                // Check if wired headphones or bluetooth headset are connected
-                boolean isHeadsetConnected = audioManager.isWiredHeadsetOn()
-                        || audioManager.isBluetoothScoOn()
-                        || audioManager.isBluetoothA2dpOn();
+                boolean isWiredHeadset = false;
+                try {
+                    isWiredHeadset = audioManager.isWiredHeadsetOn();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error checking wired headset: " + e.getMessage());
+                }
+
+                boolean isBluetoothConnected = false;
+                // Only check Bluetooth state if we have permissions on Android 12+
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || 
+                    androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        isBluetoothConnected = audioManager.isBluetoothScoOn() || audioManager.isBluetoothA2dpOn();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error checking bluetooth headset state: " + e.getMessage());
+                    }
+                }
+
+                boolean isHeadsetConnected = isWiredHeadset || isBluetoothConnected;
+                Log.d(TAG, "📺 Audio Routing check: Wired = " + isWiredHeadset + ", BT = " + isBluetoothConnected);
                 
-                Log.d(TAG, "📺 Audio Routing check: Headset connected = " + isHeadsetConnected);
                 audioManager.setSpeakerphoneOn(!isHeadsetConnected);
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error updating audio routing: " + e.getMessage());
+            Log.e(TAG, "General error updating audio routing: " + e.getMessage());
+            // Fallback: default to speakerphone on to prevent silent call
+            try {
+                if (audioManager != null) {
+                    audioManager.setSpeakerphoneOn(true);
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "Failed fallback speakerphone: " + ex.getMessage());
+            }
         }
     }
 

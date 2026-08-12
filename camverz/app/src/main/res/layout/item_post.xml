@@ -146,12 +146,7 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Bookmark action icon -->
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_save"
-            app:tint="@color/text_muted" />
+
 
     </LinearLayout>
 

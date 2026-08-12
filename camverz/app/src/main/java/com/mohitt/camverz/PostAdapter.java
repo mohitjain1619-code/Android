@@ -67,15 +67,33 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         // Hide verification badge (unless we add it to the backend post response)
         holder.verificationBadge.setVisibility(View.GONE);
 
-        if (post.getUserAvatar() != null && !post.getUserAvatar().isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(post.getUserAvatar(), "drawable", context.getPackageName());
+        String photoUrl = post.getUserPhotoUrl();
+        String avatar = post.getUserAvatar();
+        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
+            Glide.with(context)
+                    .load(photoUrl)
+                    .placeholder(R.drawable.ic_user_placeholder)
+                    .circleCrop()
+                    .into(holder.profileImageView);
+        } else if (avatar != null && !avatar.isEmpty()) {
+            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
             if (avatarResId != 0) {
-                Glide.with(context).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(holder.profileImageView);
+                Glide.with(context)
+                        .load(avatarResId)
+                        .placeholder(R.drawable.ic_user_placeholder)
+                        .circleCrop()
+                        .into(holder.profileImageView);
             } else {
-                Glide.with(context).load(R.drawable.ic_user_placeholder).into(holder.profileImageView);
+                Glide.with(context)
+                        .load(R.drawable.ic_user_placeholder)
+                        .circleCrop()
+                        .into(holder.profileImageView);
             }
         } else {
-            holder.profileImageView.setImageResource(R.drawable.ic_user_placeholder);
+            Glide.with(context)
+                    .load(R.drawable.ic_user_placeholder)
+                    .circleCrop()
+                    .into(holder.profileImageView);
         }
 
         holder.postTextView.setText(post.getText());
