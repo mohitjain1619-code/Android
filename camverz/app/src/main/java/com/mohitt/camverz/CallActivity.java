@@ -364,7 +364,16 @@ public class CallActivity extends AppCompatActivity {
         if (isPrivateCall && !isCaller) {
             sendAcceptPrivateCall();
         }
-        fetchIceServersAndStartCall();
+        initPeerConnection();
+        try {
+            Log.d(TAG, "Emitting join-call-room for room: " + roomName);
+            JSONObject roomInfo = new JSONObject();
+            roomInfo.put("room", roomName);
+            roomInfo.put("uid", myUid);
+            socket.emit("join-call-room", roomInfo);
+        } catch (JSONException e) {
+            Log.e(TAG, "Error joining call room: " + e.getMessage());
+        }
 
         // Route WebRTC call audio to Speakerphone or Earphones dynamically
         try {
@@ -612,6 +621,11 @@ public class CallActivity extends AppCompatActivity {
                         remoteVideoTrack.addSink(remoteView);
                         markConnected();
                     });
+                } else if (transceiver.getReceiver().track() instanceof AudioTrack) {
+                    AudioTrack remoteAudioTrack = (AudioTrack) transceiver.getReceiver().track();
+                    remoteAudioTrack.setEnabled(true);
+                    remoteAudioTrack.setVolume(1.0);
+                    runOnUiThread(CallActivity.this::markConnected);
                 }
             }
             
