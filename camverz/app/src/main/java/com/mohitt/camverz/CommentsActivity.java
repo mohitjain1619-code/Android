@@ -239,7 +239,7 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         String username = "User";
         if (commentList != null) {
             for (Comment c : commentList) {
-                if (c.getId() != null && c.getId().equals(commentId)) {
+                if (c.getCommentId() != null && c.getCommentId().equals(commentId)) {
                     username = c.getUserName();
                     break;
                 }
