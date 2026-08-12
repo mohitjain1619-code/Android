@@ -1165,13 +1165,23 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error resetting AudioManager: " + e.getMessage());
         }
         
-        try {
-            JSONObject leaveData = new JSONObject();
-            leaveData.put("room", roomName);
-            leaveData.put("uid", myUid);
-            socket.emit("leave-call-room", leaveData);
-        } catch (JSONException e) {
-            Log.e(TAG, "Error leaving room", e);
+        if (isPrivateCall) {
+            try {
+                JSONObject endData = new JSONObject();
+                endData.put("targetId", peerId);
+                socket.emit("end-private-call", endData);
+            } catch (JSONException e) {
+                Log.e(TAG, "Error emitting end-private-call", e);
+            }
+        } else {
+            try {
+                JSONObject leaveData = new JSONObject();
+                leaveData.put("room", roomName);
+                leaveData.put("uid", myUid);
+                socket.emit("leave-call-room", leaveData);
+            } catch (JSONException e) {
+                Log.e(TAG, "Error leaving room", e);
+            }
         }
 
         removeSocketListeners();
