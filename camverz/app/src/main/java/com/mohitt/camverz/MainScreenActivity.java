@@ -27,6 +27,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,6 +40,12 @@ public class MainScreenActivity extends BaseActivity {
 
     private static final String TAG = "MainScreen";
     private Socket socket;
+    private Emitter.Listener connectListener;
+    private Emitter.Listener onlineUsersListener;
+    private Emitter.Listener onlineCountListener;
+    private Emitter.Listener matchFoundListener;
+    private Emitter.Listener incomingPrivateCallListener;
+    private Emitter.Listener newMessageListener;
     private TokenManager tokenManager;
     private ApiService api;
 
@@ -271,13 +278,14 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void setupSocketListeners() {
-        socket.on(Socket.EVENT_CONNECT, args -> runOnUiThread(() -> {
+        connectListener = args -> runOnUiThread(() -> {
             if (tvLiveCount != null) {
                 tvLiveCount.setText("Live Online");
             }
-        }));
+        });
+        socket.on(Socket.EVENT_CONNECT, connectListener);
 
-        socket.on("online-users", args -> {
+        onlineUsersListener = args -> {
             if (args != null && args.length > 0 && tvLiveCount != null) {
                 try {
                     int count = Integer.parseInt(args[0].toString());
@@ -286,9 +294,10 @@ public class MainScreenActivity extends BaseActivity {
                     Log.e(TAG, "Error parsing online count", e);
                 }
             }
-        });
+        };
+        socket.on("online-users", onlineUsersListener);
 
-        socket.on("online_count", args -> {
+        onlineCountListener = args -> {
             if (args != null && args.length > 0 && tvLiveCount != null) {
                 try {
                     int count = Integer.parseInt(args[0].toString());
@@ -297,22 +306,22 @@ public class MainScreenActivity extends BaseActivity {
                     Log.e(TAG, "Error parsing online count", e);
                 }
             }
-        });
+        };
+        socket.on("online_count", onlineCountListener);
 
-        socket.on("match-found", args -> {
+        matchFoundListener = args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String peerId = data.getString("peerId");
                 Log.d(TAG, "Matched with: " + peerId);
-                runOnUiThread(() -> {
-                    Toast.makeText(MainScreenActivity.this, "Matched with: " + peerId, Toast.LENGTH_SHORT).show();
-                });
+                runOnUiThread(() -> Toast.makeText(MainScreenActivity.this, "Matched with: " + peerId, Toast.LENGTH_SHORT).show());
             } catch (JSONException e) {
                 Log.e(TAG, "Error parsing match-found", e);
             }
-        });
+        };
+        socket.on("match-found", matchFoundListener);
 
-        socket.on("incoming-private-call", args -> {
+        incomingPrivateCallListener = args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String callerId = data.getString("callerId");
@@ -322,23 +331,53 @@ public class MainScreenActivity extends BaseActivity {
                 String roomName = data.getString("room");
 
                 runOnUiThread(() -> {
-                    Intent intent = new Intent(MainScreenActivity.this, CallActivity.class);
-                    intent.putExtra("targetUserId", callerId);
-                    intent.putExtra("targetUserName", callerName);
-                    intent.putExtra("targetUserAvatar", callerAvatar);
-                    intent.putExtra("isVideoCall", isVideo);
-                    intent.putExtra("isCaller", false);
-                    intent.putExtra("roomName", roomName);
-                    startActivity(intent);
+                    androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this);
+                    builder.setTitle("Incoming Call");
+                    builder.setMessage(callerName + " is calling you" + (isVideo ? " with video." : " with voice."));
+                    builder.setPositiveButton("Accept", (dialog, which) -> {
+                        Intent intent = new Intent(MainScreenActivity.this, CallActivity.class);
+                        intent.putExtra("targetUserId", callerId);
+                        intent.putExtra("targetUserName", callerName);
+                        intent.putExtra("targetUserAvatar", callerAvatar);
+                        intent.putExtra("isVideoCall", isVideo);
+                        intent.putExtra("isCaller", false);
+                        intent.putExtra("isPrivateCall", true);
+                        intent.putExtra("roomName", roomName);
+                        startActivity(intent);
+                    });
+                    builder.setNegativeButton("Reject", (dialog, which) -> {
+                        try {
+                            JSONObject reject = new JSONObject();
+                            reject.put("callerId", callerId);
+                            socket.emit("reject-private-call", reject);
+                        } catch (JSONException ex) {
+                            Log.e(TAG, "Error emitting reject-private-call", ex);
+                        }
+                        Toast.makeText(MainScreenActivity.this, "Call rejected.", Toast.LENGTH_SHORT).show();
+                    });
+                    builder.setOnCancelListener(dialog -> {
+                        try {
+                            JSONObject reject = new JSONObject();
+                            reject.put("callerId", callerId);
+                            socket.emit("reject-private-call", reject);
+                        } catch (JSONException ex) {
+                            Log.e(TAG, "Error emitting reject-private-call", ex);
+                        }
+                    });
+                    androidx.appcompat.app.AlertDialog dialog = builder.create();
+                    if (dialog.getWindow() != null) {
+                        dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+                    }
+                    dialog.show();
                 });
             } catch (JSONException e) {
                 Log.e(TAG, "Error handling incoming-private-call", e);
             }
-        });
+        };
+        socket.on("incoming-private-call", incomingPrivateCallListener);
 
-        socket.on("new_message", args -> {
-            runOnUiThread(this::fetchUnreadMessages);
-        });
+        newMessageListener = args -> runOnUiThread(this::fetchUnreadMessages);
+        socket.on("new_message", newMessageListener);
     }
 
     private void logout() {
@@ -418,11 +457,13 @@ public class MainScreenActivity extends BaseActivity {
             adView.destroy();
             adView = null;
         }
-        socket.off(Socket.EVENT_CONNECT);
-        socket.off("online-users");
-        socket.off("online_count");
-        socket.off("match-found");
-        socket.off("incoming-private-call");
-        socket.off("new_message");
+        if (socket != null) {
+            if (connectListener != null) socket.off(Socket.EVENT_CONNECT, connectListener);
+            if (onlineUsersListener != null) socket.off("online-users", onlineUsersListener);
+            if (onlineCountListener != null) socket.off("online_count", onlineCountListener);
+            if (matchFoundListener != null) socket.off("match-found", matchFoundListener);
+            if (incomingPrivateCallListener != null) socket.off("incoming-private-call", incomingPrivateCallListener);
+            if (newMessageListener != null) socket.off("new_message", newMessageListener);
+        }
     }
 }

@@ -39,9 +39,9 @@ public class ApiClient {
     private ApiClient(Context context) {
         tokenManager = TokenManager.getInstance(context);
 
-        // Logging interceptor (debug only)
+        // Logging interceptor (enabled only in debug builds)
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        logging.setLevel(com.mohitt.camverz.BuildConfig.DEBUG ? HttpLoggingInterceptor.Level.BODY : HttpLoggingInterceptor.Level.NONE);
 
         // Auth interceptor — adds JWT to every request
         Interceptor authInterceptor = chain -> {

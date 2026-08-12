@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.mohitt.camverz.api.TokenManager;
 import org.json.JSONObject;
 import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,8 @@ public class ConnectingActivity extends BaseActivity {
 
     private static final String TAG = "ConnectingActivity";
     private Socket socket;
+    private Emitter.Listener matchFoundListener;
+    private Emitter.Listener limitExceededListener;
     private TokenManager tokenManager;
 
     private String category = "";
@@ -126,17 +129,15 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void setupSocketListeners() {
-        socket.off("match-found");
-        socket.off("limit-exceeded");
+        removeSocketListeners();
 
-        socket.on("limit-exceeded", args -> {
+        limitExceededListener = args -> {
             Log.w(TAG, "⚠️ Received limit-exceeded socket event.");
-            runOnUiThread(() -> {
-                showLimitExceededDialog();
-            });
-        });
+            runOnUiThread(this::showLimitExceededDialog);
+        };
+        socket.on("limit-exceeded", limitExceededListener);
 
-        socket.on("match-found", args -> {
+        matchFoundListener = args -> {
             Log.d(TAG, "📥 match-found socket event received. isWaiting=" + isWaiting);
             if (!isWaiting) return;
 
@@ -149,7 +150,7 @@ public class ConnectingActivity extends BaseActivity {
 
                 runOnUiThread(() -> {
                     isWaiting = false;
-                    socket.off("match-found");
+                    removeMatchFoundListener();
 
                     // Calculate elapsed search duration
                     long elapsed = System.currentTimeMillis() - searchStartTime;
@@ -170,7 +171,8 @@ public class ConnectingActivity extends BaseActivity {
             } catch (Exception e) {
                 Log.e(TAG, "match-found error: " + e.getMessage());
             }
-        });
+        };
+        socket.on("match-found", matchFoundListener);
     }
 
     private void transitionToCall(String peerId) {
@@ -321,8 +323,7 @@ public class ConnectingActivity extends BaseActivity {
 
         // Stop waiting state
         isWaiting = false;
-        socket.off("match-found");
-        socket.off("limit-exceeded");
+        removeSocketListeners();
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Daily Limit Reached")
@@ -344,12 +345,30 @@ public class ConnectingActivity extends BaseActivity {
         if (!matchAccepted) {
             leaveQueue();
         }
-        socket.off("match-found");
-        socket.off("limit-exceeded");
+        removeSocketListeners();
 
         // Clean up AdMob ads
         if (nativeAd != null) {
             nativeAd.destroy();
+        }
+    }
+
+    private void removeMatchFoundListener() {
+        if (socket != null && matchFoundListener != null) {
+            socket.off("match-found", matchFoundListener);
+            matchFoundListener = null;
+        }
+    }
+
+    private void removeSocketListeners() {
+        if (socket == null) return;
+        if (matchFoundListener != null) {
+            socket.off("match-found", matchFoundListener);
+            matchFoundListener = null;
+        }
+        if (limitExceededListener != null) {
+            socket.off("limit-exceeded", limitExceededListener);
+            limitExceededListener = null;
         }
     }
 }

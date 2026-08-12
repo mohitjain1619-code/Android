@@ -226,6 +226,7 @@ public class ChatActivity extends BaseActivity {
         intent.putExtra("targetUserAvatar", receiverAvatar);
         intent.putExtra("isVideoCall", isVideo);
         intent.putExtra("isCaller", true);
+        intent.putExtra("isPrivateCall", true);
         startActivity(intent);
     }
 

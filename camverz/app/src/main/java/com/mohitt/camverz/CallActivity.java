@@ -38,11 +38,14 @@ import com.mohitt.camverz.api.TokenManager;
 import de.hdodenhof.circleimageview.CircleImageView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.AudioSource;
+import io.socket.emitter.Emitter;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -99,12 +102,23 @@ public class CallActivity extends AppCompatActivity {
     private boolean isCameraSwitching = false;
     private boolean areControlsVisible = true;
     private boolean turnFallbackAttempted = false; // Track if TURN fallback was triggered
+    private boolean isCaller = false;
+    private boolean isPrivateCall = false;
+    private boolean isVideoCall = true;
+    private boolean connectionAnimationActive = true;
 
     private EglBase eglBase;
     private VideoCapturer videoCapturer;
     private PeerConnectionFactory factory;
     private PeerConnection peerConnection;
     private SurfaceTextureHelper surfaceTextureHelper;
+    private Emitter.Listener receivePrivateOfferListener;
+    private Emitter.Listener receivePrivateAnswerListener;
+    private Emitter.Listener receivePrivateIceListener;
+    private Emitter.Listener privateCallAcceptedListener;
+    private Emitter.Listener privateCallRejectedListener;
+    private Emitter.Listener privateCallEndedListener;
+    private Emitter.Listener callFailedListener;
 
     private VideoTrack localVideoTrack;
     private AudioTrack localAudioTrack;
@@ -112,6 +126,12 @@ public class CallActivity extends AppCompatActivity {
     private String peerId, myUid, roomName;
     private String peerNameValue, peerAvatarUrl;
     private Socket socket;
+    private Emitter.Listener peerReadyListener;
+    private Emitter.Listener receiveOfferListener;
+    private Emitter.Listener receiveAnswerListener;
+    private Emitter.Listener receiveIceListener;
+    private Emitter.Listener peerDisconnectedListener;
+    private Emitter.Listener callControlListener;
 
     private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
     private int retryAttempt;
@@ -209,6 +229,17 @@ public class CallActivity extends AppCompatActivity {
         tokenManager = TokenManager.getInstance(this);
 
         peerId = getIntent().getStringExtra("peer");
+        if (peerId == null) {
+            peerId = getIntent().getStringExtra("targetUserId");
+        }
+        if (peerId == null) {
+            peerId = getIntent().getStringExtra("callerId");
+        }
+
+        isCaller = getIntent().getBooleanExtra("isCaller", false);
+        isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
+        isVideoCall = getIntent().getBooleanExtra("isVideoCall", true);
+
         myUid = tokenManager.getUserId();
         socket = SocketManager.getInstance();
 
@@ -217,7 +248,10 @@ public class CallActivity extends AppCompatActivity {
             return;
         }
 
-        roomName = myUid.compareTo(peerId) < 0 ? myUid + "_" + peerId : peerId + "_" + myUid;
+        roomName = getIntent().getStringExtra("roomName");
+        if (roomName == null || roomName.isEmpty()) {
+            roomName = myUid.compareTo(peerId) < 0 ? myUid + "_" + peerId : peerId + "_" + myUid;
+        }
         isInitiator = myUid.compareTo(peerId) < 0;
 
         initUI();
@@ -324,7 +358,13 @@ public class CallActivity extends AppCompatActivity {
         setupViews();
         initWebRTC();
         setupSocket();
-        initPeerConnection();
+        if (isPrivateCall && isCaller) {
+            sendStartPrivateCall();
+        }
+        if (isPrivateCall && !isCaller) {
+            sendAcceptPrivateCall();
+        }
+        fetchIceServersAndStartCall();
 
         // Route WebRTC call audio to Speakerphone or Earphones dynamically
         try {
@@ -345,15 +385,6 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error setting up AudioManager: " + e.getMessage());
         }
 
-        try {
-            Log.d(TAG, "Emitting join-call-room for room: " + roomName);
-            JSONObject roomInfo = new JSONObject();
-            roomInfo.put("room", roomName);
-            roomInfo.put("uid", myUid);
-            socket.emit("join-call-room", roomInfo);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
         timeoutHandler.postDelayed(timeoutRunnable, 15000);
     }
 
@@ -433,11 +464,15 @@ public class CallActivity extends AppCompatActivity {
                 Log.d(TAG, "onTrack: Remote track received");
                 if (transceiver.getReceiver().track() instanceof VideoTrack) {
                     VideoTrack remoteVideoTrack = (VideoTrack) transceiver.getReceiver().track();
-                    runOnUiThread(() -> remoteVideoTrack.addSink(remoteView));
+                    runOnUiThread(() -> {
+                        remoteVideoTrack.addSink(remoteView);
+                        markConnected();
+                    });
                 } else if (transceiver.getReceiver().track() instanceof AudioTrack) {
                     AudioTrack remoteAudioTrack = (AudioTrack) transceiver.getReceiver().track();
                     remoteAudioTrack.setEnabled(true);
                     remoteAudioTrack.setVolume(1.0);
+                    runOnUiThread(CallActivity.this::markConnected);
                 }
             }
             
@@ -573,7 +608,10 @@ public class CallActivity extends AppCompatActivity {
             public void onTrack(RtpTransceiver transceiver) {
                 if (transceiver.getReceiver().track() instanceof VideoTrack) {
                     VideoTrack remoteVideoTrack = (VideoTrack) transceiver.getReceiver().track();
-                    runOnUiThread(() -> remoteVideoTrack.addSink(remoteView));
+                    runOnUiThread(() -> {
+                        remoteVideoTrack.addSink(remoteView);
+                        markConnected();
+                    });
                 }
             }
             
@@ -608,7 +646,7 @@ public class CallActivity extends AppCompatActivity {
             roomInfo.put("uid", myUid);
             socket.emit("join-call-room", roomInfo);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error rejoining call room after ICE refresh", e);
         }
         timeoutHandler.postDelayed(timeoutRunnable, 15000);
     }
@@ -668,12 +706,14 @@ public class CallActivity extends AppCompatActivity {
     }
     
     private void startConnectionAnimation() {
+        if (!connectionAnimationActive) return;
         connectionDot.animate()
                 .scaleX(1.3f)
                 .scaleY(1.3f)
                 .alpha(0.7f)
                 .setDuration(800)
                 .withEndAction(() -> {
+                    if (!connectionAnimationActive) return;
                     connectionDot.animate()
                             .scaleX(1.0f)
                             .scaleY(1.0f)
@@ -681,6 +721,52 @@ public class CallActivity extends AppCompatActivity {
                             .setDuration(800)
                             .withEndAction(this::startConnectionAnimation)
                             .start();
+                })
+                .start();
+    }
+
+    private void stopConnectionAnimation() {
+        connectionAnimationActive = false;
+        if (connectionDot != null) {
+            connectionDot.animate().cancel();
+            connectionDot.setScaleX(1.0f);
+            connectionDot.setScaleY(1.0f);
+            connectionDot.setAlpha(1.0f);
+        }
+    }
+
+    private void markConnected() {
+        stopConnectionAnimation();
+        runOnUiThread(() -> {
+            if (connectionStatus != null) {
+                connectionStatus.setText("Connected");
+            }
+            fadeInRemoteOverlay();
+        });
+    }
+
+    private void fadeInRemoteOverlay() {
+        if (remoteAvatarOverlay == null) return;
+        remoteAvatarOverlay.setAlpha(0f);
+        remoteAvatarOverlay.setVisibility(View.VISIBLE);
+        remoteAvatarOverlay.animate()
+                .alpha(1f)
+                .setDuration(350)
+                .start();
+    }
+
+    private void fadeOutRemoteOverlay(Runnable onComplete) {
+        if (remoteAvatarOverlay == null || remoteAvatarOverlay.getVisibility() != View.VISIBLE) {
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+        remoteAvatarOverlay.animate()
+                .alpha(0f)
+                .setDuration(250)
+                .withEndAction(() -> {
+                    remoteAvatarOverlay.setVisibility(View.GONE);
+                    remoteAvatarOverlay.setAlpha(1f);
+                    if (onComplete != null) onComplete.run();
                 })
                 .start();
     }
@@ -735,14 +821,15 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void setupSocket() {
-        socket.off();
+        removeSocketListeners();
 
-        socket.on("peer-ready", args -> {
+        peerReadyListener = args -> {
             timeoutHandler.removeCallbacks(timeoutRunnable);
             if (isInitiator) createOffer();
-        });
+        };
+        socket.on("peer-ready", peerReadyListener);
 
-        socket.on("receive-offer", args -> {
+        receiveOfferListener = args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String offerSdp = data.getString("offer");
@@ -754,9 +841,10 @@ public class CallActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 Log.e(TAG, "Error processing receive-offer", e);
             }
-        });
+        };
+        socket.on("receive-offer", receiveOfferListener);
 
-        socket.on("receive-answer", args -> {
+        receiveAnswerListener = args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String answerSdp = data.getString("answer");
@@ -767,9 +855,10 @@ public class CallActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 Log.e(TAG, "Error processing receive-answer", e);
             }
-        });
+        };
+        socket.on("receive-answer", receiveAnswerListener);
 
-        socket.on("receive-ice", args -> {
+        receiveIceListener = args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
                 IceCandidate candidate = new IceCandidate(
@@ -783,28 +872,109 @@ public class CallActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 Log.e(TAG, "Error processing receive-ice", e);
             }
-        });
+        };
+        socket.on("receive-ice", receiveIceListener);
 
-        socket.on("peer-disconnected", args -> {
-            runOnUiThread(this::disconnect);
-        });
+        if (isPrivateCall) {
+            receivePrivateOfferListener = args -> {
+                try {
+                    JSONObject data = (JSONObject) args[0];
+                    String offerSdp = data.getString("offer");
+                    SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, offerSdp);
+                    if (peerConnection != null) {
+                        peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateOffer"), sdp);
+                        createAnswer();
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error processing receive-private-offer", e);
+                }
+            };
+            socket.on("receive-private-offer", receivePrivateOfferListener);
 
-        socket.on("call-control", args -> {
+            receivePrivateAnswerListener = args -> {
+                try {
+                    JSONObject data = (JSONObject) args[0];
+                    String answerSdp = data.getString("answer");
+                    SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, answerSdp);
+                    if (peerConnection != null) {
+                        peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateAnswer"), sdp);
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error processing receive-private-answer", e);
+                }
+            };
+            socket.on("receive-private-answer", receivePrivateAnswerListener);
+
+            receivePrivateIceListener = args -> {
+                try {
+                    JSONObject data = (JSONObject) args[0];
+                    IceCandidate candidate = new IceCandidate(
+                            data.getString("sdpMid"),
+                            data.getInt("sdpMLineIndex"),
+                            data.getString("candidate")
+                    );
+                    if (peerConnection != null) {
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error processing receive-private-ice", e);
+                }
+            };
+            socket.on("receive-private-ice", receivePrivateIceListener);
+
+            privateCallAcceptedListener = args -> runOnUiThread(() -> {
+                Log.d(TAG, "private-call-accepted received");
+                stopConnectionAnimation();
+                if (connectionStatus != null) {
+                    connectionStatus.setText("Call accepted. Connecting...");
+                }
+                Toast.makeText(CallActivity.this, "Private call accepted.", Toast.LENGTH_SHORT).show();
+            });
+            socket.on("private-call-accepted", privateCallAcceptedListener);
+
+            privateCallRejectedListener = args -> runOnUiThread(() -> {
+                Toast.makeText(CallActivity.this, "Call was rejected.", Toast.LENGTH_SHORT).show();
+                disconnect();
+            });
+            socket.on("private-call-rejected", privateCallRejectedListener);
+
+            privateCallEndedListener = args -> runOnUiThread(() -> {
+                Toast.makeText(CallActivity.this, "Call ended by the other user.", Toast.LENGTH_SHORT).show();
+                disconnect();
+            });
+            socket.on("private-call-ended", privateCallEndedListener);
+
+            callFailedListener = args -> runOnUiThread(() -> {
+                try {
+                    JSONObject data = (JSONObject) args[0];
+                    String reason = data.optString("reason", "Call failed.");
+                    Toast.makeText(CallActivity.this, reason, Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    Toast.makeText(CallActivity.this, "Call failed.", Toast.LENGTH_LONG).show();
+                }
+                disconnect();
+            });
+            socket.on("call-failed", callFailedListener);
+        }
+
+        peerDisconnectedListener = args -> runOnUiThread(this::disconnect);
+        socket.on("peer-disconnected", peerDisconnectedListener);
+
+        callControlListener = args -> {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String type = data.getString("type");
                 boolean enabled = data.getBoolean("enabled");
                 String senderId = data.getString("senderId");
-                
+
                 if (!myUid.equals(senderId) && "video".equals(type)) {
-                    runOnUiThread(() -> {
-                        remoteAvatarOverlay.setVisibility(enabled ? View.GONE : View.VISIBLE);
-                    });
+                    runOnUiThread(() -> remoteAvatarOverlay.setVisibility(enabled ? View.GONE : View.VISIBLE));
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing call-control event", e);
             }
-        });
+        };
+        socket.on("call-control", callControlListener);
     }
 
     private void createOffer() {
@@ -838,10 +1008,17 @@ public class CallActivity extends AppCompatActivity {
     private void sendOffer(SessionDescription sdp) {
         try {
             JSONObject offer = new JSONObject();
-            offer.put("to", peerId);
-            offer.put("offer", sdp.description);
-            offer.put("room", roomName);
-            socket.emit("send-offer", offer);
+            if (isPrivateCall) {
+                offer.put("targetId", peerId);
+                offer.put("offer", sdp.description);
+                offer.put("room", roomName);
+                socket.emit("send-private-offer", offer);
+            } else {
+                offer.put("to", peerId);
+                offer.put("offer", sdp.description);
+                offer.put("room", roomName);
+                socket.emit("send-offer", offer);
+            }
         } catch (JSONException e) {
             Log.e(TAG, "Error sending offer", e);
         }
@@ -850,10 +1027,17 @@ public class CallActivity extends AppCompatActivity {
     private void sendAnswer(SessionDescription sdp) {
         try {
             JSONObject answer = new JSONObject();
-            answer.put("to", peerId);
-            answer.put("answer", sdp.description);
-            answer.put("room", roomName);
-            socket.emit("send-answer", answer);
+            if (isPrivateCall) {
+                answer.put("targetId", peerId);
+                answer.put("answer", sdp.description);
+                answer.put("room", roomName);
+                socket.emit("send-private-answer", answer);
+            } else {
+                answer.put("to", peerId);
+                answer.put("answer", sdp.description);
+                answer.put("room", roomName);
+                socket.emit("send-answer", answer);
+            }
         } catch (JSONException e) {
             Log.e(TAG, "Error sending answer", e);
         }
@@ -862,14 +1046,49 @@ public class CallActivity extends AppCompatActivity {
     private void sendIce(IceCandidate candidate) {
         try {
             JSONObject ice = new JSONObject();
-            ice.put("to", peerId);
-            ice.put("candidate", candidate.sdp);
-            ice.put("sdpMid", candidate.sdpMid);
-            ice.put("sdpMLineIndex", candidate.sdpMLineIndex);
-            ice.put("room", roomName);
-            socket.emit("send-ice", ice);
+            if (isPrivateCall) {
+                ice.put("targetId", peerId);
+                ice.put("room", roomName);
+                ice.put("candidate", candidate.sdp);
+                ice.put("sdpMid", candidate.sdpMid);
+                ice.put("sdpMLineIndex", candidate.sdpMLineIndex);
+                socket.emit("send-private-ice", ice);
+            } else {
+                ice.put("to", peerId);
+                ice.put("candidate", candidate.sdp);
+                ice.put("sdpMid", candidate.sdpMid);
+                ice.put("sdpMLineIndex", candidate.sdpMLineIndex);
+                ice.put("room", roomName);
+                socket.emit("send-ice", ice);
+            }
         } catch (JSONException e) {
             Log.e(TAG, "Error sending ICE candidate", e);
+        }
+    }
+
+    private void sendStartPrivateCall() {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("callerId", myUid);
+            data.put("targetId", peerId);
+            data.put("isVideo", isVideoCall);
+            data.put("room", roomName);
+            data.put("callerName", tokenManager.getUserName() != null ? tokenManager.getUserName() : "");
+            data.put("callerAvatar", tokenManager.getUserAvatar() != null ? tokenManager.getUserAvatar() : "");
+            socket.emit("start-private-call", data);
+        } catch (JSONException e) {
+            Log.e(TAG, "Error emitting start-private-call", e);
+        }
+    }
+
+    private void sendAcceptPrivateCall() {
+        try {
+            JSONObject data = new JSONObject();
+            data.put("callerId", peerId);
+            data.put("room", roomName);
+            socket.emit("accept-private-call", data);
+        } catch (JSONException e) {
+            Log.e(TAG, "Error emitting accept-private-call", e);
         }
     }
 
@@ -955,7 +1174,7 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error leaving room", e);
         }
 
-        socket.off();
+        removeSocketListeners();
 
         if (localVideoTrack != null) {
             localVideoTrack.removeSink(localView);
@@ -988,6 +1207,13 @@ public class CallActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             if (localView != null) localView.release();
             if (remoteView != null) remoteView.release();
+        });
+
+        fadeOutRemoteOverlay(() -> {
+            if (factory != null) {
+                factory.dispose();
+                factory = null;
+            }
         });
 
         if (factory != null) {
@@ -1173,8 +1399,8 @@ public class CallActivity extends AppCompatActivity {
         try {
             if (audioManager != null) {
                 // Check if wired headphones or bluetooth headset are connected
-                boolean isHeadsetConnected = audioManager.isWiredHeadsetOn() 
-                        || audioManager.isBluetoothScoOn() 
+                boolean isHeadsetConnected = audioManager.isWiredHeadsetOn()
+                        || audioManager.isBluetoothScoOn()
                         || audioManager.isBluetoothA2dpOn();
                 
                 Log.d(TAG, "📺 Audio Routing check: Headset connected = " + isHeadsetConnected);
@@ -1183,6 +1409,30 @@ public class CallActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e(TAG, "Error updating audio routing: " + e.getMessage());
         }
+    }
+
+    private void removeSocketListeners() {
+        if (socket == null) return;
+        if (peerReadyListener != null) socket.off("peer-ready", peerReadyListener);
+        if (receiveOfferListener != null) socket.off("receive-offer", receiveOfferListener);
+        if (receiveAnswerListener != null) socket.off("receive-answer", receiveAnswerListener);
+        if (receiveIceListener != null) socket.off("receive-ice", receiveIceListener);
+        if (receivePrivateOfferListener != null) socket.off("receive-private-offer", receivePrivateOfferListener);
+        if (receivePrivateAnswerListener != null) socket.off("receive-private-answer", receivePrivateAnswerListener);
+        if (receivePrivateIceListener != null) socket.off("receive-private-ice", receivePrivateIceListener);
+        if (privateCallAcceptedListener != null) socket.off("private-call-accepted", privateCallAcceptedListener);
+        if (privateCallRejectedListener != null) socket.off("private-call-rejected", privateCallRejectedListener);
+        if (privateCallEndedListener != null) socket.off("private-call-ended", privateCallEndedListener);
+        if (callFailedListener != null) socket.off("call-failed", callFailedListener);
+        if (peerDisconnectedListener != null) socket.off("peer-disconnected", peerDisconnectedListener);
+        if (callControlListener != null) socket.off("call-control", callControlListener);
+
+        peerReadyListener = null;
+        receiveOfferListener = null;
+        receiveAnswerListener = null;
+        receiveIceListener = null;
+        peerDisconnectedListener = null;
+        callControlListener = null;
     }
 
     @Override
