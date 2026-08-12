@@ -741,7 +741,11 @@ public class CallActivity extends AppCompatActivity {
             if (connectionStatus != null) {
                 connectionStatus.setText("Connected");
             }
-            fadeInRemoteOverlay();
+            if (isVideoCall) {
+                fadeOutRemoteOverlay(null);
+            } else {
+                fadeInRemoteOverlay();
+            }
         });
     }
 

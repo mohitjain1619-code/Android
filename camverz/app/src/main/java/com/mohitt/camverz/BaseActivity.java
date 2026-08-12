@@ -62,11 +62,18 @@ public class BaseActivity extends AppCompatActivity {
             Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
             Insets displayCutoutInsets = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
             Insets navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            Insets imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime());
 
             // Merge status bar and cutout top insets
             int topMargin = Math.max(statusBarInsets.top, displayCutoutInsets.top);
             if (topMargin <= 0) {
                 topMargin = dpToPx(38); // Safe fallback
+            }
+
+            // Merge navigation bar and keyboard bottom insets
+            int bottomMargin = Math.max(navigationBarInsets.bottom, imeInsets.bottom);
+            if (bottomMargin <= 0) {
+                bottomMargin = dpToPx(16); // Safe fallback
             }
 
             if (topView != null) {
@@ -81,14 +88,14 @@ public class BaseActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
                 if (lp instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
-                    mlp.bottomMargin = Math.max(navigationBarInsets.bottom, dpToPx(16));
+                    mlp.bottomMargin = bottomMargin;
                     bottomView.setLayoutParams(mlp);
                 } else {
                     bottomView.setPadding(
                         bottomView.getPaddingLeft(),
                         bottomView.getPaddingTop(),
                         bottomView.getPaddingRight(),
-                        dpToPx(16) + navigationBarInsets.bottom
+                        bottomMargin
                     );
                 }
             }

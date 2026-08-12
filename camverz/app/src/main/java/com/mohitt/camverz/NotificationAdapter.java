@@ -53,35 +53,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         setNotificationText(holder, notification);
         holder.timestamp.setText(getFormattedTimestamp(notification.getTimestamp()));
 
-        String photoUrl = notification.getTriggeringUserPhotoUrl();
-        String avatar = notification.getTriggeringUserAvatar();
-
-        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
-            Glide.with(context)
-                    .load(photoUrl)
-                    .placeholder(R.drawable.ic_user_placeholder)
-                    .circleCrop()
-                    .into(holder.userAvatar);
-        } else if (avatar != null && !avatar.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(context)
-                        .load(avatarResId)
-                        .placeholder(R.drawable.ic_user_placeholder)
-                        .circleCrop()
-                        .into(holder.userAvatar);
-            } else {
-                Glide.with(context)
-                        .load(R.drawable.ic_user_placeholder)
-                        .circleCrop()
-                        .into(holder.userAvatar);
-            }
-        } else {
-            Glide.with(context)
-                    .load(R.drawable.ic_user_placeholder)
-                    .circleCrop()
-                    .into(holder.userAvatar);
-        }
+        AvatarHelper.loadAvatar(context, notification.getTriggeringUserPhotoUrl(), notification.getTriggeringUserAvatar(), notification.getTriggeringUserName(), holder.userAvatar);
 
         holder.userAvatar.setOnClickListener(v -> {
             Intent intent = new Intent(context, ProfileActivity.class);

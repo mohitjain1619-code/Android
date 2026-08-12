@@ -51,34 +51,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         Comment comment = commentList.get(position);
 
         holder.username.setText(comment.getUserName());
-        String photoUrl = comment.getUserPhotoUrl();
-        String avatar = comment.getUserAvatar();
-        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
-            Glide.with(context)
-                    .load(photoUrl)
-                    .placeholder(R.drawable.ic_user_placeholder)
-                    .circleCrop()
-                    .into(holder.profileImage);
-        } else if (avatar != null && !avatar.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(context)
-                        .load(avatarResId)
-                        .placeholder(R.drawable.ic_user_placeholder)
-                        .circleCrop()
-                        .into(holder.profileImage);
-            } else {
-                Glide.with(context)
-                        .load(R.drawable.ic_user_placeholder)
-                        .circleCrop()
-                        .into(holder.profileImage);
-            }
-        } else {
-            Glide.with(context)
-                    .load(R.drawable.ic_user_placeholder)
-                    .circleCrop()
-                    .into(holder.profileImage);
-        }
+        AvatarHelper.loadAvatar(context, comment.getUserPhotoUrl(), comment.getUserAvatar(), comment.getUserName(), holder.profileImage);
 
         holder.commentText.setText(comment.getText());
         holder.timestamp.setText(getTimestampString(comment.getTimestamp()));
@@ -128,7 +101,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder {
         RelativeLayout root;
-        CircleImageView profileImage;
+        ImageView profileImage;
         TextView username;
         TextView commentText;
         TextView timestamp;

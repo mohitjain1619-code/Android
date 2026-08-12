@@ -59,12 +59,14 @@ router.get("/:id", async (req, res) => {
 
     return res.json({
       ok: true,
-      user: formatUser(user),
-      followersCount: parseInt(followers.count),
-      followingCount: parseInt(following.count),
-      isFollowing: !!isFollowing,
-      isBlocked: !!isBlocked,
-      isBlockedByOther: !!isBlockedByOther,
+      user: {
+        ...formatUser(user),
+        followersCount: parseInt(followers.count),
+        followingCount: parseInt(following.count),
+        isFollowedByMe: !!isFollowing,
+        isBlocked: !!isBlocked,
+        isBlockedByOther: !!isBlockedByOther,
+      }
     });
   } catch (err) {
     console.error("Get user error:", err);

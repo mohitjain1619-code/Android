@@ -17,10 +17,12 @@ router.get("/", async (req, res) => {
               u.name as triggering_user_name, 
               u.avatar as triggering_user_avatar,
               u.photo_url as triggering_user_photo_url,
-              p.text as post_text
+              p.text as post_text,
+              c.text as comment_text
        FROM notifications n
        LEFT JOIN users u ON u.id = n.triggering_user_id
        LEFT JOIN posts p ON p.id = n.post_id
+       LEFT JOIN comments c ON c.id = n.comment_id
        WHERE n.user_id = $1
        ORDER BY n.created_at DESC
        LIMIT $2 OFFSET $3`,
@@ -45,7 +47,7 @@ router.get("/", async (req, res) => {
           photoUrl: n.triggering_user_photo_url,
         } : null,
         postId: n.post_id,
-        postText: n.post_text,
+        postText: (n.type === 'comment' || n.type === 'reply') ? n.comment_text : n.post_text,
         commentId: n.comment_id,
         createdAt: n.created_at,
       })),

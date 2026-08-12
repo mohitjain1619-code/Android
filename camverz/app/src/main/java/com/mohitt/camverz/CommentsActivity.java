@@ -42,6 +42,8 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
 
     private String postId;
     private String replyingToCommentId; // To keep track of which comment is being replied to
+    private android.view.View replyIndicatorLayout;
+    private android.widget.TextView replyIndicatorText;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,7 +51,11 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         setContentView(R.layout.activity_comments);
 
         // Apply edge-to-edge window insets to prevent status bar / navigation bar overlap
-        applyWindowInsets(findViewById(R.id.toolbar), findViewById(R.id.comment_input_layout));
+        applyWindowInsets(findViewById(R.id.toolbar), findViewById(R.id.bottom_container));
+
+        replyIndicatorLayout = findViewById(R.id.reply_indicator_layout);
+        replyIndicatorText = findViewById(R.id.reply_indicator_text);
+        findViewById(R.id.cancel_reply_button).setOnClickListener(v -> cancelReplyMode());
 
         // Back button
         findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
@@ -182,8 +188,7 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         commentEditText.setText("");
-                        replyingToCommentId = null;
-                        commentEditText.setHint("Write a comment...");
+                        cancelReplyMode();
                         loadComments(); // Refresh comments list
                         Toast.makeText(CommentsActivity.this, "Comment posted", Toast.LENGTH_SHORT).show();
                         return;
@@ -219,10 +224,36 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         });
     }
 
+    private void cancelReplyMode() {
+        replyingToCommentId = null;
+        if (replyIndicatorLayout != null) {
+            replyIndicatorLayout.setVisibility(android.view.View.GONE);
+        }
+        commentEditText.setHint("Write a comment...");
+    }
+
     @Override
     public void onReplyClicked(String commentId) {
         replyingToCommentId = commentId;
-        commentEditText.setHint("Replying to a comment...");
+        
+        String username = "User";
+        if (commentList != null) {
+            for (Comment c : commentList) {
+                if (c.getId() != null && c.getId().equals(commentId)) {
+                    username = c.getUserName();
+                    break;
+                }
+            }
+        }
+        
+        if (replyIndicatorText != null) {
+            replyIndicatorText.setText("Replying to " + username);
+        }
+        if (replyIndicatorLayout != null) {
+            replyIndicatorLayout.setVisibility(android.view.View.VISIBLE);
+        }
+        
+        commentEditText.setHint("Write a reply...");
         commentEditText.requestFocus();
     }
 

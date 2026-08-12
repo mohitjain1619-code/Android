@@ -259,7 +259,7 @@ public class ProfileActivity extends BaseActivity {
 
             followButton.setOnClickListener(v -> followUser());
             messageButton.setOnClickListener(v -> {
-                Intent intent = new Intent(ProfileActivity.this, InboxActivity.class);
+                Intent intent = new Intent(ProfileActivity.this, ChatActivity.class);
                 intent.putExtra("userId", visitedUserId);
                 if (visitedUser != null) {
                     intent.putExtra("userName", visitedUser.getName());

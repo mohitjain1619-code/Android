@@ -67,34 +67,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         // Hide verification badge (unless we add it to the backend post response)
         holder.verificationBadge.setVisibility(View.GONE);
 
-        String photoUrl = post.getUserPhotoUrl();
-        String avatar = post.getUserAvatar();
-        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
-            Glide.with(context)
-                    .load(photoUrl)
-                    .placeholder(R.drawable.ic_user_placeholder)
-                    .circleCrop()
-                    .into(holder.profileImageView);
-        } else if (avatar != null && !avatar.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(context)
-                        .load(avatarResId)
-                        .placeholder(R.drawable.ic_user_placeholder)
-                        .circleCrop()
-                        .into(holder.profileImageView);
-            } else {
-                Glide.with(context)
-                        .load(R.drawable.ic_user_placeholder)
-                        .circleCrop()
-                        .into(holder.profileImageView);
-            }
-        } else {
-            Glide.with(context)
-                    .load(R.drawable.ic_user_placeholder)
-                    .circleCrop()
-                    .into(holder.profileImageView);
-        }
+        AvatarHelper.loadAvatar(context, post.getUserPhotoUrl(), post.getUserAvatar(), post.getUsername(), holder.profileImageView);
 
         holder.postTextView.setText(post.getText());
         holder.timestampTextView.setText(getFormattedTimestamp(post.getCreatedAt()));
@@ -111,10 +84,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
                 boolean wasLiked = post.isLikedByMe();
                 
-                // Optimistic UI update
+                // Optimistic UI update (direct view modification)
                 post.setLikedByMe(!wasLiked);
                 post.setLikeCount(wasLiked ? post.getLikeCount() - 1 : post.getLikeCount() + 1);
-                notifyItemChanged(position);
+                holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+                holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
+
+                // Bounce micro-animation
+                holder.likeButton.setScaleX(0.7f);
+                holder.likeButton.setScaleY(0.7f);
+                holder.likeButton.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
 
                 api.toggleLike(postId).enqueue(new Callback<JsonObject>() {
                     @Override
@@ -123,7 +102,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                             // Revert on failure
                             post.setLikedByMe(wasLiked);
                             post.setLikeCount(wasLiked ? post.getLikeCount() + 1 : post.getLikeCount() - 1);
-                            notifyItemChanged(position);
+                            holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+                            holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
                         }
                     }
                     @Override
@@ -131,7 +111,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                         // Revert on failure
                         post.setLikedByMe(wasLiked);
                         post.setLikeCount(wasLiked ? post.getLikeCount() + 1 : post.getLikeCount() - 1);
-                        notifyItemChanged(position);
+                        holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+                        holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
                     }
                 });
             });
@@ -140,13 +121,18 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.likeButton.setOnClickListener(v -> Toast.makeText(context, "You need to be logged in to like posts", Toast.LENGTH_SHORT).show());
         }
 
-        // --- Comment Button Logic ---
-        holder.commentCountTextView.setText(String.valueOf(post.getCommentCount()));
-        holder.commentButton.setOnClickListener(v -> {
+        // --- Click Post Box to Open Comments ---
+        View.OnClickListener commentClickListener = v -> {
             Intent intent = new Intent(context, CommentsActivity.class);
             intent.putExtra("postId", post.getId());
             context.startActivity(intent);
-        });
+        };
+        holder.itemView.setOnClickListener(commentClickListener);
+        holder.postTextView.setOnClickListener(commentClickListener);
+
+        // --- Comment Button Logic ---
+        holder.commentCountTextView.setText(String.valueOf(post.getCommentCount()));
+        holder.commentButton.setOnClickListener(commentClickListener);
 
         // --- Post Menu Logic ---
         if (tokenManager.isLoggedIn() && tokenManager.getUserId().equals(post.getUserId())) {
