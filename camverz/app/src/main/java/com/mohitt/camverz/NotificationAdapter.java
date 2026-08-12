@@ -13,15 +13,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.gson.JsonObject;
+import com.mohitt.camverz.api.ApiClient;
 
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
@@ -66,6 +73,64 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             holder.postPreview.setText(notification.getPostText());
         } else {
             holder.postPreview.setVisibility(View.GONE);
+        }
+
+        if ("friend_request".equals(notification.getType()) && notification.getFriendRequestId() != null && "pending".equals(notification.getFriendshipStatus())) {
+            holder.friendRequestActionsLayout.setVisibility(View.VISIBLE);
+            holder.acceptButton.setEnabled(true);
+            holder.rejectButton.setEnabled(true);
+
+            holder.acceptButton.setOnClickListener(v -> {
+                holder.acceptButton.setEnabled(false);
+                holder.rejectButton.setEnabled(false);
+                ApiClient.getInstance(context).getApi().acceptFriendRequest(notification.getFriendRequestId()).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                        if (response.isSuccessful()) {
+                            notification.setFriendshipStatus("accepted");
+                            notifyItemChanged(holder.getAdapterPosition());
+                        } else {
+                            holder.acceptButton.setEnabled(true);
+                            holder.rejectButton.setEnabled(true);
+                            Toast.makeText(context, "Failed to accept request", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {
+                        holder.acceptButton.setEnabled(true);
+                        holder.rejectButton.setEnabled(true);
+                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+
+            holder.rejectButton.setOnClickListener(v -> {
+                holder.acceptButton.setEnabled(false);
+                holder.rejectButton.setEnabled(false);
+                ApiClient.getInstance(context).getApi().rejectFriendRequest(notification.getFriendRequestId()).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                        if (response.isSuccessful()) {
+                            notification.setFriendshipStatus("rejected");
+                            notifyItemChanged(holder.getAdapterPosition());
+                        } else {
+                            holder.acceptButton.setEnabled(true);
+                            holder.rejectButton.setEnabled(true);
+                            Toast.makeText(context, "Failed to reject request", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {
+                        holder.acceptButton.setEnabled(true);
+                        holder.rejectButton.setEnabled(true);
+                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        } else {
+            holder.friendRequestActionsLayout.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> handleNotificationClick(notification));
@@ -118,6 +183,15 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 break;
             case "reply":
                 messageSuffix = " replied to your comment.";
+                break;
+            case "friend_request":
+                if ("accepted".equals(notification.getFriendshipStatus())) {
+                    messageSuffix = " sent you a friend request (Accepted).";
+                } else if ("rejected".equals(notification.getFriendshipStatus())) {
+                    messageSuffix = " sent you a friend request (Rejected).";
+                } else {
+                    messageSuffix = " sent you a friend request.";
+                }
                 break;
             default:
                 messageSuffix = " sent a notification.";
@@ -197,6 +271,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         TextView notificationText;
         TextView timestamp;
         TextView postPreview;
+        LinearLayout friendRequestActionsLayout;
+        androidx.appcompat.widget.AppCompatButton acceptButton;
+        androidx.appcompat.widget.AppCompatButton rejectButton;
 
         public NotificationViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -204,6 +281,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             notificationText = itemView.findViewById(R.id.notification_text);
             timestamp = itemView.findViewById(R.id.timestamp);
             postPreview = itemView.findViewById(R.id.post_preview);
+            friendRequestActionsLayout = itemView.findViewById(R.id.friend_request_actions_layout);
+            acceptButton = itemView.findViewById(R.id.accept_button);
+            rejectButton = itemView.findViewById(R.id.reject_button);
         }
     }
 }

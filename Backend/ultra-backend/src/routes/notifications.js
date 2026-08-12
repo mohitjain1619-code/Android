@@ -34,9 +34,21 @@ router.get("/", async (req, res) => {
       [req.user.userId]
     );
 
-    return res.json({
-      ok: true,
-      notifications: notifications.map((n) => ({
+    const mappedNotifications = [];
+    for (const n of notifications) {
+      let friendRequestId = null;
+      let friendshipStatus = null;
+      if (n.type === 'friend_request') {
+        const fr = await queryOne(
+          "SELECT id, status FROM friend_requests WHERE from_user_id = $1 AND to_user_id = $2",
+          [n.triggering_user_id, req.user.userId]
+        );
+        if (fr) {
+          friendRequestId = fr.id;
+          friendshipStatus = fr.status;
+        }
+      }
+      mappedNotifications.push({
         id: n.id,
         type: n.type,
         read: n.read,
@@ -50,7 +62,14 @@ router.get("/", async (req, res) => {
         postText: (n.type === 'comment' || n.type === 'reply') ? n.comment_text : n.post_text,
         commentId: n.comment_id,
         createdAt: n.created_at,
-      })),
+        friendRequestId,
+        friendshipStatus,
+      });
+    }
+
+    return res.json({
+      ok: true,
+      notifications: mappedNotifications,
       unreadCount: parseInt(unreadCount.count),
     });
   } catch (err) {

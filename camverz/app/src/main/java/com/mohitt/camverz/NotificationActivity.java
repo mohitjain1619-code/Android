@@ -123,6 +123,13 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
                                     notif.setTriggeringUserPhotoUrl("");
                                 }
 
+                                if (obj.has("friendRequestId") && !obj.get("friendRequestId").isJsonNull()) {
+                                    notif.setFriendRequestId(obj.get("friendRequestId").getAsString());
+                                }
+                                if (obj.has("friendshipStatus") && !obj.get("friendshipStatus").isJsonNull()) {
+                                    notif.setFriendshipStatus(obj.get("friendshipStatus").getAsString());
+                                }
+
                                 // Parse createdAt timestamp from ISO string
                                 if (obj.has("createdAt") && !obj.get("createdAt").isJsonNull()) {
                                     try {

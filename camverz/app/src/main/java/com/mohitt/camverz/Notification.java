@@ -105,4 +105,12 @@ public class Notification {
     public void setNotificationId(String notificationId) {
         this.notificationId = notificationId;
     }
+
+    private String friendRequestId;
+    private String friendshipStatus;
+
+    public String getFriendRequestId() { return friendRequestId; }
+    public void setFriendRequestId(String friendRequestId) { this.friendRequestId = friendRequestId; }
+    public String getFriendshipStatus() { return friendshipStatus; }
+    public void setFriendshipStatus(String friendshipStatus) { this.friendshipStatus = friendshipStatus; }
 }

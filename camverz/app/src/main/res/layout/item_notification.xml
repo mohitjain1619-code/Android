@@ -61,6 +61,45 @@
                 android:textColor="@color/text_muted"
                 android:textSize="12sp"
                 tools:text="2 hours ago" />
+
+            <LinearLayout
+                android:id="@+id/friend_request_actions_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/accept_button"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@drawable/bg_follow_button"
+                    android:text="Accept"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/reject_button"
+                    android:layout_width="0dp"
+                    android:layout_height="32dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_following_button"
+                    android:text="Reject"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:ignore="TouchTargetSizeCheck" />
+
+            </LinearLayout>
         </LinearLayout>
 
     </RelativeLayout>
