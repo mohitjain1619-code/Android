@@ -204,39 +204,72 @@ public class InboxActivity extends BaseActivity {
 
     private void updateActiveUsersRow() {
         if (activeNowLayout == null || activeUsersContainer == null) return;
-        if (fullConversationList == null || fullConversationList.isEmpty()) {
+        if (!tokenManager.isLoggedIn()) {
             activeNowLayout.setVisibility(View.GONE);
             return;
         }
 
-        activeNowLayout.setVisibility(View.VISIBLE);
-        activeUsersContainer.removeAllViews();
+        api.getOnlineFriends().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("friends")) {
+                        JsonArray friendsArray = data.getAsJsonArray("friends");
+                        if (friendsArray.size() > 0) {
+                            activeNowLayout.setVisibility(View.VISIBLE);
+                            activeUsersContainer.removeAllViews();
+                            
+                            for (JsonElement element : friendsArray) {
+                                JsonObject friendObj = element.getAsJsonObject();
+                                String friendId = friendObj.has("id") ? friendObj.get("id").getAsString() : "";
+                                String friendName = friendObj.has("name") ? friendObj.get("name").getAsString() : "";
+                                String friendAvatar = friendObj.has("avatar") ? friendObj.get("avatar").getAsString() : "";
+                                String friendPhotoUrl = friendObj.has("photoUrl") && !friendObj.get("photoUrl").isJsonNull() ? friendObj.get("photoUrl").getAsString() : "";
 
-        for (Conversation conv : fullConversationList) {
-            View itemView = LayoutInflater.from(this).inflate(R.layout.item_active_user_avatar, activeUsersContainer, false);
-            CircleImageView avatarView = itemView.findViewById(R.id.active_user_avatar);
-            TextView nameView = itemView.findViewById(R.id.active_user_name);
+                                View itemView = LayoutInflater.from(InboxActivity.this).inflate(R.layout.item_active_user_avatar, activeUsersContainer, false);
+                                ImageView avatarView = itemView.findViewById(R.id.active_user_avatar);
+                                TextView nameView = itemView.findViewById(R.id.active_user_name);
 
-            nameView.setText(conv.getName());
-            
-            // Set image using Glide or avatar helper
-            int resId = getResources().getIdentifier(conv.getProfileImageUrl(), "drawable", getPackageName());
-            if (resId != 0) {
-                avatarView.setImageResource(resId);
-            } else {
-                avatarView.setImageResource(R.drawable.ic_user_placeholder);
+                                String displayName = friendName;
+                                if (displayName.contains(" ")) {
+                                    displayName = displayName.substring(0, displayName.indexOf(" "));
+                                }
+                                if (displayName.length() > 8) {
+                                    displayName = displayName.substring(0, 8) + "..";
+                                }
+                                nameView.setText(displayName);
+
+                                AvatarHelper.loadAvatar(InboxActivity.this, friendPhotoUrl, friendAvatar, friendName, avatarView);
+
+                                itemView.setOnClickListener(v -> {
+                                    Intent intent = new Intent(InboxActivity.this, ChatActivity.class);
+                                    intent.putExtra("userId", friendId);
+                                    intent.putExtra("userName", friendName);
+                                    intent.putExtra("userAvatar", friendAvatar);
+                                    startActivity(intent);
+                                });
+
+                                activeUsersContainer.addView(itemView);
+                            }
+                        } else {
+                            activeNowLayout.setVisibility(View.GONE);
+                        }
+                    } else {
+                        activeNowLayout.setVisibility(View.GONE);
+                    }
+                } else {
+                    activeNowLayout.setVisibility(View.GONE);
+                }
             }
 
-            itemView.setOnClickListener(v -> {
-                Intent intent = new Intent(InboxActivity.this, ChatActivity.class);
-                intent.putExtra("targetUserId", conv.getUserId());
-                intent.putExtra("targetUserName", conv.getName());
-                intent.putExtra("targetUserAvatar", conv.getProfileImageUrl());
-                startActivity(intent);
-            });
-
-            activeUsersContainer.addView(itemView);
-        }
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                if (activeNowLayout != null) {
+                    activeNowLayout.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     private void checkForUnreadNotifications() {

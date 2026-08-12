@@ -7,13 +7,11 @@
     android:gravity="center"
     android:orientation="vertical">
 
-    <de.hdodenhof.circleimageview.CircleImageView
+    <ImageView
         android:id="@+id/active_user_avatar"
         android:layout_width="52dp"
         android:layout_height="52dp"
-        android:src="@drawable/ic_user_placeholder"
-        app:civ_border_color="@color/accent_emerald"
-        app:civ_border_width="2dp" />
+        android:src="@drawable/ic_user_placeholder" />
 
     <TextView
         android:id="@+id/active_user_name"

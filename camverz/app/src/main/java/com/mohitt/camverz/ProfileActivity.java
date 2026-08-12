@@ -54,6 +54,8 @@ public class ProfileActivity extends BaseActivity {
     private RecyclerView postsRecyclerView;
     private SwipeRefreshLayout swipeRefreshLayout;
     private Button followButton, messageButton;
+    private String friendshipStatus = "none";
+    private String friendshipRequestId = null;
     private LinearLayout otherUserActionsLayout;
     private View mainContentLayout;
 
@@ -501,17 +503,22 @@ public class ProfileActivity extends BaseActivity {
     }
 
     private void followUser() {
+        if (visitedUserId == null) return;
         setUpdatingState(true);
-        if (followButton.getText().toString().equalsIgnoreCase("Follow")) {
-            api.followUser(visitedUserId).enqueue(new Callback<JsonObject>() {
+
+        if ("none".equals(friendshipStatus)) {
+            // Send request
+            Map<String, String> body = new HashMap<>();
+            body.put("targetUserId", visitedUserId);
+            api.sendFriendRequest(body).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     setUpdatingState(false);
                     if (response.isSuccessful()) {
-                        followButton.setText("Following");
-                        loadData(); // Reload profile to update followers count
+                        Toast.makeText(ProfileActivity.this, "Request Sent", Toast.LENGTH_SHORT).show();
+                        loadData();
                     } else {
-                        Toast.makeText(ProfileActivity.this, "Failed to follow user", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, "Failed to send request", Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override
@@ -520,17 +527,21 @@ public class ProfileActivity extends BaseActivity {
                     Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
                 }
             });
-        } else {
-            // Unfollow
-            api.unfollowUser(visitedUserId).enqueue(new Callback<JsonObject>() {
+        } else if ("received".equals(friendshipStatus)) {
+            // Accept request
+            if (friendshipRequestId == null) {
+                setUpdatingState(false);
+                return;
+            }
+            api.acceptFriendRequest(friendshipRequestId).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     setUpdatingState(false);
                     if (response.isSuccessful()) {
-                        followButton.setText("Follow");
-                        loadData(); // Reload profile to update followers count
+                        Toast.makeText(ProfileActivity.this, "Request Accepted", Toast.LENGTH_SHORT).show();
+                        loadData();
                     } else {
-                        Toast.makeText(ProfileActivity.this, "Failed to unfollow user", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, "Failed to accept request", Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override
@@ -539,6 +550,32 @@ public class ProfileActivity extends BaseActivity {
                     Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
                 }
             });
+        } else if ("sent".equals(friendshipStatus) || "friends".equals(friendshipStatus)) {
+            // Cancel request or Unfriend
+            new AlertDialog.Builder(this)
+                .setTitle("friends".equals(friendshipStatus) ? "Unfriend User" : "Cancel Request")
+                .setMessage("friends".equals(friendshipStatus) ? "Are you sure you want to remove this user from your friends?" : "Are you sure you want to cancel your friend request?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    api.deleteFriendRequest(visitedUserId).enqueue(new Callback<JsonObject>() {
+                        @Override
+                        public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                            setUpdatingState(false);
+                            if (response.isSuccessful()) {
+                                Toast.makeText(ProfileActivity.this, "Action completed successfully", Toast.LENGTH_SHORT).show();
+                                loadData();
+                            } else {
+                                Toast.makeText(ProfileActivity.this, "Failed to complete action", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        @Override
+                        public void onFailure(Call<JsonObject> call, Throwable t) {
+                            setUpdatingState(false);
+                            Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                })
+                .setNegativeButton("No", (dialog, which) -> setUpdatingState(false))
+                .show();
         }
     }
 
@@ -561,7 +598,19 @@ public class ProfileActivity extends BaseActivity {
         }
 
         if (!currentUserId.equals(visitedUserId)) {
-            followButton.setText(visitedUser.isFollowedByMe() ? "Following" : "Follow");
+            if ("friends".equals(friendshipStatus)) {
+                followButton.setText("Friends");
+                followButton.setBackgroundResource(R.drawable.bg_btn_secondary_glass);
+            } else if ("sent".equals(friendshipStatus)) {
+                followButton.setText("Requested");
+                followButton.setBackgroundResource(R.drawable.bg_btn_secondary_glass);
+            } else if ("received".equals(friendshipStatus)) {
+                followButton.setText("Accept Request");
+                followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+            } else {
+                followButton.setText("Add Friend");
+                followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+            }
         }
 
         if ("male".equalsIgnoreCase(visitedUser.getGender())) {
@@ -784,6 +833,9 @@ public class ProfileActivity extends BaseActivity {
                         visitedUser.setFollowersCount(userObj.has("followersCount") ? userObj.get("followersCount").getAsInt() : 0);
                         visitedUser.setFollowingCount(userObj.has("followingCount") ? userObj.get("followingCount").getAsInt() : 0);
                         visitedUser.setFollowedByMe(userObj.has("isFollowedByMe") && userObj.get("isFollowedByMe").getAsBoolean());
+                        
+                        friendshipStatus = userObj.has("friendshipStatus") ? userObj.get("friendshipStatus").getAsString() : "none";
+                        friendshipRequestId = userObj.has("friendshipRequestId") && !userObj.get("friendshipRequestId").isJsonNull() ? userObj.get("friendshipRequestId").getAsString() : null;
                         
                         if (mainContentLayout != null) mainContentLayout.setVisibility(View.VISIBLE);
                         updateProfileUI();

@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const { isUserOnline } = require("../config/redis");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -190,5 +191,74 @@ function formatRequest(r) {
     createdAt: r.created_at,
   };
 }
+
+// ============================================
+// DELETE /friends/request/:userId — Cancel request or Unfriend a user
+// ============================================
+router.delete("/request/:userId", async (req, res) => {
+  try {
+    const targetId = req.params.userId;
+    // Delete friend request in both directions
+    await query(
+      `DELETE FROM friend_requests 
+       WHERE (from_user_id = $1 AND to_user_id = $2) 
+          OR (from_user_id = $2 AND to_user_id = $1)`,
+      [req.user.userId, targetId]
+    );
+
+    // Also delete follows in both directions
+    await query(
+      `DELETE FROM follows 
+       WHERE (follower_id = $1 AND following_id = $2) 
+          OR (follower_id = $2 AND following_id = $1)`,
+      [req.user.userId, targetId]
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("Cancel/remove friend request error:", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+// ============================================
+// GET /friends/online — Get list of online accepted friends
+// ============================================
+router.get("/online", async (req, res) => {
+  try {
+    const friends = await queryMany(
+      `SELECT u.id, u.name, u.avatar, u.photo_url, u.gender, u.verified
+       FROM friend_requests fr
+       JOIN users u ON (u.id = fr.from_user_id OR u.id = fr.to_user_id)
+       WHERE (fr.from_user_id = $1 OR fr.to_user_id = $1)
+         AND fr.status = 'accepted'
+         AND u.id != $1`,
+      [req.user.userId]
+    );
+
+    const onlineFriends = [];
+    for (const friend of friends) {
+      const online = await isUserOnline(friend.id);
+      if (online) {
+        onlineFriends.push({
+          id: friend.id,
+          name: friend.name,
+          avatar: friend.avatar,
+          photoUrl: friend.photo_url,
+          gender: friend.gender,
+          verified: friend.verified,
+        });
+      }
+    }
+
+    return res.json({
+      ok: true,
+      friends: onlineFriends,
+    });
+  } catch (err) {
+    console.error("Get online friends list error:", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
 
 module.exports = router;

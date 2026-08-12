@@ -74,8 +74,8 @@ public class ChatActivity extends BaseActivity {
         receiverName = getIntent().getStringExtra("userName");
         receiverAvatar = getIntent().getStringExtra("userAvatar");
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        RelativeLayout toolbar = findViewById(R.id.toolbar);
+        findViewById(R.id.back_button).setOnClickListener(v -> finish());
 
         CircleImageView toolbarAvatar = findViewById(R.id.toolbar_avatar);
         TextView toolbarUsername = findViewById(R.id.toolbar_username);

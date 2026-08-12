@@ -156,6 +156,12 @@ public interface ApiService {
     @GET("friends/status/{userId}")
     Call<JsonObject> getFriendStatus(@Path("userId") String userId);
 
+    @DELETE("friends/request/{userId}")
+    Call<JsonObject> deleteFriendRequest(@Path("userId") String userId);
+
+    @GET("friends/online")
+    Call<JsonObject> getOnlineFriends();
+
     // ============================================
     // VERIFICATION
     // ============================================

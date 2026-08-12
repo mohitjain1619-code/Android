@@ -100,7 +100,7 @@ router.get("/unread-count", async (req, res) => {
       "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = false",
       [req.user.userId]
     );
-    return res.json({ ok: true, count: parseInt(result.count) });
+    return res.json({ ok: true, count: parseInt(result.count), unreadCount: parseInt(result.count) });
   } catch (err) {
     console.error("Unread count error:", err);
     return res.status(500).json({ error: "Internal error" });

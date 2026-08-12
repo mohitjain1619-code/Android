@@ -57,6 +57,25 @@ router.get("/:id", async (req, res) => {
       [user.id, req.user.userId]
     );
 
+    // Check friendship status
+    const sent = await queryOne(
+      "SELECT * FROM friend_requests WHERE from_user_id = $1 AND to_user_id = $2",
+      [req.user.userId, user.id]
+    );
+    const received = await queryOne(
+      "SELECT * FROM friend_requests WHERE from_user_id = $1 AND to_user_id = $2",
+      [user.id, req.user.userId]
+    );
+    let friendshipStatus = "none";
+    let friendshipRequestId = null;
+    if (sent) {
+      friendshipStatus = sent.status === "accepted" ? "friends" : "sent";
+      friendshipRequestId = sent.id;
+    } else if (received) {
+      friendshipStatus = received.status === "accepted" ? "friends" : "received";
+      friendshipRequestId = received.id;
+    }
+
     return res.json({
       ok: true,
       user: {
@@ -66,6 +85,8 @@ router.get("/:id", async (req, res) => {
         isFollowedByMe: !!isFollowing,
         isBlocked: !!isBlocked,
         isBlockedByOther: !!isBlockedByOther,
+        friendshipStatus,
+        friendshipRequestId,
       }
     });
   } catch (err) {

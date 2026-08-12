@@ -53,10 +53,13 @@ public class AvatarHelper {
     }
 
     public static void loadAvatar(Context context, String photoUrl, String avatar, String userName, ImageView imageView) {
+        BitmapDrawable initials = getInitialAvatar(context, userName);
+        imageView.setImageDrawable(initials);
+
         if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
             Glide.with(context)
                     .load(photoUrl)
-                    .placeholder(getInitialAvatar(context, userName))
+                    .placeholder(initials)
                     .circleCrop()
                     .into(imageView);
         } else if (avatar != null && !avatar.isEmpty()) {
@@ -64,14 +67,10 @@ public class AvatarHelper {
             if (avatarResId != 0) {
                 Glide.with(context)
                         .load(avatarResId)
-                        .placeholder(getInitialAvatar(context, userName))
+                        .placeholder(initials)
                         .circleCrop()
                         .into(imageView);
-            } else {
-                imageView.setImageDrawable(getInitialAvatar(context, userName));
             }
-        } else {
-            imageView.setImageDrawable(getInitialAvatar(context, userName));
         }
     }
 }
