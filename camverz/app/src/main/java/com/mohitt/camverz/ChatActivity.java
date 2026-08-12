@@ -78,6 +78,9 @@ public class ChatActivity extends BaseActivity {
         RelativeLayout toolbar = findViewById(R.id.toolbar);
         findViewById(R.id.back_button).setOnClickListener(v -> finish());
 
+        View messageInputLayout = findViewById(R.id.message_input_layout);
+        applyWindowInsets(toolbar, messageInputLayout);
+
         CircleImageView toolbarAvatar = findViewById(R.id.toolbar_avatar);
         TextView toolbarUsername = findViewById(R.id.toolbar_username);
         
