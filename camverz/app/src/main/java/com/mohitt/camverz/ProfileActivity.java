@@ -600,10 +600,10 @@ public class ProfileActivity extends BaseActivity {
         if (!currentUserId.equals(visitedUserId)) {
             if ("friends".equals(friendshipStatus)) {
                 followButton.setText("Friends");
-                followButton.setBackgroundResource(R.drawable.bg_btn_secondary_glass);
+                followButton.setBackgroundResource(R.drawable.bg_following_button);
             } else if ("sent".equals(friendshipStatus)) {
                 followButton.setText("Requested");
-                followButton.setBackgroundResource(R.drawable.bg_btn_secondary_glass);
+                followButton.setBackgroundResource(R.drawable.bg_following_button);
             } else if ("received".equals(friendshipStatus)) {
                 followButton.setText("Accept Request");
                 followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
