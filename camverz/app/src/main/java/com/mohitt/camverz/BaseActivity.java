@@ -27,7 +27,8 @@ public class BaseActivity extends AppCompatActivity {
         // Ensure status bar icons are white on dark ambient backgrounds
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
 
-        if (ENABLE_SCREENSHOT_PROTECTION) {
+        boolean isSamsung = android.os.Build.MANUFACTURER.equalsIgnoreCase("samsung");
+        if (ENABLE_SCREENSHOT_PROTECTION && !isSamsung) {
             getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE
@@ -41,7 +42,7 @@ public class BaseActivity extends AppCompatActivity {
             }
             Log.d(TAG, "✅ Screenshot/Recording Protection: ON");
         } else {
-            Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE)");
+            Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
     }
 

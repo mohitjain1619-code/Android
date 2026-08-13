@@ -260,7 +260,10 @@ public class CallActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call);
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        boolean isSamsung = android.os.Build.MANUFACTURER.equalsIgnoreCase("samsung");
+        if (!isSamsung) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        }
 
         // Preload AdMob Interstitial Ad
         com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
