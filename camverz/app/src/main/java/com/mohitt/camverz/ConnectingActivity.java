@@ -284,6 +284,8 @@ public class ConnectingActivity extends BaseActivity {
     // --- Meta Audience Network Direct Native Ad Integration ---
 
     private void loadMetaNativeAd() {
+        // Enable test ads for development
+        com.facebook.ads.AdSettings.setTestMode(true);
         metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167733142869");
         com.facebook.ads.NativeAdListener nativeAdListener = new com.facebook.ads.NativeAdListener() {
             @Override
