@@ -65,10 +65,10 @@
     <!-- <string name="applovin_banner_ad_unit_id">YOUR_BANNER_AD_UNIT_ID</string> -->
     <!-- <string name="applovin_interstitial_ad_unit_id">YOUR_INTERSTITIAL_AD_UNIT_ID</string> -->
 
-    <!-- AdMob Ad Unit IDs (Replace YOUR_NEW_AD_UNIT_ID_HERE with the 10-digit IDs generated in your new AdMob account) -->
+    <!-- AdMob Ad Unit IDs -->
     <string name="admob_banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="admob_interstitial_ad_unit_id">ca-app-pub-7755876895171712/YOUR_NEW_INTERSTITIAL_AD_UNIT_ID_HERE</string>
-    <string name="admob_native_ad_unit_id">ca-app-pub-7755876895171712/YOUR_NEW_NATIVE_AD_UNIT_ID_HERE</string>
-    <string name="admob_rewarded_interstitial_ad_unit_id">ca-app-pub-7755876895171712/YOUR_NEW_REWARDED_AD_UNIT_ID_HERE</string>
+    <string name="admob_interstitial_ad_unit_id">ca-app-pub-7279598390080758/9159498237</string>
+    <string name="admob_native_ad_unit_id">ca-app-pub-7279598390080758/5722353086</string>
+    <string name="admob_rewarded_interstitial_ad_unit_id">ca-app-pub-7279598390080758/1661367303</string>
     <string name="facebook_app_id">1679167109809598</string>
 </resources>
