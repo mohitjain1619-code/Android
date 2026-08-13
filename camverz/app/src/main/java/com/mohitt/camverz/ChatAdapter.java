@@ -30,17 +30,15 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
     private final Context context;
     private final List<Message> messages;
     private String receiverAvatar;
+    private String receiverPhotoUrl;
     private TokenManager tokenManager;
 
-    public ChatAdapter(Context context, List<Message> messages) {
+    public ChatAdapter(Context context, List<Message> messages, String receiverAvatar, String receiverPhotoUrl) {
         this.context = context;
         this.messages = messages;
-        this.receiverAvatar = "";
+        this.receiverAvatar = receiverAvatar;
+        this.receiverPhotoUrl = receiverPhotoUrl;
         this.tokenManager = TokenManager.getInstance(context);
-    }
-    
-    public void setReceiverAvatar(String avatar) {
-        this.receiverAvatar = avatar;
     }
 
     @NonNull
@@ -72,16 +70,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         } else {
             // For received messages, show avatar
             if (holder.profileImage != null) {
-                if (receiverAvatar != null && !receiverAvatar.isEmpty()) {
-                     int avatarResId = context.getResources().getIdentifier(receiverAvatar, "drawable", context.getPackageName());
-                    if (avatarResId != 0) {
-                        Glide.with(context).load(avatarResId).placeholder(R.drawable.av1).into(holder.profileImage);
-                    } else {
-                        Glide.with(context).load(R.drawable.av1).into(holder.profileImage);
-                    }
-                } else {
-                     Glide.with(context).load(R.drawable.av1).into(holder.profileImage);
-                }
+                AvatarHelper.loadAvatar(context, receiverPhotoUrl, receiverAvatar, null, holder.profileImage);
                 
                 holder.profileImage.setOnClickListener(v -> {
                     Intent intent = new Intent(context, ProfileActivity.class);

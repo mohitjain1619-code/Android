@@ -266,6 +266,7 @@ public class ProfileActivity extends BaseActivity {
                 if (visitedUser != null) {
                     intent.putExtra("userName", visitedUser.getName());
                     intent.putExtra("userAvatar", visitedUser.getAvatar());
+                    intent.putExtra("userPhotoUrl", visitedUser.getPhotoUrl());
                 }
                 startActivity(intent);
             });
@@ -739,6 +740,29 @@ public class ProfileActivity extends BaseActivity {
                         if ("avatar".equals(field)) {
                             int avatarResId = getResources().getIdentifier(value, "drawable", getPackageName());
                             Glide.with(ProfileActivity.this).load(avatarResId).into(profileImageView);
+                            
+                            // Save updated avatar in TokenManager
+                            String currentGender = visitedUser != null ? visitedUser.getGender() : tokenManager.getUserGender();
+                            tokenManager.saveUser(
+                                tokenManager.getUserId(),
+                                tokenManager.getUserName(),
+                                tokenManager.getUserEmail(),
+                                currentGender,
+                                value,
+                                "male".equalsIgnoreCase(currentGender)
+                            );
+                        } else if ("name".equals(field)) {
+                            // Save updated name in TokenManager
+                            String currentGender = visitedUser != null ? visitedUser.getGender() : tokenManager.getUserGender();
+                            String currentAvatar = visitedUser != null ? visitedUser.getAvatar() : tokenManager.getUserAvatar();
+                            tokenManager.saveUser(
+                                tokenManager.getUserId(),
+                                value,
+                                tokenManager.getUserEmail(),
+                                currentGender,
+                                currentAvatar,
+                                "male".equalsIgnoreCase(currentGender)
+                            );
                         }
                         setUpdatingState(false);
                         return;

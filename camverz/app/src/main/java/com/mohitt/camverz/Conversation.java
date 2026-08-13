@@ -67,4 +67,12 @@ public class Conversation {
     public void setUnread(boolean unread) {
         isUnread = unread;
     }
+
+    private String photoUrl;
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
+
+    private String chatId;
+    public String getChatId() { return chatId; }
+    public void setChatId(String chatId) { this.chatId = chatId; }
 }

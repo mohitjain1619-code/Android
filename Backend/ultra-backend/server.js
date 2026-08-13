@@ -123,6 +123,10 @@ app.get("/api/webrtc/ice", (req, res) => {
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
+// Make io accessible from Express routes (for emitting socket events from REST endpoints)
+app.set("io", io);
+app.set("redisModule", redisModule);
+
 // Helper: Log WebRTC call room logs to Postgres database
 async function logCallIfNeeded(room, state) {
   try {
@@ -337,8 +341,23 @@ io.on("connection", (socket) => {
     console.log("📞 Private call from", callerId, "to", targetId);
     await redisModule.setUserOnline(callerId, socket.id);
 
+    // Check if callee is already in a call
+    const calleeCallSession = await redisModule.redis.get(`camverz:call_session:${targetId}`);
+    if (calleeCallSession) {
+      console.log("📵 Target user", targetId, "is busy (already in a call)");
+      socket.emit("call-failed", { reason: "User is busy on another call" });
+      return;
+    }
+
     const targetSocket = await redisModule.getUserSocket(targetId);
     if (targetSocket) {
+      // Track active ringing session in Redis with 60s TTL (auto-cleanup)
+      const sessionData = JSON.stringify({ callerId, targetId, room, isVideo, status: "ringing" });
+      await redisModule.redis.set(`camverz:call_session:${callerId}`, sessionData, "EX", 60);
+      await redisModule.redis.set(`camverz:call_session:${targetId}`, sessionData, "EX", 60);
+      // Track which socket is the caller for disconnect cleanup
+      await redisModule.redis.set(`camverz:call_socket:${socket.id}`, JSON.stringify({ callerId, targetId, room }), "EX", 60);
+
       io.to(targetSocket).emit("incoming-private-call", {
         callerId,
         callerName: callerName || "Unknown",
@@ -354,16 +373,66 @@ io.on("connection", (socket) => {
   });
 
   socket.on("accept-private-call", async ({ callerId, room }) => {
+    // Verify the call session is still active (not cancelled)
+    const sessionRaw = await redisModule.redis.get(`camverz:call_session:${callerId}`);
+    if (!sessionRaw) {
+      console.log("⚠️ Stale accept — call session no longer exists for caller", callerId);
+      socket.emit("call-failed", { reason: "Call was cancelled" });
+      return;
+    }
+    // Update session status to 'connected'
+    try {
+      const session = JSON.parse(sessionRaw);
+      session.status = "connected";
+      const connectedData = JSON.stringify(session);
+      await redisModule.redis.set(`camverz:call_session:${callerId}`, connectedData, "EX", 3600);
+      await redisModule.redis.set(`camverz:call_session:${session.targetId}`, connectedData, "EX", 3600);
+    } catch (e) { /* ignore parse errors */ }
+
     const callerSocket = await redisModule.getUserSocket(callerId);
     if (callerSocket) io.to(callerSocket).emit("private-call-accepted", { room });
   });
 
   socket.on("reject-private-call", async ({ callerId }) => {
+    // Clean up call session
+    const sessionRaw = await redisModule.redis.get(`camverz:call_session:${callerId}`);
+    if (sessionRaw) {
+      try {
+        const session = JSON.parse(sessionRaw);
+        await redisModule.redis.del(`camverz:call_session:${session.callerId}`);
+        await redisModule.redis.del(`camverz:call_session:${session.targetId}`);
+      } catch (e) { /* ignore */ }
+    }
     const callerSocket = await redisModule.getUserSocket(callerId);
     if (callerSocket) io.to(callerSocket).emit("private-call-rejected");
   });
 
+  // Cancel a call before it's answered (caller hangs up during ringing)
+  socket.on("cancel-private-call", async ({ targetId }) => {
+    console.log("🚫 Call cancelled by caller, notifying", targetId);
+    // Clean up call session
+    const sessionRaw = await redisModule.redis.get(`camverz:call_session:${targetId}`);
+    if (sessionRaw) {
+      try {
+        const session = JSON.parse(sessionRaw);
+        await redisModule.redis.del(`camverz:call_session:${session.callerId}`);
+        await redisModule.redis.del(`camverz:call_session:${session.targetId}`);
+      } catch (e) { /* ignore */ }
+    }
+    const targetSocket = await redisModule.getUserSocket(targetId);
+    if (targetSocket) io.to(targetSocket).emit("private-call-cancelled");
+  });
+
   socket.on("end-private-call", async ({ targetId }) => {
+    // Clean up call session
+    const sessionRaw = await redisModule.redis.get(`camverz:call_session:${targetId}`);
+    if (sessionRaw) {
+      try {
+        const session = JSON.parse(sessionRaw);
+        await redisModule.redis.del(`camverz:call_session:${session.callerId}`);
+        await redisModule.redis.del(`camverz:call_session:${session.targetId}`);
+      } catch (e) { /* ignore */ }
+    }
     const targetSocket = await redisModule.getUserSocket(targetId);
     if (targetSocket) io.to(targetSocket).emit("private-call-ended");
   });
@@ -398,6 +467,38 @@ io.on("connection", (socket) => {
         await redisModule.removeFromQueue(uid);
         break;
       }
+    }
+
+    // Auto-cancel any pending ringing call session on disconnect
+    try {
+      const callSocketRaw = await redisModule.redis.get(`camverz:call_socket:${socket.id}`);
+      if (callSocketRaw) {
+        const { callerId, targetId, room } = JSON.parse(callSocketRaw);
+        const sessionRaw = await redisModule.redis.get(`camverz:call_session:${callerId}`);
+        if (sessionRaw) {
+          const session = JSON.parse(sessionRaw);
+          if (session.status === "ringing") {
+            // Caller disconnected during ringing — cancel the call for callee
+            const targetSocket = await redisModule.getUserSocket(targetId);
+            if (targetSocket) {
+              io.to(targetSocket).emit("private-call-cancelled");
+              console.log("🚫 Auto-cancelled ringing call from", callerId, "to", targetId, "due to disconnect");
+            }
+            await redisModule.redis.del(`camverz:call_session:${callerId}`);
+            await redisModule.redis.del(`camverz:call_session:${targetId}`);
+          }
+        }
+        await redisModule.redis.del(`camverz:call_socket:${socket.id}`);
+      }
+    } catch (err) {
+      console.error("Error during call session disconnect cleanup:", err);
+    }
+
+    // Clean up call session for this user
+    if (disconnectedUid) {
+      try {
+        await redisModule.redis.del(`camverz:call_session:${disconnectedUid}`);
+      } catch (e) { /* ignore */ }
     }
 
     // Clean up rooms

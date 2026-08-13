@@ -58,20 +58,29 @@ router.get("/:id/messages", async (req, res) => {
   try {
     const { limit = 50, before } = req.query;
 
-    // Verify user is part of chat
-    const chat = await queryOne(
+    // Verify user is part of chat. The parameter can be either the chatId or the other user's ID!
+    let chat = await queryOne(
       "SELECT * FROM chats WHERE id = $1 AND (user1_id = $2 OR user2_id = $2)",
       [req.params.id, req.user.userId]
     );
+
+    if (!chat) {
+      chat = await queryOne(
+        "SELECT * FROM chats WHERE ((user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1))",
+        [req.user.userId, req.params.id]
+      );
+    }
+
     if (!chat) return res.status(404).json({ error: "Chat not found" });
 
+    const resolvedChatId = chat.id;
     let sql = `
       SELECT m.*, u.name as sender_name, u.avatar as sender_avatar
       FROM messages m
       JOIN users u ON u.id = m.sender_id
       WHERE m.chat_id = $1
     `;
-    const params = [req.params.id];
+    const params = [resolvedChatId];
 
     if (before) {
       sql += ` AND m.created_at < $2`;
@@ -155,6 +164,37 @@ router.post("/:targetUserId/messages", async (req, res) => {
 
     // Update last_message_at
     await query("UPDATE chats SET last_message_at = NOW() WHERE id = $1", [chat.id]);
+
+    // Emit real-time socket notification to the recipient
+    try {
+      const io = req.app.get("io");
+      const redisModule = req.app.get("redisModule");
+      if (io && redisModule) {
+        const targetSocket = await redisModule.getUserSocket(targetId);
+        if (targetSocket) {
+          io.to(targetSocket).emit("new_message", {
+            senderId: req.user.userId,
+            chatId: chat.id,
+            text: text.trim(),
+            messageId: message.id,
+            createdAt: message.created_at,
+          });
+        }
+        // Also emit to sender for multi-device sync
+        const senderSocket = await redisModule.getUserSocket(req.user.userId);
+        if (senderSocket) {
+          io.to(senderSocket).emit("new_message", {
+            senderId: req.user.userId,
+            chatId: chat.id,
+            text: text.trim(),
+            messageId: message.id,
+            createdAt: message.created_at,
+          });
+        }
+      }
+    } catch (socketErr) {
+      console.error("Socket emit error (non-fatal):", socketErr);
+    }
 
     return res.json({
       ok: true,

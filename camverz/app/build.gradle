@@ -23,8 +23,8 @@ android {
         applicationId = "com.mohitt.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 35
-        versionName = "1.1.4"
+        versionCode = 37
+        versionName = "1.1.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -153,8 +153,13 @@ dependencies {
     // Google Mobile Ads (AdMob) SDK & Mediation Adapters (Meta, InMobi)
     implementation 'com.google.android.gms:play-services-ads:23.2.0'
     implementation 'com.google.ads.mediation:facebook:+'
-    implementation 'com.google.ads.mediation:inmobi:+'
+    implementation 'com.google.ads.mediation:inmobi:10.7.5.0'
     implementation 'com.facebook.android:audience-network-sdk:6.18.0'
+
+    // Required InMobi SDK dependencies
+    implementation 'com.inmobi.monetization:inmobi-ads-kotlin:10.7.5'
+    implementation 'androidx.media3:media3-exoplayer:1.4.1'
+    implementation 'androidx.browser:browser:1.8.0'
 
     // Google Play Install Referrer (for direct Play Store affiliate tracking)
     implementation 'com.android.installreferrer:installreferrer:2.2'

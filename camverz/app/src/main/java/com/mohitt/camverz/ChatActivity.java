@@ -34,6 +34,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import io.socket.client.Socket;
@@ -49,6 +52,7 @@ public class ChatActivity extends BaseActivity {
     private List<Message> messages;
     private EditText messageEditText;
     private Button sendButton;
+    private String chatId;
     private String currentUserId;
     private String receiverId;
     private String receiverName;
@@ -71,9 +75,11 @@ public class ChatActivity extends BaseActivity {
         socket = SocketManager.getInstance();
         currentUserId = tokenManager.getUserId();
         
+        chatId = getIntent().getStringExtra("chatId");
         receiverId = getIntent().getStringExtra("userId");
         receiverName = getIntent().getStringExtra("userName");
         receiverAvatar = getIntent().getStringExtra("userAvatar");
+        String receiverPhotoUrl = getIntent().getStringExtra("userPhotoUrl");
 
         RelativeLayout toolbar = findViewById(R.id.toolbar);
         findViewById(R.id.back_button).setOnClickListener(v -> finish());
@@ -88,16 +94,7 @@ public class ChatActivity extends BaseActivity {
         ImageView voiceCallBtn = findViewById(R.id.voice_call_button);
 
         toolbarUsername.setText(receiverName);
-        if (receiverAvatar != null && !receiverAvatar.isEmpty()) {
-            int avatarResId = getResources().getIdentifier(receiverAvatar, "drawable", getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(toolbarAvatar);
-            } else {
-                Glide.with(this).load(R.drawable.ic_user_placeholder).into(toolbarAvatar);
-            }
-        } else {
-            toolbarAvatar.setImageResource(R.drawable.ic_user_placeholder);
-        }
+        AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
 
         View.OnClickListener profileListener = v -> {
             Intent intent = new Intent(ChatActivity.this, ProfileActivity.class);
@@ -137,8 +134,7 @@ public class ChatActivity extends BaseActivity {
         });
 
         messages = new ArrayList<>();
-        chatAdapter = new ChatAdapter(this, messages);
-        chatAdapter.setReceiverAvatar(receiverAvatar);
+        chatAdapter = new ChatAdapter(this, messages, receiverAvatar, receiverPhotoUrl);
         recyclerView.setAdapter(chatAdapter);
 
         setupSocket();
@@ -148,7 +144,16 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        loadMessages();
+        if (tokenManager.isLoggedIn()) {
+            try {
+                JSONObject obj = new JSONObject();
+                obj.put("uid", tokenManager.getUserId());
+                socket.emit("register-user", obj);
+            } catch (Exception e) {
+                Log.e(TAG, "Error auto-registering user in ChatActivity.onResume", e);
+            }
+        }
+        resolveChatIdAndLoadMessages();
         markAsRead();
     }
 
@@ -160,6 +165,10 @@ public class ChatActivity extends BaseActivity {
                 
                 // If message is from the user we are chatting with, or from ourselves (sync)
                 if (senderId.equals(receiverId) || senderId.equals(currentUserId)) {
+                    String msgChatId = data.has("chatId") ? data.getString("chatId") : null;
+                    if (msgChatId != null && !msgChatId.isEmpty()) {
+                        chatId = msgChatId;
+                    }
                     runOnUiThread(() -> {
                         loadMessages(); // reload messages to get the latest
                         markAsRead();
@@ -244,6 +253,9 @@ public class ChatActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
+                        if (data.has("chatId")) {
+                            chatId = data.get("chatId").getAsString();
+                        }
                         loadMessages(); // reload to show sent message
                     } else {
                         Toast.makeText(ChatActivity.this, "Failed to send", Toast.LENGTH_SHORT).show();
@@ -257,8 +269,49 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
+    private void resolveChatIdAndLoadMessages() {
+        if (chatId != null && !chatId.isEmpty()) {
+            loadMessages();
+            return;
+        }
+        if (!tokenManager.isLoggedIn() || receiverId == null) {
+            loadMessages();
+            return;
+        }
+        api.getChats().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("chats")) {
+                        JsonArray chatsArray = data.getAsJsonArray("chats");
+                        for (int i = 0; i < chatsArray.size(); i++) {
+                            JsonObject chatObj = chatsArray.get(i).getAsJsonObject();
+                            if (chatObj.has("otherUser") && !chatObj.get("otherUser").isJsonNull()) {
+                                JsonObject otherUserObj = chatObj.getAsJsonObject("otherUser");
+                                String otherUserId = otherUserObj.has("id") ? otherUserObj.get("id").getAsString() : "";
+                                if (otherUserId.equals(receiverId)) {
+                                    chatId = chatObj.has("id") ? chatObj.get("id").getAsString() : "";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                loadMessages();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Log.e(TAG, "Error resolving chatId in resolveChatIdAndLoadMessages", t);
+                loadMessages();
+            }
+        });
+    }
+
     private void loadMessages() {
-        api.getMessages(receiverId, 50, null).enqueue(new Callback<JsonObject>() {
+        String targetId = (chatId != null && !chatId.isEmpty()) ? chatId : receiverId;
+        api.getMessages(targetId, 50, null).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -267,16 +320,24 @@ public class ChatActivity extends BaseActivity {
                         messages.clear();
                         if (data.has("messages")) {
                             JsonArray msgArray = data.getAsJsonArray("messages");
-                            for (int i = msgArray.size() - 1; i >= 0; i--) { // Reverse order because we fetch newest first
+                            // Backend returns messages in chronological order (oldest first)
+                            for (int i = 0; i < msgArray.size(); i++) {
                                 JsonElement element = msgArray.get(i);
                                 JsonObject msgObj = element.getAsJsonObject();
                                 Message m = new Message();
                                 m.setMessageId(msgObj.has("id") ? msgObj.get("id").getAsString() : "");
                                 m.setSenderId(msgObj.has("senderId") ? msgObj.get("senderId").getAsString() : "");
-                                m.setReceiverId(msgObj.has("receiverId") ? msgObj.get("receiverId").getAsString() : "");
+                                // Derive receiverId: if sender is me, receiver is the other user; else receiver is me
+                                String senderId = msgObj.has("senderId") ? msgObj.get("senderId").getAsString() : "";
+                                if (senderId.equals(currentUserId)) {
+                                    m.setReceiverId(receiverId);
+                                } else {
+                                    m.setReceiverId(currentUserId);
+                                }
                                 m.setMessage(msgObj.has("text") ? msgObj.get("text").getAsString() : "");
-                                m.setTimestamp(msgObj.has("timestamp") ? msgObj.get("timestamp").getAsLong() : 0);
-                                m.setSeen(msgObj.has("seen") && msgObj.get("seen").getAsBoolean());
+                                // Parse createdAt ISO string to epoch millis
+                                m.setTimestamp(parseIsoTimestamp(msgObj));
+                                m.setSeen(msgObj.has("read") && msgObj.get("read").getAsBoolean());
                                 messages.add(m);
                             }
                         }
@@ -295,9 +356,41 @@ public class ChatActivity extends BaseActivity {
         });
     }
 
+    /**
+     * Parse the "createdAt" ISO 8601 timestamp from a message JSON object to epoch millis.
+     * Falls back to current time if parsing fails.
+     */
+    private long parseIsoTimestamp(JsonObject msgObj) {
+        try {
+            if (msgObj.has("createdAt") && !msgObj.get("createdAt").isJsonNull()) {
+                String isoStr = msgObj.get("createdAt").getAsString();
+                // Handle ISO 8601 format: "2026-08-12T14:30:00.000Z"
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                java.util.Date date = sdf.parse(isoStr);
+                if (date != null) return date.getTime();
+            }
+        } catch (Exception e) {
+            // Try alternate format without millis
+            try {
+                if (msgObj.has("createdAt") && !msgObj.get("createdAt").isJsonNull()) {
+                    String isoStr = msgObj.get("createdAt").getAsString();
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+                    java.util.Date date = sdf.parse(isoStr);
+                    if (date != null) return date.getTime();
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "Error parsing timestamp", ex);
+            }
+        }
+        return System.currentTimeMillis();
+    }
+
     private void markAsRead() {
-        if (currentUserId != null && receiverId != null) {
-            api.markChatRead(receiverId).enqueue(new Callback<JsonObject>() {
+        String targetId = (chatId != null && !chatId.isEmpty()) ? chatId : receiverId;
+        if (currentUserId != null && targetId != null) {
+            api.markChatRead(targetId).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
                 @Override

@@ -38,20 +38,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
         User user = users.get(position);
         holder.username.setText(user.getName());
 
-        if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(user.getAvatar(), "drawable", context.getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(context).load(avatarResId).placeholder(R.drawable.av1).into(holder.profileImage);
-            } else {
-                Glide.with(context).load(R.drawable.av1).into(holder.profileImage);
-            }
-        } else {
-            Glide.with(context).load(R.drawable.av1).into(holder.profileImage);
-        }
+        AvatarHelper.loadAvatar(context, user.getPhotoUrl(), user.getAvatar(), user.getName(), holder.profileImage);
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("userId", user.getUid());
+            intent.putExtra("userName", user.getName());
+            intent.putExtra("userAvatar", user.getAvatar());
+            intent.putExtra("userPhotoUrl", user.getPhotoUrl());
             context.startActivity(intent);
         });
     }

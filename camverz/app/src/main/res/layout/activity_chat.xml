@@ -11,11 +11,12 @@
     <RelativeLayout
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="wrap_content"
         android:background="@drawable/bg_glass_card_premium"
         android:elevation="4dp"
         android:gravity="center_vertical"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="12dp">
 
         <ImageView
             android:id="@+id/back_button"
@@ -98,11 +99,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/bg_glass_card_premium"
-        android:elevation="6dp"
+        android:background="@android:color/transparent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:clipToPadding="false">
 
         <EditText
             android:id="@+id/message_edit_text"

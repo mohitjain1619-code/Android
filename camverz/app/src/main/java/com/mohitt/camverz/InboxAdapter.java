@@ -55,17 +55,7 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.InboxViewHol
         holder.lastMessageTextView.setText(conversation.getLastMessage());
         holder.timestampTextView.setText(getFormattedTimestamp(conversation.getLastActivity()));
 
-        String avatarName = conversation.getProfileImageUrl();
-        if (avatarName != null && !avatarName.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatarName, "drawable", context.getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(context).load(avatarResId).placeholder(R.drawable.av1).into(holder.profileImageView);
-            } else {
-                Glide.with(context).load(R.drawable.av1).into(holder.profileImageView);
-            }
-        } else {
-            Glide.with(context).load(R.drawable.av1).into(holder.profileImageView);
-        }
+        AvatarHelper.loadAvatar(context, conversation.getPhotoUrl(), conversation.getProfileImageUrl(), conversation.getName(), holder.profileImageView);
 
         if (conversation.isUnread()) {
             holder.lastMessageTextView.setTypeface(null, Typeface.BOLD);
@@ -79,9 +69,11 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.InboxViewHol
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ChatActivity.class);
+            intent.putExtra("chatId", conversation.getChatId());
             intent.putExtra("userId", conversation.getUserId());
             intent.putExtra("userName", conversation.getName());
             intent.putExtra("userAvatar", conversation.getProfileImageUrl());
+            intent.putExtra("userPhotoUrl", conversation.getPhotoUrl());
             context.startActivity(intent);
         });
 

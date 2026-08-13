@@ -83,7 +83,7 @@ public class CallActivity extends AppCompatActivity {
     private static final int PERMISSION_REQ = 101;
 
     private SurfaceViewRenderer localView, remoteView;
-    private ImageButton btnMute, btnSwitchCamera, btnEnd, btnToggleVideo;
+    private ImageButton btnMute, btnSwitchCamera, btnEnd, btnToggleVideo, btnSpeaker;
     private RelativeLayout controlsContainer, callContainer;
     private FrameLayout localViewContainer;
     private LinearLayout bottomControls, topUserInfoBar;
@@ -98,7 +98,7 @@ public class CallActivity extends AppCompatActivity {
     private CircleImageView remoteAvatarLarge, localAvatarSmall;
     private TextView remoteAvatarNameText;
 
-    private boolean isMuted = false, isVideoOff = false;
+    private boolean isMuted = false, isVideoOff = false, isSpeakerOn = false;
     private boolean isCameraSwitching = false;
     private boolean areControlsVisible = true;
     private boolean turnFallbackAttempted = false; // Track if TURN fallback was triggered
@@ -106,6 +106,65 @@ public class CallActivity extends AppCompatActivity {
     private boolean isPrivateCall = false;
     private boolean isVideoCall = true;
     private boolean connectionAnimationActive = true;
+    private boolean isCallAccepted = false;
+
+    private final List<IceCandidate> pendingIceCandidates = java.util.Collections.synchronizedList(new ArrayList<>());
+    private boolean isRemoteDescriptionSet = false;
+
+    private Object audioFocusRequest = null; // Use Object to support API < 26 and API >= 26
+    private final android.media.AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = focusChange -> {
+        Log.d(TAG, "OnAudioFocusChangeListener: " + focusChange);
+    };
+
+    private void requestAudioFocus() {
+        if (audioManager == null) return;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                android.media.AudioAttributes playbackAttributes = new android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build();
+                android.media.AudioFocusRequest focusRequest = new android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                        .setAudioAttributes(playbackAttributes)
+                        .setAcceptsDelayedFocusGain(true)
+                        .setOnAudioFocusChangeListener(audioFocusChangeListener)
+                        .build();
+                audioFocusRequest = focusRequest;
+                audioManager.requestAudioFocus(focusRequest);
+            } else {
+                audioManager.requestAudioFocus(audioFocusChangeListener, android.media.AudioManager.STREAM_VOICE_CALL, android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error requesting audio focus: " + e.getMessage());
+        }
+    }
+
+    private void abandonAudioFocus() {
+        if (audioManager == null) return;
+        try {
+            audioManager.setMode(android.media.AudioManager.MODE_NORMAL);
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && audioFocusRequest instanceof android.media.AudioFocusRequest) {
+                audioManager.abandonAudioFocusRequest((android.media.AudioFocusRequest) audioFocusRequest);
+                audioFocusRequest = null;
+            } else {
+                audioManager.abandonAudioFocus(audioFocusChangeListener);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error abandoning audio focus: " + e.getMessage());
+        }
+    }
+
+    private void drainRemoteIceCandidates() {
+        synchronized (pendingIceCandidates) {
+            Log.d(TAG, "Draining " + pendingIceCandidates.size() + " remote ICE candidates");
+            for (IceCandidate candidate : pendingIceCandidates) {
+                if (peerConnection != null) {
+                    peerConnection.addIceCandidate(candidate);
+                }
+            }
+            pendingIceCandidates.clear();
+        }
+    }
 
     private EglBase eglBase;
     private VideoCapturer videoCapturer;
@@ -119,6 +178,7 @@ public class CallActivity extends AppCompatActivity {
     private Emitter.Listener privateCallRejectedListener;
     private Emitter.Listener privateCallEndedListener;
     private Emitter.Listener callFailedListener;
+    private Emitter.Listener privateCallCancelledListener;
 
     private VideoTrack localVideoTrack;
     private AudioTrack localAudioTrack;
@@ -140,7 +200,10 @@ public class CallActivity extends AppCompatActivity {
     private final android.content.BroadcastReceiver headsetReceiver = new android.content.BroadcastReceiver() {
         @Override
         public void onReceive(android.content.Context context, android.content.Intent intent) {
-            if (android.content.Intent.ACTION_HEADSET_PLUG.equals(intent.getAction())) {
+            String action = intent.getAction();
+            if (android.content.Intent.ACTION_HEADSET_PLUG.equals(action) ||
+                android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED.equals(action) ||
+                android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 updateAudioRouting();
             }
         }
@@ -163,11 +226,21 @@ public class CallActivity extends AppCompatActivity {
         }
     };
 
-    private static class SimpleSdp implements SdpObserver {
+    private class SimpleSdp implements SdpObserver {
         private final String eventName;
-        public SimpleSdp(String eventName) { this.eventName = eventName; }
+        private final boolean isRemote;
+        public SimpleSdp(String eventName, boolean isRemote) {
+            this.eventName = eventName;
+            this.isRemote = isRemote;
+        }
         @Override public void onCreateSuccess(SessionDescription s) { Log.d(TAG, eventName + " - onCreateSuccess"); }
-        @Override public void onSetSuccess() { Log.d(TAG, eventName + " - onSetSuccess"); }
+        @Override public void onSetSuccess() {
+            Log.d(TAG, eventName + " - onSetSuccess");
+            if (isRemote) {
+                isRemoteDescriptionSet = true;
+                drainRemoteIceCandidates();
+            }
+        }
         @Override public void onCreateFailure(String s) { Log.e(TAG, eventName + " - onCreateFailure: " + s); }
         @Override public void onSetFailure(String s) { Log.e(TAG, eventName + " - onSetFailure: " + s); }
     }
@@ -239,6 +312,7 @@ public class CallActivity extends AppCompatActivity {
         isCaller = getIntent().getBooleanExtra("isCaller", false);
         isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
         isVideoCall = getIntent().getBooleanExtra("isVideoCall", true);
+        isCallAccepted = !isCaller;
 
         myUid = tokenManager.getUserId();
         socket = SocketManager.getInstance();
@@ -289,6 +363,7 @@ public class CallActivity extends AppCompatActivity {
         btnSwitchCamera = findViewById(R.id.btnSwitchCamera);
         btnEnd = findViewById(R.id.btnEnd);
         btnToggleVideo = findViewById(R.id.btnToggleVideo);
+        btnSpeaker = findViewById(R.id.btnSpeaker);
         controlsContainer = findViewById(R.id.controls_container);
         callContainer = findViewById(R.id.call_container);
         localViewContainer = findViewById(R.id.local_view_container);
@@ -312,6 +387,7 @@ public class CallActivity extends AppCompatActivity {
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnEnd.setOnClickListener(v -> disconnect());
         btnToggleVideo.setOnClickListener(v -> toggleVideo());
+        if (btnSpeaker != null) btnSpeaker.setOnClickListener(v -> toggleSpeaker());
         followButton.setOnClickListener(v -> handleFollowClick());
 
         String localAvatar = tokenManager.getUserAvatar();
@@ -322,19 +398,63 @@ public class CallActivity extends AppCompatActivity {
             }
         }
         
-        remoteView.setOnClickListener(v -> toggleControlsVisibility());
+        if (!isVideoCall) {
+            localViewContainer.setVisibility(View.GONE);
+            btnToggleVideo.setVisibility(View.GONE);
+            btnSwitchCamera.setVisibility(View.GONE);
+            if (btnSpeaker != null) btnSpeaker.setVisibility(View.VISIBLE);
+            
+            // For audio calls, force remote overlay (large avatar blur bg) to stay visible
+            remoteAvatarOverlay.setVisibility(View.VISIBLE);
+            TextView textCameraOff = findViewById(R.id.remote_avatar_overlay).findViewById(R.id.remote_avatar_overlay).findViewById(R.id.remote_avatar_name_text);
+            if (textCameraOff != null) {
+                // Remove the "Camera is off" label or replace it with "Voice Call"
+                try {
+                    View textMuted = ((LinearLayout) textCameraOff.getParent()).getChildAt(2);
+                    if (textMuted instanceof TextView) {
+                        ((TextView) textMuted).setText("Voice Call");
+                    }
+                } catch (Exception e) {}
+            }
+        }
+        
+        remoteView.setOnClickListener(v -> {
+            if (isVideoCall) {
+                toggleControlsVisibility();
+            }
+        });
         setupDraggableLocalView();
         setupButtonAnimations();
-        setupAutoHideControls();
+        if (isVideoCall) {
+            setupAutoHideControls();
+        } else {
+            // Audio call controls remain visible always
+            areControlsVisible = true;
+            topUserInfoBar.setVisibility(View.VISIBLE);
+            bottomControls.setVisibility(View.VISIBLE);
+        }
         startConnectionAnimation();
         loadPeerUserInfo();
     }
 
     private void checkPermissions() {
-        String[] perm = {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO};
-        if (ContextCompat.checkSelfPermission(this, perm[0]) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, perm[1]) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, perm, PERMISSION_REQ);
+        List<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.CAMERA);
+        permissions.add(Manifest.permission.RECORD_AUDIO);
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+        }
+        
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        for (String p : permissions) {
+            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsNeeded.add(p);
+            }
+        }
+        
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[0]), PERMISSION_REQ);
         } else {
             startCall();
         }
@@ -344,7 +464,18 @@ public class CallActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQ && grantResults.length > 0) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            boolean allGranted = true;
+            for (int i = 0; i < permissions.length; i++) {
+                String permission = permissions[i];
+                int result = grantResults[i];
+                // BLUETOOTH_CONNECT is optional; we only fail if CAMERA or RECORD_AUDIO are denied
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    if (permission.equals(Manifest.permission.CAMERA) || permission.equals(Manifest.permission.RECORD_AUDIO)) {
+                        allGranted = false;
+                    }
+                }
+            }
+            if (allGranted) {
                 startCall();
             } else {
                 Toast.makeText(this, "Camera & Audio permissions are required.", Toast.LENGTH_LONG).show();
@@ -380,10 +511,14 @@ public class CallActivity extends AppCompatActivity {
             audioManager = (android.media.AudioManager) getSystemService(android.content.Context.AUDIO_SERVICE);
             if (audioManager != null) {
                 audioManager.setMode(android.media.AudioManager.MODE_IN_COMMUNICATION);
+                requestAudioFocus();
                 updateAudioRouting();
                 
-                // Register dynamic listener for earphones plug/unplug events
-                android.content.IntentFilter filter = new android.content.IntentFilter(android.content.Intent.ACTION_HEADSET_PLUG);
+                // Register dynamic listener for earphones plug/unplug events + bluetooth device connect/disconnect
+                android.content.IntentFilter filter = new android.content.IntentFilter();
+                filter.addAction(android.content.Intent.ACTION_HEADSET_PLUG);
+                filter.addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED);
+                filter.addAction(android.bluetooth.BluetoothDevice.ACTION_ACL_DISCONNECTED);
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
                     registerReceiver(headsetReceiver, filter, android.content.Context.RECEIVER_EXPORTED);
                 } else {
@@ -394,7 +529,17 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error setting up AudioManager: " + e.getMessage());
         }
 
-        timeoutHandler.postDelayed(timeoutRunnable, 15000);
+        if (isCaller) {
+            if (connectionStatus != null) {
+                connectionStatus.setText("Calling...");
+            }
+            timeoutHandler.postDelayed(timeoutRunnable, 45000); // 45s ringing timeout for caller
+        } else {
+            if (connectionStatus != null) {
+                connectionStatus.setText("Connecting...");
+            }
+            timeoutHandler.postDelayed(timeoutRunnable, 15000); // 15s connection timeout for callee
+        }
     }
 
     private void setupViews() {
@@ -413,18 +558,28 @@ public class CallActivity extends AppCompatActivity {
                 .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBase.getEglBaseContext()))
                 .createPeerConnectionFactory();
 
-        AudioSource audioSource = factory.createAudioSource(new MediaConstraints());
+        MediaConstraints audioConstraints = new MediaConstraints();
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googEchoCancellation", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googNoiseSuppression", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googAutoGainControl", "true"));
+        AudioSource audioSource = factory.createAudioSource(audioConstraints);
         localAudioTrack = factory.createAudioTrack("AUDIO", audioSource);
 
-        videoCapturer = createCapturer();
-        surfaceTextureHelper = SurfaceTextureHelper.create("capture", eglBase.getEglBaseContext());
-        VideoSource videoSource = factory.createVideoSource(videoCapturer.isScreencast());
+        if (isVideoCall) {
+            try {
+                videoCapturer = createCapturer();
+                surfaceTextureHelper = SurfaceTextureHelper.create("capture", eglBase.getEglBaseContext());
+                VideoSource videoSource = factory.createVideoSource(videoCapturer.isScreencast());
 
-        videoCapturer.initialize(surfaceTextureHelper, getApplicationContext(), videoSource.getCapturerObserver());
-        videoCapturer.startCapture(720, 1280, 30);
+                videoCapturer.initialize(surfaceTextureHelper, getApplicationContext(), videoSource.getCapturerObserver());
+                videoCapturer.startCapture(720, 1280, 30);
 
-        localVideoTrack = factory.createVideoTrack("VIDEO", videoSource);
-        localVideoTrack.addSink(localView);
+                localVideoTrack = factory.createVideoTrack("VIDEO", videoSource);
+                localVideoTrack.addSink(localView);
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing video capture: " + e.getMessage());
+            }
+        }
     }
 
     private VideoCapturer createCapturer() {
@@ -460,6 +615,8 @@ public class CallActivity extends AppCompatActivity {
 
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+        isRemoteDescriptionSet = false;
+        pendingIceCandidates.clear();
         
         peerConnection = factory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
@@ -487,7 +644,7 @@ public class CallActivity extends AppCompatActivity {
             
             @Override public void onConnectionChange(PeerConnection.PeerConnectionState s) {
                 Log.d(TAG, "onConnectionChange: " + s);
-                if (s == PeerConnection.PeerConnectionState.DISCONNECTED || s == PeerConnection.PeerConnectionState.CLOSED || s == PeerConnection.PeerConnectionState.FAILED) {
+                if (s == PeerConnection.PeerConnectionState.CLOSED || s == PeerConnection.PeerConnectionState.FAILED) {
                     disconnect();
                 }
             }
@@ -606,6 +763,8 @@ public class CallActivity extends AppCompatActivity {
 
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+        isRemoteDescriptionSet = false;
+        pendingIceCandidates.clear();
         
         peerConnection = factory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
@@ -630,7 +789,7 @@ public class CallActivity extends AppCompatActivity {
             }
             
             @Override public void onConnectionChange(PeerConnection.PeerConnectionState s) {
-                if (s == PeerConnection.PeerConnectionState.DISCONNECTED || s == PeerConnection.PeerConnectionState.CLOSED || s == PeerConnection.PeerConnectionState.FAILED) {
+                if (s == PeerConnection.PeerConnectionState.CLOSED || s == PeerConnection.PeerConnectionState.FAILED) {
                     disconnect();
                 }
             }
@@ -853,7 +1012,7 @@ public class CallActivity extends AppCompatActivity {
                 String offerSdp = data.getString("offer");
                 SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, offerSdp);
                 if (peerConnection != null) {
-                    peerConnection.setRemoteDescription(new SimpleSdp("RemoteOffer"), sdp);
+                    peerConnection.setRemoteDescription(new SimpleSdp("RemoteOffer", true), sdp);
                     createAnswer();
                 }
             } catch (JSONException e) {
@@ -868,7 +1027,7 @@ public class CallActivity extends AppCompatActivity {
                 String answerSdp = data.getString("answer");
                 SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, answerSdp);
                 if (peerConnection != null) {
-                    peerConnection.setRemoteDescription(new SimpleSdp("RemoteAnswer"), sdp);
+                    peerConnection.setRemoteDescription(new SimpleSdp("RemoteAnswer", true), sdp);
                 }
             } catch (JSONException e) {
                 Log.e(TAG, "Error processing receive-answer", e);
@@ -884,8 +1043,12 @@ public class CallActivity extends AppCompatActivity {
                         data.getInt("sdpMLineIndex"),
                         data.getString("candidate")
                 );
-                if (peerConnection != null) {
-                    peerConnection.addIceCandidate(candidate);
+                if (isRemoteDescriptionSet) {
+                    if (peerConnection != null) {
+                        peerConnection.addIceCandidate(candidate);
+                    }
+                } else {
+                    pendingIceCandidates.add(candidate);
                 }
             } catch (JSONException e) {
                 Log.e(TAG, "Error processing receive-ice", e);
@@ -900,7 +1063,7 @@ public class CallActivity extends AppCompatActivity {
                     String offerSdp = data.getString("offer");
                     SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, offerSdp);
                     if (peerConnection != null) {
-                        peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateOffer"), sdp);
+                        peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateOffer", true), sdp);
                         createAnswer();
                     }
                 } catch (JSONException e) {
@@ -915,7 +1078,7 @@ public class CallActivity extends AppCompatActivity {
                     String answerSdp = data.getString("answer");
                     SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, answerSdp);
                     if (peerConnection != null) {
-                        peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateAnswer"), sdp);
+                        peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateAnswer", true), sdp);
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, "Error processing receive-private-answer", e);
@@ -931,8 +1094,12 @@ public class CallActivity extends AppCompatActivity {
                             data.getInt("sdpMLineIndex"),
                             data.getString("candidate")
                     );
-                    if (peerConnection != null) {
-                        peerConnection.addIceCandidate(candidate);
+                    if (isRemoteDescriptionSet) {
+                        if (peerConnection != null) {
+                            peerConnection.addIceCandidate(candidate);
+                        }
+                    } else {
+                        pendingIceCandidates.add(candidate);
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, "Error processing receive-private-ice", e);
@@ -942,6 +1109,10 @@ public class CallActivity extends AppCompatActivity {
 
             privateCallAcceptedListener = args -> runOnUiThread(() -> {
                 Log.d(TAG, "private-call-accepted received");
+                isCallAccepted = true;
+                timeoutHandler.removeCallbacks(timeoutRunnable);
+                // Start 15s connection timeout
+                timeoutHandler.postDelayed(timeoutRunnable, 15000);
                 stopConnectionAnimation();
                 if (connectionStatus != null) {
                     connectionStatus.setText("Call accepted. Connecting...");
@@ -955,6 +1126,12 @@ public class CallActivity extends AppCompatActivity {
                 disconnect();
             });
             socket.on("private-call-rejected", privateCallRejectedListener);
+
+            privateCallCancelledListener = args -> runOnUiThread(() -> {
+                Toast.makeText(CallActivity.this, "Call cancelled by caller.", Toast.LENGTH_SHORT).show();
+                disconnect();
+            });
+            socket.on("private-call-cancelled", privateCallCancelledListener);
 
             privateCallEndedListener = args -> runOnUiThread(() -> {
                 Toast.makeText(CallActivity.this, "Call ended by the other user.", Toast.LENGTH_SHORT).show();
@@ -997,12 +1174,12 @@ public class CallActivity extends AppCompatActivity {
 
     private void createOffer() {
         if (peerConnection == null) return;
-        peerConnection.createOffer(new SimpleSdp("CreateOffer") {
+        peerConnection.createOffer(new SimpleSdp("CreateOffer", false) {
             @Override
             public void onCreateSuccess(SessionDescription sdp) {
                 super.onCreateSuccess(sdp);
                 if (peerConnection != null) {
-                    peerConnection.setLocalDescription(new SimpleSdp("LocalOffer"), sdp);
+                    peerConnection.setLocalDescription(new SimpleSdp("LocalOffer", false), sdp);
                     sendOffer(sdp);
                 }
             }
@@ -1011,12 +1188,12 @@ public class CallActivity extends AppCompatActivity {
 
     private void createAnswer() {
         if (peerConnection == null) return;
-        peerConnection.createAnswer(new SimpleSdp("CreateAnswer") {
+        peerConnection.createAnswer(new SimpleSdp("CreateAnswer", false) {
             @Override
             public void onCreateSuccess(SessionDescription sdp) {
                 super.onCreateSuccess(sdp);
                 if (peerConnection != null) {
-                    peerConnection.setLocalDescription(new SimpleSdp("LocalAnswer"), sdp);
+                    peerConnection.setLocalDescription(new SimpleSdp("LocalAnswer", false), sdp);
                     sendAnswer(sdp);
                 }
             }
@@ -1176,6 +1353,7 @@ public class CallActivity extends AppCompatActivity {
         // Reset AudioManager state when call disconnects
         try {
             if (audioManager != null) {
+                abandonAudioFocus();
                 audioManager.setMode(android.media.AudioManager.MODE_NORMAL);
                 audioManager.setSpeakerphoneOn(false);
             }
@@ -1185,11 +1363,15 @@ public class CallActivity extends AppCompatActivity {
         
         if (isPrivateCall) {
             try {
-                JSONObject endData = new JSONObject();
-                endData.put("targetId", peerId);
-                socket.emit("end-private-call", endData);
+                JSONObject data = new JSONObject();
+                data.put("targetId", peerId);
+                if (!isCallAccepted && isCaller) {
+                    socket.emit("cancel-private-call", data);
+                } else {
+                    socket.emit("end-private-call", data);
+                }
             } catch (JSONException e) {
-                Log.e(TAG, "Error emitting end-private-call", e);
+                Log.e(TAG, "Error emitting end/cancel-private-call", e);
             }
         } else {
             try {
@@ -1237,15 +1419,14 @@ public class CallActivity extends AppCompatActivity {
             if (remoteView != null) remoteView.release();
         });
 
-        fadeOutRemoteOverlay(() -> {
-            if (factory != null) {
-                factory.dispose();
-                factory = null;
-            }
-        });
+        fadeOutRemoteOverlay(null);
 
         if (factory != null) {
-            factory.dispose();
+            try {
+                factory.dispose();
+            } catch (Exception e) {
+                Log.e(TAG, "Error disposing factory: " + e.getMessage());
+            }
             factory = null;
         }
 
@@ -1421,42 +1602,62 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error checking VPN connection state", e);
         }
         return false;
-    }    private void updateAudioRouting() {
+    }
+
+    private void toggleSpeaker() {
+        isSpeakerOn = !isSpeakerOn;
+        if (btnSpeaker != null) {
+            btnSpeaker.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
+                btnSpeaker.setImageResource(isSpeakerOn ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+                btnSpeaker.setBackgroundResource(isSpeakerOn ? R.drawable.bg_call_btn_red : R.drawable.bg_round_white);
+                btnSpeaker.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+            }).start();
+        }
+        updateAudioRouting();
+    }
+
+    private void updateAudioRouting() {
+        if (audioManager == null) return;
         try {
-            if (audioManager != null) {
-                boolean isWiredHeadset = false;
+            boolean isWiredHeadset = audioManager.isWiredHeadsetOn();
+            boolean isBluetoothConnected = false;
+            
+            // Check Bluetooth
+            if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || 
+                androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 try {
-                    isWiredHeadset = audioManager.isWiredHeadsetOn();
-                } catch (Exception e) {
-                    Log.e(TAG, "Error checking wired headset: " + e.getMessage());
-                }
-
-                boolean isBluetoothConnected = false;
-                // Only check Bluetooth state if we have permissions on Android 12+
-                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || 
-                    androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    try {
+                    android.bluetooth.BluetoothAdapter btAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
+                    if (btAdapter != null && btAdapter.isEnabled()) {
                         isBluetoothConnected = audioManager.isBluetoothScoOn() || audioManager.isBluetoothA2dpOn();
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error checking bluetooth headset state: " + e.getMessage());
                     }
+                } catch (Exception btEx) {
+                    Log.e(TAG, "Bluetooth check error: " + btEx.getMessage());
                 }
-
-                boolean isHeadsetConnected = isWiredHeadset || isBluetoothConnected;
-                Log.d(TAG, "📺 Audio Routing check: Wired = " + isWiredHeadset + ", BT = " + isBluetoothConnected);
-                
-                audioManager.setSpeakerphoneOn(!isHeadsetConnected);
+            }
+            
+            Log.d(TAG, "updateAudioRouting: wired=" + isWiredHeadset + ", bluetooth=" + isBluetoothConnected + ", isVideoCall=" + isVideoCall + ", isSpeakerOn=" + isSpeakerOn);
+            
+            if (isWiredHeadset) {
+                // Wired headset connected - audio goes through headset, mic should auto-route
+                audioManager.stopBluetoothSco();
+                audioManager.setBluetoothScoOn(false);
+                audioManager.setSpeakerphoneOn(isSpeakerOn);
+            } else if (isBluetoothConnected) {
+                audioManager.startBluetoothSco();
+                audioManager.setBluetoothScoOn(true);
+                audioManager.setSpeakerphoneOn(false);
+            } else {
+                audioManager.stopBluetoothSco();
+                audioManager.setBluetoothScoOn(false);
+                if (isSpeakerOn) {
+                    audioManager.setSpeakerphoneOn(true);
+                } else {
+                    // For video calls, default to speakerphone. For audio-only calls, default to earpiece.
+                    audioManager.setSpeakerphoneOn(isVideoCall);
+                }
             }
         } catch (Exception e) {
-            Log.e(TAG, "General error updating audio routing: " + e.getMessage());
-            // Fallback: default to speakerphone on to prevent silent call
-            try {
-                if (audioManager != null) {
-                    audioManager.setSpeakerphoneOn(true);
-                }
-            } catch (Exception ex) {
-                Log.e(TAG, "Failed fallback speakerphone: " + ex.getMessage());
-            }
+            Log.e(TAG, "Error updating audio routing: " + e.getMessage());
         }
     }
 
@@ -1471,6 +1672,7 @@ public class CallActivity extends AppCompatActivity {
         if (receivePrivateIceListener != null) socket.off("receive-private-ice", receivePrivateIceListener);
         if (privateCallAcceptedListener != null) socket.off("private-call-accepted", privateCallAcceptedListener);
         if (privateCallRejectedListener != null) socket.off("private-call-rejected", privateCallRejectedListener);
+        if (privateCallCancelledListener != null) socket.off("private-call-cancelled", privateCallCancelledListener);
         if (privateCallEndedListener != null) socket.off("private-call-ended", privateCallEndedListener);
         if (callFailedListener != null) socket.off("call-failed", callFailedListener);
         if (peerDisconnectedListener != null) socket.off("peer-disconnected", peerDisconnectedListener);
@@ -1482,6 +1684,7 @@ public class CallActivity extends AppCompatActivity {
         receiveIceListener = null;
         peerDisconnectedListener = null;
         callControlListener = null;
+        privateCallCancelledListener = null;
     }
 
     @Override

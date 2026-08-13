@@ -100,3 +100,10 @@
 # ==============================================================================
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
+
+# ==============================================================================
+# InMobi SDK
+# ==============================================================================
+-keepattributes SourceFile,LineNumberTable
+-keep class com.inmobi.** { *; }
+-dontwarn com.inmobi.**

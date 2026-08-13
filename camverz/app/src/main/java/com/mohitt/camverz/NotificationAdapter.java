@@ -186,12 +186,15 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                 break;
             case "friend_request":
                 if ("accepted".equals(notification.getFriendshipStatus())) {
-                    messageSuffix = " sent you a friend request (Accepted).";
+                    messageSuffix = " sent you a request (Accepted).";
                 } else if ("rejected".equals(notification.getFriendshipStatus())) {
-                    messageSuffix = " sent you a friend request (Rejected).";
+                    messageSuffix = " sent you a request (Rejected).";
                 } else {
-                    messageSuffix = " sent you a friend request.";
+                    messageSuffix = " sent you a request.";
                 }
+                break;
+            case "friend_accepted":
+                messageSuffix = " accepted your friend request.";
                 break;
             default:
                 messageSuffix = " sent a notification.";

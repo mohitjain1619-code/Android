@@ -81,6 +81,9 @@ public class MainScreenActivity extends BaseActivity {
                 obj.put("uid", tokenManager.getUserId());
                 socket.emit("register-user", obj);
             } catch (JSONException e) { e.printStackTrace(); }
+            
+            // Initialize global incoming call handler (works from any screen)
+            IncomingCallHandler.getInstance().init(getApplication(), socket);
         }
 
         cardGay = findViewById(R.id.cardGay);
@@ -298,7 +301,12 @@ public class MainScreenActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        int unreadCount = data.has("unreadCount") ? data.get("unreadCount").getAsInt() : 0;
+                        int unreadCount = 0;
+                        if (data.has("count")) {
+                            unreadCount = data.get("count").getAsInt();
+                        } else if (data.has("unreadCount")) {
+                            unreadCount = data.get("unreadCount").getAsInt();
+                        }
                         updateUnreadMessagesCount(unreadCount);
                     }
                 }
@@ -365,66 +373,17 @@ public class MainScreenActivity extends BaseActivity {
         };
         socket.on("match-found", matchFoundListener);
 
-        incomingPrivateCallListener = args -> {
-            try {
-                JSONObject data = (JSONObject) args[0];
-                String callerId = data.getString("callerId");
-                String callerName = data.optString("callerName", "Unknown");
-                String callerAvatar = data.optString("callerAvatar", "");
-                boolean isVideo = data.optBoolean("isVideo", true);
-                String roomName = data.getString("room");
-
-                runOnUiThread(() -> {
-                    androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this);
-                    builder.setTitle("Incoming Call");
-                    builder.setMessage(callerName + " is calling you" + (isVideo ? " with video." : " with voice."));
-                    builder.setPositiveButton("Accept", (dialog, which) -> {
-                        Intent intent = new Intent(MainScreenActivity.this, CallActivity.class);
-                        intent.putExtra("targetUserId", callerId);
-                        intent.putExtra("targetUserName", callerName);
-                        intent.putExtra("targetUserAvatar", callerAvatar);
-                        intent.putExtra("isVideoCall", isVideo);
-                        intent.putExtra("isCaller", false);
-                        intent.putExtra("isPrivateCall", true);
-                        intent.putExtra("roomName", roomName);
-                        startActivity(intent);
-                    });
-                    builder.setNegativeButton("Reject", (dialog, which) -> {
-                        try {
-                            JSONObject reject = new JSONObject();
-                            reject.put("callerId", callerId);
-                            socket.emit("reject-private-call", reject);
-                        } catch (JSONException ex) {
-                            Log.e(TAG, "Error emitting reject-private-call", ex);
-                        }
-                        Toast.makeText(MainScreenActivity.this, "Call rejected.", Toast.LENGTH_SHORT).show();
-                    });
-                    builder.setOnCancelListener(dialog -> {
-                        try {
-                            JSONObject reject = new JSONObject();
-                            reject.put("callerId", callerId);
-                            socket.emit("reject-private-call", reject);
-                        } catch (JSONException ex) {
-                            Log.e(TAG, "Error emitting reject-private-call", ex);
-                        }
-                    });
-                    androidx.appcompat.app.AlertDialog dialog = builder.create();
-                    if (dialog.getWindow() != null) {
-                        dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
-                    }
-                    dialog.show();
-                });
-            } catch (JSONException e) {
-                Log.e(TAG, "Error handling incoming-private-call", e);
-            }
-        };
-        socket.on("incoming-private-call", incomingPrivateCallListener);
+        // incoming-private-call is handled globally by IncomingCallHandler
 
         newMessageListener = args -> runOnUiThread(this::fetchUnreadMessages);
         socket.on("new_message", newMessageListener);
     }
 
     private void logout() {
+        // Destroy the global incoming call handler
+        IncomingCallHandler.getInstance().destroy(getApplication());
+        CallManager.reset();
+        
         tokenManager.clearToken();
         socket.disconnect();
         Intent intent = new Intent(MainScreenActivity.this, LoginActivity.class);
@@ -506,7 +465,7 @@ public class MainScreenActivity extends BaseActivity {
             if (onlineUsersListener != null) socket.off("online-users", onlineUsersListener);
             if (onlineCountListener != null) socket.off("online_count", onlineCountListener);
             if (matchFoundListener != null) socket.off("match-found", matchFoundListener);
-            if (incomingPrivateCallListener != null) socket.off("incoming-private-call", incomingPrivateCallListener);
+            // incoming-private-call is managed by IncomingCallHandler (global, not removed here)
             if (newMessageListener != null) socket.off("new_message", newMessageListener);
         }
     }

@@ -170,12 +170,36 @@ public class InboxActivity extends BaseActivity {
                             for (JsonElement element : chatsArray) {
                                 JsonObject chatObj = element.getAsJsonObject();
                                 Conversation conversation = new Conversation();
-                                conversation.setUserId(chatObj.has("targetUserId") ? chatObj.get("targetUserId").getAsString() : "");
-                                conversation.setName(chatObj.has("targetUserName") ? chatObj.get("targetUserName").getAsString() : "Unknown");
-                                conversation.setProfileImageUrl(chatObj.has("targetUserAvatar") ? chatObj.get("targetUserAvatar").getAsString() : "av1");
-                                conversation.setLastMessage(chatObj.has("lastMessage") ? chatObj.get("lastMessage").getAsString() : "");
-                                conversation.setLastActivity(chatObj.has("lastActivity") ? chatObj.get("lastActivity").getAsLong() : 0);
-                                conversation.setUnread(chatObj.has("unread") && chatObj.get("unread").getAsBoolean());
+                                conversation.setChatId(chatObj.has("id") ? chatObj.get("id").getAsString() : "");
+                                if (chatObj.has("otherUser") && !chatObj.get("otherUser").isJsonNull()) {
+                                    JsonObject otherUserObj = chatObj.getAsJsonObject("otherUser");
+                                    conversation.setUserId(otherUserObj.has("id") ? otherUserObj.get("id").getAsString() : "");
+                                    conversation.setName(otherUserObj.has("name") ? otherUserObj.get("name").getAsString() : "Unknown");
+                                    conversation.setProfileImageUrl(otherUserObj.has("avatar") && !otherUserObj.get("avatar").isJsonNull() ? otherUserObj.get("avatar").getAsString() : "");
+                                    if (otherUserObj.has("photoUrl") && !otherUserObj.get("photoUrl").isJsonNull()) {
+                                        conversation.setPhotoUrl(otherUserObj.get("photoUrl").getAsString());
+                                    }
+                                } else {
+                                    conversation.setUserId("");
+                                    conversation.setName("Unknown");
+                                    conversation.setProfileImageUrl("");
+                                }
+                                conversation.setLastMessage(chatObj.has("lastMessage") && !chatObj.get("lastMessage").isJsonNull() ? chatObj.get("lastMessage").getAsString() : "");
+                                // Parse lastMessageAt ISO string to epoch millis
+                                if (chatObj.has("lastMessageAt") && !chatObj.get("lastMessageAt").isJsonNull()) {
+                                    try {
+                                        String isoStr = chatObj.get("lastMessageAt").getAsString();
+                                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+                                        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                        java.util.Date date = sdf.parse(isoStr);
+                                        conversation.setLastActivity(date != null ? date.getTime() : 0);
+                                    } catch (Exception e) {
+                                        conversation.setLastActivity(0);
+                                    }
+                                } else {
+                                    conversation.setLastActivity(0);
+                                }
+                                conversation.setUnread(chatObj.has("unreadCount") && chatObj.get("unreadCount").getAsInt() > 0);
                                 fullConversationList.add(conversation);
                             }
                         }
@@ -248,6 +272,17 @@ public class InboxActivity extends BaseActivity {
                                     intent.putExtra("userId", friendId);
                                     intent.putExtra("userName", friendName);
                                     intent.putExtra("userAvatar", friendAvatar);
+                                    intent.putExtra("userPhotoUrl", friendPhotoUrl);
+                                    String resolvedChatId = "";
+                                    if (fullConversationList != null) {
+                                        for (Conversation conv : fullConversationList) {
+                                            if (conv.getUserId() != null && conv.getUserId().equals(friendId)) {
+                                                resolvedChatId = conv.getChatId();
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    intent.putExtra("chatId", resolvedChatId);
                                     startActivity(intent);
                                 });
 
