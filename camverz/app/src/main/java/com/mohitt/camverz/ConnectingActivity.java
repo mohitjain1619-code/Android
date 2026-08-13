@@ -28,6 +28,13 @@ import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoa
 import com.google.android.gms.ads.OnUserEarnedRewardListener;
 import androidx.annotation.NonNull;
 
+// Import Meta Audience Network classes
+import com.facebook.ads.Ad;
+import com.facebook.ads.AdError;
+import com.facebook.ads.NativeAdListener;
+import com.facebook.ads.NativeAdLayout;
+import com.facebook.ads.MediaView;
+
 public class ConnectingActivity extends BaseActivity {
 
     private static final String TAG = "ConnectingActivity";
@@ -45,6 +52,7 @@ public class ConnectingActivity extends BaseActivity {
 
     // Google AdMob Mediated Native Ad & Delay
     private NativeAd nativeAd;
+    private com.facebook.ads.NativeAd metaNativeAd;
     private RewardedInterstitialAd rewardedInterstitialAd;
     private long searchStartTime = 0;
     private static final long MIN_SEARCH_DURATION_MS = 5000; // Enforce minimum 5 seconds search duration
@@ -71,6 +79,7 @@ public class ConnectingActivity extends BaseActivity {
         com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
             runOnUiThread(() -> {
                 loadNativeAd();
+                loadMetaNativeAd();
                 loadRewardedInterstitialAd();
             });
         });
@@ -272,6 +281,103 @@ public class ConnectingActivity extends BaseActivity {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
+    // --- Meta Audience Network Direct Native Ad Integration ---
+
+    private void loadMetaNativeAd() {
+        metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167733142869");
+        com.facebook.ads.NativeAdListener nativeAdListener = new com.facebook.ads.NativeAdListener() {
+            @Override
+            public void onMediaDownloaded(com.facebook.ads.Ad ad) {
+                Log.d(TAG, "Meta Media Downloaded");
+            }
+
+            @Override
+            public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
+                Log.e(TAG, "Meta Native Ad failed to load: " + adError.getErrorMessage());
+            }
+
+            @Override
+            public void onAdLoaded(com.facebook.ads.Ad ad) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+                if (metaNativeAd != null && metaNativeAd == ad) {
+                    inflateMetaNativeAd(metaNativeAd);
+                }
+            }
+
+            @Override
+            public void onAdClicked(com.facebook.ads.Ad ad) {
+                Log.d(TAG, "Meta Ad Clicked");
+            }
+
+            @Override
+            public void onLoggingImpression(com.facebook.ads.Ad ad) {
+                Log.d(TAG, "Meta Logging Impression");
+            }
+        };
+
+        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig()
+                .withAdListener(nativeAdListener)
+                .build());
+    }
+
+    private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {
+        FrameLayout adContainer = findViewById(R.id.metaNativeAdContainer);
+        if (adContainer == null) return;
+        adContainer.removeAllViews();
+        adContainer.setVisibility(View.VISIBLE);
+
+        // Main native ad container from Meta
+        com.facebook.ads.NativeAdLayout adLayout = new com.facebook.ads.NativeAdLayout(this);
+        adLayout.setLayoutParams(new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT));
+
+        // Build native ad components inside a LinearLayout dynamically
+        LinearLayout innerContainer = new LinearLayout(this);
+        innerContainer.setOrientation(LinearLayout.VERTICAL);
+        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
+        innerContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+
+        // Headline (Title)
+        TextView adHeadline = new TextView(this);
+        adHeadline.setText(ad.getAdHeadline());
+        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
+        adHeadline.setTextSize(16);
+        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        innerContainer.addView(adHeadline);
+
+        // Body (Description)
+        TextView adBody = new TextView(this);
+        adBody.setText(ad.getAdBodyText());
+        adBody.setTextColor(getResources().getColor(R.color.text_secondary));
+        adBody.setTextSize(12);
+        adBody.setPadding(0, dpToPx(4), 0, dpToPx(8));
+        innerContainer.addView(adBody);
+
+        // Call to action button
+        Button callToAction = new Button(this);
+        callToAction.setText(ad.getAdCallToAction());
+        callToAction.setBackgroundResource(R.drawable.bg_glass_card_premium);
+        callToAction.setTextColor(getResources().getColor(R.color.accent_primary));
+        callToAction.setTextSize(14);
+        callToAction.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        innerContainer.addView(callToAction);
+
+        adLayout.addView(innerContainer);
+
+        // Register views for interaction (clicks)
+        List<View> clickableViews = new ArrayList<>();
+        clickableViews.add(adHeadline);
+        clickableViews.add(callToAction);
+        
+        MediaView mediaView = new MediaView(this);
+        ad.registerViewForInteraction(adLayout, mediaView, clickableViews);
+
+        adContainer.addView(adLayout);
+    }
+
     private void loadRewardedInterstitialAd() {
         RewardedInterstitialAd.load(this, getString(R.string.admob_rewarded_interstitial_ad_unit_id),
                 new AdRequest.Builder().build(), new RewardedInterstitialAdLoadCallback() {
@@ -350,6 +456,9 @@ public class ConnectingActivity extends BaseActivity {
         // Clean up AdMob ads
         if (nativeAd != null) {
             nativeAd.destroy();
+        }
+        if (metaNativeAd != null) {
+            metaNativeAd.destroy();
         }
     }
 
