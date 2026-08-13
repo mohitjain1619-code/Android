@@ -109,6 +109,17 @@ public class MainScreenActivity extends BaseActivity {
             tvUserName.setText(tokenManager.getUserName());
         }
 
+        if (tvUserName != null) {
+            tvUserName.setOnLongClickListener(v -> {
+                com.google.android.gms.ads.MobileAds.openAdInspector(this, error -> {
+                    if (error != null) {
+                        android.widget.Toast.makeText(this, "Ad Inspector error: " + error.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return true;
+            });
+        }
+
         if (chipCommunityHub != null) {
             chipCommunityHub.setOnClickListener(v -> 
                 Toast.makeText(MainScreenActivity.this, "💬 Community, Real Meet & Fantasy features are coming soon!", Toast.LENGTH_LONG).show());
