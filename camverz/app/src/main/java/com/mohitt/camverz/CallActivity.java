@@ -383,6 +383,9 @@ public class CallActivity extends AppCompatActivity {
         localAvatarSmall = findViewById(R.id.local_avatar_small);
         remoteAvatarNameText = findViewById(R.id.remote_avatar_name_text);
 
+        isSpeakerOn = isVideoCall;
+        updateSpeakerButtonUI();
+
         btnMute.setOnClickListener(v -> toggleMute());
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnEnd.setOnClickListener(v -> disconnect());
@@ -1612,12 +1615,18 @@ public class CallActivity extends AppCompatActivity {
         return false;
     }
 
+    private void updateSpeakerButtonUI() {
+        if (btnSpeaker != null) {
+            btnSpeaker.setImageResource(isSpeakerOn ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+            btnSpeaker.setBackgroundResource(isSpeakerOn ? R.drawable.bg_call_btn_red : R.drawable.bg_round_white);
+        }
+    }
+
     private void toggleSpeaker() {
         isSpeakerOn = !isSpeakerOn;
         if (btnSpeaker != null) {
             btnSpeaker.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
-                btnSpeaker.setImageResource(isSpeakerOn ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
-                btnSpeaker.setBackgroundResource(isSpeakerOn ? R.drawable.bg_call_btn_red : R.drawable.bg_round_white);
+                updateSpeakerButtonUI();
                 btnSpeaker.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
             }).start();
         }
