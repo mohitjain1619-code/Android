@@ -27,8 +27,8 @@ public class BaseActivity extends AppCompatActivity {
         // Ensure status bar icons are white on dark ambient backgrounds
         WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
 
-        boolean isTestDevice = getSharedPreferences("debug_prefs", MODE_PRIVATE).getBoolean("is_test_device", false);
-        if (ENABLE_SCREENSHOT_PROTECTION && !isTestDevice) {
+        boolean isDebug = com.mohitt.camverz.BuildConfig.DEBUG;
+        if (ENABLE_SCREENSHOT_PROTECTION && !isDebug) {
             getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE
@@ -44,27 +44,6 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
-
-        // Fetch Advertising ID in a background thread to dynamically verify test device
-        new Thread(() -> {
-            try {
-                com.google.android.gms.ads.identifier.AdvertisingIdClient.Info adInfo =
-                        com.google.android.gms.ads.identifier.AdvertisingIdClient.getAdvertisingIdInfo(getApplicationContext());
-                if (adInfo != null) {
-                    String adId = adInfo.getId();
-                    boolean matches = "ba4350ab-4d9f-4139-af45-49472cf0dc7b".equalsIgnoreCase(adId);
-                    boolean wasTestDevice = getSharedPreferences("debug_prefs", MODE_PRIVATE).getBoolean("is_test_device", false);
-                    if (matches != wasTestDevice) {
-                        getSharedPreferences("debug_prefs", MODE_PRIVATE).edit().putBoolean("is_test_device", matches).apply();
-                        if (matches) {
-                            runOnUiThread(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error checking Advertising ID: " + e.getMessage());
-            }
-        }).start();
     }
 
     public void applyWindowInsets(final View topView, final View bottomView) {

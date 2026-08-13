@@ -260,31 +260,10 @@ public class CallActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call);
 
-        boolean isTestDevice = getSharedPreferences("debug_prefs", MODE_PRIVATE).getBoolean("is_test_device", false);
-        if (!isTestDevice) {
+        boolean isDebug = com.mohitt.camverz.BuildConfig.DEBUG;
+        if (!isDebug) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
-
-        // Fetch Advertising ID in a background thread to dynamically verify test device
-        new Thread(() -> {
-            try {
-                com.google.android.gms.ads.identifier.AdvertisingIdClient.Info adInfo =
-                        com.google.android.gms.ads.identifier.AdvertisingIdClient.getAdvertisingIdInfo(getApplicationContext());
-                if (adInfo != null) {
-                    String adId = adInfo.getId();
-                    boolean matches = "ba4350ab-4d9f-4139-af45-49472cf0dc7b".equalsIgnoreCase(adId);
-                    boolean wasTestDevice = getSharedPreferences("debug_prefs", MODE_PRIVATE).getBoolean("is_test_device", false);
-                    if (matches != wasTestDevice) {
-                        getSharedPreferences("debug_prefs", MODE_PRIVATE).edit().putBoolean("is_test_device", matches).apply();
-                        if (matches) {
-                            runOnUiThread(() -> getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE));
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error checking Advertising ID: " + e.getMessage());
-            }
-        }).start();
 
         // Preload AdMob Interstitial Ad
         com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
