@@ -553,7 +553,15 @@ public class CallActivity extends AppCompatActivity {
 
     private void initWebRTC() {
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(this).createInitializationOptions());
+
+        // Build JavaAudioDeviceModule with software AEC and NS (hardware disabled to resolve driver feedback)
+        org.webrtc.audio.AudioDeviceModule audioDeviceModule = org.webrtc.audio.JavaAudioDeviceModule.builder(this)
+                .setUseHardwareAcousticEchoCanceler(false)
+                .setUseHardwareNoiseSuppressor(false)
+                .createAudioDeviceModule();
+
         factory = PeerConnectionFactory.builder()
+                .setAudioDeviceModule(audioDeviceModule)
                 .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBase.getEglBaseContext(), true, true))
                 .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBase.getEglBaseContext()))
                 .createPeerConnectionFactory();
@@ -1638,10 +1646,10 @@ public class CallActivity extends AppCompatActivity {
             Log.d(TAG, "updateAudioRouting: wired=" + isWiredHeadset + ", bluetooth=" + isBluetoothConnected + ", isVideoCall=" + isVideoCall + ", isSpeakerOn=" + isSpeakerOn);
             
             if (isWiredHeadset) {
-                // Wired headset connected - audio goes through headset, mic should auto-route
+                // Wired headset connected - audio goes through headset, mic should auto-route (ensure speakerphone is off)
                 audioManager.stopBluetoothSco();
                 audioManager.setBluetoothScoOn(false);
-                audioManager.setSpeakerphoneOn(isSpeakerOn);
+                audioManager.setSpeakerphoneOn(false);
             } else if (isBluetoothConnected) {
                 audioManager.startBluetoothSco();
                 audioManager.setBluetoothScoOn(true);
