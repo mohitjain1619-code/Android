@@ -194,6 +194,7 @@ public class CallActivity extends AppCompatActivity {
     private Emitter.Listener callControlListener;
 
     private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
+    private com.facebook.ads.InterstitialAd metaInterstitialAd;
     private int retryAttempt;
     private boolean isInitiator = false;
 
@@ -291,6 +292,8 @@ public class CallActivity extends AppCompatActivity {
                 @Override
                 public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
                     interstitialAd = null;
+                    Log.w(TAG, "AdMob interstitial failed, loading Meta fallback: " + loadAdError.getMessage());
+                    loadMetaInterstitialAd();
                     retryAttempt++;
                     int delayMillis = (int) Math.min(Math.pow(2, Math.min(6, retryAttempt)) * 1000, 30000);
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -1457,9 +1460,16 @@ public class CallActivity extends AppCompatActivity {
         final int finalCount = currentCount;
         runOnUiThread(() -> {
             // Show mediated interstitial ad on every 2nd completed call to ensure optimal user experience
-            if (finalCount % 2 == 0 && interstitialAd != null && !isFinishing() && !isDestroyed()) {
-                Log.d(TAG, "📺 Showing Interstitial Ad on disconnect (Call #" + finalCount + ")");
-                interstitialAd.show(CallActivity.this);
+            if (finalCount % 2 == 0 && !isFinishing() && !isDestroyed()) {
+                if (interstitialAd != null) {
+                    Log.d(TAG, "📺 Showing AdMob Interstitial on disconnect (Call #" + finalCount + ")");
+                    interstitialAd.show(CallActivity.this);
+                } else if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
+                    Log.d(TAG, "📺 Showing Meta Interstitial fallback on disconnect (Call #" + finalCount + ")");
+                    metaInterstitialAd.show();
+                } else {
+                    finish();
+                }
             } else {
                 finish();
             }
@@ -1707,6 +1717,40 @@ public class CallActivity extends AppCompatActivity {
         privateCallCancelledListener = null;
     }
 
+    private void loadMetaInterstitialAd() {
+        if (isFinishing() || isDestroyed()) return;
+        if (com.mohitt.camverz.BuildConfig.DEBUG) {
+            com.facebook.ads.AdSettings.setTestMode(true);
+        }
+        if (metaInterstitialAd != null) {
+            metaInterstitialAd.destroy();
+            metaInterstitialAd = null;
+        }
+        metaInterstitialAd = new com.facebook.ads.InterstitialAd(this, "1679167109809598_1679167723142870");
+        com.facebook.ads.InterstitialAdListener listener = new com.facebook.ads.InterstitialAdListener() {
+            @Override public void onInterstitialDisplayed(com.facebook.ads.Ad ad) {}
+            @Override
+            public void onInterstitialDismissed(com.facebook.ads.Ad ad) {
+                if (metaInterstitialAd != null) {
+                    metaInterstitialAd.destroy();
+                    metaInterstitialAd = null;
+                }
+                finish();
+            }
+            @Override
+            public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
+                Log.e(TAG, "Meta Interstitial failed: " + adError.getErrorMessage());
+                finish();
+            }
+            @Override public void onAdLoaded(com.facebook.ads.Ad ad) {
+                Log.d(TAG, "✅ Meta Interstitial loaded.");
+            }
+            @Override public void onAdClicked(com.facebook.ads.Ad ad) {}
+            @Override public void onLoggingImpression(com.facebook.ads.Ad ad) {}
+        };
+        metaInterstitialAd.loadAd(metaInterstitialAd.buildLoadAdConfig().withAdListener(listener).build());
+    }
+
     @Override
     protected void onDestroy() {
         disconnect();
@@ -1718,6 +1762,10 @@ public class CallActivity extends AppCompatActivity {
         if (interstitialAd != null) {
             interstitialAd.setFullScreenContentCallback(null);
             interstitialAd = null;
+        }
+        if (metaInterstitialAd != null) {
+            metaInterstitialAd.destroy();
+            metaInterstitialAd = null;
         }
         super.onDestroy();
     }
