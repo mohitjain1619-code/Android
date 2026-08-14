@@ -54,6 +54,11 @@ public class ConnectingActivity extends BaseActivity {
     private NativeAd nativeAd;
     private com.facebook.ads.NativeAd metaNativeAd;
     private RewardedInterstitialAd rewardedInterstitialAd;
+
+    // InMobi Interstitial Ad & Timer
+    private com.inmobi.ads.InMobiInterstitial inmobiInterstitialAd;
+    private Handler inmobiHandler;
+    private Runnable inmobiRunnable;
     private long searchStartTime = 0;
     private static final long MIN_SEARCH_DURATION_MS = 5000; // Enforce minimum 5 seconds search duration
 
@@ -91,6 +96,20 @@ public class ConnectingActivity extends BaseActivity {
             leaveQueue();
             finish();
         });
+
+        // Initialize and start InMobi 2-minute recurring timer
+        inmobiHandler = new Handler(Looper.getMainLooper());
+        inmobiRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isFinishing() || isDestroyed()) return;
+                loadInMobiInterstitial();
+                // Repeat every 2 minutes (120,000 milliseconds)
+                inmobiHandler.postDelayed(this, 120000);
+            }
+        };
+        // Schedule first check after 2 minutes
+        inmobiHandler.postDelayed(inmobiRunnable, 120000);
     }
 
     @Override
@@ -457,6 +476,11 @@ public class ConnectingActivity extends BaseActivity {
         }
         removeSocketListeners();
 
+        // Clean up InMobi timer
+        if (inmobiHandler != null && inmobiRunnable != null) {
+            inmobiHandler.removeCallbacks(inmobiRunnable);
+        }
+
         // Clean up AdMob ads
         if (nativeAd != null) {
             nativeAd.destroy();
@@ -464,6 +488,60 @@ public class ConnectingActivity extends BaseActivity {
         if (metaNativeAd != null) {
             metaNativeAd.destroy();
         }
+    }
+
+    private void loadInMobiInterstitial() {
+        if (isFinishing() || isDestroyed()) return;
+        Log.d(TAG, "InMobi - Starting direct interstitial load...");
+
+        inmobiInterstitialAd = new com.inmobi.ads.InMobiInterstitial(
+            this,
+            10000770044L,
+            new com.inmobi.ads.listeners.InterstitialAdEventListener() {
+                @Override
+                public void onAdLoadSucceeded(@NonNull com.inmobi.ads.InMobiInterstitial ad, @NonNull com.inmobi.ads.AdMetaInfo adMetaInfo) {
+                    Log.d(TAG, "InMobi - Interstitial Ad load succeeded.");
+                    if (!isFinishing() && !isDestroyed() && ad.isReady()) {
+                        runOnUiThread(() -> {
+                            Log.d(TAG, "InMobi - Showing Interstitial Ad.");
+                            ad.show();
+                        });
+                    }
+                }
+
+                @Override
+                public void onAdLoadFailed(@NonNull com.inmobi.ads.InMobiInterstitial ad, @NonNull com.inmobi.ads.InMobiAdRequestStatus status) {
+                    Log.w(TAG, "InMobi - Interstitial Ad failed to load: " + status.getMessage() + ", code: " + status.getStatusCode());
+                }
+
+                @Override
+                public void onAdClicked(@NonNull com.inmobi.ads.InMobiInterstitial ad, @NonNull java.util.Map<Object, Object> map) {
+                    Log.d(TAG, "InMobi - Interstitial Ad clicked.");
+                }
+
+                @Override
+                public void onAdDismissed(@NonNull com.inmobi.ads.InMobiInterstitial ad) {
+                    Log.d(TAG, "InMobi - Interstitial Ad dismissed.");
+                }
+
+                @Override
+                public void onAdDisplayed(@NonNull com.inmobi.ads.InMobiInterstitial ad, @NonNull com.inmobi.ads.AdMetaInfo adMetaInfo) {
+                    Log.d(TAG, "InMobi - Interstitial Ad displayed.");
+                }
+
+                @Override
+                public void onAdDisplayFailed(@NonNull com.inmobi.ads.InMobiInterstitial ad) {
+                    Log.e(TAG, "InMobi - Interstitial Ad display failed.");
+                }
+
+                @Override
+                public void onUserLeftApplication(@NonNull com.inmobi.ads.InMobiInterstitial ad) {
+                    Log.d(TAG, "InMobi - User left application.");
+                }
+            }
+        );
+
+        inmobiInterstitialAd.load();
     }
 
     private void removeMatchFoundListener() {

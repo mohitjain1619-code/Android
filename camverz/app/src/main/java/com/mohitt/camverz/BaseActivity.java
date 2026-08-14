@@ -21,6 +21,22 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Initialize InMobi SDK
+        org.json.JSONObject consentObject = new org.json.JSONObject();
+        try {
+            consentObject.put("gdpr", "0");
+        } catch (Exception e) {}
+        com.inmobi.sdk.InMobiSdk.init(this, "cf32cb0f880544468e1a4077d1febf0d", consentObject, new com.inmobi.sdk.SdkInitializationListener() {
+            @Override
+            public void onInitializationComplete(@androidx.annotation.Nullable Error error) {
+                if (error != null) {
+                    android.util.Log.e("InMobi", "InMobi Init failed: " + error.getMessage());
+                } else {
+                    android.util.Log.d("InMobi", "InMobi Init Successful");
+                }
+            }
+        });
+
         // Enable edge-to-edge window insets
         androidx.activity.EdgeToEdge.enable(this);
         
