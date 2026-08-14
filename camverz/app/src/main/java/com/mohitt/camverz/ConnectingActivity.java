@@ -84,10 +84,12 @@ public class ConnectingActivity extends BaseActivity {
         com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
             runOnUiThread(() -> {
                 loadNativeAd();
-                loadMetaNativeAd();
                 loadRewardedInterstitialAd();
             });
         });
+
+        // Load Meta Native Ad immediately without waiting for AdMob SDK initialization
+        loadMetaNativeAd();
 
         checkAndRequestLocationPermission();
         setupSocketListeners();
@@ -109,8 +111,8 @@ public class ConnectingActivity extends BaseActivity {
                 inmobiHandler.postDelayed(this, 120000);
             }
         };
-        // Schedule first check after 2 minutes
-        inmobiHandler.postDelayed(inmobiRunnable, 120000);
+        // Schedule first load after 5 seconds for quick local testing, then repeat every 2 minutes
+        inmobiHandler.postDelayed(inmobiRunnable, 5000);
     }
 
     @Override
