@@ -38,6 +38,8 @@ public class LoginActivity extends AppCompatActivity {
     private GoogleSignInClient mGoogleSignInClient;
     private TokenManager tokenManager;
     private ApiService api;
+    private android.view.View loadingOverlay;
+    private Button getStartedButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +67,8 @@ public class LoginActivity extends AppCompatActivity {
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        Button getStartedButton = findViewById(R.id.get_started_button);
+        loadingOverlay = findViewById(R.id.loading_overlay);
+        getStartedButton = findViewById(R.id.get_started_button);
         android.view.View logoHero = findViewById(R.id.logo_hero_container);
         android.view.View appTitle = findViewById(R.id.app_title);
         android.view.View appSubtitle = findViewById(R.id.app_subtitle);
@@ -101,14 +104,8 @@ public class LoginActivity extends AppCompatActivity {
 
         getStartedButton.setOnClickListener(v -> {
             Log.d(TAG, "🔐 Get Started button clicked");
-            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.GET_ACCOUNTS)
-                    == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                signInWithGoogle();
-            } else {
-                Log.w(TAG, "GET_ACCOUNTS permission not granted. Requesting beforehand...");
-                androidx.core.app.ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.GET_ACCOUNTS}, 101);
-            }
+            showLoadingState();
+            signInWithGoogle();
         });
 
         TextView testerLoginLink = findViewById(R.id.tester_login_link);
@@ -202,9 +199,12 @@ public class LoginActivity extends AppCompatActivity {
                 if (account != null && account.getIdToken() != null) {
                     Log.d(TAG, "✅ Google Sign In successful");
                     authenticateWithBackend(account.getIdToken());
+                } else {
+                    hideLoadingState();
                 }
             } catch (ApiException e) {
                 Log.w(TAG, "❌ Google sign in failed", e);
+                hideLoadingState();
                 Toast.makeText(LoginActivity.this, "Sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
@@ -298,12 +298,14 @@ public class LoginActivity extends AppCompatActivity {
                         }
                     } else {
                         Log.w(TAG, "❌ Backend auth response not ok");
+                        hideLoadingState();
                         runOnUiThread(() ->
                                 Toast.makeText(LoginActivity.this, "Authentication failed", Toast.LENGTH_SHORT).show()
                         );
                     }
                 } else {
                     Log.w(TAG, "❌ Backend auth failed: " + response.code());
+                    hideLoadingState();
                     String errorMsg = "Authentication failed";
                     if (response.code() == 403) {
                         try {
@@ -330,6 +332,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 Log.e(TAG, "❌ Network error during auth", t);
+                hideLoadingState();
                 runOnUiThread(() ->
                         Toast.makeText(LoginActivity.this, "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show()
                 );
@@ -358,6 +361,20 @@ public class LoginActivity extends AppCompatActivity {
             Log.e(TAG, "Error getting device Google accounts", e);
         }
         return emails;
+    }
+
+    private void showLoadingState() {
+        runOnUiThread(() -> {
+            if (loadingOverlay != null) loadingOverlay.setVisibility(android.view.View.VISIBLE);
+            if (getStartedButton != null) getStartedButton.setEnabled(false);
+        });
+    }
+
+    private void hideLoadingState() {
+        runOnUiThread(() -> {
+            if (loadingOverlay != null) loadingOverlay.setVisibility(android.view.View.GONE);
+            if (getStartedButton != null) getStartedButton.setEnabled(true);
+        });
     }
 
     private void goToGenderSelection() {
