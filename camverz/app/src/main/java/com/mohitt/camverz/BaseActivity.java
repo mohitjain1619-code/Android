@@ -80,6 +80,50 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
+
+        // Initialize LevelPlay SDK
+        initLevelPlaySDK();
+    }
+
+    public static boolean isLevelPlayInitialized = false;
+    public static final java.util.List<Runnable> levelPlayInitCallbacks = new java.util.ArrayList<>();
+
+    public static void runOnLevelPlayInit(Runnable runnable) {
+        if (isLevelPlayInitialized) {
+            runnable.run();
+        } else {
+            synchronized (levelPlayInitCallbacks) {
+                levelPlayInitCallbacks.add(runnable);
+            }
+        }
+    }
+
+    // Initialize ironSource (LevelPlay) SDK
+    private void initLevelPlaySDK() {
+        if (isLevelPlayInitialized) return;
+        try {
+            com.unity3d.mediation.LevelPlayInitRequest request = new com.unity3d.mediation.LevelPlayInitRequest.Builder("27a0e2125").build();
+            com.unity3d.mediation.LevelPlay.init(this, request, new com.unity3d.mediation.LevelPlayInitListener() {
+                @Override
+                public void onInitSuccess(com.unity3d.mediation.LevelPlayConfiguration configuration) {
+                    android.util.Log.d("BaseActivity", "✅ ironSource LevelPlay initialized successfully with App Key 27a0e2125");
+                    isLevelPlayInitialized = true;
+                    synchronized (levelPlayInitCallbacks) {
+                        for (Runnable cb : levelPlayInitCallbacks) {
+                            try { cb.run(); } catch (Exception e) {}
+                        }
+                        levelPlayInitCallbacks.clear();
+                    }
+                }
+
+                @Override
+                public void onInitFailed(com.unity3d.mediation.LevelPlayInitError error) {
+                    android.util.Log.e("BaseActivity", "ironSource LevelPlay initialization failed: " + error.getErrorMessage());
+                }
+            });
+        } catch (Exception e) {
+            android.util.Log.e("BaseActivity", "ironSource initialization exception: " + e.getMessage());
+        }
     }
 
     public void applyWindowInsets(final View topView, final View bottomView) {

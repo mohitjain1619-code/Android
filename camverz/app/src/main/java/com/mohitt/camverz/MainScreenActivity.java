@@ -61,6 +61,9 @@ public class MainScreenActivity extends BaseActivity {
     private TextView notificationBadge;
 
     private com.google.android.gms.ads.AdView adView;
+    private com.unity3d.mediation.rewarded.LevelPlayRewardedAd levelPlayRewardedAd;
+    private boolean isRewardedVideoAvailable = false;
+    private String pendingCategory = "straight";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,6 +211,9 @@ public class MainScreenActivity extends BaseActivity {
         if (adContainer != null) {
             adContainer.setVisibility(View.GONE);
         }
+
+        // Preload ironSource Rewarded Ad once LevelPlay init succeeds
+        BaseActivity.runOnLevelPlayInit(this::loadLevelPlayRewardedVideoAd);
     }
 
     private void addTouchScaleFeedback(View... views) {
@@ -438,9 +444,26 @@ public class MainScreenActivity extends BaseActivity {
             startActivity(intent);
             return;
         }
-        Intent intent = new Intent(MainScreenActivity.this, ConnectingActivity.class);
-        intent.putExtra("category", category);
-        startActivity(intent);
+        pendingCategory = category;
+
+        // Increment call attempt counter
+        android.content.SharedPreferences prefs = getSharedPreferences("app_stats", MODE_PRIVATE);
+        int attempts = prefs.getInt("call_attempts", 0);
+        attempts++;
+        prefs.edit().putInt("call_attempts", attempts).apply();
+
+        Log.d(TAG, "Call attempt #" + attempts);
+
+        if (attempts % 3 == 0) {
+            if (levelPlayRewardedAd != null && (isRewardedVideoAvailable || levelPlayRewardedAd.isAdReady())) {
+                Log.d(TAG, "📺 Showing ironSource Rewarded Ad on 3rd attempt (#" + attempts + ")");
+                levelPlayRewardedAd.showAd(MainScreenActivity.this);
+                return;
+            } else {
+                Log.w(TAG, "ironSource Rewarded Ad not ready on attempt #" + attempts + ", proceeding directly");
+            }
+        }
+        proceedToConnectingDirectly();
     }
 
     private void loadBannerAd() {
@@ -455,6 +478,62 @@ public class MainScreenActivity extends BaseActivity {
             com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
             adView.loadAd(adRequest);
             Log.d(TAG, "✅ AdMob Banner Ad requested for MainScreen");
+        }
+    }
+
+    private void proceedToConnectingDirectly() {
+        Intent intent = new Intent(MainScreenActivity.this, ConnectingActivity.class);
+        intent.putExtra("category", pendingCategory);
+        startActivity(intent);
+    }
+
+    private void loadLevelPlayRewardedVideoAd() {
+        try {
+            levelPlayRewardedAd = new com.unity3d.mediation.rewarded.LevelPlayRewardedAd("onddt1lewzexkb5q");
+            levelPlayRewardedAd.setListener(new com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener() {
+                @Override
+                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    isRewardedVideoAvailable = true;
+                    Log.d(TAG, "ironSource Rewarded Ad is loaded and available");
+                }
+
+                @Override
+                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
+                    isRewardedVideoAvailable = false;
+                    Log.w(TAG, "ironSource Rewarded Ad failed to load: " + error.getErrorMessage());
+                }
+
+                @Override
+                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "ironSource Rewarded Ad is shown");
+                }
+
+                @Override
+                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.e(TAG, "ironSource Rewarded Ad failed to show: " + error.getErrorMessage());
+                    isRewardedVideoAvailable = false;
+                    levelPlayRewardedAd.loadAd(); // Reload for next time
+                    proceedToConnectingDirectly();
+                }
+
+                @Override
+                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                @Override
+                public void onAdRewarded(com.unity3d.mediation.rewarded.LevelPlayReward reward, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "ironSource Rewarded Ad successfully rewarded user");
+                }
+
+                @Override
+                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    isRewardedVideoAvailable = false;
+                    levelPlayRewardedAd.loadAd(); // Reload for next time
+                    proceedToConnectingDirectly();
+                }
+            });
+            levelPlayRewardedAd.loadAd();
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading ironSource Rewarded Ad: " + e.getMessage());
         }
     }
 

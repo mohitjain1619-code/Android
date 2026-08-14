@@ -27,6 +27,75 @@
   text-align: center;
 }
 
+.subscriptionCard {
+  background: rgba(13, 13, 31, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--neon-cyan);
+  border-radius: var(--radius-xl);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.subCardMain {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.subIconWrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.subCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subCardHeaderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.subPlanTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.subBadge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #000000;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subRemainingText {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 .avatarSection {
   display: flex;
   flex-direction: column;

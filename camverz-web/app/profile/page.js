@@ -3,7 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../lib/auth-context';
 import { updateUser, getFollowersCount, getFollowingCount } from '../../lib/firestore';
 import { useRouter } from 'next/navigation';
-import { Edit3, MapPin, Calendar, Shield, ShieldCheck, Camera, Save, X, LogOut, Heart, Star, Music, Briefcase, BookOpen, Dumbbell, Coffee, Globe, Smile } from 'lucide-react';
+import { Edit3, MapPin, Calendar, Shield, ShieldCheck, Camera, Save, X, LogOut, Heart, Star, Music, Briefcase, BookOpen, Dumbbell, Coffee, Globe, Smile, Crown, Zap, AlertCircle } from 'lucide-react';
+import { getSubscriptionStatus } from '../../lib/subscription';
 import styles from './page.module.css';
 
 const AVATARS = Array.from({ length: 15 }, (_, i) => `av${i + 1}`);
@@ -146,6 +147,7 @@ export default function ProfilePage() {
   }
 
   const age = calculateAge(userData.dob);
+  const subStatus = getSubscriptionStatus(userData);
 
   return (
     <div className={styles.page}>
@@ -215,6 +217,37 @@ export default function ProfilePage() {
               </>
             )}
           </div>
+        </div>
+
+        {/* Luxury Subscription Status Card */}
+        <div className={styles.subscriptionCard} style={{ borderColor: subStatus.badgeColor }}>
+          <div className={styles.subCardMain}>
+            <div className={styles.subIconWrapper} style={{ background: `rgba(${subStatus.isAdFree ? '0, 229, 255' : '189, 0, 255'}, 0.15)` }}>
+              <Crown size={28} style={{ color: subStatus.badgeColor }} />
+            </div>
+            <div className={styles.subCardInfo}>
+              <div className={styles.subCardHeaderRow}>
+                <h3 className={styles.subPlanTitle}>{subStatus.planName}</h3>
+                <span className={styles.subBadge} style={{ background: subStatus.badgeColor }}>
+                  {subStatus.badgeText}
+                </span>
+              </div>
+              <p className={styles.subRemainingText}>
+                {subStatus.hasActivePlan ? (
+                  <>⏱️ Active Pass: <strong>{subStatus.remainingText}</strong></>
+                ) : (
+                  <>Unlock unlimited matching, HD video, and 100% ad-free experience.</>
+                )}
+              </p>
+            </div>
+          </div>
+          <button 
+            className="btn-neon" 
+            onClick={() => router.push('/pricing')}
+            style={{ padding: '10px 20px', fontSize: '0.88rem', flexShrink: 0 }}
+          >
+            <Zap size={16} /> {subStatus.hasActivePlan ? 'Extend / Upgrade Pass' : 'Get VIP Pass'}
+          </button>
         </div>
 
         {/* Verification Banner */}

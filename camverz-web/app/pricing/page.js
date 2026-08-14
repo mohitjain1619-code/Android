@@ -2,15 +2,16 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../lib/auth-context';
-import { Check, Zap, Sparkles, Crown, ShieldCheck, Lock, RefreshCw, ArrowRight, Star, Video, EyeOff, MapPin, Globe } from 'lucide-react';
+import { PRICING_MATRIX, getPaymentUrl, getSubscriptionStatus, REGIONAL_COUNTRIES } from '../../lib/subscription';
+import { Check, Zap, Sparkles, Crown, ShieldCheck, Lock, ArrowRight, Star, Video, MapPin, Globe } from 'lucide-react';
 import styles from './page.module.css';
-
-const REGIONAL_COUNTRIES = ['pakistan', 'bangladesh', 'thailand', 'pk', 'bd', 'th'];
 
 export default function PricingPage() {
   const { user, userData, setShowLogin, setShowOnboarding } = useAuth();
   const [regionMode, setRegionMode] = useState('international'); // 'india' | 'regional' | 'international'
   const [detectedLocation, setDetectedLocation] = useState('Detecting location...');
+
+  const subStatus = getSubscriptionStatus(userData);
 
   // Auto-detect user country from userData or IP geolocation
   useEffect(() => {
@@ -23,13 +24,13 @@ export default function PricingPage() {
 
     if (userCountry && (userCountry.includes('india') || userCountry === 'in')) {
       setRegionMode('india');
-      setDetectedLocation(`Detected: India (INR Pricing Applied 🇮🇳)`);
+      setDetectedLocation('Location: India (INR ₹ Pricing) 🇮🇳');
     } else if (userCountry && REGIONAL_COUNTRIES.some(c => userCountry.includes(c))) {
       setRegionMode('regional');
-      setDetectedLocation(`Detected: ${userData.city || userCountry.toUpperCase()} (Regional Discount Tier 🏷️)`);
+      setDetectedLocation(`Location: ${userData.city || userCountry.toUpperCase()} (Regional Tier 🏷️)`);
     } else if (userCountry) {
       setRegionMode('international');
-      setDetectedLocation(`Detected: ${userData.city || userCountry.toUpperCase()} (International Tier)`);
+      setDetectedLocation(`Location: ${userData.city || userCountry.toUpperCase()} (International Tier 🌐)`);
     } else {
       // Fallback: IP Geolocation lookup
       fetch('https://ipapi.co/json/')
@@ -39,58 +40,20 @@ export default function PricingPage() {
           const countryCode = (data.country_code || '').toLowerCase();
           if (countryCode === 'in' || countryName.includes('india')) {
             setRegionMode('india');
-            setDetectedLocation('Detected: India (INR Pricing Applied 🇮🇳)');
+            setDetectedLocation('Location: India (INR ₹ Pricing) 🇮🇳');
           } else if (REGIONAL_COUNTRIES.some(c => countryName.includes(c) || countryCode.includes(c))) {
             setRegionMode('regional');
-            setDetectedLocation(`Detected: ${data.country_name || 'Regional'} (Regional Discount Tier 🏷️)`);
+            setDetectedLocation(`Location: ${data.country_name || 'Regional'} (Regional Tier 🏷️)`);
           } else {
             setRegionMode('international');
-            setDetectedLocation(`Detected: ${data.country_name || 'Global'} (International Tier)`);
+            setDetectedLocation(`Location: ${data.country_name || 'Global'} (International Tier 🌐)`);
           }
         })
         .catch(() => {
-          setDetectedLocation('Global Pricing');
+          setDetectedLocation('Global Location Applied');
         });
     }
   }, [userData]);
-
-  // Helper to resolve plan prices based on selected region
-  const getPlanPrice = (pkgId, tierType) => {
-    if (pkgId === '1-day') {
-      if (tierType === 'With Ads') {
-        if (regionMode === 'india') return '130';
-        if (regionMode === 'regional') return '3';
-        return '7';
-      } else {
-        if (regionMode === 'india') return '170';
-        if (regionMode === 'regional') return '5';
-        return '10';
-      }
-    }
-    if (pkgId === '10-days') {
-      if (tierType === 'With Ads') {
-        if (regionMode === 'india') return '299';
-        if (regionMode === 'regional') return '7';
-        return '15';
-      } else {
-        if (regionMode === 'india') return '379';
-        if (regionMode === 'regional') return '10';
-        return '19';
-      }
-    }
-    if (pkgId === '1-month') {
-      if (tierType === 'With Ads') {
-        if (regionMode === 'india') return '449';
-        if (regionMode === 'regional') return '12';
-        return '25';
-      } else {
-        if (regionMode === 'india') return '499';
-        if (regionMode === 'regional') return '18';
-        return '35';
-      }
-    }
-    return '';
-  };
 
   const currencySymbol = regionMode === 'india' ? '₹' : '$';
 
@@ -101,11 +64,12 @@ export default function PricingPage() {
       icon: Zap,
       badge: 'Quick Trial',
       badgeClass: styles.badgeCyan,
-      description: 'Full access for 24 hours. Perfect for quick connections and testing out premium matching.',
+      description: 'Full 24-hour access. Perfect for quick connections and testing premium filters.',
       durationLabel: '/ 24 Hours',
       tiers: [
         {
           type: 'With Ads',
+          isAdFree: false,
           tag: 'Standard Access',
           tagClass: styles.tagWithAds,
           isFeatured: false,
@@ -114,18 +78,19 @@ export default function PricingPage() {
             'Global Live Matching',
             'Gender Preference Filter',
             'Standard Video Quality',
-            'Interstitials & Banner Ads Included',
+            'Interstitials & Ads Included',
           ],
           btnClass: styles.btnStandard,
         },
         {
           type: 'Without Ads (Ad-Free)',
+          isAdFree: true,
           tag: 'Zero Ads + VIP',
           tagClass: styles.tagNoAds,
           isFeatured: true,
           features: [
             'Unlimited HD Video Calls (24 Hours)',
-            '100% Ad-Free Experience',
+            '100% Zero Ads Guarantee',
             'Priority Fast Match Queue',
             'Full Gender & Country Filters',
             'VIP Badge on Profile',
@@ -146,6 +111,7 @@ export default function PricingPage() {
       tiers: [
         {
           type: 'With Ads',
+          isAdFree: false,
           tag: 'Standard Access',
           tagClass: styles.tagWithAds,
           isFeatured: false,
@@ -160,6 +126,7 @@ export default function PricingPage() {
         },
         {
           type: 'Without Ads (Ad-Free)',
+          isAdFree: true,
           tag: 'Ad-Free + VIP Boost',
           tagClass: styles.tagNoAds,
           isFeatured: true,
@@ -185,6 +152,7 @@ export default function PricingPage() {
       tiers: [
         {
           type: 'With Ads',
+          isAdFree: false,
           tag: 'Standard VIP',
           tagClass: styles.tagWithAds,
           isFeatured: false,
@@ -199,6 +167,7 @@ export default function PricingPage() {
         },
         {
           type: 'Without Ads (Ad-Free)',
+          isAdFree: true,
           tag: 'Ultimate Platinum',
           tagClass: styles.tagNoAds,
           isFeatured: true,
@@ -215,21 +184,7 @@ export default function PricingPage() {
     },
   ];
 
-  const getPaymentLink = (pkgId, tierType) => {
-    if (regionMode === 'india') {
-      if (pkgId === '1-day' && tierType === 'With Ads') {
-        return 'https://rzp.io/rzp/0hqC5wl';
-      }
-      if (pkgId === '1-day' && tierType === 'Without Ads (Ad-Free)') return 'https://rzp.io/rzp/XJPN9Fk';
-      if (pkgId === '10-days' && tierType === 'With Ads') return '';
-      if (pkgId === '10-days' && tierType === 'Without Ads (Ad-Free)') return '';
-      if (pkgId === '1-month' && tierType === 'With Ads') return '';
-      if (pkgId === '1-month' && tierType === 'Without Ads (Ad-Free)') return '';
-    }
-    return null;
-  };
-
-  const handlePlanClick = (pkgId, tierType, planName, price) => {
+  const handlePlanClick = (pkgId, isAdFree, planName, price) => {
     // 1. Auth Gatekeeper
     if (!user) {
       setShowLogin(true);
@@ -242,13 +197,12 @@ export default function PricingPage() {
       return;
     }
 
-    // 3. Process Checkout
-    const link = getPaymentLink(pkgId, tierType);
+    // 3. Get exact payment URL
+    const link = getPaymentUrl(pkgId, isAdFree, regionMode, user?.email || '', userData?.name || '');
     if (link) {
-      // Append user identifiers to payment page parameters if needed
-      window.location.href = `${link}?email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(userData.name || '')}`;
+      window.location.href = link;
     } else {
-      alert(`Processing VIP Pass: ${planName} (${currencySymbol}${price}). Redirecting to Checkout...`);
+      alert(`Initiating purchase for ${planName} (${currencySymbol}${price})...`);
     }
   };
 
@@ -262,14 +216,30 @@ export default function PricingPage() {
       <div className={styles.header}>
         <div className={styles.headerBadge}>
           <Crown size={16} />
-          <span>Camverz Premium Passes</span>
+          <span>Camverz VIP Passes</span>
         </div>
         <h1 className={styles.title}>
           Choose Your <span className="neon-text">VIP Experience</span>
         </h1>
         <p className={styles.subtitle}>
-          Unlock unlimited live video calls, gender filters, fast queueing, and ad-free streaming. Select from our 3 pass durations below!
+          Unlock unlimited live video calls, gender filters, fast queueing, and ad-free streaming. Select your preferred pass duration below!
         </p>
+
+        {/* Active Plan Banner (if user already has an active subscription) */}
+        {subStatus.hasActivePlan && (
+          <div className={styles.activePlanBanner} style={{ borderColor: subStatus.badgeColor }}>
+            <div className={styles.activePlanHeader}>
+              <Crown size={20} style={{ color: subStatus.badgeColor }} />
+              <span className={styles.activePlanTitle}>Current Active Plan: <strong>{subStatus.planName}</strong></span>
+            </div>
+            <div className={styles.activePlanMeta}>
+              <span className={styles.activeBadge} style={{ background: subStatus.badgeColor }}>
+                {subStatus.badgeText}
+              </span>
+              <span className={styles.activeRemaining}>⏱️ {subStatus.remainingText}</span>
+            </div>
+          </div>
+        )}
 
         {/* Region & Location Selector */}
         <div className={styles.regionToggleContainer}>
@@ -278,27 +248,31 @@ export default function PricingPage() {
             <span>{detectedLocation}</span>
           </div>
 
-          <div className={styles.regionToggleGroup}>
-            <button
-              className={`${styles.regionBtn} ${regionMode === 'india' ? styles.regionBtnActive : ''}`}
-              onClick={() => setRegionMode('india')}
-            >
-              <span>🇮🇳 India (₹ INR)</span>
-            </button>
-            <button
-              className={`${styles.regionBtn} ${regionMode === 'regional' ? styles.regionBtnActive : ''}`}
-              onClick={() => setRegionMode('regional')}
-            >
-              <span>🌏 Regional (USD)</span>
-            </button>
-            <button
-              className={`${styles.regionBtn} ${regionMode === 'international' ? styles.regionBtnActive : ''}`}
-              onClick={() => setRegionMode('international')}
-            >
-              <Globe size={14} />
-              <span>International (USD)</span>
-            </button>
-          </div>
+          {/* REQUIREMENT: Show region switcher ONLY when NOT logged in.
+              When logged in, hide region toggle buttons and show locked region pricing. */}
+          {!user && (
+            <div className={styles.regionToggleGroup}>
+              <button
+                className={`${styles.regionBtn} ${regionMode === 'india' ? styles.regionBtnActive : ''}`}
+                onClick={() => setRegionMode('india')}
+              >
+                <span>🇮🇳 India (₹ INR)</span>
+              </button>
+              <button
+                className={`${styles.regionBtn} ${regionMode === 'regional' ? styles.regionBtnActive : ''}`}
+                onClick={() => setRegionMode('regional')}
+              >
+                <span>🌏 Regional (USD)</span>
+              </button>
+              <button
+                className={`${styles.regionBtn} ${regionMode === 'international' ? styles.regionBtnActive : ''}`}
+                onClick={() => setRegionMode('international')}
+              >
+                <Globe size={14} />
+                <span>International (USD)</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -306,6 +280,9 @@ export default function PricingPage() {
       <div className={styles.sectionsContainer}>
         {packages.map((pkg) => {
           const IconComponent = pkg.icon;
+          const pkgData = PRICING_MATRIX[pkg.id];
+          const regionMatrix = pkgData[regionMode] || pkgData.international;
+
           return (
             <div
               key={pkg.id}
@@ -330,7 +307,10 @@ export default function PricingPage() {
               {/* Tiers Grid: With Ads vs Without Ads */}
               <div className={styles.tiersGrid}>
                 {pkg.tiers.map((tier, idx) => {
-                  const resolvedPrice = getPlanPrice(pkg.id, tier.type);
+                  const tierData = tier.isAdFree ? regionMatrix.no_ads : regionMatrix.with_ads;
+                  const priceVal = tierData.price;
+                  const displayPrice = tierData.displayPrice;
+
                   return (
                     <div
                       key={idx}
@@ -348,7 +328,7 @@ export default function PricingPage() {
 
                       <div className={styles.tierPriceContainer}>
                         <span className={styles.priceCurrency}>{currencySymbol}</span>
-                        <span className={styles.priceValue}>{resolvedPrice}</span>
+                        <span className={styles.priceValue}>{priceVal}</span>
                         <span className={styles.pricePeriod}>{pkg.durationLabel}</span>
                       </div>
 
@@ -367,9 +347,9 @@ export default function PricingPage() {
 
                       <button
                         className={`${styles.buyBtn} ${tier.btnClass}`}
-                        onClick={() => handlePlanClick(pkg.id, tier.type, `${pkg.title} - ${tier.type}`, resolvedPrice)}
+                        onClick={() => handlePlanClick(pkg.id, tier.isAdFree, `${pkg.title} (${tier.type})`, priceVal)}
                       >
-                        <span>Choose Plan ({currencySymbol}{resolvedPrice})</span>
+                        <span>Choose Plan ({displayPrice})</span>
                         <ArrowRight size={16} />
                       </button>
                     </div>

@@ -68,6 +68,55 @@
   line-height: 1.6;
 }
 
+.activePlanBanner {
+  background: rgba(13, 13, 31, 0.85);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 16px;
+  padding: 16px 24px;
+  margin: 20px auto;
+  max-width: 600px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 229, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.activePlanHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+.activePlanTitle {
+  font-weight: 500;
+}
+
+.activePlanMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.activeBadge {
+  color: #000;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.activeRemaining {
+  font-size: 0.9rem;
+  color: var(--neon-cyan);
+  font-weight: 600;
+}
+
 /* Region Switcher Controls */
 .regionToggleContainer {
   display: flex;

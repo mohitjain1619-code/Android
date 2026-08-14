@@ -107,3 +107,35 @@
 -keepattributes SourceFile,LineNumberTable
 -keep class com.inmobi.** { *; }
 -dontwarn com.inmobi.**
+
+# ==============================================================================
+# Google Tink (crypto library used transitively — missing http classes)
+# ==============================================================================
+-dontwarn com.google.api.client.http.**
+-dontwarn com.google.api.client.**
+-dontwarn org.joda.time.**
+-keep class com.google.crypto.tink.** { *; }
+-dontwarn com.google.crypto.tink.**
+
+# ==============================================================================
+# Unity Ads SDK
+# ==============================================================================
+-keep class com.unity3d.ads.** { *; }
+-dontwarn com.unity3d.ads.**
+-keep class com.unity3d.services.** { *; }
+-dontwarn com.unity3d.services.**
+
+# ==============================================================================
+# ironSource / LevelPlay SDK
+# ==============================================================================
+-keep class com.ironsource.** { *; }
+-dontwarn com.ironsource.**
+-keep class com.unity3d.mediation.** { *; }
+-dontwarn com.unity3d.mediation.**
+
+# ==============================================================================
+# R8 missing_rules.txt catch-all (suppress known transitive missing refs)
+# ==============================================================================
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+-dontwarn com.google.j2objc.annotations.**

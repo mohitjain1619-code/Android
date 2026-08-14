@@ -117,13 +117,15 @@ public class CreatePostActivity extends BaseActivity {
         });
     }
 
+    private String loadedRewardedPlacementId = null;
+
     private void loadUnityRewardedAd() {
         if (!com.unity3d.ads.UnityAds.isInitialized()) {
             com.unity3d.ads.UnityAds.initialize(getApplicationContext(), "800356158", false, new com.unity3d.ads.IUnityAdsInitializationListener() {
                 @Override
                 public void onInitializationComplete() {
                     Log.d(TAG, "Unity Ads initialized in CreatePostActivity");
-                    preloadRewardedAdInternal();
+                    preloadRewardedAdInternal("rew");
                 }
 
                 @Override
@@ -132,32 +134,41 @@ public class CreatePostActivity extends BaseActivity {
                 }
             });
         } else {
-            preloadRewardedAdInternal();
+            preloadRewardedAdInternal("rew");
         }
     }
 
-    private void preloadRewardedAdInternal() {
-        com.unity3d.ads.UnityAds.load("Rewarded_Android", new com.unity3d.ads.IUnityAdsLoadListener() {
+    private void preloadRewardedAdInternal(String placementId) {
+        com.unity3d.ads.UnityAds.load(placementId, new com.unity3d.ads.IUnityAdsLoadListener() {
             @Override
-            public void onUnityAdsAdLoaded(String placementId) {
+            public void onUnityAdsAdLoaded(String pId) {
                 isRewardedAdLoaded = true;
-                Log.d(TAG, "Unity Rewarded Ad loaded successfully");
+                loadedRewardedPlacementId = pId;
+                Log.d(TAG, "Unity Rewarded Ad loaded successfully with placement: " + pId);
             }
 
             @Override
-            public void onUnityAdsFailedToLoad(String placementId, com.unity3d.ads.UnityAds.UnityAdsLoadError error, String message) {
-                isRewardedAdLoaded = false;
-                Log.e(TAG, "Unity Rewarded Ad failed to load: " + message);
+            public void onUnityAdsFailedToLoad(String pId, com.unity3d.ads.UnityAds.UnityAdsLoadError error, String message) {
+                Log.e(TAG, "Unity Rewarded Ad failed for placement " + pId + ": " + message);
+                if ("rew".equals(pId)) {
+                    preloadRewardedAdInternal("800356158_rewarded");
+                } else if ("800356158_rewarded".equals(pId)) {
+                    preloadRewardedAdInternal("Rewarded_Android");
+                } else if ("Rewarded_Android".equals(pId)) {
+                    preloadRewardedAdInternal("rewarded");
+                } else {
+                    isRewardedAdLoaded = false;
+                }
             }
         });
     }
 
     private void showUnityRewardedAdAndFinish() {
-        if (isRewardedAdLoaded) {
-            com.unity3d.ads.UnityAds.show(this, "Rewarded_Android", new com.unity3d.ads.IUnityAdsShowListener() {
+        if (isRewardedAdLoaded && loadedRewardedPlacementId != null) {
+            com.unity3d.ads.UnityAds.show(this, loadedRewardedPlacementId, new com.unity3d.ads.IUnityAdsShowListener() {
                 @Override
                 public void onUnityAdsShowStart(String placementId) {
-                    Log.d(TAG, "Unity Rewarded Ad started displaying");
+                    Log.d(TAG, "Unity Rewarded Ad started displaying: " + placementId);
                 }
 
                 @Override

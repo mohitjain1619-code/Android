@@ -573,4 +573,12 @@ public class ConnectingActivity extends BaseActivity {
             limitExceededListener = null;
         }
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (!matchAccepted && isWaiting) {
+            leaveQueue();
+        }
+    }
 }

@@ -73,6 +73,9 @@ public class ProfileActivity extends BaseActivity {
     
     private ApiService api;
     private TokenManager tokenManager;
+    private com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout;
+    private android.widget.FrameLayout nativeAdContainer;
+    private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,6 +166,11 @@ public class ProfileActivity extends BaseActivity {
 
         checkBlockStatusAndLoad();
         setupUI();
+
+        // Initialize ironSource native ad layouts and load once LevelPlay init is complete
+        nativeAdContainer = findViewById(R.id.ironsource_native_container);
+        nativeAdLayout = findViewById(R.id.ironsource_native_ad_layout);
+        BaseActivity.runOnLevelPlayInit(this::loadLevelPlayNativeAd);
     }
 
     private void checkBlockStatusAndLoad() {
@@ -971,5 +979,70 @@ public class ProfileActivity extends BaseActivity {
                     finish();
                 });
         builder.show();
+    }
+
+    private void loadLevelPlayNativeAd() {
+        try {
+            if (levelPlayNativeAd != null) {
+                levelPlayNativeAd.destroyAd();
+                levelPlayNativeAd = null;
+            }
+
+            // ironSource LevelPlay Native Ad Builder
+            levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
+                    .withPlacementName("4178n3sq2cj8dahz")
+                    .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
+                        @Override
+                        public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                            android.util.Log.d("ProfileActivity", "ironSource Native Ad loaded successfully");
+                            runOnUiThread(() -> {
+                                if (nativeAdContainer != null && nativeAdLayout != null) {
+                                    nativeAdContainer.setVisibility(android.view.View.VISIBLE);
+                                    nativeAdLayout.removeAllViews();
+                                    
+                                    // Inflate custom layout assets inside NativeAdLayout
+                                    android.view.LayoutInflater.from(ProfileActivity.this)
+                                            .inflate(R.layout.layout_native_ad_levelplay, nativeAdLayout, true);
+                                            
+                                    // Map views to layout setters
+                                    nativeAdLayout.setTitleView(nativeAdLayout.findViewById(R.id.ad_title));
+                                    nativeAdLayout.setBodyView(nativeAdLayout.findViewById(R.id.ad_body));
+                                    nativeAdLayout.setAdvertiserView(nativeAdLayout.findViewById(R.id.ad_advertiser));
+                                    nativeAdLayout.setCallToActionView(nativeAdLayout.findViewById(R.id.ad_cta));
+                                    nativeAdLayout.setIconView(nativeAdLayout.findViewById(R.id.ad_icon));
+                                    nativeAdLayout.setMediaView((com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView) nativeAdLayout.findViewById(R.id.ad_media));
+                                    
+                                    // Register views to register impressions/clicks
+                                    nativeAdLayout.registerNativeAdViews(nativeAd);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.logger.IronSourceError error) {
+                            android.util.Log.e("ProfileActivity", "ironSource Native Ad load failed: " + error.getErrorMessage());
+                        }
+
+                        @Override
+                        public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                        @Override
+                        public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    })
+                    .build();
+
+            levelPlayNativeAd.loadAd();
+        } catch (Exception e) {
+            android.util.Log.e("ProfileActivity", "Error loading ironSource Native Ad: " + e.getMessage());
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (levelPlayNativeAd != null) {
+            levelPlayNativeAd.destroyAd();
+            levelPlayNativeAd = null;
+        }
+        super.onDestroy();
     }
 }

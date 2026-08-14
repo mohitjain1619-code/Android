@@ -64,6 +64,7 @@ public class ChatActivity extends BaseActivity {
     
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
+    private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd ironSourceInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,12 +98,53 @@ public class ChatActivity extends BaseActivity {
         AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
 
         View.OnClickListener profileListener = v -> {
-            Intent intent = new Intent(ChatActivity.this, ProfileActivity.class);
-            intent.putExtra("userId", receiverId);
-            startActivity(intent);
+            if (ironSourceInterstitialAd != null && ironSourceInterstitialAd.isAdReady()) {
+                Log.d(TAG, "📺 Showing ironSource Interstitial on profile click");
+                ironSourceInterstitialAd.showAd(ChatActivity.this);
+            } else {
+                navigateToProfileDirectly();
+            }
         };
         toolbarAvatar.setOnClickListener(profileListener);
         toolbarUsername.setOnClickListener(profileListener);
+
+        // Preload ironSource Interstitial
+        try {
+            ironSourceInterstitialAd = new com.unity3d.mediation.interstitial.LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
+            ironSourceInterstitialAd.setListener(new com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener() {
+                @Override
+                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "ironSource Interstitial loaded successfully");
+                }
+
+                @Override
+                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
+                    Log.e(TAG, "ironSource Interstitial failed to load: " + error.getErrorMessage());
+                }
+
+                @Override
+                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                @Override
+                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.e(TAG, "ironSource Interstitial failed to show: " + error.getErrorMessage());
+                    navigateToProfileDirectly();
+                }
+
+                @Override
+                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                @Override
+                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    navigateToProfileDirectly();
+                }
+            });
+            BaseActivity.runOnLevelPlayInit(() -> {
+                if (ironSourceInterstitialAd != null) ironSourceInterstitialAd.loadAd();
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error preloading ironSource Interstitial: " + e.getMessage());
+        }
         
         videoCallBtn.setOnClickListener(v -> initiateCall(true));
         voiceCallBtn.setOnClickListener(v -> initiateCall(false));
@@ -400,6 +442,12 @@ public class ChatActivity extends BaseActivity {
     }
     
     // deleteMessage methods omitted for brevity, can be added later if needed via API
+
+    private void navigateToProfileDirectly() {
+        Intent intent = new Intent(ChatActivity.this, ProfileActivity.class);
+        intent.putExtra("userId", receiverId);
+        startActivity(intent);
+    }
 
     @Override
     protected void onDestroy() {

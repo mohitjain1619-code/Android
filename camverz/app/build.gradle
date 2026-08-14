@@ -23,8 +23,8 @@ android {
         applicationId = "com.mohitt.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 39
-        versionName = "1.1.8"
+        versionCode = 40
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -158,6 +158,9 @@ dependencies {
 
     // Unity Ads SDK
     implementation 'com.unity3d.ads:unity-ads:4.12.2'
+
+    // ironSource (LevelPlay) SDK
+    implementation 'com.unity3d.ads-mediation:mediation-sdk:9.5.0'
 
     // Required InMobi SDK dependencies
     implementation 'com.inmobi.monetization:inmobi-ads-kotlin:10.7.5'
