@@ -89,6 +89,7 @@ public class ConnectingActivity extends BaseActivity {
             });
         });
 
+        checkAndRequestLocationPermission();
         setupSocketListeners();
         loadUserDataAndJoinQueue();
 
@@ -548,6 +549,14 @@ public class ConnectingActivity extends BaseActivity {
         if (socket != null && matchFoundListener != null) {
             socket.off("match-found", matchFoundListener);
             matchFoundListener = null;
+        }
+    }
+
+    private void checkAndRequestLocationPermission() {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            androidx.core.app.ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    1001);
         }
     }
 
