@@ -26,6 +26,11 @@ public class BaseActivity extends AppCompatActivity {
         try {
             consentObject.put("gdpr", "0");
         } catch (Exception e) {}
+        
+        if (com.mohitt.camverz.BuildConfig.DEBUG) {
+            com.inmobi.sdk.InMobiSdk.setLogLevel(com.inmobi.sdk.InMobiSdk.LogLevel.DEBUG);
+        }
+
         com.inmobi.sdk.InMobiSdk.init(this, "cf32cb0f880544468e1a4077d1febf0d", consentObject, new com.inmobi.sdk.SdkInitializationListener() {
             @Override
             public void onInitializationComplete(@androidx.annotation.Nullable Error error) {
