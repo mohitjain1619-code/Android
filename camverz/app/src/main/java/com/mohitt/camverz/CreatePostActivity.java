@@ -33,6 +33,7 @@ public class CreatePostActivity extends BaseActivity {
     private RadioGroup categoryGroup;
     private ApiService api;
     private boolean isPosting = false;
+    private boolean isRewardedAdLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,9 @@ public class CreatePostActivity extends BaseActivity {
                 uploadPost();
             }
         });
+
+        // Preload Unity Rewarded Ad
+        loadUnityRewardedAd();
     }
 
     private void uploadPost() {
@@ -94,7 +98,7 @@ public class CreatePostActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         Toast.makeText(CreatePostActivity.this, "Post uploaded", Toast.LENGTH_SHORT).show();
-                        finish();
+                        showUnityRewardedAdAndFinish();
                         return;
                     }
                 }
@@ -111,5 +115,68 @@ public class CreatePostActivity extends BaseActivity {
                 postButton.setEnabled(true);
             }
         });
+    }
+
+    private void loadUnityRewardedAd() {
+        if (!com.unity3d.ads.UnityAds.isInitialized()) {
+            com.unity3d.ads.UnityAds.initialize(getApplicationContext(), "800356158", false, new com.unity3d.ads.IUnityAdsInitializationListener() {
+                @Override
+                public void onInitializationComplete() {
+                    Log.d(TAG, "Unity Ads initialized in CreatePostActivity");
+                    preloadRewardedAdInternal();
+                }
+
+                @Override
+                public void onInitializationFailed(com.unity3d.ads.UnityAds.UnityAdsInitializationError error, String message) {
+                    Log.e(TAG, "Unity Ads initialization failed in CreatePostActivity: " + message);
+                }
+            });
+        } else {
+            preloadRewardedAdInternal();
+        }
+    }
+
+    private void preloadRewardedAdInternal() {
+        com.unity3d.ads.UnityAds.load("Rewarded_Android", new com.unity3d.ads.IUnityAdsLoadListener() {
+            @Override
+            public void onUnityAdsAdLoaded(String placementId) {
+                isRewardedAdLoaded = true;
+                Log.d(TAG, "Unity Rewarded Ad loaded successfully");
+            }
+
+            @Override
+            public void onUnityAdsFailedToLoad(String placementId, com.unity3d.ads.UnityAds.UnityAdsLoadError error, String message) {
+                isRewardedAdLoaded = false;
+                Log.e(TAG, "Unity Rewarded Ad failed to load: " + message);
+            }
+        });
+    }
+
+    private void showUnityRewardedAdAndFinish() {
+        if (isRewardedAdLoaded) {
+            com.unity3d.ads.UnityAds.show(this, "Rewarded_Android", new com.unity3d.ads.IUnityAdsShowListener() {
+                @Override
+                public void onUnityAdsShowStart(String placementId) {
+                    Log.d(TAG, "Unity Rewarded Ad started displaying");
+                }
+
+                @Override
+                public void onUnityAdsShowClick(String placementId) {}
+
+                @Override
+                public void onUnityAdsShowComplete(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowCompletionState state) {
+                    Log.d(TAG, "Unity Rewarded Ad completed displaying with state: " + state);
+                    finish();
+                }
+
+                @Override
+                public void onUnityAdsShowFailure(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowError error, String message) {
+                    Log.e(TAG, "Unity Rewarded Ad failed to display: " + message);
+                    finish();
+                }
+            });
+        } else {
+            finish();
+        }
     }
 }

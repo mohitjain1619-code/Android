@@ -195,6 +195,7 @@ public class CallActivity extends AppCompatActivity {
 
     private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
     private com.facebook.ads.InterstitialAd metaInterstitialAd;
+    private boolean isUnityInterstitialLoaded = false;
     private int retryAttempt;
     private boolean isInitiator = false;
 
@@ -336,6 +337,9 @@ public class CallActivity extends AppCompatActivity {
 
         initUI();
         checkPermissions();
+        
+        // Preload Unity Interstitial ad
+        loadUnityInterstitialAd();
     }
 
     @Override
@@ -1459,9 +1463,12 @@ public class CallActivity extends AppCompatActivity {
 
         final int finalCount = currentCount;
         runOnUiThread(() -> {
-            // Show mediated interstitial ad on every 2nd completed call to ensure optimal user experience
-            if (finalCount % 2 == 0 && !isFinishing() && !isDestroyed()) {
-                if (interstitialAd != null) {
+            // Show interstitial ad on every completed call to ensure optimal user experience
+            if (!isFinishing() && !isDestroyed()) {
+                if (isUnityInterstitialLoaded) {
+                    Log.d(TAG, "📺 Showing Unity Interstitial on disconnect (Call #" + finalCount + ")");
+                    showUnityInterstitialAndFinish();
+                } else if (interstitialAd != null) {
                     Log.d(TAG, "📺 Showing AdMob Interstitial on disconnect (Call #" + finalCount + ")");
                     interstitialAd.show(CallActivity.this);
                 } else if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
@@ -1768,5 +1775,64 @@ public class CallActivity extends AppCompatActivity {
             metaInterstitialAd = null;
         }
         super.onDestroy();
+    }
+
+    private void loadUnityInterstitialAd() {
+        if (!com.unity3d.ads.UnityAds.isInitialized()) {
+            com.unity3d.ads.UnityAds.initialize(getApplicationContext(), "800356158", false, new com.unity3d.ads.IUnityAdsInitializationListener() {
+                @Override
+                public void onInitializationComplete() {
+                    Log.d(TAG, "Unity Ads initialized in CallActivity");
+                    preloadInterstitialInternal();
+                }
+
+                @Override
+                public void onInitializationFailed(com.unity3d.ads.UnityAds.UnityAdsInitializationError error, String message) {
+                    Log.e(TAG, "Unity Ads initialization failed in CallActivity: " + message);
+                }
+            });
+        } else {
+            preloadInterstitialInternal();
+        }
+    }
+
+    private void preloadInterstitialInternal() {
+        com.unity3d.ads.UnityAds.load("Interstitial_Android", new com.unity3d.ads.IUnityAdsLoadListener() {
+            @Override
+            public void onUnityAdsAdLoaded(String placementId) {
+                isUnityInterstitialLoaded = true;
+                Log.d(TAG, "Unity Interstitial loaded successfully");
+            }
+
+            @Override
+            public void onUnityAdsFailedToLoad(String placementId, com.unity3d.ads.UnityAds.UnityAdsLoadError error, String message) {
+                isUnityInterstitialLoaded = false;
+                Log.e(TAG, "Unity Interstitial failed to load: " + message);
+            }
+        });
+    }
+
+    private void showUnityInterstitialAndFinish() {
+        com.unity3d.ads.UnityAds.show(this, "Interstitial_Android", new com.unity3d.ads.IUnityAdsShowListener() {
+            @Override
+            public void onUnityAdsShowStart(String placementId) {
+                Log.d(TAG, "Unity Interstitial started displaying");
+            }
+
+            @Override
+            public void onUnityAdsShowClick(String placementId) {}
+
+            @Override
+            public void onUnityAdsShowComplete(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowCompletionState state) {
+                Log.d(TAG, "Unity Interstitial completed displaying: " + state);
+                finish();
+            }
+
+            @Override
+            public void onUnityAdsShowFailure(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowError error, String message) {
+                Log.e(TAG, "Unity Interstitial failed to display: " + message);
+                finish();
+            }
+        });
     }
 }

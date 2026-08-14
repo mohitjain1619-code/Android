@@ -42,6 +42,21 @@ public class BaseActivity extends AppCompatActivity {
             }
         });
 
+        // Initialize Unity Ads SDK
+        if (!com.unity3d.ads.UnityAds.isInitialized()) {
+            com.unity3d.ads.UnityAds.initialize(getApplicationContext(), "800356158", false, new com.unity3d.ads.IUnityAdsInitializationListener() {
+                @Override
+                public void onInitializationComplete() {
+                    android.util.Log.d("BaseActivity", "Unity Ads Init Successful");
+                }
+
+                @Override
+                public void onInitializationFailed(com.unity3d.ads.UnityAds.UnityAdsInitializationError error, String message) {
+                    android.util.Log.e("BaseActivity", "Unity Ads Init Failed: " + message);
+                }
+            });
+        }
+
         // Enable edge-to-edge window insets
         androidx.activity.EdgeToEdge.enable(this);
         
