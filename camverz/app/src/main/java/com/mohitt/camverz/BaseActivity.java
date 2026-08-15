@@ -102,11 +102,21 @@ public class BaseActivity extends AppCompatActivity {
     private void initLevelPlaySDK() {
         if (isLevelPlayInitialized) return;
         try {
+            com.unity3d.mediation.LevelPlay.setAdaptersDebug(true);
             com.unity3d.mediation.LevelPlayInitRequest request = new com.unity3d.mediation.LevelPlayInitRequest.Builder("27a0e2125").build();
             com.unity3d.mediation.LevelPlay.init(this, request, new com.unity3d.mediation.LevelPlayInitListener() {
                 @Override
                 public void onInitSuccess(com.unity3d.mediation.LevelPlayConfiguration configuration) {
                     android.util.Log.d("BaseActivity", "✅ ironSource LevelPlay initialized successfully with App Key 27a0e2125");
+                    
+                    // Print clear bidding network check status
+                    android.util.Log.d("BiddingCheck", "--------------------------------------------------");
+                    android.util.Log.d("BiddingCheck", "🔎 CHECKING ACTIVE BIDDING ADAPTERS IN CODE:");
+                    checkAdapterClass("com.ironsource.adapters.unityads.UnityAdsAdapter", "Unity Ads (Bidding)");
+                    checkAdapterClass("com.ironsource.adapters.facebook.FacebookAdapter", "Meta / Facebook (Bidding)");
+                    checkAdapterClass("com.ironsource.adapters.inmobi.InMobiAdapter", "InMobi");
+                    android.util.Log.d("BiddingCheck", "--------------------------------------------------");
+
                     isLevelPlayInitialized = true;
                     synchronized (levelPlayInitCallbacks) {
                         for (Runnable cb : levelPlayInitCallbacks) {
@@ -123,6 +133,15 @@ public class BaseActivity extends AppCompatActivity {
             });
         } catch (Exception e) {
             android.util.Log.e("BaseActivity", "ironSource initialization exception: " + e.getMessage());
+        }
+    }
+
+    private void checkAdapterClass(String className, String networkName) {
+        try {
+            Class.forName(className);
+            android.util.Log.d("BiddingCheck", "✅ " + networkName + " Adapter: ACTIVE (Code integrated & ready for auction!)");
+        } catch (ClassNotFoundException e) {
+            android.util.Log.e("BiddingCheck", "❌ " + networkName + " Adapter: MISSING (Not integrated in code)");
         }
     }
 

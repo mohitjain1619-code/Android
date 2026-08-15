@@ -65,6 +65,8 @@ public class ChatActivity extends BaseActivity {
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
     private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd ironSourceInterstitialAd;
+    private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd messageLevelPlayAd;
+    private boolean isMessageAdLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,6 +183,7 @@ public class ChatActivity extends BaseActivity {
 
         setupSocket();
         checkBlockStatus();
+        loadMessageLevelPlayAd();
     }
     
     @Override
@@ -299,6 +302,7 @@ public class ChatActivity extends BaseActivity {
                             chatId = data.get("chatId").getAsString();
                         }
                         loadMessages(); // reload to show sent message
+                        showMessageLevelPlayAd();
                     } else {
                         Toast.makeText(ChatActivity.this, "Failed to send", Toast.LENGTH_SHORT).show();
                     }
@@ -453,5 +457,61 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         socket.off("new_message");
+    }
+
+    private void loadMessageLevelPlayAd() {
+        try {
+            messageLevelPlayAd = new com.unity3d.mediation.interstitial.LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
+            messageLevelPlayAd.setListener(new com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener() {
+                @Override
+                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    isMessageAdLoaded = true;
+                    Log.d(TAG, "✅ LevelPlay Interstitial for messages loaded successfully");
+                }
+
+                @Override
+                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
+                    isMessageAdLoaded = false;
+                    Log.e(TAG, "❌ LevelPlay Interstitial for messages load failed: " + error.getErrorMessage());
+                }
+
+                @Override
+                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "📺 LevelPlay Interstitial for messages displayed");
+                }
+
+                @Override
+                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.e(TAG, "❌ LevelPlay Interstitial for messages display failed: " + error.getErrorMessage());
+                    isMessageAdLoaded = false;
+                    loadMessageLevelPlayAd();
+                }
+
+                @Override
+                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                @Override
+                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "✅ LevelPlay Interstitial for messages closed");
+                    isMessageAdLoaded = false;
+                    loadMessageLevelPlayAd();
+                }
+            });
+            BaseActivity.runOnLevelPlayInit(() -> {
+                if (messageLevelPlayAd != null) {
+                    Log.d(TAG, "🔍 Loading LevelPlay Interstitial for messages");
+                    messageLevelPlayAd.loadAd();
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing LevelPlay Interstitial for messages: " + e.getMessage());
+        }
+    }
+
+    private void showMessageLevelPlayAd() {
+        Log.d(TAG, "🔍 showMessageLevelPlayAd called. isLoaded=" + isMessageAdLoaded);
+        if (messageLevelPlayAd != null && (isMessageAdLoaded || messageLevelPlayAd.isAdReady())) {
+            messageLevelPlayAd.showAd(this);
+        }
     }
 }

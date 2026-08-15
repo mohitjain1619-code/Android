@@ -33,7 +33,11 @@ public class CreatePostActivity extends BaseActivity {
     private RadioGroup categoryGroup;
     private ApiService api;
     private boolean isPosting = false;
-    private boolean isRewardedAdLoaded = false;
+    private com.unity3d.mediation.rewarded.LevelPlayRewardedAd levelPlayRewardedAd = null;
+    private boolean isRewardedVideoAvailable = false;
+    private android.app.ProgressDialog progressDialog;
+    private final android.os.Handler adWaitHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable adWaitRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +62,8 @@ public class CreatePostActivity extends BaseActivity {
             }
         });
 
-        // Preload Unity Rewarded Ad
-        loadUnityRewardedAd();
+        // Preload ironSource LevelPlay Rewarded Ad
+        BaseActivity.runOnLevelPlayInit(this::loadLevelPlayRewardedVideoAd);
     }
 
     private void uploadPost() {
@@ -98,7 +102,7 @@ public class CreatePostActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         Toast.makeText(CreatePostActivity.this, "Post uploaded", Toast.LENGTH_SHORT).show();
-                        showUnityRewardedAdAndFinish();
+                        showLevelPlayRewardedAdAndFinish();
                         return;
                     }
                 }
@@ -117,77 +121,93 @@ public class CreatePostActivity extends BaseActivity {
         });
     }
 
-    private String loadedRewardedPlacementId = null;
-
-    private void loadUnityRewardedAd() {
-        if (!com.unity3d.ads.UnityAds.isInitialized()) {
-            com.unity3d.ads.UnityAds.initialize(getApplicationContext(), "800356158", false, new com.unity3d.ads.IUnityAdsInitializationListener() {
+    private void loadLevelPlayRewardedVideoAd() {
+        try {
+            levelPlayRewardedAd = new com.unity3d.mediation.rewarded.LevelPlayRewardedAd("onddt1lewzexkb5q");
+            levelPlayRewardedAd.setListener(new com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener() {
                 @Override
-                public void onInitializationComplete() {
-                    Log.d(TAG, "Unity Ads initialized in CreatePostActivity");
-                    preloadRewardedAdInternal("rew");
+                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    isRewardedVideoAvailable = true;
+                    Log.d(TAG, "ironSource Rewarded Ad loaded successfully for CreatePostActivity");
+                    runOnUiThread(() -> {
+                        if (progressDialog != null && progressDialog.isShowing()) {
+                            adWaitHandler.removeCallbacks(adWaitRunnable);
+                            progressDialog.dismiss();
+                            if (levelPlayRewardedAd != null) {
+                                levelPlayRewardedAd.showAd(CreatePostActivity.this);
+                            } else {
+                                finish();
+                            }
+                        }
+                    });
                 }
 
                 @Override
-                public void onInitializationFailed(com.unity3d.ads.UnityAds.UnityAdsInitializationError error, String message) {
-                    Log.e(TAG, "Unity Ads initialization failed in CreatePostActivity: " + message);
-                }
-            });
-        } else {
-            preloadRewardedAdInternal("rew");
-        }
-    }
-
-    private void preloadRewardedAdInternal(String placementId) {
-        com.unity3d.ads.UnityAds.load(placementId, new com.unity3d.ads.IUnityAdsLoadListener() {
-            @Override
-            public void onUnityAdsAdLoaded(String pId) {
-                isRewardedAdLoaded = true;
-                loadedRewardedPlacementId = pId;
-                Log.d(TAG, "Unity Rewarded Ad loaded successfully with placement: " + pId);
-            }
-
-            @Override
-            public void onUnityAdsFailedToLoad(String pId, com.unity3d.ads.UnityAds.UnityAdsLoadError error, String message) {
-                Log.e(TAG, "Unity Rewarded Ad failed for placement " + pId + ": " + message);
-                if ("rew".equals(pId)) {
-                    preloadRewardedAdInternal("800356158_rewarded");
-                } else if ("800356158_rewarded".equals(pId)) {
-                    preloadRewardedAdInternal("Rewarded_Android");
-                } else if ("Rewarded_Android".equals(pId)) {
-                    preloadRewardedAdInternal("rewarded");
-                } else {
-                    isRewardedAdLoaded = false;
-                }
-            }
-        });
-    }
-
-    private void showUnityRewardedAdAndFinish() {
-        if (isRewardedAdLoaded && loadedRewardedPlacementId != null) {
-            com.unity3d.ads.UnityAds.show(this, loadedRewardedPlacementId, new com.unity3d.ads.IUnityAdsShowListener() {
-                @Override
-                public void onUnityAdsShowStart(String placementId) {
-                    Log.d(TAG, "Unity Rewarded Ad started displaying: " + placementId);
+                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
+                    isRewardedVideoAvailable = false;
+                    Log.w(TAG, "ironSource Rewarded Ad failed to load in CreatePostActivity: " + error.getErrorMessage());
+                    runOnUiThread(() -> {
+                        if (progressDialog != null && progressDialog.isShowing()) {
+                            adWaitHandler.removeCallbacks(adWaitRunnable);
+                            cleanupAndFinish();
+                        }
+                    });
                 }
 
                 @Override
-                public void onUnityAdsShowClick(String placementId) {}
+                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "ironSource Rewarded Ad displayed");
+                }
 
                 @Override
-                public void onUnityAdsShowComplete(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowCompletionState state) {
-                    Log.d(TAG, "Unity Rewarded Ad completed displaying with state: " + state);
+                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.e(TAG, "ironSource Rewarded Ad display failed: " + error.getErrorMessage());
                     finish();
                 }
 
                 @Override
-                public void onUnityAdsShowFailure(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowError error, String message) {
-                    Log.e(TAG, "Unity Rewarded Ad failed to display: " + message);
+                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                @Override
+                public void onAdRewarded(com.unity3d.mediation.rewarded.LevelPlayReward reward, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                    Log.d(TAG, "ironSource Rewarded Ad successfully rewarded user");
+                }
+
+                @Override
+                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
                     finish();
                 }
             });
-        } else {
-            finish();
+            levelPlayRewardedAd.loadAd();
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading ironSource Rewarded Ad: " + e.getMessage());
         }
+    }
+
+    private void showLevelPlayRewardedAdAndFinish() {
+        if (levelPlayRewardedAd != null && (isRewardedVideoAvailable || levelPlayRewardedAd.isAdReady())) {
+            levelPlayRewardedAd.showAd(this);
+        } else {
+            // Show loading dialog and wait up to 2.5 seconds
+            progressDialog = new android.app.ProgressDialog(this);
+            progressDialog.setMessage("Loading ad...");
+            progressDialog.setCancelable(false);
+            progressDialog.show();
+
+            adWaitRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    cleanupAndFinish();
+                }
+            };
+            adWaitHandler.postDelayed(adWaitRunnable, 2500);
+        }
+    }
+
+    private void cleanupAndFinish() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
+        }
+        finish();
     }
 }

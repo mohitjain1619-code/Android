@@ -199,6 +199,8 @@ public class CallActivity extends AppCompatActivity {
     private boolean isUnityInterstitialLoaded = false;
     private int retryAttempt;
     private boolean isInitiator = false;
+    private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd levelPlayPrivateCallAd = null;
+    private boolean isPrivateCallAdLoaded = false;
 
     private final android.content.BroadcastReceiver headsetReceiver = new android.content.BroadcastReceiver() {
         @Override
@@ -452,6 +454,7 @@ public class CallActivity extends AppCompatActivity {
         }
         startConnectionAnimation();
         loadPeerUserInfo();
+        loadPrivateCallAdIfNeeded();
     }
 
     private void checkPermissions() {
@@ -1472,6 +1475,17 @@ public class CallActivity extends AppCompatActivity {
                 return;
             }
 
+            boolean isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
+            if (isPrivateCall) {
+                if (levelPlayPrivateCallAd != null && (isPrivateCallAdLoaded || levelPlayPrivateCallAd.isAdReady())) {
+                    Log.d(TAG, "📺 Showing LevelPlay Interstitial on private call disconnect");
+                    levelPlayPrivateCallAd.showAd(CallActivity.this);
+                } else {
+                    finish();
+                }
+                return;
+            }
+
             if (isUnityInterstitialLoaded) {
                 Log.d(TAG, "📺 Showing Unity Interstitial on disconnect (Call #" + finalCount + ")");
                 showUnityInterstitialAndFinish();
@@ -1822,6 +1836,50 @@ public class CallActivity extends AppCompatActivity {
             });
         } else {
             preloadInterstitialInternal("800356158_interstitial");
+        }
+    }
+
+    private void loadPrivateCallAdIfNeeded() {
+        boolean isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
+        if (isPrivateCall) {
+            try {
+                levelPlayPrivateCallAd = new com.unity3d.mediation.interstitial.LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
+                levelPlayPrivateCallAd.setListener(new com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener() {
+                    @Override
+                    public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                        isPrivateCallAdLoaded = true;
+                        Log.d(TAG, "LevelPlay Interstitial for private call loaded successfully");
+                    }
+
+                    @Override
+                    public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
+                        isPrivateCallAdLoaded = false;
+                        Log.e(TAG, "LevelPlay Interstitial for private call load failed: " + error.getErrorMessage());
+                    }
+
+                    @Override
+                    public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                    @Override
+                    public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                        isPrivateCallAdLoaded = false;
+                        finish();
+                    }
+
+                    @Override
+                    public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
+
+                    @Override
+                    public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
+                        finish();
+                    }
+                });
+                BaseActivity.runOnLevelPlayInit(() -> {
+                    if (levelPlayPrivateCallAd != null) levelPlayPrivateCallAd.loadAd();
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing LevelPlay Interstitial for private call: " + e.getMessage());
+            }
         }
     }
 
