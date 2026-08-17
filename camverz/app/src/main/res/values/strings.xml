@@ -68,7 +68,7 @@
     <!-- AdMob Ad Unit IDs -->
     <string name="admob_banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
     <string name="admob_interstitial_ad_unit_id">ca-app-pub-6992986179206821/7624629090</string>
-    <string name="admob_native_ad_unit_id">ca-app-pub-7279598390080758/5722353086</string>
-    <string name="admob_rewarded_interstitial_ad_unit_id">ca-app-pub-7279598390080758/1661367303</string>
+    <string name="admob_native_ad_unit_id">ca-app-pub-6992986179206821/4544838488</string>
+    <string name="admob_rewarded_interstitial_ad_unit_id">ca-app-pub-6992986179206821/4935720723</string>
     <string name="facebook_app_id">1679167109809598</string>
 </resources>
