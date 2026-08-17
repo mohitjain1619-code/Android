@@ -40,6 +40,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -71,6 +77,7 @@ public class ProfileActivity extends BaseActivity {
     private boolean isBlockedByOther = false;
     private boolean hasLoadedData = false;
     private com.facebook.ads.InterstitialAd metaAvatarInterstitialAd;
+    private com.google.android.gms.ads.interstitial.InterstitialAd admobAvatarInterstitialAd;
     
     private ApiService api;
     private TokenManager tokenManager;
@@ -761,7 +768,7 @@ public class ProfileActivity extends BaseActivity {
                                 value,
                                 "male".equalsIgnoreCase(currentGender)
                             );
-                            loadAndShowMetaInterstitialForAvatar();
+                            loadAndShowAdMobInterstitialForAvatar();
                         } else if ("name".equals(field)) {
                             // Save updated name in TokenManager
                             String currentGender = visitedUser != null ? visitedUser.getGender() : tokenManager.getUserGender();
@@ -1139,56 +1146,48 @@ public class ProfileActivity extends BaseActivity {
             metaAvatarInterstitialAd.destroy();
             metaAvatarInterstitialAd = null;
         }
+        if (admobAvatarInterstitialAd != null) {
+            admobAvatarInterstitialAd = null;
+        }
         super.onDestroy();
     }
 
-    private void loadAndShowMetaInterstitialForAvatar() {
+    private void loadAndShowAdMobInterstitialForAvatar() {
         try {
-            if (com.mohitt.camverz.BuildConfig.DEBUG) {
-                com.facebook.ads.AdSettings.setTestMode(true);
-            }
-            metaAvatarInterstitialAd = new com.facebook.ads.InterstitialAd(this, "1679167109809598_1679167723142870");
-            com.facebook.ads.InterstitialAdListener listener = new com.facebook.ads.InterstitialAdListener() {
-                @Override
-                public void onInterstitialDisplayed(com.facebook.ads.Ad ad) {
-                    android.util.Log.d("ProfileActivity", "Meta Interstitial displayed on avatar update");
-                }
-
-                @Override
-                public void onInterstitialDismissed(com.facebook.ads.Ad ad) {
-                    android.util.Log.d("ProfileActivity", "Meta Interstitial dismissed");
-                    if (metaAvatarInterstitialAd != null) {
-                        metaAvatarInterstitialAd.destroy();
-                        metaAvatarInterstitialAd = null;
+            AdRequest adRequest = new AdRequest.Builder().build();
+            com.google.android.gms.ads.interstitial.InterstitialAd.load(this, getString(R.string.admob_interstitial_ad_unit_id), adRequest,
+                new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
+                        android.util.Log.d("ProfileActivity", "AdMob Interstitial loaded on avatar update. Showing now.");
+                        admobAvatarInterstitialAd = ad;
+                        admobAvatarInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                            @Override
+                            public void onAdDismissedFullScreenContent() {
+                                android.util.Log.d("ProfileActivity", "AdMob Interstitial dismissed");
+                                admobAvatarInterstitialAd = null;
+                            }
+                            @Override
+                            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                                android.util.Log.e("ProfileActivity", "AdMob Interstitial failed to show: " + adError.getMessage());
+                                admobAvatarInterstitialAd = null;
+                            }
+                            @Override
+                            public void onAdShowedFullScreenContent() {
+                                android.util.Log.d("ProfileActivity", "AdMob Interstitial displayed");
+                            }
+                        });
+                        admobAvatarInterstitialAd.show(ProfileActivity.this);
                     }
-                }
 
-                @Override
-                public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
-                    android.util.Log.e("ProfileActivity", "Meta Interstitial failed to load on avatar update: " + adError.getErrorMessage());
-                    if (metaAvatarInterstitialAd != null) {
-                        metaAvatarInterstitialAd.destroy();
-                        metaAvatarInterstitialAd = null;
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        android.util.Log.e("ProfileActivity", "AdMob Interstitial failed to load on avatar update: " + loadAdError.getMessage());
+                        admobAvatarInterstitialAd = null;
                     }
-                }
-
-                @Override
-                public void onAdLoaded(com.facebook.ads.Ad ad) {
-                    android.util.Log.d("ProfileActivity", "Meta Interstitial loaded on avatar update. Showing now.");
-                    if (metaAvatarInterstitialAd != null && metaAvatarInterstitialAd.isAdLoaded()) {
-                        metaAvatarInterstitialAd.show();
-                    }
-                }
-
-                @Override
-                public void onAdClicked(com.facebook.ads.Ad ad) {}
-
-                @Override
-                public void onLoggingImpression(com.facebook.ads.Ad ad) {}
-            };
-            metaAvatarInterstitialAd.loadAd(metaAvatarInterstitialAd.buildLoadAdConfig().withAdListener(listener).build());
+                });
         } catch (Exception e) {
-            android.util.Log.e("ProfileActivity", "Error loading Meta Interstitial for avatar: " + e.getMessage());
+            android.util.Log.e("ProfileActivity", "Error loading AdMob Interstitial for avatar: " + e.getMessage());
         }
     }
 }
