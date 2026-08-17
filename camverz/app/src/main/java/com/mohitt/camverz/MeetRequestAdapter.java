@@ -86,6 +86,19 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
             if (listener != null) listener.onStartCallClicked(req);
         });
 
+        holder.itemView.setOnClickListener(v -> {
+            if (context instanceof RealMeetActivity) {
+                ((RealMeetActivity) context).openFullPostDetailDialog(
+                        req.getApplicantName(), req.getApplicantAge(), req.getApplicantCity(), req.getPostTitle(), req.getContactPreference(), "Incoming Request", req.getMessage(), req.getApplicantAvatar(), req.getApplicantUserId(), req.getPostId()
+                );
+            }
+        });
+
+        // Touch animation feedback
+        holder.itemView.setOnTouchListener((v, event) -> {
+            return false;
+        });
+
         holder.btnOpenChat.setOnClickListener(v -> {
             if (listener != null) listener.onOpenChatClicked(req);
         });

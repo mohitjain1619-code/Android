@@ -1,6 +1,7 @@
 package com.mohitt.camverz;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,17 +54,39 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
 
         AvatarHelper.loadAvatar(context, post.getHostPhotoUrl(), post.getHostAvatar(), post.getHostName(), holder.ivHostAvatar);
 
+        RealMeetStore store = RealMeetStore.getInstance(context);
+        boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
+
         if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getHostUserId())) {
             holder.btnJoinParty.setText("🗑️ Delete Party");
+            holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_chip);
+            holder.btnJoinParty.setTextColor(Color.WHITE);
             holder.btnJoinParty.setOnClickListener(v -> {
                 if (listener != null) listener.onDeletePartyClicked(post);
             });
+        } else if (hasRequested) {
+            holder.btnJoinParty.setText("📩 Requested");
+            holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
+            holder.btnJoinParty.setTextColor(Color.parseColor("#8E8E93"));
+            holder.btnJoinParty.setOnClickListener(v -> {
+                android.widget.Toast.makeText(context, "You have already requested an invite for this party.", android.widget.Toast.LENGTH_SHORT).show();
+            });
         } else {
-            holder.btnJoinParty.setText("Request Invite");
+            holder.btnJoinParty.setText("🎉 Join Party");
+            holder.btnJoinParty.setBackgroundResource(R.drawable.bg_neon_emerald_button);
+            holder.btnJoinParty.setTextColor(Color.BLACK);
             holder.btnJoinParty.setOnClickListener(v -> {
                 if (listener != null) listener.onJoinPartyClicked(post);
             });
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (context instanceof RealMeetActivity) {
+                ((RealMeetActivity) context).openFullPostDetailDialog(
+                        post.getHostName(), post.getHostAge(), post.getTargetGender(), post.getPurpose(), post.getVenue(), post.getPartyTime(), "Capacity: " + post.getCapacity() + " Guests Max.", post.getHostAvatar(), post.getHostUserId(), post.getId()
+                );
+            }
+        });
 
         // Touch animation feedback
         holder.itemView.setOnTouchListener((v, event) -> {

@@ -1,6 +1,7 @@
 package com.mohitt.camverz;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -51,17 +52,39 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
 
         AvatarHelper.loadAvatar(context, post.getPhotoUrl(), post.getUserAvatar(), post.getUserName(), holder.ivFantasyAvatar);
 
+        RealMeetStore store = RealMeetStore.getInstance(context);
+        boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
+
         if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getUserId())) {
             holder.btnConnectFantasy.setText("🗑️ Delete Fantasy");
+            holder.btnConnectFantasy.setBackgroundResource(R.drawable.bg_luxury_chip);
+            holder.btnConnectFantasy.setTextColor(Color.WHITE);
             holder.btnConnectFantasy.setOnClickListener(v -> {
                 if (listener != null) listener.onDeleteFantasyClicked(post);
             });
+        } else if (hasRequested) {
+            holder.btnConnectFantasy.setText("📩 Requested");
+            holder.btnConnectFantasy.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
+            holder.btnConnectFantasy.setTextColor(Color.parseColor("#8E8E93"));
+            holder.btnConnectFantasy.setOnClickListener(v -> {
+                android.widget.Toast.makeText(context, "You have already requested to connect for this fantasy.", android.widget.Toast.LENGTH_SHORT).show();
+            });
         } else {
-            holder.btnConnectFantasy.setText("Send Whisper");
+            holder.btnConnectFantasy.setText("✨ Secret Connect");
+            holder.btnConnectFantasy.setBackgroundResource(R.drawable.bg_neon_magenta_button);
+            holder.btnConnectFantasy.setTextColor(Color.WHITE);
             holder.btnConnectFantasy.setOnClickListener(v -> {
                 if (listener != null) listener.onFantasyConnectClicked(post);
             });
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (context instanceof RealMeetActivity) {
+                ((RealMeetActivity) context).openFullPostDetailDialog(
+                        post.getUserName(), post.getAge(), post.getRelationshipStatus(), post.getInterests(), "Fantasy Vibe", "Anytime", post.getDescription(), post.getUserAvatar(), post.getUserId(), post.getId()
+                );
+            }
+        });
 
         // Touch animation feedback
         holder.itemView.setOnTouchListener((v, event) -> {

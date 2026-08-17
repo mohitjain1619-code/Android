@@ -242,6 +242,17 @@ public class RealMeetStore {
         saveMeetRequests(requests);
     }
 
+    public synchronized boolean hasUserRequestedPost(String userId, String postId) {
+        if (userId == null || postId == null) return false;
+        List<RealMeetRequest> requests = getMeetRequests();
+        for (RealMeetRequest req : requests) {
+            if (userId.equalsIgnoreCase(req.getApplicantUserId()) && postId.equalsIgnoreCase(req.getPostId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public synchronized void deleteMeetRequest(String requestId) {
         List<RealMeetRequest> requests = getMeetRequests();
         requests.removeIf(r -> r.getId().equalsIgnoreCase(requestId));

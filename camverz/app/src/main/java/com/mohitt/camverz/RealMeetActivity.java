@@ -534,12 +534,11 @@ public class RealMeetActivity extends BaseActivity {
             MeetRequestAdapter adapter = new MeetRequestAdapter(this, myIncomingRequests, new MeetRequestAdapter.OnRequestActionListener() {
                 @Override
                 public void onStartCallClicked(RealMeetRequest request) {
-                    Toast.makeText(RealMeetActivity.this, "🎥 Starting private 1-on-1 video call with " + request.getApplicantName() + "...", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(RealMeetActivity.this, CallActivity.class);
+                    Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
                     intent.putExtra("targetUserId", request.getApplicantUserId());
-                    intent.putExtra("isCaller", true);
-                    intent.putExtra("isPrivateCall", true);
-                    intent.putExtra("isVideoCall", true);
+                    intent.putExtra("targetUserName", request.getApplicantName());
+                    intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
+                    intent.putExtra("contactPreference", "Private Video Call");
                     startActivity(intent);
                 }
 
@@ -584,6 +583,11 @@ public class RealMeetActivity extends BaseActivity {
     private void openSendRequestModal(String postId, String postTitle, String posterUserId, String posterName) {
         if (currentUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
             Toast.makeText(this, "This is your own post!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (store.hasUserRequestedPost(currentUserId, postId)) {
+            Toast.makeText(this, "Request already sent for this post!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -664,6 +668,53 @@ public class RealMeetActivity extends BaseActivity {
             dialog.dismiss();
             Toast.makeText(this, "📩 Request sent to " + (posterName != null ? posterName : "post owner") + "!", Toast.LENGTH_LONG).show();
         });
+
+        dialog.show();
+    }
+
+    public void openFullPostDetailDialog(String name, int age, String city, String title, String venue, String time, String description, String avatar, String posterUserId, String postId) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_view_full_post, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+
+        ImageView ivFullAvatar = dialogView.findViewById(R.id.ivFullAvatar);
+        TextView tvFullNameAge = dialogView.findViewById(R.id.tvFullNameAge);
+        TextView tvFullSubtext = dialogView.findViewById(R.id.tvFullSubtext);
+        TextView tvFullTitle = dialogView.findViewById(R.id.tvFullTitle);
+        TextView tvFullVenue = dialogView.findViewById(R.id.tvFullVenue);
+        TextView tvFullTime = dialogView.findViewById(R.id.tvFullTime);
+        TextView tvFullDescription = dialogView.findViewById(R.id.tvFullDescription);
+        TextView btnCloseFullDialog = dialogView.findViewById(R.id.btnCloseFullDialog);
+        TextView btnFullDialogAction = dialogView.findViewById(R.id.btnFullDialogAction);
+
+        tvFullNameAge.setText(name + " ♂️ " + age + " ✔️");
+        tvFullSubtext.setText("📍 " + (city != null ? city : "Nearby"));
+        tvFullTitle.setText(title != null ? title : "Community Post");
+        tvFullVenue.setText(venue != null ? "📍 " + venue : "📍 Nearby Venue");
+        tvFullTime.setText(time != null ? "⏰ " + time : "⏰ Scheduled");
+        tvFullDescription.setText(description != null ? description : "No additional details.");
+
+        AvatarHelper.loadAvatar(this, null, avatar, name, ivFullAvatar);
+
+        btnCloseFullDialog.setOnClickListener(v -> dialog.dismiss());
+
+        boolean hasRequested = store.hasUserRequestedPost(currentUserId, postId);
+        if (currentUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
+            btnFullDialogAction.setText("🗑️ Your Post");
+            btnFullDialogAction.setBackgroundResource(R.drawable.bg_luxury_chip);
+            btnFullDialogAction.setTextColor(Color.WHITE);
+            btnFullDialogAction.setEnabled(false);
+        } else if (hasRequested) {
+            btnFullDialogAction.setText("📩 Request Sent");
+            btnFullDialogAction.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
+            btnFullDialogAction.setTextColor(Color.parseColor("#8E8E93"));
+            btnFullDialogAction.setEnabled(false);
+        } else {
+            btnFullDialogAction.setText("⚡ Send Request");
+            btnFullDialogAction.setOnClickListener(v -> {
+                dialog.dismiss();
+                openSendRequestModal(postId, title, posterUserId, name);
+            });
+        }
 
         dialog.show();
     }

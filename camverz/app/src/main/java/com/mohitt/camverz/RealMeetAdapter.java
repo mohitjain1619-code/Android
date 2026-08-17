@@ -1,6 +1,7 @@
 package com.mohitt.camverz;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -61,17 +62,39 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
 
         AvatarHelper.loadAvatar(context, post.getPhotoUrl(), post.getUserAvatar(), post.getUserName(), holder.ivAvatar);
 
+        RealMeetStore store = RealMeetStore.getInstance(context);
+        boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
+
         if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getUserId())) {
             holder.btnConnect.setText("🗑️ Delete Post");
+            holder.btnConnect.setBackgroundResource(R.drawable.bg_luxury_chip);
+            holder.btnConnect.setTextColor(Color.WHITE);
             holder.btnConnect.setOnClickListener(v -> {
                 if (listener != null) listener.onDeleteClicked(post);
             });
+        } else if (hasRequested) {
+            holder.btnConnect.setText("📩 Requested");
+            holder.btnConnect.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
+            holder.btnConnect.setTextColor(Color.parseColor("#8E8E93"));
+            holder.btnConnect.setOnClickListener(v -> {
+                android.widget.Toast.makeText(context, "You have already requested to connect for this post.", android.widget.Toast.LENGTH_SHORT).show();
+            });
         } else {
-            holder.btnConnect.setText("Connect");
+            holder.btnConnect.setText("⚡ Connect & Meet");
+            holder.btnConnect.setBackgroundResource(R.drawable.bg_neon_amber_button);
+            holder.btnConnect.setTextColor(Color.BLACK);
             holder.btnConnect.setOnClickListener(v -> {
                 if (listener != null) listener.onConnectClicked(post);
             });
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (context instanceof RealMeetActivity) {
+                ((RealMeetActivity) context).openFullPostDetailDialog(
+                        post.getUserName(), post.getAge(), post.getCity(), post.getPurpose(), post.getLocation(), post.getTime(), post.getDescription(), post.getUserAvatar(), post.getUserId(), post.getId()
+                );
+            }
+        });
 
         // Touch animation feedback
         holder.itemView.setOnTouchListener((v, event) -> {
