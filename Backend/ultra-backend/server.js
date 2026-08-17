@@ -157,12 +157,14 @@ io.on("connection", (socket) => {
 
   // REGISTER USER
   socket.on("register-user", async ({ uid }) => {
+    socket.uid = uid; // Save on socket object for O(1) disconnect lookup
     await redisModule.setUserOnline(uid, socket.id);
     console.log("✅ User registered:", uid, "→", socket.id);
   });
 
   // JOIN QUEUE (Optimized, O(1) atomic matching)
   socket.on("join-queue", async ({ uid, gender, category }) => {
+    socket.uid = uid; // Save on socket object for O(1) disconnect lookup
     // 1. Enforce Daily Call Limits if Review Mode is INACTIVE
     if (!REVIEW_MODE) {
       try {
@@ -264,6 +266,8 @@ io.on("connection", (socket) => {
   // CALL ROOM LOGIC (Redis-backed)
   // ============================================
   socket.on("join-call-room", async ({ room, uid }) => {
+    socket.uid = uid; // Save on socket object for O(1) disconnect lookup
+    socket.currentRoom = room; // Track current call room for O(1) room cleanup
     await redisModule.setUserOnline(uid, socket.id);
     socket.join(room);
 
@@ -291,6 +295,7 @@ io.on("connection", (socket) => {
 
   socket.on("leave-call-room", async ({ room, uid }) => {
     console.log("🚪", uid, "left room", room);
+    socket.currentRoom = null; // Clear room tracking
     socket.leave(room);
     
     // Notify peer that this user disconnected
@@ -339,6 +344,7 @@ io.on("connection", (socket) => {
   // ============================================
   socket.on("start-private-call", async ({ callerId, targetId, isVideo, room, callerName, callerAvatar }) => {
     console.log("📞 Private call from", callerId, "to", targetId);
+    socket.uid = callerId; // Save on socket object for O(1) disconnect lookup
     await redisModule.setUserOnline(callerId, socket.id);
 
     // Check if callee is already in a call
@@ -456,16 +462,29 @@ io.on("connection", (socket) => {
   // DISCONNECT CLEANUP
   // ============================================
   socket.on("disconnect", async () => {
-    // Find which user disconnected by checking all online users
-    const allSockets = await redisModule.redis.hgetall("camverz:user_socket");
-    let disconnectedUid = null;
+    let disconnectedUid = socket.uid;
 
-    for (const [uid, sid] of Object.entries(allSockets)) {
-      if (sid === socket.id) {
-        disconnectedUid = uid;
-        await redisModule.setUserOffline(uid);
-        await redisModule.removeFromQueue(uid);
-        break;
+    if (!disconnectedUid) {
+      // Fallback O(N) lookup in case user disconnected before registration/binding
+      try {
+        const allSockets = await redisModule.redis.hgetall("camverz:user_socket");
+        for (const [uid, sid] of Object.entries(allSockets)) {
+          if (sid === socket.id) {
+            disconnectedUid = uid;
+            break;
+          }
+        }
+      } catch (err) {
+        console.error("Error during fallback disconnect lookup:", err);
+      }
+    }
+
+    if (disconnectedUid) {
+      try {
+        await redisModule.setUserOffline(disconnectedUid);
+        await redisModule.removeFromQueue(disconnectedUid);
+      } catch (err) {
+        console.error("Error setting user offline:", err);
       }
     }
 
@@ -501,22 +520,25 @@ io.on("connection", (socket) => {
       } catch (e) { /* ignore */ }
     }
 
-    // Clean up rooms
-    if (disconnectedUid) {
-      const rooms = await redisModule.getAllRooms();
-      for (const [room, state] of Object.entries(rooms)) {
-        if (state.users.includes(disconnectedUid)) {
+    // Clean up rooms (O(1) room cleanup instead of O(M) rooms iteration)
+    const currentRoom = socket.currentRoom;
+    if (disconnectedUid && currentRoom) {
+      try {
+        const state = await redisModule.getRoomState(currentRoom);
+        if (state && state.users.includes(disconnectedUid)) {
           state.users = state.users.filter((u) => u !== disconnectedUid);
-          io.to(room).emit("peer-disconnected", { uid: disconnectedUid });
+          io.to(currentRoom).emit("peer-disconnected", { uid: disconnectedUid });
 
           if (state.users.length === 0) {
-            await logCallIfNeeded(room, state);
-            await redisModule.deleteRoom(room);
-            console.log("🗑️ Room auto-deleted on disconnect:", room);
+            await logCallIfNeeded(currentRoom, state);
+            await redisModule.deleteRoom(currentRoom);
+            console.log("🗑️ Room auto-deleted on disconnect:", currentRoom);
           } else {
-            await redisModule.setRoomState(room, state);
+            await redisModule.setRoomState(currentRoom, state);
           }
         }
+      } catch (err) {
+        console.error("Error cleaning up room on disconnect:", err);
       }
     }
 

@@ -21,4 +21,8 @@
         <item name="android:popupBackground">@color/bg_card</item>
     </style>
 
+    <style name="CircleImageStyle">
+        <item name="cornerSize">50%</item>
+    </style>
+
 </resources>

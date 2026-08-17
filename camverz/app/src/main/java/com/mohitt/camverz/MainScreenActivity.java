@@ -124,8 +124,11 @@ public class MainScreenActivity extends BaseActivity {
         }
 
         if (chipCommunityHub != null) {
-            chipCommunityHub.setOnClickListener(v -> 
-                Toast.makeText(MainScreenActivity.this, "💬 Community, Real Meet & Fantasy features are coming soon!", Toast.LENGTH_LONG).show());
+            chipCommunityHub.setOnClickListener(v -> {
+                Intent intent = new Intent(MainScreenActivity.this, RealMeetActivity.class);
+                startActivity(intent);
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            });
         }
 
         if (chipFriends != null) {
@@ -244,6 +247,9 @@ public class MainScreenActivity extends BaseActivity {
                 return true;
             } else if (item.getItemId() == R.id.action_mediation_debugger) {
                 Toast.makeText(this, "Mediation debugger is disabled", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (item.getItemId() == R.id.action_ad_testing) {
+                startActivity(new Intent(this, AdTestingActivity.class));
                 return true;
             }
             return false;
@@ -455,13 +461,7 @@ public class MainScreenActivity extends BaseActivity {
         Log.d(TAG, "Call attempt #" + attempts);
 
         if (attempts % 3 == 0) {
-            if (levelPlayRewardedAd != null && (isRewardedVideoAvailable || levelPlayRewardedAd.isAdReady())) {
-                Log.d(TAG, "📺 Showing ironSource Rewarded Ad on 3rd attempt (#" + attempts + ")");
-                levelPlayRewardedAd.showAd(MainScreenActivity.this);
-                return;
-            } else {
-                Log.w(TAG, "ironSource Rewarded Ad not ready on attempt #" + attempts + ", proceeding directly");
-            }
+            Log.d(TAG, "Attempt #" + attempts + " - proceeding to connecting without pre-roll ad.");
         }
         proceedToConnectingDirectly();
     }

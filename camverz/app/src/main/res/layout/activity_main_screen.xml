@@ -140,7 +140,7 @@
                             android:background="@drawable/bg_btn_primary_gradient"
                             android:paddingHorizontal="8dp"
                             android:paddingVertical="3dp"
-                            android:text="SOON"
+                            android:text="HOT 🔥"
                             android:textColor="#FFFFFF"
                             android:textSize="10sp"
                             android:textStyle="bold" />

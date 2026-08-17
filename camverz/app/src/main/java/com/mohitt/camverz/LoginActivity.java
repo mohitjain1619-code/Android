@@ -214,41 +214,43 @@ public class LoginActivity extends AppCompatActivity {
      * Send Google ID token to OUR backend (not Firebase).
      * Backend verifies with Google, creates/finds user in PostgreSQL, returns JWT.
      */
-    private void authenticateWithBackend(String idToken) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("idToken", idToken);
+    private void authenticateWithBackend(final String idToken) {
+        new Thread(() -> {
+            final Map<String, Object> body = new HashMap<>();
+            body.put("idToken", idToken);
 
-        // Retrieve and send secondary device emails to backend for anti-abuse verification
-        try {
-            java.util.List<String> emails = getDeviceGoogleEmails();
-            if (!emails.isEmpty()) {
-                body.put("deviceEmails", emails);
+            // Retrieve and send secondary device emails to backend for anti-abuse verification
+            try {
+                java.util.List<String> emails = getDeviceGoogleEmails();
+                if (!emails.isEmpty()) {
+                    body.put("deviceEmails", emails);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error adding device emails to request", e);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error adding device emails to request", e);
-        }
 
-        // Include unique device ID (ANDROID_ID) & platform
-        try {
-            String androidId = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-            if (androidId != null && !androidId.trim().isEmpty()) {
-                body.put("deviceId", androidId);
-                body.put("platform", "android");
-                Log.d(TAG, "Sending deviceId: " + androidId);
+            // Include unique device ID (ANDROID_ID) & platform
+            try {
+                String androidId = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+                if (androidId != null && !androidId.trim().isEmpty()) {
+                    body.put("deviceId", androidId);
+                    body.put("platform", "android");
+                    Log.d(TAG, "Sending deviceId: " + androidId);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting ANDROID_ID", e);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error getting ANDROID_ID", e);
-        }
 
-        // Fetch saved referrer code
-        String affiliateRef = getSharedPreferences("camverz_prefs", MODE_PRIVATE)
-                .getString("affiliate_ref", null);
-        if (affiliateRef != null && !affiliateRef.trim().isEmpty()) {
-            body.put("affiliateRef", affiliateRef);
-            Log.d(TAG, "Sending affiliateRef to backend: " + affiliateRef);
-        }
+            // Fetch saved referrer code
+            String affiliateRef = getSharedPreferences("camverz_prefs", MODE_PRIVATE)
+                    .getString("affiliate_ref", null);
+            if (affiliateRef != null && !affiliateRef.trim().isEmpty()) {
+                body.put("affiliateRef", affiliateRef);
+                Log.d(TAG, "Sending affiliateRef to backend: " + affiliateRef);
+            }
 
-        api.authWithGoogle(body).enqueue(new Callback<JsonObject>() {
+            runOnUiThread(() -> {
+                api.authWithGoogle(body).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -338,8 +340,9 @@ public class LoginActivity extends AppCompatActivity {
                 );
             }
         });
+            });
+        }).start();
     }
-
     private java.util.List<String> getDeviceGoogleEmails() {
         java.util.List<String> emails = new java.util.ArrayList<>();
         try {

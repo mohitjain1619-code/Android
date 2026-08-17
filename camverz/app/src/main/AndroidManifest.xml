@@ -157,6 +157,17 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".AdTestingActivity"
+            android:exported="false"
+            android:label="Ad Testing Dashboard" />
+
+        <!-- Real Meet & Fantasy Community Activity -->
+        <activity
+            android:name=".RealMeetActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
 
         <!-- AdMob Application ID (Test ID / Production loaded dynamically) -->
         <meta-data
@@ -166,6 +177,9 @@
         <!-- Meta Audience Network App ID -->
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.ads.APPLICATION_ID"
             android:value="@string/facebook_app_id" />
 
         <!-- AppLovin SDK Key (Commented out)

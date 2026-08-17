@@ -70,12 +70,14 @@ public class ProfileActivity extends BaseActivity {
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
     private boolean hasLoadedData = false;
+    private com.facebook.ads.InterstitialAd metaAvatarInterstitialAd;
     
     private ApiService api;
     private TokenManager tokenManager;
     private com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout;
     private android.widget.FrameLayout nativeAdContainer;
     private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
+    private com.facebook.ads.NativeAd metaNativeAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -759,6 +761,7 @@ public class ProfileActivity extends BaseActivity {
                                 value,
                                 "male".equalsIgnoreCase(currentGender)
                             );
+                            loadAndShowMetaInterstitialForAvatar();
                         } else if ("name".equals(field)) {
                             // Save updated name in TokenManager
                             String currentGender = visitedUser != null ? visitedUser.getGender() : tokenManager.getUserGender();
@@ -1021,6 +1024,7 @@ public class ProfileActivity extends BaseActivity {
                         @Override
                         public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.logger.IronSourceError error) {
                             android.util.Log.e("ProfileActivity", "ironSource Native Ad load failed: " + error.getErrorMessage());
+                            runOnUiThread(() -> loadMetaNativeAd());
                         }
 
                         @Override
@@ -1037,12 +1041,154 @@ public class ProfileActivity extends BaseActivity {
         }
     }
 
+    private int dpToPx(int dp) {
+        return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+
+    private void loadMetaNativeAd() {
+        if (com.mohitt.camverz.BuildConfig.DEBUG) {
+            com.facebook.ads.AdSettings.setTestMode(true);
+        }
+        metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167733142869");
+        com.facebook.ads.NativeAdListener nativeAdListener = new com.facebook.ads.NativeAdListener() {
+            @Override
+            public void onMediaDownloaded(com.facebook.ads.Ad ad) {}
+
+            @Override
+            public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
+                android.util.Log.e("ProfileActivity", "Meta Native Ad failed to load: " + adError.getErrorMessage());
+            }
+
+            @Override
+            public void onAdLoaded(com.facebook.ads.Ad ad) {
+                if (isFinishing() || isDestroyed()) return;
+                if (metaNativeAd != null && metaNativeAd == ad) {
+                    inflateMetaNativeAd(metaNativeAd);
+                }
+            }
+
+            @Override
+            public void onAdClicked(com.facebook.ads.Ad ad) {}
+
+            @Override
+            public void onLoggingImpression(com.facebook.ads.Ad ad) {}
+        };
+
+        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig()
+                .withAdListener(nativeAdListener)
+                .build());
+    }
+
+    private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {
+        android.widget.FrameLayout adContainer = findViewById(R.id.metaNativeAdContainer);
+        if (adContainer == null) return;
+        adContainer.removeAllViews();
+        adContainer.setVisibility(android.view.View.VISIBLE);
+
+        com.facebook.ads.NativeAdLayout adLayout = new com.facebook.ads.NativeAdLayout(this);
+        adLayout.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT));
+
+        android.widget.LinearLayout innerContainer = new android.widget.LinearLayout(this);
+        innerContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
+        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
+        innerContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+
+        android.widget.TextView adHeadline = new android.widget.TextView(this);
+        adHeadline.setText(ad.getAdHeadline());
+        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
+        adHeadline.setTextSize(16);
+        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        innerContainer.addView(adHeadline);
+
+        android.widget.TextView adBody = new android.widget.TextView(this);
+        adBody.setText(ad.getAdBodyText());
+        adBody.setTextColor(getResources().getColor(R.color.text_secondary));
+        adBody.setTextSize(12);
+        adBody.setPadding(0, dpToPx(4), 0, dpToPx(8));
+        innerContainer.addView(adBody);
+
+        android.widget.Button callToAction = new android.widget.Button(this);
+        callToAction.setText(ad.getAdCallToAction());
+        callToAction.setBackgroundResource(R.drawable.bg_glass_card_premium);
+        callToAction.setTextColor(getResources().getColor(R.color.accent_primary));
+        callToAction.setTextSize(14);
+        callToAction.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        innerContainer.addView(callToAction);
+
+        adLayout.addView(innerContainer);
+
+        java.util.List<android.view.View> clickableViews = new java.util.ArrayList<>();
+        clickableViews.add(adHeadline);
+        clickableViews.add(callToAction);
+        
+        com.facebook.ads.MediaView mediaView = new com.facebook.ads.MediaView(this);
+        ad.registerViewForInteraction(adLayout, mediaView, clickableViews);
+
+        adContainer.addView(adLayout);
+    }
+
     @Override
     protected void onDestroy() {
         if (levelPlayNativeAd != null) {
             levelPlayNativeAd.destroyAd();
             levelPlayNativeAd = null;
         }
+        if (metaAvatarInterstitialAd != null) {
+            metaAvatarInterstitialAd.destroy();
+            metaAvatarInterstitialAd = null;
+        }
         super.onDestroy();
+    }
+
+    private void loadAndShowMetaInterstitialForAvatar() {
+        try {
+            if (com.mohitt.camverz.BuildConfig.DEBUG) {
+                com.facebook.ads.AdSettings.setTestMode(true);
+            }
+            metaAvatarInterstitialAd = new com.facebook.ads.InterstitialAd(this, "1679167109809598_1679167723142870");
+            com.facebook.ads.InterstitialAdListener listener = new com.facebook.ads.InterstitialAdListener() {
+                @Override
+                public void onInterstitialDisplayed(com.facebook.ads.Ad ad) {
+                    android.util.Log.d("ProfileActivity", "Meta Interstitial displayed on avatar update");
+                }
+
+                @Override
+                public void onInterstitialDismissed(com.facebook.ads.Ad ad) {
+                    android.util.Log.d("ProfileActivity", "Meta Interstitial dismissed");
+                    if (metaAvatarInterstitialAd != null) {
+                        metaAvatarInterstitialAd.destroy();
+                        metaAvatarInterstitialAd = null;
+                    }
+                }
+
+                @Override
+                public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
+                    android.util.Log.e("ProfileActivity", "Meta Interstitial failed to load on avatar update: " + adError.getErrorMessage());
+                    if (metaAvatarInterstitialAd != null) {
+                        metaAvatarInterstitialAd.destroy();
+                        metaAvatarInterstitialAd = null;
+                    }
+                }
+
+                @Override
+                public void onAdLoaded(com.facebook.ads.Ad ad) {
+                    android.util.Log.d("ProfileActivity", "Meta Interstitial loaded on avatar update. Showing now.");
+                    if (metaAvatarInterstitialAd != null && metaAvatarInterstitialAd.isAdLoaded()) {
+                        metaAvatarInterstitialAd.show();
+                    }
+                }
+
+                @Override
+                public void onAdClicked(com.facebook.ads.Ad ad) {}
+
+                @Override
+                public void onLoggingImpression(com.facebook.ads.Ad ad) {}
+            };
+            metaAvatarInterstitialAd.loadAd(metaAvatarInterstitialAd.buildLoadAdConfig().withAdListener(listener).build());
+        } catch (Exception e) {
+            android.util.Log.e("ProfileActivity", "Error loading Meta Interstitial for avatar: " + e.getMessage());
+        }
     }
 }

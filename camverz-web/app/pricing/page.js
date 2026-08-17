@@ -15,22 +15,28 @@ export default function PricingPage() {
 
   // Auto-detect user country from userData or IP geolocation
   useEffect(() => {
-    let userCountry = '';
-    if (userData?.city) {
-      userCountry = userData.city.split(',').pop().trim().toLowerCase();
-    } else if (userData?.country) {
-      userCountry = userData.country.trim().toLowerCase();
-    }
+    let cityStr = (userData?.city || '').trim().toLowerCase();
+    let countryStr = (userData?.country || '').trim().toLowerCase();
 
-    if (userCountry && (userCountry.includes('india') || userCountry === 'in')) {
+    // Robust check for India
+    const isIndia = countryStr.includes('india') || countryStr === 'in' || 
+                    cityStr.includes('india') || cityStr === 'in' ||
+                    cityStr.includes('gwalior') || cityStr.includes('delhi') || 
+                    cityStr.includes('mumbai') || cityStr.includes('bangalore') ||
+                    cityStr.includes('madhya pradesh');
+
+    if (isIndia) {
       setRegionMode('india');
       setDetectedLocation('Location: India (INR ₹ Pricing) 🇮🇳');
-    } else if (userCountry && REGIONAL_COUNTRIES.some(c => userCountry.includes(c))) {
+    } else if (
+      REGIONAL_COUNTRIES.some(c => countryStr.includes(c)) || 
+      (userData?.city && REGIONAL_COUNTRIES.some(c => cityStr.includes(c)))
+    ) {
       setRegionMode('regional');
-      setDetectedLocation(`Location: ${userData.city || userCountry.toUpperCase()} (Regional Tier 🏷️)`);
-    } else if (userCountry) {
+      setDetectedLocation(`Location: ${userData.city || countryStr.toUpperCase() || 'Regional'} (Regional Tier 🏷️)`);
+    } else if (countryStr || cityStr) {
       setRegionMode('international');
-      setDetectedLocation(`Location: ${userData.city || userCountry.toUpperCase()} (International Tier 🌐)`);
+      setDetectedLocation(`Location: ${userData.city || countryStr.toUpperCase()} (International Tier 🌐)`);
     } else {
       // Fallback: IP Geolocation lookup
       fetch('https://ipapi.co/json/')

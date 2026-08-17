@@ -192,6 +192,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+            sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
             Date date = sdf.parse(isoDateString);
             if (date == null) return "just now";
             

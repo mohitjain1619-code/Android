@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:background="@drawable/bg_glowing_card"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <!-- Header: User Avatar + Name + Age + Relationship Status -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivFantasyAvatar"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_avatar_3"
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
+
+            <View
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_avatar_white_ring" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvFantasyNameAge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Simran, 25"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvStatusChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/bg_luxury_chip"
+                android:letterSpacing="0.05"
+                android:paddingHorizontal="7dp"
+                android:paddingVertical="2dp"
+                android:text="SINGLE"
+                android:textColor="#E5E5EA"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Interests / Vibe -->
+    <TextView
+        android:id="@+id/tvInterests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="✨ Stargazing, Travel, Music"
+        android:textColor="#8E8E93"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+    <!-- Fantasy Text (Up to 200 chars limit) -->
+    <TextView
+        android:id="@+id/tvFantasyText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:ellipsize="end"
+        android:lineSpacingExtra="3dp"
+        android:maxLines="4"
+        android:text="Looking for someone to go on unscripted stargazing trips and late-night ice cream runs with."
+        android:textColor="#F2F2F7"
+        android:textSize="11sp" />
+
+    <!-- Secret Chat / Connect Button -->
+    <TextView
+        android:id="@+id/btnConnectFantasy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_tactile_btn"
+        android:gravity="center"
+        android:paddingVertical="8dp"
+        android:text="Send Whisper"
+        android:textColor="#000000"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

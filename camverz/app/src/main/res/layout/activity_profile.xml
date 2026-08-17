@@ -393,6 +393,16 @@
                         android:layout_height="wrap_content" />
                 </FrameLayout>
 
+                <!-- Meta Direct Native Ad Container (Fallback) -->
+                <FrameLayout
+                    android:id="@+id/metaNativeAdContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="24dp"
+                    android:visibility="gone" />
+
             </LinearLayout>
         </ScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:background="@drawable/bg_glowing_card"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <!-- Top Badge: Party Host -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_party_glow_badge"
+            android:letterSpacing="0.05"
+            android:paddingHorizontal="7dp"
+            android:paddingVertical="3dp"
+            android:text="🎉 PARTY HOST"
+            android:textColor="#FFFFFF"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/tvTargetGender"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_luxury_chip"
+            android:paddingHorizontal="7dp"
+            android:paddingVertical="3dp"
+            android:text="Everyone"
+            android:textColor="#8E8E93"
+            android:textSize="9sp" />
+    </LinearLayout>
+
+    <!-- Host info -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <RelativeLayout
+            android:layout_width="34dp"
+            android:layout_height="34dp">
+
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/ivHostAvatar"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_avatar_2"
+                app:shapeAppearanceOverlay="@style/CircleImageStyle" />
+
+            <View
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="@drawable/bg_avatar_white_ring" />
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvHostNameAge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Priya, 25"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCapacity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👥 15 People Max"
+                android:textColor="#8E8E93"
+                android:textSize="10sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Party Purpose -->
+    <TextView
+        android:id="@+id/tvPartyPurpose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Weekend Techno &amp; BBQ Night"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <!-- Venue Location -->
+    <TextView
+        android:id="@+id/tvPartyVenue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="📍 Skydeck Rooftop Villa, HSR Layout"
+        android:textColor="#E5E5EA"
+        android:textSize="10sp" />
+
+    <!-- Date/Time -->
+    <TextView
+        android:id="@+id/tvPartyTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="⏰ Saturday, 9:00 PM"
+        android:textColor="#8E8E93"
+        android:textSize="10sp" />
+
+    <!-- Join Party Button -->
+    <TextView
+        android:id="@+id/btnJoinParty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_tactile_btn"
+        android:gravity="center"
+        android:paddingVertical="8dp"
+        android:text="Request Invite"
+        android:textColor="#000000"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

@@ -680,6 +680,10 @@ public class CallActivity extends AppCompatActivity {
             @Override public void onSignalingChange(PeerConnection.SignalingState s) {}
             @Override public void onIceConnectionChange(PeerConnection.IceConnectionState s) {
                 Log.d(TAG, "onIceConnectionChange: " + s);
+                if (s == PeerConnection.IceConnectionState.CONNECTED || s == PeerConnection.IceConnectionState.COMPLETED) {
+                    timeoutHandler.removeCallbacks(timeoutRunnable);
+                    Log.d(TAG, "WebRTC connected, timeout cancelled.");
+                }
                 if (s == PeerConnection.IceConnectionState.FAILED && !turnFallbackAttempted) {
                     Log.w(TAG, "STUN failed, attempting TURN fallback...");
                     turnFallbackAttempted = true;
@@ -1414,114 +1418,89 @@ public class CallActivity extends AppCompatActivity {
 
         removeSocketListeners();
 
-        if (localVideoTrack != null) {
-            localVideoTrack.removeSink(localView);
-        }
-
-        if (videoCapturer != null) {
-            try { 
-                videoCapturer.stopCapture(); 
-            } catch (InterruptedException e) { 
-                e.printStackTrace(); 
-            }
-            videoCapturer.dispose();
-            videoCapturer = null;
-        }
-        
-        if (localVideoTrack != null) localVideoTrack.dispose();
-        if (localAudioTrack != null) localAudioTrack.dispose();
-        
-        if (surfaceTextureHelper != null) {
-            surfaceTextureHelper.dispose();
-            surfaceTextureHelper = null;
-        }
-
-        if (peerConnection != null) {
-            peerConnection.close();
-            peerConnection.dispose();
-            peerConnection = null;
-        }
-        
-        runOnUiThread(() -> {
-            if (localView != null) localView.release();
-            if (remoteView != null) remoteView.release();
-        });
-
-        fadeOutRemoteOverlay(null);
-
-        if (factory != null) {
-            try {
-                factory.dispose();
-            } catch (Exception e) {
-                Log.e(TAG, "Error disposing factory: " + e.getMessage());
-            }
-            factory = null;
-        }
-
-        if (eglBase != null) {
-            eglBase.release();
-            eglBase = null;
-        }
-
-        android.content.SharedPreferences prefs = getSharedPreferences("app_stats", MODE_PRIVATE);
-        int currentCount = prefs.getInt("call_counter", 0);
-        currentCount++;
-        prefs.edit().putInt("call_counter", currentCount).apply();
-
-        final int finalCount = currentCount;
-        runOnUiThread(() -> {
-            if (isFinishing() || isDestroyed()) {
-                finish();
-                return;
-            }
-
-            boolean isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
-            if (isPrivateCall) {
-                if (levelPlayPrivateCallAd != null && (isPrivateCallAdLoaded || levelPlayPrivateCallAd.isAdReady())) {
-                    Log.d(TAG, "📺 Showing LevelPlay Interstitial on private call disconnect");
-                    levelPlayPrivateCallAd.showAd(CallActivity.this);
-                } else {
-                    finish();
+        // Release WebRTC on a background thread to prevent UI freezing / deadlock!
+        new Thread(() -> {
+            if (localVideoTrack != null) {
+                try {
+                    localVideoTrack.removeSink(localView);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error removing sink: " + e.getMessage());
                 }
-                return;
             }
 
-            if (isUnityInterstitialLoaded) {
-                Log.d(TAG, "📺 Showing Unity Interstitial on disconnect (Call #" + finalCount + ")");
-                showUnityInterstitialAndFinish();
-            } else if (interstitialAd != null) {
-                Log.d(TAG, "📺 Showing AdMob Interstitial on disconnect (Call #" + finalCount + ")");
-                interstitialAd.show(CallActivity.this);
-            } else if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
-                Log.d(TAG, "📺 Showing Meta Interstitial fallback on disconnect (Call #" + finalCount + ")");
-                metaInterstitialAd.show();
-            } else if (metaInterstitialAd != null) {
-                // Meta ad is currently loading over network, wait up to 2.5s for load to complete
-                Log.d(TAG, "⏳ Meta ad loading in-flight. Waiting up to 2.5s for ad load...");
-                final ProgressDialog adProgress = new ProgressDialog(CallActivity.this);
-                adProgress.setMessage("Ending call...");
-                adProgress.setCancelable(false);
-                try { adProgress.show(); } catch (Exception e) {}
+            if (videoCapturer != null) {
+                try { 
+                    videoCapturer.stopCapture(); 
+                } catch (Exception e) { 
+                    Log.e(TAG, "Error stopping capturer: " + e.getMessage());
+                }
+                try {
+                    videoCapturer.dispose();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error disposing capturer: " + e.getMessage());
+                }
+                videoCapturer = null;
+            }
+            
+            if (localVideoTrack != null) {
+                try { localVideoTrack.dispose(); } catch (Exception e) {}
+                localVideoTrack = null;
+            }
+            if (localAudioTrack != null) {
+                try { localAudioTrack.dispose(); } catch (Exception e) {}
+                localAudioTrack = null;
+            }
+            
+            if (surfaceTextureHelper != null) {
+                try { surfaceTextureHelper.dispose(); } catch (Exception e) {}
+                surfaceTextureHelper = null;
+            }
 
-                Handler waitHandler = new Handler(Looper.getMainLooper());
-                Runnable finishRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        try { if (adProgress.isShowing()) adProgress.dismiss(); } catch (Exception e) {}
-                        if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
-                            metaInterstitialAd.show();
-                        } else if (isUnityInterstitialLoaded) {
-                            showUnityInterstitialAndFinish();
-                        } else {
-                            finish();
-                        }
-                    }
-                };
-                waitHandler.postDelayed(finishRunnable, 2500);
-            } else {
+            if (peerConnection != null) {
+                try {
+                    peerConnection.close();
+                    peerConnection.dispose();
+                } catch (Exception e) {}
+                peerConnection = null;
+            }
+
+            if (factory != null) {
+                try {
+                    factory.dispose();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error disposing factory: " + e.getMessage());
+                }
+                factory = null;
+            }
+
+            if (eglBase != null) {
+                try { eglBase.release(); } catch (Exception e) {}
+                eglBase = null;
+            }
+            
+            // Release SurfaceViews and finish on Main Thread
+            runOnUiThread(() -> {
+                if (localView != null) {
+                    try { localView.release(); } catch (Exception e) {}
+                }
+                if (remoteView != null) {
+                    try { remoteView.release(); } catch (Exception e) {}
+                }
+                
+                fadeOutRemoteOverlay(null);
+
+                // Update call counter stats
+                try {
+                    android.content.SharedPreferences prefs = getSharedPreferences("app_stats", MODE_PRIVATE);
+                    int currentCount = prefs.getInt("call_counter", 0);
+                    currentCount++;
+                    prefs.edit().putInt("call_counter", currentCount).apply();
+                } catch (Exception e) {}
+
+                // Finish immediately without showing post-call interstitial ads
                 finish();
-            }
-        });
+            });
+        }).start();
     }
 
     private void loadPeerUserInfo() {

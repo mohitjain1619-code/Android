@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ad Testing Dashboard"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Meta Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Meta (Direct)"
+            android:textColor="#38BDF8"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+            
+        <Button
+            android:id="@+id/btn_meta_interstitial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Interstitial"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_meta_rewarded"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Rewarded Video"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_meta_native"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Native Ad"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+
+        <!-- Unity Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Unity (Direct)"
+            android:textColor="#38BDF8"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+            
+        <Button
+            android:id="@+id/btn_unity_interstitial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Interstitial"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_unity_rewarded"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Rewarded Video"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+
+        <!-- ironSource Direct Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ironSource (Direct)"
+            android:textColor="#38BDF8"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+            
+        <Button
+            android:id="@+id/btn_is_interstitial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Interstitial"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_is_rewarded"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Rewarded Video"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+
+        <!-- Mediation Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mediation (LevelPlay)"
+            android:textColor="#38BDF8"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+            
+        <Button
+            android:id="@+id/btn_lp_interstitial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Interstitial"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_lp_rewarded"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Rewarded Video"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_lp_native"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Native Ad"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+
+        <!-- AdMob Mediation Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="AdMob Mediation"
+            android:textColor="#38BDF8"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+            
+        <Button
+            android:id="@+id/btn_admob_interstitial"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Interstitial"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_admob_rewarded"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Rewarded Interstitial"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+            
+        <Button
+            android:id="@+id/btn_admob_native"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Load &amp; Show Native Ad"
+            android:backgroundTint="#1E293B"
+            android:textColor="#FFFFFF" />
+
+        <!-- Ad Containers for Native Ads -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Native Ad Preview"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp" />
+
+        <!-- LevelPlay Native Container -->
+        <FrameLayout
+            android:id="@+id/ad_testing_lp_native_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone">
+            <com.ironsource.mediationsdk.ads.nativead.NativeAdLayout
+                android:id="@+id/ad_testing_lp_native_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </FrameLayout>
+
+        <!-- Meta Native Container -->
+        <FrameLayout
+            android:id="@+id/ad_testing_meta_native_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
+        <!-- AdMob Native Container -->
+        <FrameLayout
+            android:id="@+id/ad_testing_admob_native_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</ScrollView>
