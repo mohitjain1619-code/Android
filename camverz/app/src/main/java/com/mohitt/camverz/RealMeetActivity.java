@@ -151,7 +151,7 @@ public class RealMeetActivity extends BaseActivity {
         // Return to Random Video Calling listener
         btnReturnToVideo.setOnClickListener(v -> finish());
         if (btnHeaderRequests != null) btnHeaderRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
-        if (btnHeaderInbox != null) btnHeaderInbox.setOnClickListener(v -> startActivity(new Intent(this, InboxActivity.class)));
+        if (btnHeaderInbox != null) btnHeaderInbox.setOnClickListener(v -> startActivity(new Intent(this, CommunityInboxActivity.class)));
 
         // Dock Tab click listeners
         if (dockTabMeet != null) dockTabMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));

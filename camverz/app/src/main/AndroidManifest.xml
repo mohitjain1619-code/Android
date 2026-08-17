@@ -150,6 +150,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".CommunityInboxActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".NotificationActivity"
             android:exported="false" />
 
