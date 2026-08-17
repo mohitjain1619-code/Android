@@ -21,35 +21,66 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!-- Return to Random Video Calling Button -->
+            <!-- Left Actions: Return Button & Requests Button -->
             <LinearLayout
-                android:id="@+id/btnReturnToVideo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
-                android:background="@drawable/bg_luxury_pill_dark"
-                android:clickable="true"
-                android:focusable="true"
                 android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="7dp">
+                android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_arrow_back"
-                    app:tint="#FFFFFF" />
-
-                <TextView
+                <!-- Return to Random Video Calling Button -->
+                <LinearLayout
+                    android:id="@+id/btnReturnToVideo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="Video Calling"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    android:background="@drawable/bg_luxury_pill_dark"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="7dp">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_arrow_back"
+                        app:tint="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:text="Video Calling"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Incoming Requests Button -->
+                <LinearLayout
+                    android:id="@+id/btnHeaderRequests"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_luxury_chip"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="7dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📩 Requests"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Title branding -->
@@ -292,13 +323,13 @@
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- Floating Dock Navigation Bar (Bottom Dock with Center Action FAB) -->
+    <!-- Floating Dock Navigation Bar (Bottom Dock with Center Action FAB - 100% Symmetric Layout) -->
     <RelativeLayout
         android:id="@+id/bottomDockNav"
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginHorizontal="16dp"
+        android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_dock_nav"
         android:elevation="14dp"
@@ -310,6 +341,7 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
+            <!-- Left Tab 1: Meets -->
             <LinearLayout
                 android:id="@+id/dockTabMeet"
                 android:layout_width="0dp"
@@ -325,7 +357,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="📍"
-                    android:textSize="17sp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tvTextMeet"
@@ -334,10 +366,11 @@
                     android:layout_marginTop="1dp"
                     android:text="Meets"
                     android:textColor="#FFFFFF"
-                    android:textSize="9sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Left Tab 2: Fantasy -->
             <LinearLayout
                 android:id="@+id/dockTabFantasy"
                 android:layout_width="0dp"
@@ -353,7 +386,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="💭"
-                    android:textSize="17sp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tvTextFantasy"
@@ -362,43 +395,16 @@
                     android:layout_marginTop="1dp"
                     android:text="Fantasy"
                     android:textColor="#8E8E93"
-                    android:textSize="9sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/dockTabRequests"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvIconRequests"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📩"
-                    android:textSize="17sp" />
-
-                <TextView
-                    android:id="@+id/tvTextRequests"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:text="Requests"
-                    android:textColor="#8E8E93"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Center Action FAB Placeholder space -->
+            <!-- Center Action FAB Placeholder space (Exact Center) -->
             <View
-                android:layout_width="52dp"
+                android:layout_width="54dp"
                 android:layout_height="wrap_content" />
 
+            <!-- Right Tab 1: Party -->
             <LinearLayout
                 android:id="@+id/dockTabParty"
                 android:layout_width="0dp"
@@ -414,7 +420,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🎉"
-                    android:textSize="17sp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tvTextParty"
@@ -423,10 +429,11 @@
                     android:layout_marginTop="1dp"
                     android:text="Party"
                     android:textColor="#8E8E93"
-                    android:textSize="9sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Right Tab 2: Profile -->
             <LinearLayout
                 android:id="@+id/dockTabProfile"
                 android:layout_width="0dp"
@@ -442,7 +449,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="👤"
-                    android:textSize="17sp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/tvTextProfile"
@@ -451,7 +458,7 @@
                     android:layout_marginTop="1dp"
                     android:text="Profile"
                     android:textColor="#8E8E93"
-                    android:textSize="9sp"
+                    android:textSize="10sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -460,8 +467,8 @@
         <!-- Center Primary Action FAB Floating in Dock Center -->
         <FrameLayout
             android:id="@+id/fabCreate"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
             android:layout_centerInParent="true"
             android:background="@drawable/bg_center_fab"
             android:clickable="true"
@@ -475,7 +482,7 @@
                 android:layout_gravity="center"
                 android:text="+"
                 android:textColor="#000000"
-                android:textSize="30sp"
+                android:textSize="32sp"
                 android:textStyle="bold" />
         </FrameLayout>
 

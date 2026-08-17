@@ -57,13 +57,14 @@ public class RealMeetActivity extends BaseActivity {
 
     // Header & Search
     private LinearLayout btnReturnToVideo;
+    private View btnHeaderRequests;
     private LinearLayout cityFilterContainer;
     private TextView chipFilterGlobal, chipFilterCity;
     private EditText etSearch;
 
     // Bottom Floating Dock Views
-    private View dockTabMeet, dockTabFantasy, dockTabRequests, dockTabParty, dockTabProfile;
-    private TextView tvTextMeet, tvTextFantasy, tvTextRequests, tvTextParty, tvTextProfile;
+    private View dockTabMeet, dockTabFantasy, dockTabParty, dockTabProfile;
+    private TextView tvTextMeet, tvTextFantasy, tvTextParty, tvTextProfile;
     private View fabCreate;
 
     // Content Views
@@ -103,18 +104,17 @@ public class RealMeetActivity extends BaseActivity {
         currentUserGender = tokenManager.getUserGender();
 
         btnReturnToVideo = findViewById(R.id.btnReturnToVideo);
+        btnHeaderRequests = findViewById(R.id.btnHeaderRequests);
         etSearch = findViewById(R.id.etSearch);
 
         dockTabMeet = findViewById(R.id.dockTabMeet);
         dockTabFantasy = findViewById(R.id.dockTabFantasy);
-        dockTabRequests = findViewById(R.id.dockTabRequests);
         dockTabParty = findViewById(R.id.dockTabParty);
         dockTabProfile = findViewById(R.id.dockTabProfile);
         fabCreate = findViewById(R.id.fabCreate);
 
         tvTextMeet = findViewById(R.id.tvTextMeet);
         tvTextFantasy = findViewById(R.id.tvTextFantasy);
-        tvTextRequests = findViewById(R.id.tvTextRequests);
         tvTextParty = findViewById(R.id.tvTextParty);
         tvTextProfile = findViewById(R.id.tvTextProfile);
 
@@ -138,11 +138,11 @@ public class RealMeetActivity extends BaseActivity {
 
         // Return to Random Video Calling listener
         btnReturnToVideo.setOnClickListener(v -> finish());
+        if (btnHeaderRequests != null) btnHeaderRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
 
         // Dock Tab click listeners
         if (dockTabMeet != null) dockTabMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));
         if (dockTabFantasy != null) dockTabFantasy.setOnClickListener(v -> switchTab(Tab.FANTASY));
-        if (dockTabRequests != null) dockTabRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
         if (dockTabParty != null) dockTabParty.setOnClickListener(v -> switchTab(Tab.PARTY));
         if (dockTabProfile != null) dockTabProfile.setOnClickListener(v -> switchTab(Tab.PROFILE));
 
@@ -286,7 +286,6 @@ public class RealMeetActivity extends BaseActivity {
 
         if (tvTextMeet != null) tvTextMeet.setTextColor(tab == Tab.REAL_MEET ? Color.WHITE : Color.parseColor("#8E8E93"));
         if (tvTextFantasy != null) tvTextFantasy.setTextColor(tab == Tab.FANTASY ? Color.WHITE : Color.parseColor("#8E8E93"));
-        if (tvTextRequests != null) tvTextRequests.setTextColor(tab == Tab.REQUESTS ? Color.WHITE : Color.parseColor("#8E8E93"));
         if (tvTextParty != null) tvTextParty.setTextColor(tab == Tab.PARTY ? Color.WHITE : Color.parseColor("#8E8E93"));
         if (tvTextProfile != null) tvTextProfile.setTextColor(tab == Tab.PROFILE ? Color.WHITE : Color.parseColor("#8E8E93"));
 
