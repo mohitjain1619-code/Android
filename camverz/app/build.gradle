@@ -163,6 +163,7 @@ dependencies {
     implementation 'com.unity3d.ads-mediation:mediation-sdk:9.5.0'
     implementation 'com.ironsource.adapters:unityadsadapter:4.3.42'
     implementation 'com.ironsource.adapters:facebookadapter:4.3.52'
+    implementation 'com.ironsource.adapters:admobadapter:4.3.43'
 
     // Required InMobi SDK dependencies
     implementation 'com.inmobi.monetization:inmobi-ads-kotlin:10.7.5'
