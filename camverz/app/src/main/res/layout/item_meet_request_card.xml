@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="6dp"
@@ -49,19 +50,19 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="Simran Kaur, 24"
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Applicant Name, Age" />
 
             <TextView
                 android:id="@+id/tvApplicantCity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="📍 Delhi • Interested in your post"
                 android:textColor="#8E8E93"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                tools:text="📍 City • Interested in your post" />
         </LinearLayout>
 
         <TextView
@@ -71,10 +72,10 @@
             android:background="@drawable/bg_luxury_chip"
             android:paddingHorizontal="8dp"
             android:paddingVertical="3dp"
-            android:text="PENDING"
             android:textColor="#E5E5EA"
             android:textSize="9sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="PENDING" />
     </LinearLayout>
 
     <!-- Post Context Tag -->
@@ -88,10 +89,10 @@
         android:maxLines="1"
         android:paddingHorizontal="10dp"
         android:paddingVertical="4dp"
-        android:text="For: Coffee &amp; Casual Chat at Third Wave"
         android:textColor="#F2F2F7"
         android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="For: Post Purpose" />
 
     <!-- Message text -->
     <TextView
@@ -100,9 +101,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:lineSpacingExtra="3dp"
-        android:text="Hey! I'm near CP right now, would love to join you for coffee!"
         android:textColor="#D1D1D6"
-        android:textSize="12sp" />
+        android:textSize="12sp"
+        tools:text="Applicant message..." />
 
     <!-- Contact Mode Preference Tag -->
     <TextView
@@ -110,10 +111,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="🎥 Prefers Private Video Call"
         android:textColor="#8E8E93"
         android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="🎥 Prefers Video Call" />
 
     <!-- Direct Action Buttons Row -->
     <LinearLayout

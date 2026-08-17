@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp"
@@ -48,10 +49,10 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="Simran, 25"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Name, Age" />
 
             <TextView
                 android:id="@+id/tvStatusChip"
@@ -62,10 +63,10 @@
                 android:letterSpacing="0.05"
                 android:paddingHorizontal="7dp"
                 android:paddingVertical="2dp"
-                android:text="SINGLE"
                 android:textColor="#E5E5EA"
                 android:textSize="9sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="STATUS" />
         </LinearLayout>
     </LinearLayout>
 
@@ -77,10 +78,10 @@
         android:layout_marginTop="10dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="✨ Stargazing, Travel, Music"
         android:textColor="#8E8E93"
         android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="✨ Interests" />
 
     <!-- Fantasy Text (Up to 200 chars limit) -->
     <TextView
@@ -91,9 +92,9 @@
         android:ellipsize="end"
         android:lineSpacingExtra="3dp"
         android:maxLines="4"
-        android:text="Looking for someone to go on unscripted stargazing trips and late-night ice cream runs with."
         android:textColor="#F2F2F7"
-        android:textSize="11sp" />
+        android:textSize="11sp"
+        tools:text="Fantasy description..." />
 
     <!-- Secret Chat / Connect Button -->
     <TextView

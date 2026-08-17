@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp"
@@ -48,28 +49,28 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:text="Aanya, 23"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:text="Name, 24" />
 
             <TextView
                 android:id="@+id/tvCity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
-                android:text="📍 Delhi"
                 android:textColor="#8E8E93"
-                android:textSize="10sp" />
+                android:textSize="10sp"
+                tools:text="📍 City" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/tvTimeAgo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="30m ago"
             android:textColor="#636366"
-            android:textSize="9sp" />
+            android:textSize="9sp"
+            tools:text="Just now" />
     </LinearLayout>
 
     <!-- Purpose Chip -->
@@ -83,10 +84,10 @@
         android:maxLines="1"
         android:paddingHorizontal="9dp"
         android:paddingVertical="4dp"
-        android:text="☕ Coffee &amp; Casual Chat"
         android:textColor="#F2F2F7"
         android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="Meeting Purpose" />
 
     <!-- Exact Location -->
     <TextView
@@ -96,10 +97,10 @@
         android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="🏢 Third Wave Coffee, CP"
         android:textColor="#E5E5EA"
         android:textSize="11sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        tools:text="Meeting Location" />
 
     <!-- Exact Clock Time -->
     <TextView
@@ -109,9 +110,9 @@
         android:layout_marginTop="3dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="⏰ 7:30 PM Today"
         android:textColor="#8E8E93"
-        android:textSize="10sp" />
+        android:textSize="10sp"
+        tools:text="⏰ Meeting Time" />
 
     <!-- Description (Up to 200 chars limit) -->
     <TextView
@@ -122,9 +123,9 @@
         android:ellipsize="end"
         android:lineSpacingExtra="3dp"
         android:maxLines="3"
-        android:text="Up for coffee after work! Looking to meet someone genuine for good conversations."
         android:textColor="#D1D1D6"
-        android:textSize="11sp" />
+        android:textSize="11sp"
+        tools:text="Meeting description..." />
 
     <!-- Respond / Connect Button -->
     <TextView

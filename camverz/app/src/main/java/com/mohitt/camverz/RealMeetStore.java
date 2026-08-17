@@ -26,6 +26,9 @@ public class RealMeetStore {
     private RealMeetStore(Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         gson = new Gson();
+        if (!prefs.getBoolean("cleared_mock_v3", false)) {
+            prefs.edit().clear().putBoolean("cleared_mock_v3", true).apply();
+        }
     }
 
     public static synchronized RealMeetStore getInstance(Context context) {
