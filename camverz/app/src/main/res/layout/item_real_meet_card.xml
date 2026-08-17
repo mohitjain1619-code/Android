@@ -5,13 +5,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="5dp"
-    android:background="@drawable/bg_glowing_card"
+    android:background="@drawable/bg_real_meet_gradient_card"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
     android:padding="14dp">
 
-    <!-- Header: User Avatar + Name + Age -->
+    <!-- Header: User Avatar with Amber Ring + Name + Age -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -19,27 +19,27 @@
         android:orientation="horizontal">
 
         <RelativeLayout
-            android:layout_width="38dp"
-            android:layout_height="38dp">
+            android:layout_width="40dp"
+            android:layout_height="40dp">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/ivAvatar"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_avatar_1"
                 app:shapeAppearanceOverlay="@style/CircleImageStyle" />
 
             <View
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:background="@drawable/bg_avatar_white_ring" />
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_avatar_amber_ring" />
         </RelativeLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="9dp"
+            android:layout_marginStart="10dp"
             android:layout_weight="1"
             android:orientation="vertical">
 
@@ -58,38 +58,39 @@
                 android:id="@+id/tvCity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:textColor="#8E8E93"
+                android:layout_marginTop="2dp"
+                android:textColor="#FF9500"
                 android:textSize="10sp"
-                tools:text="📍 City" />
+                android:textStyle="bold"
+                tools:text="📍 Gwalior" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/tvTimeAgo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#636366"
+            android:textColor="#8E8E93"
             android:textSize="9sp"
             tools:text="Just now" />
     </LinearLayout>
 
-    <!-- Purpose Chip -->
+    <!-- Purpose Badge Chip -->
     <TextView
         android:id="@+id/tvPurpose"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:background="@drawable/bg_luxury_chip"
         android:ellipsize="end"
         android:maxLines="1"
-        android:paddingHorizontal="9dp"
-        android:paddingVertical="4dp"
-        android:textColor="#F2F2F7"
-        android:textSize="10sp"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="5dp"
+        android:textColor="#FFD60A"
+        android:textSize="11sp"
         android:textStyle="bold"
         tools:text="Meeting Purpose" />
 
-    <!-- Exact Location -->
+    <!-- Location details -->
     <TextView
         android:id="@+id/tvLocation"
         android:layout_width="match_parent"
@@ -99,44 +100,52 @@
         android:maxLines="1"
         android:textColor="#E5E5EA"
         android:textSize="11sp"
-        android:textStyle="bold"
-        tools:text="Meeting Location" />
+        tools:text="📍 Venue Location" />
 
-    <!-- Exact Clock Time -->
-    <TextView
-        android:id="@+id/tvTime"
+    <!-- Time Glass Pill Box -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="#8E8E93"
-        android:textSize="10sp"
-        tools:text="⏰ Meeting Time" />
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_luxury_pill_dark"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp">
 
-    <!-- Description (Up to 200 chars limit) -->
+        <TextView
+            android:id="@+id/tvTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF9500"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            tools:text="⏰ Today at 8:00 PM" />
+    </LinearLayout>
+
+    <!-- Brief Description -->
     <TextView
         android:id="@+id/tvDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
+        android:layout_marginTop="8dp"
         android:ellipsize="end"
-        android:lineSpacingExtra="3dp"
-        android:maxLines="3"
-        android:textColor="#D1D1D6"
-        android:textSize="11sp"
-        tools:text="Meeting description..." />
+        android:maxLines="2"
+        android:textColor="#8E8E93"
+        android:textSize="10sp"
+        tools:text="Meeting description details..." />
 
-    <!-- Respond / Connect Button -->
+    <!-- Electric Amber Connect CTA Button -->
     <TextView
         android:id="@+id/btnConnect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:background="@drawable/bg_tactile_btn"
+        android:background="@drawable/bg_neon_amber_button"
+        android:clickable="true"
+        android:focusable="true"
         android:gravity="center"
-        android:paddingVertical="8dp"
-        android:text="Connect"
+        android:paddingVertical="9dp"
+        android:text="⚡ Connect &amp; Meet"
         android:textColor="#000000"
         android:textSize="11sp"
         android:textStyle="bold" />
