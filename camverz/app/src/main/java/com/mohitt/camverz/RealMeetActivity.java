@@ -5,6 +5,8 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -30,6 +32,8 @@ import com.mohitt.camverz.api.ApiClient;
 import com.mohitt.camverz.api.ApiService;
 import com.mohitt.camverz.api.TokenManager;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -38,6 +42,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
+import io.socket.client.Socket;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -54,6 +59,7 @@ public class RealMeetActivity extends BaseActivity {
     private ApiService api;
     private RealMeetStore store;
     private Gson gson;
+    private Socket socket;
 
     // Header & Search
     private LinearLayout btnReturnToVideo;
@@ -86,6 +92,10 @@ public class RealMeetActivity extends BaseActivity {
     private String currentUserGender;
     private int currentUserAge = 22;
 
+    // Auto-refresh handler for live real-time sync
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private Runnable refreshRunnable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +107,7 @@ public class RealMeetActivity extends BaseActivity {
         api = ApiClient.getInstance(this).getApi();
         store = RealMeetStore.getInstance(this);
         gson = new Gson();
+        socket = SocketManager.getInstance();
 
         currentUserId = tokenManager.getUserId();
         currentUserName = tokenManager.getUserName();
@@ -183,9 +194,61 @@ public class RealMeetActivity extends BaseActivity {
         // FAB listener
         fabCreate.setOnClickListener(v -> onFabClicked());
 
+        setupSocketListeners();
         fetchUserProfileDetails();
         fetchFeedFromServer();
         loadCurrentTabFeed();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startAutoRefreshLoop();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopAutoRefreshLoop();
+    }
+
+    private void startAutoRefreshLoop() {
+        stopAutoRefreshLoop();
+        refreshRunnable = new Runnable() {
+            @Override
+            public void run() {
+                fetchFeedFromServer();
+                refreshHandler.postDelayed(this, 5000); // Poll server every 5 seconds
+            }
+        };
+        refreshHandler.postDelayed(refreshRunnable, 5000);
+    }
+
+    private void stopAutoRefreshLoop() {
+        if (refreshRunnable != null) {
+            refreshHandler.removeCallbacks(refreshRunnable);
+            refreshRunnable = null;
+        }
+    }
+
+    private void setupSocketListeners() {
+        if (socket != null) {
+            socket.on("realmeet-request-sent", args -> {
+                if (args != null && args.length > 0) {
+                    try {
+                        JSONObject obj = (JSONObject) args[0];
+                        String posterId = obj.optString("posterUserId");
+                        String applicantName = obj.optString("applicantName");
+                        if (currentUserId != null && currentUserId.equalsIgnoreCase(posterId)) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(RealMeetActivity.this, "📩 Live Meet Request from " + applicantName + "!", Toast.LENGTH_LONG).show();
+                                fetchFeedFromServer();
+                            });
+                        }
+                    } catch (Exception e) {}
+                }
+            });
+        }
     }
 
     private void fetchFeedFromServer() {
@@ -216,6 +279,28 @@ public class RealMeetActivity extends BaseActivity {
                                 store.addFantasyPost(fantasy);
                             }
                         }
+                        runOnUiThread(() -> loadCurrentTabFeed());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {}
+        });
+
+        api.getRealMeetServerRequests().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject body = response.body();
+                    if (body.has("ok") && body.get("ok").getAsBoolean() && body.has("requests")) {
+                        JsonArray arr = body.getAsJsonArray("requests");
+                        List<RealMeetRequest> serverReqs = new ArrayList<>();
+                        for (JsonElement el : arr) {
+                            RealMeetRequest req = gson.fromJson(el, RealMeetRequest.class);
+                            serverReqs.add(req);
+                        }
+                        store.saveMeetRequests(serverReqs);
                         runOnUiThread(() -> loadCurrentTabFeed());
                     }
                 }
@@ -414,12 +499,19 @@ public class RealMeetActivity extends BaseActivity {
             recyclerView.setAdapter(adapter);
 
         } else if (currentTab == Tab.REQUESTS) {
-            List<RealMeetRequest> requests = store.getMeetRequests();
-            if (requests.isEmpty()) {
-                emptyView.setVisibility(View.VISIBLE);
-                tvEmptyText.setText("No incoming meet requests yet.");
+            List<RealMeetRequest> allRequests = store.getMeetRequests();
+            List<RealMeetRequest> myIncomingRequests = new ArrayList<>();
+            for (RealMeetRequest r : allRequests) {
+                // Show requests where current user is the poster OR show all requests if testing
+                if (currentUserId == null || r.getPosterUserId() == null || currentUserId.equalsIgnoreCase(r.getPosterUserId()) || r.getPosterUserId().isEmpty()) {
+                    myIncomingRequests.add(r);
+                }
             }
-            MeetRequestAdapter adapter = new MeetRequestAdapter(this, requests, new MeetRequestAdapter.OnRequestActionListener() {
+            if (myIncomingRequests.isEmpty()) {
+                emptyView.setVisibility(View.VISIBLE);
+                tvEmptyText.setText("No incoming meet requests right now.");
+            }
+            MeetRequestAdapter adapter = new MeetRequestAdapter(this, myIncomingRequests, new MeetRequestAdapter.OnRequestActionListener() {
                 @Override
                 public void onStartCallClicked(RealMeetRequest request) {
                     Toast.makeText(RealMeetActivity.this, "🎥 Starting private video call with " + request.getApplicantName() + "...", Toast.LENGTH_SHORT).show();
@@ -441,6 +533,18 @@ public class RealMeetActivity extends BaseActivity {
                 public void onToggleAcceptClicked(RealMeetRequest request) {
                     String newStatus = "ACCEPTED".equalsIgnoreCase(request.getStatus()) ? "PENDING" : "ACCEPTED";
                     store.updateRequestStatus(request.getId(), newStatus);
+
+                    Map<String, Object> body = new HashMap<>();
+                    body.put("requestId", request.getId());
+                    body.put("status", newStatus);
+                    api.updateRealMeetServerRequestStatus(body).enqueue(new Callback<JsonObject>() {
+                        @Override
+                        public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+
+                        @Override
+                        public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    });
+
                     loadCurrentTabFeed();
                     Toast.makeText(RealMeetActivity.this, "Request status updated to " + newStatus, Toast.LENGTH_SHORT).show();
                 }
@@ -450,6 +554,11 @@ public class RealMeetActivity extends BaseActivity {
     }
 
     private void openSendRequestModal(String postId, String postTitle, String posterUserId, String posterName) {
+        if (currentUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
+            Toast.makeText(this, "This is your own post!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_send_meet_request, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
 

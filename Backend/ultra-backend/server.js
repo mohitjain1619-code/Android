@@ -96,7 +96,25 @@ app.post("/api/realmeet/request", (req, res) => {
   const { request } = req.body;
   if (!request) return res.status(400).json({ ok: false, message: "Invalid request payload" });
   realMeetRequestsStore.unshift(request);
+  try {
+    io.emit("realmeet-request-sent", request);
+  } catch (e) {}
   res.json({ ok: true, message: "Request sent successfully" });
+});
+
+app.put("/api/realmeet/request/status", (req, res) => {
+  const { requestId, status } = req.body;
+  if (!requestId || !status) return res.status(400).json({ ok: false, message: "Invalid request data" });
+  for (let reqObj of realMeetRequestsStore) {
+    if (reqObj.id === requestId) {
+      reqObj.status = status;
+      break;
+    }
+  }
+  try {
+    io.emit("realmeet-status-updated", { requestId, status });
+  } catch (e) {}
+  res.json({ ok: true, message: "Status updated successfully" });
 });
 
 app.get("/health", async (req, res) => {

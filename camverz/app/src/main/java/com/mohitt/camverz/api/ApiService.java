@@ -30,6 +30,9 @@ public interface ApiService {
     @POST("realmeet/request")
     Call<JsonObject> createRealMeetServerRequest(@Body Map<String, Object> body);
 
+    @PUT("realmeet/request/status")
+    Call<JsonObject> updateRealMeetServerRequestStatus(@Body Map<String, Object> body);
+
     // ============================================
     // AUTH
     // ============================================
