@@ -233,6 +233,9 @@ io.on("connection", (socket) => {
   // REGISTER USER
   socket.on("register-user", async ({ uid }) => {
     socket.uid = uid; // Save on socket object for O(1) disconnect lookup
+    socket.isSearching = false;
+    socket.peerUid = null;
+    socket.currentRoom = null;
     await redisModule.setUserOnline(uid, socket.id);
     console.log("✅ User registered:", uid, "→", socket.id);
   });
@@ -240,6 +243,10 @@ io.on("connection", (socket) => {
   // JOIN QUEUE (Optimized, O(1) atomic matching)
   socket.on("join-queue", async ({ uid, gender, category }) => {
     socket.uid = uid; // Save on socket object for O(1) disconnect lookup
+    socket.isSearching = true; // Mark as actively matching
+    socket.peerUid = null;
+    socket.currentRoom = null;
+
     // 1. Enforce Daily Call Limits if Review Mode is INACTIVE
     if (!REVIEW_MODE) {
       try {
@@ -302,15 +309,18 @@ io.on("connection", (socket) => {
         continue;
       }
       
-      // Verify candidate is still online
-      const peerSocket = await redisModule.getUserSocket(peerId);
-      if (peerSocket) {
-        matchFound = true;
-        break; // Found a valid matched user!
-      } else {
-        // Discard offline user and clean up their queue registry
-        await redisModule.removeFromQueue(peerId);
+      // Verify candidate is still online & actively searching
+      const peerSocketId = await redisModule.getUserSocket(peerId);
+      if (peerSocketId) {
+        const peerSocket = io.sockets.sockets.get(peerSocketId);
+        if (peerSocket && peerSocket.isSearching === true) {
+          matchFound = true;
+          break; // Found a valid matched user!
+        }
       }
+      
+      // Discard invalid/stale/offline user and clean up their queue registry
+      await redisModule.removeFromQueue(peerId);
     }
     
     if (matchFound && peerId) {
@@ -318,11 +328,25 @@ io.on("connection", (socket) => {
       await redisModule.removeFromQueue(peerId);
       await redisModule.removeFromQueue(uid);
       
-      console.log("💚 MATCH FOUND:", uid, "<>", peerId);
-      
       const s1 = socket.id;
       const s2 = await redisModule.getUserSocket(peerId);
+      const peerSocket = io.sockets.sockets.get(s2);
       
+      // Establish deterministic room name
+      const room = uid.localeCompare(peerId) < 0 ? `${uid}_${peerId}` : `${peerId}_${uid}`;
+      
+      // Bind states to socket objects immediately to prevent race conditions during transitions
+      socket.isSearching = false;
+      socket.peerUid = peerId;
+      socket.currentRoom = room;
+      
+      if (peerSocket) {
+        peerSocket.isSearching = false;
+        peerSocket.peerUid = uid;
+        peerSocket.currentRoom = room;
+      }
+      
+      console.log("💚 MATCH FOUND:", uid, "<>", peerId);
       if (s1) io.to(s1).emit("match-found", { peerId });
       if (s2) io.to(s2).emit("match-found", { peerId: uid });
     } else {
@@ -333,6 +357,9 @@ io.on("connection", (socket) => {
 
   // LEAVE QUEUE
   socket.on("leave-queue", async ({ uid }) => {
+    socket.isSearching = false;
+    socket.peerUid = null;
+    socket.currentRoom = null;
     await redisModule.removeFromQueue(uid);
     console.log("🚪 Removed:", uid);
   });
@@ -343,6 +370,7 @@ io.on("connection", (socket) => {
   socket.on("join-call-room", async ({ room, uid }) => {
     socket.uid = uid; // Save on socket object for O(1) disconnect lookup
     socket.currentRoom = room; // Track current call room for O(1) room cleanup
+    socket.isSearching = false; // Disable search mode
     await redisModule.setUserOnline(uid, socket.id);
     socket.join(room);
 
@@ -358,9 +386,10 @@ io.on("connection", (socket) => {
     await redisModule.setRoomState(room, state);
     console.log("👥", uid, "joined", room);
 
-    if (state.users.length === 2 && !state.ready) {
+    // If both participants are in the room, notify ready status (auto-retry compatible)
+    if (state.users.length === 2) {
       state.ready = true;
-      state.start_time = Date.now();
+      state.start_time = state.start_time || Date.now();
       state.participants = [...state.users];
       await redisModule.setRoomState(room, state);
       console.log("⚡ Both ready in room:", room);
@@ -371,6 +400,7 @@ io.on("connection", (socket) => {
   socket.on("leave-call-room", async ({ room, uid }) => {
     console.log("🚪", uid, "left room", room);
     socket.currentRoom = null; // Clear room tracking
+    socket.peerUid = null;
     socket.leave(room);
     
     // Notify peer that this user disconnected
@@ -593,6 +623,24 @@ io.on("connection", (socket) => {
       try {
         await redisModule.redis.del(`camverz:call_session:${disconnectedUid}`);
       } catch (e) { /* ignore */ }
+    }
+
+    // Direct peer notify on disconnect (immediate fallback)
+    if (socket.peerUid) {
+      try {
+        const peerSocketId = await redisModule.getUserSocket(socket.peerUid);
+        if (peerSocketId) {
+          io.to(peerSocketId).emit("peer-disconnected", { uid: disconnectedUid });
+          // Reset peer status on the active peer's socket
+          const peerSocket = io.sockets.sockets.get(peerSocketId);
+          if (peerSocket) {
+            peerSocket.peerUid = null;
+            peerSocket.currentRoom = null;
+          }
+        }
+      } catch (err) {
+        console.error("Error notifying peer on disconnect:", err);
+      }
     }
 
     // Clean up rooms (O(1) room cleanup instead of O(M) rooms iteration)
