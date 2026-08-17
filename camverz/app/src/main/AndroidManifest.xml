@@ -105,6 +105,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- Community Chat Activity -->
+        <activity
+            android:name=".CommunityChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Verification Info Activity -->
         <activity
             android:name=".VerificationInfoActivity"

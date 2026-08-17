@@ -48,7 +48,16 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         holder.tvRequestMessage.setText(req.getMessage());
 
         String pref = req.getContactPreference() != null ? req.getContactPreference() : "Private Video Call";
-        holder.tvContactPreference.setText(pref.contains("Video") ? "🎥 Prefers Private Video Call" : "💬 Prefers Direct Chat");
+        boolean isVideoPref = pref.toLowerCase().contains("video");
+        holder.tvContactPreference.setText(isVideoPref ? "🎥 Prefers Private Video Call" : "💬 Prefers Direct Chat");
+
+        if (isVideoPref) {
+            holder.btnStartCall.setVisibility(View.VISIBLE);
+            holder.btnOpenChat.setVisibility(View.GONE);
+        } else {
+            holder.btnStartCall.setVisibility(View.GONE);
+            holder.btnOpenChat.setVisibility(View.VISIBLE);
+        }
 
         holder.tvStatusBadge.setText(req.getStatus());
         if ("ACCEPTED".equalsIgnoreCase(req.getStatus())) {

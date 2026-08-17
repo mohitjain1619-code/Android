@@ -24,6 +24,9 @@ public interface ApiService {
     @POST("realmeet/post")
     Call<JsonObject> createRealMeetServerPost(@Body Map<String, Object> body);
 
+    @DELETE("realmeet/post/{id}")
+    Call<JsonObject> deleteRealMeetServerPost(@Path("id") String postId);
+
     @GET("realmeet/requests")
     Call<JsonObject> getRealMeetServerRequests();
 

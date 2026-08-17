@@ -77,15 +77,33 @@ app.get("/api/realmeet/feed", (req, res) => {
 
 app.post("/api/realmeet/post", (req, res) => {
   const { type, post } = req.body;
-  if (!post) return res.status(400).json({ ok: false, message: "Invalid post payload" });
+  if (!post || !post.id) return res.status(400).json({ ok: false, message: "Invalid post payload" });
   if (type === "REAL_MEET") {
+    realMeetPostsStore = realMeetPostsStore.filter(p => p.id !== post.id);
     realMeetPostsStore.unshift(post);
   } else if (type === "PARTY") {
+    partyPostsStore = partyPostsStore.filter(p => p.id !== post.id);
     partyPostsStore.unshift(post);
   } else if (type === "FANTASY") {
+    fantasyPostsStore = fantasyPostsStore.filter(p => p.id !== post.id);
     fantasyPostsStore.unshift(post);
   }
+  try {
+    io.emit("realmeet-post-updated", { type, post });
+  } catch (e) {}
   res.json({ ok: true, message: "Post created successfully" });
+});
+
+app.delete("/api/realmeet/post/:id", (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ ok: false, message: "Invalid post ID" });
+  realMeetPostsStore = realMeetPostsStore.filter(p => p.id !== id);
+  partyPostsStore = partyPostsStore.filter(p => p.id !== id);
+  fantasyPostsStore = fantasyPostsStore.filter(p => p.id !== id);
+  try {
+    io.emit("realmeet-post-deleted", { postId: id });
+  } catch (e) {}
+  res.json({ ok: true, message: "Post deleted successfully" });
 });
 
 app.get("/api/realmeet/requests", (req, res) => {

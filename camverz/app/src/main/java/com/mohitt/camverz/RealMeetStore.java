@@ -13,11 +13,11 @@ import java.util.List;
 
 public class RealMeetStore {
 
-    private static final String PREF_NAME = "real_meet_store";
-    private static final String KEY_REAL_MEET_POSTS = "real_meet_posts";
-    private static final String KEY_PARTY_POSTS = "party_posts";
-    private static final String KEY_FANTASY_POSTS = "fantasy_posts";
-    private static final String KEY_MEET_REQUESTS = "meet_requests";
+    private static final String PREF_NAME = "real_meet_store_prefs";
+    private static final String KEY_REAL_MEET_POSTS = "key_real_meet_posts_v3";
+    private static final String KEY_PARTY_POSTS = "key_party_posts_v3";
+    private static final String KEY_FANTASY_POSTS = "key_fantasy_posts_v3";
+    private static final String KEY_MEET_REQUESTS = "key_meet_requests_v3";
 
     private static RealMeetStore instance;
     private final SharedPreferences prefs;
@@ -26,8 +26,8 @@ public class RealMeetStore {
     private RealMeetStore(Context context) {
         prefs = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         gson = new Gson();
-        if (!prefs.getBoolean("cleared_mock_v3", false)) {
-            prefs.edit().clear().putBoolean("cleared_mock_v3", true).apply();
+        if (!prefs.getBoolean("cleared_mock_v4", false)) {
+            prefs.edit().clear().putBoolean("cleared_mock_v4", true).apply();
         }
     }
 
@@ -54,6 +54,24 @@ public class RealMeetStore {
         prefs.edit().putString(KEY_REAL_MEET_POSTS, json).apply();
     }
 
+    public synchronized void setRealMeetPosts(List<RealMeetPost> newPosts) {
+        if (newPosts == null) return;
+        List<RealMeetPost> deduplicated = new ArrayList<>();
+        for (RealMeetPost p : newPosts) {
+            if (p != null && p.getId() != null) {
+                boolean exists = false;
+                for (RealMeetPost existing : deduplicated) {
+                    if (existing.getId().equalsIgnoreCase(p.getId())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) deduplicated.add(p);
+            }
+        }
+        saveRealMeetPosts(deduplicated);
+    }
+
     public synchronized RealMeetPost getUserPostToday(String userId) {
         if (userId == null || userId.isEmpty()) return null;
         List<RealMeetPost> posts = getRealMeetPosts();
@@ -77,13 +95,15 @@ public class RealMeetStore {
     }
 
     public synchronized void addRealMeetPost(RealMeetPost post) {
+        if (post == null || post.getId() == null) return;
         List<RealMeetPost> posts = getRealMeetPosts();
-        posts.removeIf(p -> p.getUserId().equalsIgnoreCase(post.getUserId()));
+        posts.removeIf(p -> p.getId().equalsIgnoreCase(post.getId()));
         posts.add(0, post);
         saveRealMeetPosts(posts);
     }
 
     public synchronized void deleteRealMeetPost(String postId) {
+        if (postId == null) return;
         List<RealMeetPost> posts = getRealMeetPosts();
         posts.removeIf(p -> p.getId().equalsIgnoreCase(postId));
         saveRealMeetPosts(posts);
@@ -105,13 +125,34 @@ public class RealMeetStore {
         prefs.edit().putString(KEY_PARTY_POSTS, json).apply();
     }
 
+    public synchronized void setPartyPosts(List<PartyPost> newPosts) {
+        if (newPosts == null) return;
+        List<PartyPost> deduplicated = new ArrayList<>();
+        for (PartyPost p : newPosts) {
+            if (p != null && p.getId() != null) {
+                boolean exists = false;
+                for (PartyPost existing : deduplicated) {
+                    if (existing.getId().equalsIgnoreCase(p.getId())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) deduplicated.add(p);
+            }
+        }
+        savePartyPosts(deduplicated);
+    }
+
     public synchronized void addPartyPost(PartyPost post) {
+        if (post == null || post.getId() == null) return;
         List<PartyPost> posts = getPartyPosts();
+        posts.removeIf(p -> p.getId().equalsIgnoreCase(post.getId()));
         posts.add(0, post);
         savePartyPosts(posts);
     }
 
     public synchronized void deletePartyPost(String postId) {
+        if (postId == null) return;
         List<PartyPost> posts = getPartyPosts();
         posts.removeIf(p -> p.getId().equalsIgnoreCase(postId));
         savePartyPosts(posts);
@@ -133,13 +174,34 @@ public class RealMeetStore {
         prefs.edit().putString(KEY_FANTASY_POSTS, json).apply();
     }
 
+    public synchronized void setFantasyPosts(List<FantasyPost> newPosts) {
+        if (newPosts == null) return;
+        List<FantasyPost> deduplicated = new ArrayList<>();
+        for (FantasyPost p : newPosts) {
+            if (p != null && p.getId() != null) {
+                boolean exists = false;
+                for (FantasyPost existing : deduplicated) {
+                    if (existing.getId().equalsIgnoreCase(p.getId())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) deduplicated.add(p);
+            }
+        }
+        saveFantasyPosts(deduplicated);
+    }
+
     public synchronized void addFantasyPost(FantasyPost post) {
+        if (post == null || post.getId() == null) return;
         List<FantasyPost> posts = getFantasyPosts();
+        posts.removeIf(p -> p.getId().equalsIgnoreCase(post.getId()));
         posts.add(0, post);
         saveFantasyPosts(posts);
     }
 
     public synchronized void deleteFantasyPost(String postId) {
+        if (postId == null) return;
         List<FantasyPost> posts = getFantasyPosts();
         posts.removeIf(p -> p.getId().equalsIgnoreCase(postId));
         saveFantasyPosts(posts);
@@ -161,20 +223,10 @@ public class RealMeetStore {
         prefs.edit().putString(KEY_MEET_REQUESTS, json).apply();
     }
 
-    public synchronized List<RealMeetRequest> getRequestsForPoster(String posterUserId) {
-        List<RealMeetRequest> all = getMeetRequests();
-        List<RealMeetRequest> result = new ArrayList<>();
-        if (posterUserId == null) return result;
-        for (RealMeetRequest req : all) {
-            if (posterUserId.equalsIgnoreCase(req.getPosterUserId())) {
-                result.add(req);
-            }
-        }
-        return result;
-    }
-
     public synchronized void addMeetRequest(RealMeetRequest request) {
+        if (request == null || request.getId() == null) return;
         List<RealMeetRequest> requests = getMeetRequests();
+        requests.removeIf(r -> r.getId().equalsIgnoreCase(request.getId()));
         requests.add(0, request);
         saveMeetRequests(requests);
     }

@@ -248,6 +248,10 @@ public class RealMeetActivity extends BaseActivity {
                     } catch (Exception e) {}
                 }
             });
+
+            socket.on("realmeet-post-deleted", args -> {
+                runOnUiThread(() -> fetchFeedFromServer());
+            });
         }
     }
 
@@ -260,24 +264,27 @@ public class RealMeetActivity extends BaseActivity {
                     if (body.has("ok") && body.get("ok").getAsBoolean()) {
                         if (body.has("realMeetPosts")) {
                             JsonArray arr = body.getAsJsonArray("realMeetPosts");
+                            List<RealMeetPost> serverPosts = new ArrayList<>();
                             for (JsonElement el : arr) {
-                                RealMeetPost post = gson.fromJson(el, RealMeetPost.class);
-                                store.addRealMeetPost(post);
+                                serverPosts.add(gson.fromJson(el, RealMeetPost.class));
                             }
+                            store.setRealMeetPosts(serverPosts);
                         }
                         if (body.has("partyPosts")) {
                             JsonArray arr = body.getAsJsonArray("partyPosts");
+                            List<PartyPost> serverParties = new ArrayList<>();
                             for (JsonElement el : arr) {
-                                PartyPost party = gson.fromJson(el, PartyPost.class);
-                                store.addPartyPost(party);
+                                serverParties.add(gson.fromJson(el, PartyPost.class));
                             }
+                            store.setPartyPosts(serverParties);
                         }
                         if (body.has("fantasyPosts")) {
                             JsonArray arr = body.getAsJsonArray("fantasyPosts");
+                            List<FantasyPost> serverFantasies = new ArrayList<>();
                             for (JsonElement el : arr) {
-                                FantasyPost fantasy = gson.fromJson(el, FantasyPost.class);
-                                store.addFantasyPost(fantasy);
+                                serverFantasies.add(gson.fromJson(el, FantasyPost.class));
                             }
+                            store.setFantasyPosts(serverFantasies);
                         }
                         runOnUiThread(() -> loadCurrentTabFeed());
                     }
@@ -430,6 +437,10 @@ public class RealMeetActivity extends BaseActivity {
                 @Override
                 public void onDeleteClicked(RealMeetPost post) {
                     store.deleteRealMeetPost(post.getId());
+                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    });
                     loadCurrentTabFeed();
                     Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
                 }
@@ -461,6 +472,10 @@ public class RealMeetActivity extends BaseActivity {
                 @Override
                 public void onDeletePartyClicked(PartyPost post) {
                     store.deletePartyPost(post.getId());
+                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    });
                     loadCurrentTabFeed();
                     Toast.makeText(RealMeetActivity.this, "Party deleted", Toast.LENGTH_SHORT).show();
                 }
@@ -492,6 +507,10 @@ public class RealMeetActivity extends BaseActivity {
                 @Override
                 public void onDeleteFantasyClicked(FantasyPost post) {
                     store.deleteFantasyPost(post.getId());
+                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    });
                     loadCurrentTabFeed();
                     Toast.makeText(RealMeetActivity.this, "Fantasy deleted", Toast.LENGTH_SHORT).show();
                 }
@@ -502,7 +521,6 @@ public class RealMeetActivity extends BaseActivity {
             List<RealMeetRequest> allRequests = store.getMeetRequests();
             List<RealMeetRequest> myIncomingRequests = new ArrayList<>();
             for (RealMeetRequest r : allRequests) {
-                // Show requests where current user is the poster OR show all requests if testing
                 if (currentUserId == null || r.getPosterUserId() == null || currentUserId.equalsIgnoreCase(r.getPosterUserId()) || r.getPosterUserId().isEmpty()) {
                     myIncomingRequests.add(r);
                 }
@@ -514,18 +532,22 @@ public class RealMeetActivity extends BaseActivity {
             MeetRequestAdapter adapter = new MeetRequestAdapter(this, myIncomingRequests, new MeetRequestAdapter.OnRequestActionListener() {
                 @Override
                 public void onStartCallClicked(RealMeetRequest request) {
-                    Toast.makeText(RealMeetActivity.this, "🎥 Starting private video call with " + request.getApplicantName() + "...", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(RealMeetActivity.this, ConnectingActivity.class);
-                    intent.putExtra("category", "straight");
+                    Toast.makeText(RealMeetActivity.this, "🎥 Starting private 1-on-1 video call with " + request.getApplicantName() + "...", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(RealMeetActivity.this, CallActivity.class);
+                    intent.putExtra("targetUserId", request.getApplicantUserId());
+                    intent.putExtra("isCaller", true);
+                    intent.putExtra("isPrivateCall", true);
+                    intent.putExtra("isVideoCall", true);
                     startActivity(intent);
                 }
 
                 @Override
                 public void onOpenChatClicked(RealMeetRequest request) {
-                    Intent intent = new Intent(RealMeetActivity.this, ChatActivity.class);
-                    intent.putExtra("userId", request.getApplicantUserId());
-                    intent.putExtra("userName", request.getApplicantName());
-                    intent.putExtra("userAvatar", request.getApplicantAvatar());
+                    Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
+                    intent.putExtra("targetUserId", request.getApplicantUserId());
+                    intent.putExtra("targetUserName", request.getApplicantName());
+                    intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
+                    intent.putExtra("contactPreference", request.getContactPreference());
                     startActivity(intent);
                 }
 
@@ -538,11 +560,8 @@ public class RealMeetActivity extends BaseActivity {
                     body.put("requestId", request.getId());
                     body.put("status", newStatus);
                     api.updateRealMeetServerRequestStatus(body).enqueue(new Callback<JsonObject>() {
-                        @Override
-                        public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-
-                        @Override
-                        public void onFailure(Call<JsonObject> call, Throwable t) {}
+                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
                     });
 
                     loadCurrentTabFeed();
@@ -660,6 +679,10 @@ public class RealMeetActivity extends BaseActivity {
             @Override
             public void onDeleteClicked(RealMeetPost post) {
                 store.deleteRealMeetPost(post.getId());
+                api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                    @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                    @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                });
                 updateProfileUI();
                 Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
             }
@@ -767,6 +790,10 @@ public class RealMeetActivity extends BaseActivity {
 
             if (oldPostToReplace != null) {
                 store.deleteRealMeetPost(oldPostToReplace.getId());
+                api.deleteRealMeetServerPost(oldPostToReplace.getId()).enqueue(new Callback<JsonObject>() {
+                    @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                    @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                });
             }
 
             RealMeetPost newPost = new RealMeetPost(
