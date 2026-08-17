@@ -74,9 +74,9 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Mode-Enforced Video Call Button (Hidden if preference was Chat only) -->
+        <!-- In-Chat Cross Call / Chat Request Action Button -->
         <LinearLayout
-            android:id="@+id/btnHeaderVideoCall"
+            android:id="@+id/btnHeaderCallRequest"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_luxury_pill_dark"
@@ -84,18 +84,34 @@
             android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="7dp"
-            android:visibility="gone">
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp">
 
             <TextView
+                android:id="@+id/tvHeaderActionText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🎥 Video Call"
+                android:text="🎥 Request Call"
                 android:textColor="#FFFFFF"
-                android:textSize="11sp"
+                android:textSize="10sp"
                 android:textStyle="bold" />
         </LinearLayout>
+
+        <!-- Delete / Clear Chat Button -->
+        <TextView
+            android:id="@+id/btnDeleteChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_luxury_chip"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:text="🗑️"
+            android:textColor="#F87171"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <View

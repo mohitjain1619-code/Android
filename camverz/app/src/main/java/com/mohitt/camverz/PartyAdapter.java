@@ -42,7 +42,9 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         PartyPost post = postList.get(position);
 
-        holder.tvHostNameAge.setText(post.getHostName() + ", " + post.getHostAge());
+        String genderIcon = " ♂️ ";
+        String verifiedBadge = " ✔️";
+        holder.tvHostNameAge.setText(post.getHostName() + genderIcon + post.getHostAge() + verifiedBadge);
         holder.tvTargetGender.setText(post.getTargetGender());
         holder.tvCapacity.setText("👥 " + post.getCapacity() + " People Max");
         holder.tvPartyPurpose.setText(post.getPurpose());

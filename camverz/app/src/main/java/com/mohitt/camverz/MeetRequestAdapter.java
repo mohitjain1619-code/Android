@@ -19,6 +19,7 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         void onStartCallClicked(RealMeetRequest request);
         void onOpenChatClicked(RealMeetRequest request);
         void onToggleAcceptClicked(RealMeetRequest request);
+        void onDeleteRequestClicked(RealMeetRequest request);
     }
 
     private final Context context;
@@ -42,7 +43,9 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         RealMeetRequest req = requestList.get(position);
 
-        holder.tvApplicantNameAge.setText(req.getApplicantName() + ", " + req.getApplicantAge());
+        String genderBadge = " ♂️ ";
+        String verifiedBadge = " ✔️";
+        holder.tvApplicantNameAge.setText(req.getApplicantName() + genderBadge + req.getApplicantAge() + verifiedBadge);
         holder.tvApplicantCity.setText("📍 " + (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby"));
         holder.tvPostContext.setText("For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Real Meet Post"));
         holder.tvRequestMessage.setText(req.getMessage());
@@ -63,12 +66,18 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         if ("ACCEPTED".equalsIgnoreCase(req.getStatus())) {
             holder.tvStatusBadge.setTextColor(Color.parseColor("#4ADE80")); // Green
             holder.btnToggleAccept.setText("✅ Accepted");
+            holder.btnToggleAccept.setEnabled(false); // Locked once accepted
+            holder.btnToggleAccept.setAlpha(0.8f);
         } else if ("DECLINED".equalsIgnoreCase(req.getStatus())) {
             holder.tvStatusBadge.setTextColor(Color.parseColor("#F87171")); // Red
             holder.btnToggleAccept.setText("❌ Declined");
+            holder.btnToggleAccept.setEnabled(true);
+            holder.btnToggleAccept.setAlpha(1.0f);
         } else {
             holder.tvStatusBadge.setTextColor(Color.parseColor("#E5E5EA"));
             holder.btnToggleAccept.setText("✅ Accept");
+            holder.btnToggleAccept.setEnabled(true);
+            holder.btnToggleAccept.setAlpha(1.0f);
         }
 
         AvatarHelper.loadAvatar(context, req.getApplicantPhotoUrl(), req.getApplicantAvatar(), req.getApplicantName(), holder.ivApplicantAvatar);
@@ -82,22 +91,16 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         });
 
         holder.btnToggleAccept.setOnClickListener(v -> {
-            if (listener != null) listener.onToggleAcceptClicked(req);
+            if (listener != null && holder.btnToggleAccept.isEnabled()) {
+                listener.onToggleAcceptClicked(req);
+            }
         });
 
-        // Touch animation feedback
-        holder.itemView.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    v.animate().scaleX(0.95f).scaleY(0.95f).setDuration(100).start();
-                    break;
-                case android.view.MotionEvent.ACTION_UP:
-                case android.view.MotionEvent.ACTION_CANCEL:
-                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
-                    break;
-            }
-            return false;
-        });
+        if (holder.btnDeleteRequest != null) {
+            holder.btnDeleteRequest.setOnClickListener(v -> {
+                if (listener != null) listener.onDeleteRequestClicked(req);
+            });
+        }
     }
 
     @Override
@@ -107,7 +110,7 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivApplicantAvatar;
-        TextView tvApplicantNameAge, tvApplicantCity, tvStatusBadge, tvPostContext, tvRequestMessage, tvContactPreference, btnStartCall, btnOpenChat, btnToggleAccept;
+        TextView tvApplicantNameAge, tvApplicantCity, tvStatusBadge, tvPostContext, tvRequestMessage, tvContactPreference, btnStartCall, btnOpenChat, btnToggleAccept, btnDeleteRequest;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -121,6 +124,7 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
             btnStartCall = itemView.findViewById(R.id.btnStartCall);
             btnOpenChat = itemView.findViewById(R.id.btnOpenChat);
             btnToggleAccept = itemView.findViewById(R.id.btnToggleAccept);
+            btnDeleteRequest = itemView.findViewById(R.id.btnDeleteRequest);
         }
     }
 }

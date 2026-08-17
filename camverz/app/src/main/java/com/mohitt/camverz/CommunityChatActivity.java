@@ -1,5 +1,6 @@
 package com.mohitt.camverz;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -43,7 +44,8 @@ public class CommunityChatActivity extends BaseActivity {
     private ImageView btnBack;
     private ImageView ivRecipientAvatar;
     private TextView tvRecipientName, tvChatSubtitle;
-    private LinearLayout btnHeaderVideoCall;
+    private LinearLayout btnHeaderCallRequest;
+    private TextView tvHeaderActionText, btnDeleteChat;
     private RecyclerView chatRecyclerView;
     private EditText etChatMessage;
     private FrameLayout btnSendMessage;
@@ -58,6 +60,7 @@ public class CommunityChatActivity extends BaseActivity {
     private Socket socket;
     private ChatAdapter adapter;
     private final List<ChatMessage> messageList = new ArrayList<>();
+    private boolean isCallUnlocked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,27 +86,53 @@ public class CommunityChatActivity extends BaseActivity {
         ivRecipientAvatar = findViewById(R.id.ivRecipientAvatar);
         tvRecipientName = findViewById(R.id.tvRecipientName);
         tvChatSubtitle = findViewById(R.id.tvChatSubtitle);
-        btnHeaderVideoCall = findViewById(R.id.btnHeaderVideoCall);
+        btnHeaderCallRequest = findViewById(R.id.btnHeaderCallRequest);
+        tvHeaderActionText = findViewById(R.id.tvHeaderActionText);
+        btnDeleteChat = findViewById(R.id.btnDeleteChat);
+
         chatRecyclerView = findViewById(R.id.chatRecyclerView);
         etChatMessage = findViewById(R.id.etChatMessage);
         btnSendMessage = findViewById(R.id.btnSendMessage);
 
-        tvRecipientName.setText(targetUserName != null ? targetUserName : "Community Member");
+        String genderBadge = " ♂️ ";
+        String verifiedBadge = " ✔️";
+        tvRecipientName.setText((targetUserName != null ? targetUserName : "Community Member") + genderBadge + verifiedBadge);
         AvatarHelper.loadAvatar(this, null, targetUserAvatar, targetUserName, ivRecipientAvatar);
 
-        // Strict preference check: Show Video Call button ONLY if preference included Video Call
-        boolean allowVideo = contactPreference != null && contactPreference.toLowerCase().contains("video");
-        btnHeaderVideoCall.setVisibility(allowVideo ? View.VISIBLE : View.GONE);
+        boolean isVideoPref = contactPreference != null && contactPreference.toLowerCase().contains("video");
+        if (isVideoPref) {
+            isCallUnlocked = true;
+            tvHeaderActionText.setText("🎥 Video Call");
+        } else {
+            tvHeaderActionText.setText("🎥 Request Call");
+        }
 
         btnBack.setOnClickListener(v -> finish());
 
-        btnHeaderVideoCall.setOnClickListener(v -> {
-            Intent callIntent = new Intent(this, CallActivity.class);
-            callIntent.putExtra("targetUserId", targetUserId);
-            callIntent.putExtra("isCaller", true);
-            callIntent.putExtra("isPrivateCall", true);
-            callIntent.putExtra("isVideoCall", true);
-            startActivity(callIntent);
+        btnHeaderCallRequest.setOnClickListener(v -> {
+            if (isCallUnlocked) {
+                Intent callIntent = new Intent(this, CallActivity.class);
+                callIntent.putExtra("targetUserId", targetUserId);
+                callIntent.putExtra("isCaller", true);
+                callIntent.putExtra("isPrivateCall", true);
+                callIntent.putExtra("isVideoCall", true);
+                startActivity(callIntent);
+            } else {
+                sendInChatCallRequest();
+            }
+        });
+
+        btnDeleteChat.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Clear Chat")
+                    .setMessage("Are you sure you want to clear this conversation?")
+                    .setPositiveButton("Clear", (dialog, which) -> {
+                        messageList.clear();
+                        adapter.notifyDataSetChanged();
+                        Toast.makeText(this, "Conversation cleared", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
         adapter = new ChatAdapter(messageList, currentUserId);
@@ -117,6 +146,25 @@ public class CommunityChatActivity extends BaseActivity {
         setupSocket();
     }
 
+    private void sendInChatCallRequest() {
+        String msg = "🎥 Requested a Private Video Call. Tap to Accept & Start Call.";
+        ChatMessage chatMsg = new ChatMessage(currentUserId, msg, System.currentTimeMillis());
+        messageList.add(chatMsg);
+        adapter.notifyItemInserted(messageList.size() - 1);
+        chatRecyclerView.smoothScrollToPosition(messageList.size() - 1);
+
+        if (socket != null) {
+            try {
+                JSONObject payload = new JSONObject();
+                payload.put("senderId", currentUserId);
+                payload.put("receiverId", targetUserId);
+                payload.put("message", msg);
+                socket.emit("send-chat-message", payload);
+            } catch (Exception e) {}
+        }
+        Toast.makeText(this, "🎥 Video call request sent!", Toast.LENGTH_SHORT).show();
+    }
+
     private void setupSocket() {
         if (socket != null) {
             socket.on("chat-message-received", args -> {
@@ -127,6 +175,10 @@ public class CommunityChatActivity extends BaseActivity {
                         String msg = obj.optString("message");
                         if (targetUserId != null && targetUserId.equalsIgnoreCase(sender)) {
                             runOnUiThread(() -> {
+                                if (msg.contains("Video Call")) {
+                                    isCallUnlocked = true;
+                                    tvHeaderActionText.setText("🎥 Video Call");
+                                }
                                 messageList.add(new ChatMessage(sender, msg, System.currentTimeMillis()));
                                 adapter.notifyItemInserted(messageList.size() - 1);
                                 chatRecyclerView.smoothScrollToPosition(messageList.size() - 1);

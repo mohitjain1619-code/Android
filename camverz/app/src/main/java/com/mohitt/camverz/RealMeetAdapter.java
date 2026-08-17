@@ -43,7 +43,9 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         RealMeetPost post = postList.get(position);
 
-        holder.tvNameAge.setText(post.getUserName() + ", " + post.getAge());
+        String genderIcon = " ♂️ ";
+        String verifiedBadge = " ✔️";
+        holder.tvNameAge.setText(post.getUserName() + genderIcon + post.getAge() + verifiedBadge);
         holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : "Nearby"));
         holder.tvPurpose.setText(post.getPurpose());
         holder.tvLocation.setText("🏢 " + post.getLocation());

@@ -164,6 +164,20 @@
             android:textColor="#FFFFFF"
             android:textSize="11sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnDeleteRequest"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_luxury_chip"
+            android:gravity="center"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="9dp"
+            android:text="🗑️"
+            android:textColor="#F87171"
+            android:textSize="13sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>

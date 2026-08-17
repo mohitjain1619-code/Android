@@ -42,7 +42,9 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FantasyPost post = postList.get(position);
 
-        holder.tvFantasyNameAge.setText(post.getUserName() + ", " + post.getAge());
+        String genderIcon = " ♂️ ";
+        String verifiedBadge = " ✔️";
+        holder.tvFantasyNameAge.setText(post.getUserName() + genderIcon + post.getAge() + verifiedBadge);
         holder.tvStatusChip.setText(post.getRelationshipStatus());
         holder.tvInterests.setText("✨ " + post.getInterests());
         holder.tvFantasyText.setText(post.getDescription());

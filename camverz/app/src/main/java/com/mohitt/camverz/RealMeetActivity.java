@@ -63,7 +63,7 @@ public class RealMeetActivity extends BaseActivity {
 
     // Header & Search
     private LinearLayout btnReturnToVideo;
-    private View btnHeaderRequests;
+    private View btnHeaderRequests, btnHeaderInbox;
     private LinearLayout cityFilterContainer;
     private TextView chipFilterGlobal, chipFilterCity;
     private EditText etSearch;
@@ -116,6 +116,7 @@ public class RealMeetActivity extends BaseActivity {
 
         btnReturnToVideo = findViewById(R.id.btnReturnToVideo);
         btnHeaderRequests = findViewById(R.id.btnHeaderRequests);
+        btnHeaderInbox = findViewById(R.id.btnHeaderInbox);
         etSearch = findViewById(R.id.etSearch);
 
         dockTabMeet = findViewById(R.id.dockTabMeet);
@@ -150,6 +151,7 @@ public class RealMeetActivity extends BaseActivity {
         // Return to Random Video Calling listener
         btnReturnToVideo.setOnClickListener(v -> finish());
         if (btnHeaderRequests != null) btnHeaderRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
+        if (btnHeaderInbox != null) btnHeaderInbox.setOnClickListener(v -> startActivity(new Intent(this, InboxActivity.class)));
 
         // Dock Tab click listeners
         if (dockTabMeet != null) dockTabMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));
@@ -566,6 +568,13 @@ public class RealMeetActivity extends BaseActivity {
 
                     loadCurrentTabFeed();
                     Toast.makeText(RealMeetActivity.this, "Request status updated to " + newStatus, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onDeleteRequestClicked(RealMeetRequest request) {
+                    store.deleteMeetRequest(request.getId());
+                    loadCurrentTabFeed();
+                    Toast.makeText(RealMeetActivity.this, "Request deleted", Toast.LENGTH_SHORT).show();
                 }
             });
             recyclerView.setAdapter(adapter);
