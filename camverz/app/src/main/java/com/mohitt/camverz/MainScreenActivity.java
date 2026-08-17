@@ -241,20 +241,50 @@ public class MainScreenActivity extends BaseActivity {
         Context wrapper = new ContextThemeWrapper(this, R.style.CustomPopupStyle);
         PopupMenu popup = new PopupMenu(wrapper, view);
         popup.getMenuInflater().inflate(R.menu.top_menu, popup.getMenu());
+
+        // Dynamic developer check to prevent normal users from seeing debugging options
+        String userEmail = tokenManager.getUserEmail();
+        boolean isAdmin = "neerajjain0220@gmail.com".equalsIgnoreCase(userEmail) || 
+                          (userEmail != null && userEmail.contains("admin")) ||
+                          (userEmail != null && userEmail.contains("mohitjain1619"));
+
+        if (!isAdmin) {
+            popup.getMenu().removeItem(R.id.action_mediation_debugger);
+            popup.getMenu().removeItem(R.id.action_ad_testing);
+        }
+
         popup.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_logout) {
+            int itemId = item.getItemId();
+            if (itemId == R.id.action_logout) {
                 logout();
                 return true;
-            } else if (item.getItemId() == R.id.action_mediation_debugger) {
+            } else if (itemId == R.id.action_mediation_debugger) {
                 Toast.makeText(this, "Mediation debugger is disabled", Toast.LENGTH_SHORT).show();
                 return true;
-            } else if (item.getItemId() == R.id.action_ad_testing) {
+            } else if (itemId == R.id.action_ad_testing) {
                 startActivity(new Intent(this, AdTestingActivity.class));
+                return true;
+            } else if (itemId == R.id.action_share_app) {
+                shareApp();
                 return true;
             }
             return false;
         });
         popup.show();
+    }
+
+    private void shareApp() {
+        try {
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Camverz: Video Call & Real Meet");
+            String shareMessage = "\nHey! Download Camverz: Video Call & Real Meet App to make random video calls and connect with friends instantly!\n\n" +
+                    "https://play.google.com/store/apps/details?id=com.mohitt.camverz\n";
+            shareIntent.putExtra(Intent.EXTRA_TEXT, shareMessage);
+            startActivity(Intent.createChooser(shareIntent, "Share App via"));
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to share app", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
