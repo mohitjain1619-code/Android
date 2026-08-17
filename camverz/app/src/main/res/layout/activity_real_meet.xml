@@ -124,108 +124,16 @@
         android:layout_below="@id/top_realmeet_bar"
         android:background="#1A1A24" />
 
-    <!-- Feature Tab Switcher Bar -->
-    <HorizontalScrollView
-        android:id="@+id/tabScrollView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/headerDivider"
-        android:clipToPadding="false"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="10dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/tabRealMeet"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_luxury_tab_selected"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="9dp"
-                android:text="📍 Real Meet"
-                android:textColor="#000000"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tabFantasy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_luxury_tab_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="9dp"
-                android:text="💭 Fantasy"
-                android:textColor="#8E8E93"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tabParty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_luxury_tab_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="9dp"
-                android:text="🎉 Arrange Party"
-                android:textColor="#8E8E93"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tabRequests"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_luxury_tab_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="9dp"
-                android:text="📩 Requests"
-                android:textColor="#8E8E93"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tabProfile"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_luxury_tab_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="9dp"
-                android:text="👤 My Profile"
-                android:textColor="#8E8E93"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </HorizontalScrollView>
-
     <!-- Sub-Filter Bar: Global vs City Filter (Active for Real Meet) -->
     <LinearLayout
         android:id="@+id/cityFilterContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tabScrollView"
+        android:layout_below="@id/headerDivider"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
-        android:paddingBottom="8dp">
+        android:paddingVertical="8dp">
 
         <TextView
             android:id="@+id/chipFilterGlobal"
@@ -272,7 +180,7 @@
         android:id="@+id/profileContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tabScrollView"
+        android:layout_below="@id/headerDivider"
         android:visibility="gone">
 
         <LinearLayout
@@ -390,11 +298,11 @@
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:layout_alignParentBottom="true"
-        android:layout_marginHorizontal="24dp"
+        android:layout_marginHorizontal="16dp"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_dock_nav"
         android:elevation="14dp"
-        android:paddingHorizontal="16dp">
+        android:paddingHorizontal="12dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -413,18 +321,20 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvIconMeet"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="📍"
-                    android:textSize="18sp" />
+                    android:textSize="17sp" />
 
                 <TextView
+                    android:id="@+id/tvTextMeet"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
                     android:text="Meets"
                     android:textColor="#FFFFFF"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -439,24 +349,54 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvIconFantasy"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="💭"
-                    android:textSize="18sp" />
+                    android:textSize="17sp" />
 
                 <TextView
+                    android:id="@+id/tvTextFantasy"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
                     android:text="Fantasy"
                     android:textColor="#8E8E93"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dockTabRequests"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvIconRequests"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📩"
+                    android:textSize="17sp" />
+
+                <TextView
+                    android:id="@+id/tvTextRequests"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="Requests"
+                    android:textColor="#8E8E93"
+                    android:textSize="9sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <!-- Center Action FAB Placeholder space -->
             <View
-                android:layout_width="56dp"
+                android:layout_width="52dp"
                 android:layout_height="wrap_content" />
 
             <LinearLayout
@@ -470,18 +410,20 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvIconParty"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🎉"
-                    android:textSize="18sp" />
+                    android:textSize="17sp" />
 
                 <TextView
+                    android:id="@+id/tvTextParty"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
                     android:text="Party"
                     android:textColor="#8E8E93"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -496,18 +438,20 @@
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvIconProfile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="👤"
-                    android:textSize="18sp" />
+                    android:textSize="17sp" />
 
                 <TextView
+                    android:id="@+id/tvTextProfile"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
                     android:text="Profile"
                     android:textColor="#8E8E93"
-                    android:textSize="10sp"
+                    android:textSize="9sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -516,8 +460,8 @@
         <!-- Center Primary Action FAB Floating in Dock Center -->
         <FrameLayout
             android:id="@+id/fabCreate"
-            android:layout_width="54dp"
-            android:layout_height="54dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
             android:layout_centerInParent="true"
             android:background="@drawable/bg_center_fab"
             android:clickable="true"
@@ -531,7 +475,7 @@
                 android:layout_gravity="center"
                 android:text="+"
                 android:textColor="#000000"
-                android:textSize="32sp"
+                android:textSize="30sp"
                 android:textStyle="bold" />
         </FrameLayout>
 

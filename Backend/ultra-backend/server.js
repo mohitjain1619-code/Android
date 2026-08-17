@@ -54,10 +54,49 @@ const limiter = rateLimit({
 app.use("/api/", limiter);
 
 // ============================================
-// HEALTH CHECK
+// HEALTH CHECK & REAL MEET COMMUNITY ROUTES
 // ============================================
 app.get("/", (req, res) => {
   res.status(200).send("Ultra-Backend is running (VPS-Ready)");
+});
+
+// Real Meet Global Server Store (Broadcasting cross-device)
+let realMeetPostsStore = [];
+let partyPostsStore = [];
+let fantasyPostsStore = [];
+let realMeetRequestsStore = [];
+
+app.get("/api/realmeet/feed", (req, res) => {
+  res.json({
+    ok: true,
+    realMeetPosts: realMeetPostsStore,
+    partyPosts: partyPostsStore,
+    fantasyPosts: fantasyPostsStore
+  });
+});
+
+app.post("/api/realmeet/post", (req, res) => {
+  const { type, post } = req.body;
+  if (!post) return res.status(400).json({ ok: false, message: "Invalid post payload" });
+  if (type === "REAL_MEET") {
+    realMeetPostsStore.unshift(post);
+  } else if (type === "PARTY") {
+    partyPostsStore.unshift(post);
+  } else if (type === "FANTASY") {
+    fantasyPostsStore.unshift(post);
+  }
+  res.json({ ok: true, message: "Post created successfully" });
+});
+
+app.get("/api/realmeet/requests", (req, res) => {
+  res.json({ ok: true, requests: realMeetRequestsStore });
+});
+
+app.post("/api/realmeet/request", (req, res) => {
+  const { request } = req.body;
+  if (!request) return res.status(400).json({ ok: false, message: "Invalid request payload" });
+  realMeetRequestsStore.unshift(request);
+  res.json({ ok: true, message: "Request sent successfully" });
 });
 
 app.get("/health", async (req, res) => {

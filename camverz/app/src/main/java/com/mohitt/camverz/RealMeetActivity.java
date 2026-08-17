@@ -22,6 +22,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mohitt.camverz.api.ApiClient;
 import com.mohitt.camverz.api.ApiService;
@@ -29,8 +32,10 @@ import com.mohitt.camverz.api.TokenManager;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import retrofit2.Call;
@@ -48,16 +53,17 @@ public class RealMeetActivity extends BaseActivity {
     private TokenManager tokenManager;
     private ApiService api;
     private RealMeetStore store;
+    private Gson gson;
 
-    // Header & Navigation
+    // Header & Search
     private LinearLayout btnReturnToVideo;
-    private TextView tabRealMeet, tabFantasy, tabParty, tabRequests, tabProfile;
     private LinearLayout cityFilterContainer;
     private TextView chipFilterGlobal, chipFilterCity;
     private EditText etSearch;
 
     // Bottom Floating Dock Views
-    private View dockTabMeet, dockTabFantasy, dockTabParty, dockTabProfile;
+    private View dockTabMeet, dockTabFantasy, dockTabRequests, dockTabParty, dockTabProfile;
+    private TextView tvTextMeet, tvTextFantasy, tvTextRequests, tvTextParty, tvTextProfile;
     private View fabCreate;
 
     // Content Views
@@ -89,6 +95,7 @@ public class RealMeetActivity extends BaseActivity {
         tokenManager = TokenManager.getInstance(this);
         api = ApiClient.getInstance(this).getApi();
         store = RealMeetStore.getInstance(this);
+        gson = new Gson();
 
         currentUserId = tokenManager.getUserId();
         currentUserName = tokenManager.getUserName();
@@ -98,17 +105,18 @@ public class RealMeetActivity extends BaseActivity {
         btnReturnToVideo = findViewById(R.id.btnReturnToVideo);
         etSearch = findViewById(R.id.etSearch);
 
-        tabRealMeet = findViewById(R.id.tabRealMeet);
-        tabFantasy = findViewById(R.id.tabFantasy);
-        tabParty = findViewById(R.id.tabParty);
-        tabRequests = findViewById(R.id.tabRequests);
-        tabProfile = findViewById(R.id.tabProfile);
-
         dockTabMeet = findViewById(R.id.dockTabMeet);
         dockTabFantasy = findViewById(R.id.dockTabFantasy);
+        dockTabRequests = findViewById(R.id.dockTabRequests);
         dockTabParty = findViewById(R.id.dockTabParty);
         dockTabProfile = findViewById(R.id.dockTabProfile);
         fabCreate = findViewById(R.id.fabCreate);
+
+        tvTextMeet = findViewById(R.id.tvTextMeet);
+        tvTextFantasy = findViewById(R.id.tvTextFantasy);
+        tvTextRequests = findViewById(R.id.tvTextRequests);
+        tvTextParty = findViewById(R.id.tvTextParty);
+        tvTextProfile = findViewById(R.id.tvTextProfile);
 
         cityFilterContainer = findViewById(R.id.cityFilterContainer);
         chipFilterGlobal = findViewById(R.id.chipFilterGlobal);
@@ -131,15 +139,10 @@ public class RealMeetActivity extends BaseActivity {
         // Return to Random Video Calling listener
         btnReturnToVideo.setOnClickListener(v -> finish());
 
-        // Tab click listeners
-        tabRealMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));
-        tabFantasy.setOnClickListener(v -> switchTab(Tab.FANTASY));
-        tabParty.setOnClickListener(v -> switchTab(Tab.PARTY));
-        if (tabRequests != null) tabRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
-        tabProfile.setOnClickListener(v -> switchTab(Tab.PROFILE));
-
+        // Dock Tab click listeners
         if (dockTabMeet != null) dockTabMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));
         if (dockTabFantasy != null) dockTabFantasy.setOnClickListener(v -> switchTab(Tab.FANTASY));
+        if (dockTabRequests != null) dockTabRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
         if (dockTabParty != null) dockTabParty.setOnClickListener(v -> switchTab(Tab.PARTY));
         if (dockTabProfile != null) dockTabProfile.setOnClickListener(v -> switchTab(Tab.PROFILE));
 
@@ -181,7 +184,46 @@ public class RealMeetActivity extends BaseActivity {
         fabCreate.setOnClickListener(v -> onFabClicked());
 
         fetchUserProfileDetails();
+        fetchFeedFromServer();
         loadCurrentTabFeed();
+    }
+
+    private void fetchFeedFromServer() {
+        api.getRealMeetFeed().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject body = response.body();
+                    if (body.has("ok") && body.get("ok").getAsBoolean()) {
+                        if (body.has("realMeetPosts")) {
+                            JsonArray arr = body.getAsJsonArray("realMeetPosts");
+                            for (JsonElement el : arr) {
+                                RealMeetPost post = gson.fromJson(el, RealMeetPost.class);
+                                store.addRealMeetPost(post);
+                            }
+                        }
+                        if (body.has("partyPosts")) {
+                            JsonArray arr = body.getAsJsonArray("partyPosts");
+                            for (JsonElement el : arr) {
+                                PartyPost party = gson.fromJson(el, PartyPost.class);
+                                store.addPartyPost(party);
+                            }
+                        }
+                        if (body.has("fantasyPosts")) {
+                            JsonArray arr = body.getAsJsonArray("fantasyPosts");
+                            for (JsonElement el : arr) {
+                                FantasyPost fantasy = gson.fromJson(el, FantasyPost.class);
+                                store.addFantasyPost(fantasy);
+                            }
+                        }
+                        runOnUiThread(() -> loadCurrentTabFeed());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {}
+        });
     }
 
     private void fetchUserProfileDetails() {
@@ -241,22 +283,12 @@ public class RealMeetActivity extends BaseActivity {
 
     private void switchTab(Tab tab) {
         currentTab = tab;
-        tabRealMeet.setBackgroundResource(tab == Tab.REAL_MEET ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
-        tabRealMeet.setTextColor(tab == Tab.REAL_MEET ? Color.BLACK : Color.parseColor("#8E8E93"));
 
-        tabFantasy.setBackgroundResource(tab == Tab.FANTASY ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
-        tabFantasy.setTextColor(tab == Tab.FANTASY ? Color.BLACK : Color.parseColor("#8E8E93"));
-
-        tabParty.setBackgroundResource(tab == Tab.PARTY ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
-        tabParty.setTextColor(tab == Tab.PARTY ? Color.BLACK : Color.parseColor("#8E8E93"));
-
-        if (tabRequests != null) {
-            tabRequests.setBackgroundResource(tab == Tab.REQUESTS ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
-            tabRequests.setTextColor(tab == Tab.REQUESTS ? Color.BLACK : Color.parseColor("#8E8E93"));
-        }
-
-        tabProfile.setBackgroundResource(tab == Tab.PROFILE ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
-        tabProfile.setTextColor(tab == Tab.PROFILE ? Color.BLACK : Color.parseColor("#8E8E93"));
+        if (tvTextMeet != null) tvTextMeet.setTextColor(tab == Tab.REAL_MEET ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextFantasy != null) tvTextFantasy.setTextColor(tab == Tab.FANTASY ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextRequests != null) tvTextRequests.setTextColor(tab == Tab.REQUESTS ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextParty != null) tvTextParty.setTextColor(tab == Tab.PARTY ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextProfile != null) tvTextProfile.setTextColor(tab == Tab.PROFILE ? Color.WHITE : Color.parseColor("#8E8E93"));
 
         cityFilterContainer.setVisibility(tab == Tab.REAL_MEET ? View.VISIBLE : View.GONE);
         profileContainer.setVisibility(tab == Tab.PROFILE ? View.VISIBLE : View.GONE);
@@ -482,6 +514,17 @@ public class RealMeetActivity extends BaseActivity {
             );
 
             store.addMeetRequest(req);
+
+            Map<String, Object> reqPayload = new HashMap<>();
+            reqPayload.put("request", req);
+            api.createRealMeetServerRequest(reqPayload).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {}
+            });
+
             dialog.dismiss();
             Toast.makeText(this, "📩 Request sent to " + (posterName != null ? posterName : "post owner") + "!", Toast.LENGTH_LONG).show();
         });
@@ -634,6 +677,18 @@ public class RealMeetActivity extends BaseActivity {
             );
 
             store.addRealMeetPost(newPost);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("type", "REAL_MEET");
+            body.put("post", newPost);
+            api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {}
+            });
+
             dialog.dismiss();
             loadCurrentTabFeed();
             Toast.makeText(this, "✨ Real Meet post published!", Toast.LENGTH_LONG).show();
@@ -716,6 +771,18 @@ public class RealMeetActivity extends BaseActivity {
             );
 
             store.addPartyPost(partyPost);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("type", "PARTY");
+            body.put("post", partyPost);
+            api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {}
+            });
+
             dialog.dismiss();
             loadCurrentTabFeed();
             Toast.makeText(this, "🎉 Party event published!", Toast.LENGTH_LONG).show();
@@ -778,6 +845,18 @@ public class RealMeetActivity extends BaseActivity {
             );
 
             store.addFantasyPost(fantasyPost);
+
+            Map<String, Object> body = new HashMap<>();
+            body.put("type", "FANTASY");
+            body.put("post", fantasyPost);
+            api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {}
+            });
+
             dialog.dismiss();
             loadCurrentTabFeed();
             Toast.makeText(this, "💭 Fantasy shared!", Toast.LENGTH_LONG).show();

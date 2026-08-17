@@ -16,6 +16,21 @@ import retrofit2.http.*;
 public interface ApiService {
 
     // ============================================
+    // REAL MEET COMMUNITY SERVER SYNC
+    // ============================================
+    @GET("realmeet/feed")
+    Call<JsonObject> getRealMeetFeed();
+
+    @POST("realmeet/post")
+    Call<JsonObject> createRealMeetServerPost(@Body Map<String, Object> body);
+
+    @GET("realmeet/requests")
+    Call<JsonObject> getRealMeetServerRequests();
+
+    @POST("realmeet/request")
+    Call<JsonObject> createRealMeetServerRequest(@Body Map<String, Object> body);
+
+    // ============================================
     // AUTH
     // ============================================
     @POST("auth/google")
