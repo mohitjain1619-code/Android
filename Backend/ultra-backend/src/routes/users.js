@@ -322,6 +322,16 @@ function formatUser(user) {
     customId: user.custom_id,
     photoUrl: user.photo_url,
     createdAt: user.created_at,
+    planName: user.plan_name,
+    planIsAdFree: user.plan_is_ad_free,
+    planExpiresAt: user.plan_expires_at,
+    planStartedAt: user.plan_started_at,
+    subscription: {
+      planName: user.plan_name,
+      isAdFree: user.plan_is_ad_free,
+      expiresAt: user.plan_expires_at,
+      startedAt: user.plan_started_at
+    }
   };
 }
 

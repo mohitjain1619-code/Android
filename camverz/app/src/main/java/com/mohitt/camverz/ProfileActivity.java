@@ -348,6 +348,7 @@ public class ProfileActivity extends BaseActivity {
 
         if (currentUserId.equals(visitedUserId)) {
             popup.getMenu().add("Blocked Users");
+            popup.getMenu().add("Privacy & Legal Terms");
             popup.getMenu().add("Delete Account");
         } else {
             if (isBlocked) {
@@ -361,6 +362,8 @@ public class ProfileActivity extends BaseActivity {
             String title = item.getTitle().toString();
             if (title.equals("Blocked Users")) {
                 startActivity(new Intent(this, BlockedUsersActivity.class));
+            } else if (title.equals("Privacy & Legal Terms")) {
+                startActivity(new Intent(this, LegalActivity.class));
             } else if (title.equals("Block User")) {
                 showBlockConfirmationDialog();
             } else if (title.equals("Unblock User")) {

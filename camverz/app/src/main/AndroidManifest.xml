@@ -178,6 +178,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- Legal & Policies Activity -->
+        <activity
+            android:name=".LegalActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
 
         <!-- AdMob Application ID (Test ID / Production loaded dynamically) -->
         <meta-data

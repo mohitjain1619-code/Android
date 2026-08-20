@@ -861,6 +861,31 @@ router.post("/webhook/razorpay", async (req, res) => {
         return res.json({ status: "skipped", reason: "User not found" });
       }
 
+      // Activate subscription
+      let durationDays = 30; // default to 30 days
+      const planKey = (notes.pkgId || notes.plan_name || notes.product_name || "").toLowerCase();
+      
+      if (planKey.includes("7-days") || planKey.includes("7days") || planKey.includes("week")) {
+        durationDays = 7;
+      } else if (planKey.includes("1-day") || planKey.includes("1day") || planKey.includes("daily")) {
+        durationDays = 1;
+      } else if (planKey.includes("10-days") || planKey.includes("10days")) {
+        durationDays = 10;
+      }
+      
+      const isAdFree = notes.adFree === "true" || planKey.includes("noads") || planKey.includes("ad-free") || planKey.includes("adfree") || planKey.includes("premium");
+      const planNameFormatted = isAdFree ? "VIP Ad-Free Pass" : "VIP Pass (With Ads)";
+      const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+      const startedAt = new Date();
+
+      await query(
+        `UPDATE users 
+         SET plan_name = $1, plan_is_ad_free = $2, plan_expires_at = $3, plan_started_at = $4, verified = true 
+         WHERE id = $5`,
+        [planNameFormatted, isAdFree, expiresAt, startedAt, user.id]
+      );
+      console.log(`[Webhook] Activated plan "${planNameFormatted}" for ${user.email} (valid for ${durationDays} days)`);
+
       // Track conversion
       const signup = await queryOne("SELECT * FROM affiliate_signups WHERE referred_user_id = $1", [user.id]);
       if (signup) {

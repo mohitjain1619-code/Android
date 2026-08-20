@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0F172A"
+    android:padding="16dp">
+
+    <!-- Header bar -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+
+        <ImageButton
+            android:id="@+id/btn_back"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Back"
+            app:tint="#FFFFFF" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Legal &amp; Policies"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <!-- Horizontal Category Tabs -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:layout_marginBottom="16dp">
+
+        <RadioGroup
+            android:id="@+id/rg_policy_selector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rb_child_safety"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_luxury_pill_dark"
+                android:button="@null"
+                android:checked="true"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="🛡️ Child Safety"
+                android:textColor="#F2F2F7"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <RadioButton
+                android:id="@+id/rb_privacy_policy"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_luxury_pill_dark"
+                android:button="@null"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="🔒 Privacy Policy"
+                android:textColor="#F2F2F7"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <RadioButton
+                android:id="@+id/rb_terms_conditions"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_luxury_pill_dark"
+                android:button="@null"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="📜 Terms of Service"
+                android:textColor="#F2F2F7"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <RadioButton
+                android:id="@+id/rb_refund_policy"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_luxury_pill_dark"
+                android:button="@null"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="💸 Refund Policy"
+                android:textColor="#F2F2F7"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <RadioButton
+                android:id="@+id/rb_cookie_policy"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_luxury_pill_dark"
+                android:button="@null"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="🍪 Cookie Policy"
+                android:textColor="#F2F2F7"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp" />
+
+            <RadioButton
+                android:id="@+id/rb_community_guidelines"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_luxury_pill_dark"
+                android:button="@null"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:text="👥 Community Code"
+                android:textColor="#F2F2F7"
+                android:textSize="12sp" />
+        </RadioGroup>
+    </HorizontalScrollView>
+
+    <!-- Policy Content Container -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_glass_card_luxury"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_policy_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:lineSpacingExtra="5dp"
+            android:textColor="#E2E8F0"
+            android:textSize="13sp" />
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

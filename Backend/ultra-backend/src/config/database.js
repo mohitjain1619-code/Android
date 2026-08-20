@@ -106,6 +106,15 @@ async function runMigrations() {
       );
     `);
 
+    // 7. Add subscription fields to users
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS plan_name TEXT,
+      ADD COLUMN IF NOT EXISTS plan_is_ad_free BOOLEAN NOT NULL DEFAULT false,
+      ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS plan_started_at TIMESTAMPTZ;
+    `);
+
     console.log("✅ Database migrations applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations:", err.message);

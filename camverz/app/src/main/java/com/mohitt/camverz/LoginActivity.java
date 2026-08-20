@@ -108,6 +108,14 @@ public class LoginActivity extends AppCompatActivity {
             signInWithGoogle();
         });
 
+        TextView tvTermsPrivacy = findViewById(R.id.tv_terms_privacy);
+        if (tvTermsPrivacy != null) {
+            tvTermsPrivacy.setOnClickListener(v -> {
+                Log.d(TAG, "⚖️ Legal & Privacy link clicked");
+                startActivity(new Intent(this, LegalActivity.class));
+            });
+        }
+
         TextView testerLoginLink = findViewById(R.id.tester_login_link);
         testerLoginLink.setOnClickListener(v -> {
             Log.d(TAG, "🔓 Tester login link clicked");
