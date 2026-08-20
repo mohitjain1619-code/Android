@@ -53,30 +53,36 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
+                android:layout_toEndOf="@id/btnReturnToVideo"
+                android:layout_marginStart="16dp"
                 android:layout_centerVertical="true"
                 android:gravity="end"
                 android:orientation="vertical">
 
                 <TextView
+                    android:id="@+id/tvHeaderTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.1"
                     android:text="REAL MEET"
                     android:textColor="#FFFFFF"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tvHeaderSubtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.08"
-                    android:text="COMMUNITY HUB"
-                    android:textColor="#8E8E93"
-                    android:textSize="9sp"
-                    android:textStyle="bold" />
+                    android:letterSpacing="0.02"
+                    android:text="See who wants to meet you in real life today"
+                    android:textColor="#A0A0AA"
+                    android:textSize="9.5sp"
+                    android:textStyle="italic"
+                    android:gravity="end"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
             </LinearLayout>
         </RelativeLayout>
 

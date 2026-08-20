@@ -44,7 +44,14 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
         PartyPost post = postList.get(position);
 
         String genderIcon = " ♂️ ";
-        String verifiedBadge = " ✔️";
+        if (post.getGender() != null && post.getGender().toLowerCase().startsWith("f")) {
+            genderIcon = " ♀️ ";
+        }
+
+        boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
+        boolean isVerified = isMale || post.isVerified();
+        String verifiedBadge = isVerified ? " ✔️" : "";
+
         holder.tvHostNameAge.setText(post.getHostName() + genderIcon + post.getHostAge() + verifiedBadge);
         holder.tvTargetGender.setText(post.getTargetGender());
         holder.tvCapacity.setText("👥 " + post.getCapacity() + " People Max");

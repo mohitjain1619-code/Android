@@ -74,12 +74,22 @@
             tools:text="Just now" />
     </LinearLayout>
 
+    <!-- Purpose Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="PURPOSE"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
     <!-- Purpose Badge Chip -->
     <TextView
         android:id="@+id/tvPurpose"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="4dp"
         android:background="@drawable/bg_luxury_chip"
         android:ellipsize="end"
         android:maxLines="1"
@@ -90,47 +100,77 @@
         android:textStyle="bold"
         tools:text="Meeting Purpose" />
 
+    <!-- Venue Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="VENUE"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
     <!-- Location details -->
     <TextView
         android:id="@+id/tvLocation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="#E5E5EA"
         android:textSize="11sp"
-        tools:text="📍 Venue Location" />
+        tools:text="🏢 Venue Location" />
+
+    <!-- Schedule Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="SCHEDULED TIME"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
 
     <!-- Time Glass Pill Box -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:background="@drawable/bg_luxury_pill_dark"
         android:gravity="center_vertical"
         android:paddingHorizontal="10dp"
         android:paddingVertical="6dp">
 
-        <TextView
-            android:id="@+id/tvTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#FF9500"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            tools:text="⏰ Today at 8:00 PM" />
+         <TextView
+             android:id="@+id/tvTime"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:textColor="#FF9500"
+             android:textSize="10sp"
+             android:textStyle="bold"
+             tools:text="⏰ Today at 8:00 PM" />
     </LinearLayout>
+
+    <!-- Description Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="ABOUT MEET"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
 
     <!-- Brief Description -->
     <TextView
         android:id="@+id/tvDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:maxLines="2"
-        android:textColor="#8E8E93"
+        android:textColor="#F2F2F7"
         android:textSize="10sp"
         tools:text="Meeting description details..." />
 

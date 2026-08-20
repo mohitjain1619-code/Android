@@ -203,18 +203,7 @@ public class FeedActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
-        adView = new com.google.android.gms.ads.AdView(this);
-        adView.setAdUnitId(getString(R.string.admob_banner_ad_unit_id));
-        adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
-
-        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
-        if (adContainer != null) {
-            adContainer.removeAllViews();
-            adContainer.addView(adView);
-            com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-            Log.d(TAG, "✅ AdMob Banner Ad requested for FeedActivity");
-        }
+        // Ads disabled in main app
     }
 
     @Override

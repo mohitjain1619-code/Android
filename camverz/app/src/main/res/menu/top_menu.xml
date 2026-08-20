@@ -4,6 +4,9 @@
         android:id="@+id/action_share_app"
         android:title="Share App 🚀" />
     <item
+        android:id="@+id/action_rate_app"
+        android:title="Rate App ⭐" />
+    <item
         android:id="@+id/action_mediation_debugger"
         android:title="Mediation Debugger" />
     <item

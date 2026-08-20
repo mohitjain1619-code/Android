@@ -55,7 +55,8 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.InboxViewHol
         holder.lastMessageTextView.setText(conversation.getLastMessage());
         holder.timestampTextView.setText(getFormattedTimestamp(conversation.getLastActivity()));
 
-        AvatarHelper.loadAvatar(context, conversation.getPhotoUrl(), conversation.getProfileImageUrl(), conversation.getName(), holder.profileImageView);
+        AvatarHelper.loadAvatar(context, conversation.getPhotoUrl(), conversation.getProfileImageUrl(),
+                conversation.getName(), holder.profileImageView);
 
         if (conversation.isUnread()) {
             holder.lastMessageTextView.setTypeface(null, Typeface.BOLD);

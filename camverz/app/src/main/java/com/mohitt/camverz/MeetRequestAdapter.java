@@ -44,8 +44,15 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         RealMeetRequest req = requestList.get(position);
 
         String genderBadge = " ♂️ ";
-        String verifiedBadge = " ✔️";
-        holder.tvApplicantNameAge.setText(req.getApplicantName() + genderBadge + req.getApplicantAge() + verifiedBadge);
+        if (req.getApplicantGender() != null && req.getApplicantGender().toLowerCase().startsWith("f")) {
+            genderBadge = " ♀️ ";
+        }
+
+        boolean isMale = req.getApplicantGender() == null || !req.getApplicantGender().toLowerCase().startsWith("f");
+        boolean isVerified = isMale || req.isApplicantVerified();
+        String verifiedBadge = isVerified ? " ✔️" : "";
+
+        holder.tvApplicantNameAge.setText(req.getApplicantName() + " " + genderBadge + " " + req.getApplicantAge() + verifiedBadge);
         holder.tvApplicantCity.setText("📍 " + (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby"));
         holder.tvPostContext.setText("For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Real Meet Post"));
         holder.tvRequestMessage.setText(req.getMessage());

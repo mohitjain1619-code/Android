@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { Menu, X, Video, User, FileText, BookOpen, Info, Mail, LogOut, Crown, MessageSquare, Bell } from 'lucide-react';
+import { Menu, X, Video, User, FileText, BookOpen, Info, Mail, LogOut, Crown, MessageSquare, Bell, Zap } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -18,7 +18,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMenuOpen(false));
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
 
   const links = [
     { href: '/', label: 'Home', icon: Video },
@@ -41,7 +44,7 @@ export default function Navbar() {
       <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
         <div className={styles.inner}>
           <Link href="/" className={styles.logo}>
-            <span className={styles.logoIcon}>⚡</span>
+            <span className={styles.logoIcon} aria-hidden="true"><Zap size={18} strokeWidth={2.5} /></span>
             <span className={styles.logoText}>Camverz</span>
           </Link>
 

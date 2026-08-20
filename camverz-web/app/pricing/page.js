@@ -10,6 +10,7 @@ export default function PricingPage() {
   const { user, userData, setShowLogin, setShowOnboarding } = useAuth();
   const [regionMode, setRegionMode] = useState('international'); // 'india' | 'regional' | 'international'
   const [detectedLocation, setDetectedLocation] = useState('Detecting location...');
+  const [pricingCategory, setPricingCategory] = useState('video-call'); // 'video-call' | 'community-hub'
 
   const subStatus = getSubscriptionStatus(userData);
 
@@ -63,7 +64,7 @@ export default function PricingPage() {
 
   const currencySymbol = regionMode === 'india' ? '₹' : '$';
 
-  const packages = [
+  const videoCallingPackages = [
     {
       id: '1-day',
       title: '1 Day Pass',
@@ -190,6 +191,94 @@ export default function PricingPage() {
     },
   ];
 
+  const communityHubPackages = [
+    {
+      id: 'community-7-days',
+      title: 'Community 7 Days Pass',
+      icon: Sparkles,
+      badge: 'Hub Value Boost 🔥',
+      badgeClass: styles.badgePurple,
+      isPopularSection: true,
+      description: '7 Days of community access. Post events and connect with real people in your area.',
+      durationLabel: '/ 7 Days',
+      tiers: [
+        {
+          type: 'With Ads',
+          isAdFree: false,
+          tag: 'Standard Hub VIP',
+          tagClass: styles.tagWithAds,
+          isFeatured: false,
+          features: [
+            'Post Real Meet, Party, or Fantasy',
+            'Unlimited Meet & Chat Requests',
+            'Standard Post visibility',
+            'City-wise filter & Global access',
+            'Inbox Ads included',
+          ],
+          btnClass: styles.btnStandard,
+        },
+        {
+          type: 'Without Ads (Ad-Free)',
+          isAdFree: true,
+          tag: 'Hub VIP Gold',
+          tagClass: styles.tagNoAds,
+          isFeatured: true,
+          features: [
+            '100% Ad-Free Community Inbox',
+            'Triple (3X) Post Visibility Boost',
+            'Unlimited Real Meet Requests',
+            'Special Gold profile layout in feed',
+            'Instant priority request notifications',
+          ],
+          btnClass: styles.btnPro,
+        },
+      ],
+    },
+    {
+      id: 'community-1-month',
+      title: 'Community 1 Month Pass',
+      icon: Crown,
+      badge: 'Hub Elite VIP 💎',
+      badgeClass: styles.badgePink,
+      description: '30 Days of ultimate community status. Build local connections and throw house events.',
+      durationLabel: '/ Month',
+      tiers: [
+        {
+          type: 'With Ads',
+          isAdFree: false,
+          tag: 'Standard Platinum',
+          tagClass: styles.tagWithAds,
+          isFeatured: false,
+          features: [
+            'Unlimited Real Meet, Party, Fantasy posts',
+            'City filter & Search override',
+            'Standard Post visibility',
+            '1 Month validity',
+            'Standard Ads included',
+          ],
+          btnClass: styles.btnStandard,
+        },
+        {
+          type: 'Without Ads (Ad-Free)',
+          isAdFree: true,
+          tag: 'Ultimate Elite VIP',
+          tagClass: styles.tagNoAds,
+          isFeatured: true,
+          features: [
+            '100% Ad-Free Community Inbox & Feed',
+            '5X Post Visibility & VIP Top Feed placement',
+            'Unlimited Real Meet Requests & direct chat routing',
+            'Exclusive Crown status badge',
+            'Priority local event search visibility',
+          ],
+          btnClass: styles.btnPro,
+        },
+      ],
+    },
+  ];
+
+  const packages = pricingCategory === 'video-call' ? videoCallingPackages : communityHubPackages;
+
   const handlePlanClick = (pkgId, isAdFree, planName, price) => {
     // 1. Auth Gatekeeper
     if (!user) {
@@ -246,7 +335,23 @@ export default function PricingPage() {
             </div>
           </div>
         )}
-
+        {/* Pricing Category Tabs: Video Calling vs Community Hub */}
+        <div className={styles.categoryToggleGroup}>
+          <button
+            className={`${styles.categoryBtn} ${pricingCategory === 'video-call' ? styles.categoryBtnActive : ''}`}
+            onClick={() => setPricingCategory('video-call')}
+          >
+            <Video size={16} />
+            <span>Video Call passes</span>
+          </button>
+          <button
+            className={`${styles.categoryBtn} ${pricingCategory === 'community-hub' ? styles.categoryBtnActive : ''}`}
+            onClick={() => setPricingCategory('community-hub')}
+          >
+            <MapPin size={16} />
+            <span>Real Meet, Party &amp; Fantasy Hub passes</span>
+          </button>
+        </div>
         {/* Region & Location Selector */}
         <div className={styles.regionToggleContainer}>
           <div className={styles.detectedLocationPill}>

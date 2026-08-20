@@ -104,12 +104,22 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- Event Title Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="EVENT TITLE"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
     <!-- Party Title / Purpose -->
     <TextView
         android:id="@+id/tvPartyPurpose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="4dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="#FFFFFF"
@@ -117,12 +127,22 @@
         android:textStyle="bold"
         tools:text="🎉 House Party Title" />
 
+    <!-- Party Venue Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="PARTY VENUE"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
     <!-- Venue Location -->
     <TextView
         android:id="@+id/tvPartyVenue"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="#34C759"
@@ -130,11 +150,21 @@
         android:textStyle="bold"
         tools:text="📍 Party Venue Address" />
 
+    <!-- Schedule Heading -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="SCHEDULED TIME"
+        android:textColor="#8E8E93"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
     <!-- Party Time Glass Box -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:background="@drawable/bg_luxury_pill_dark"
         android:gravity="center_vertical"
         android:paddingHorizontal="10dp"

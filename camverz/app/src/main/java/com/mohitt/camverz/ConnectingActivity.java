@@ -56,7 +56,7 @@ public class ConnectingActivity extends BaseActivity {
     private RewardedInterstitialAd rewardedInterstitialAd;
 
     private long searchStartTime = 0;
-    private static final long MIN_SEARCH_DURATION_MS = 5000; // Enforce minimum 5 seconds search duration
+    private static final long MIN_SEARCH_DURATION_MS = 0; // Delay disabled (ads removed)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -202,29 +202,7 @@ public class ConnectingActivity extends BaseActivity {
     // --- Google AdMob Mediated Native Ad Integration ---
 
     private void loadNativeAd() {
-        AdLoader adLoader = new AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
-                .forNativeAd(new NativeAd.OnNativeAdLoadedListener() {
-                    @Override
-                    public void onNativeAdLoaded(NativeAd ad) {
-                        if (isFinishing() || isDestroyed()) {
-                            ad.destroy();
-                            return;
-                        }
-                        if (nativeAd != null) {
-                            nativeAd.destroy();
-                        }
-                        nativeAd = ad;
-                        inflateAdMobNativeAd(ad);
-                    }
-                })
-                .withAdListener(new com.google.android.gms.ads.AdListener() {
-                    @Override
-                    public void onAdFailedToLoad(LoadAdError adError) {
-                        Log.e(TAG, "AdMob Native ad failed to load: " + adError.toString());
-                    }
-                })
-                .build();
-        adLoader.loadAd(new AdRequest.Builder().build());
+        // Ads disabled in main app
     }
 
     private void inflateAdMobNativeAd(NativeAd ad) {
@@ -289,46 +267,7 @@ public class ConnectingActivity extends BaseActivity {
     // --- Meta Audience Network Direct Native Ad Integration ---
 
     private void loadMetaNativeAd() {
-        // Enable test ads for development builds only
-        if (com.mohitt.camverz.BuildConfig.DEBUG) {
-            com.facebook.ads.AdSettings.setTestMode(true);
-        }
-        metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167733142869");
-        com.facebook.ads.NativeAdListener nativeAdListener = new com.facebook.ads.NativeAdListener() {
-            @Override
-            public void onMediaDownloaded(com.facebook.ads.Ad ad) {
-                Log.d(TAG, "Meta Media Downloaded");
-            }
-
-            @Override
-            public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
-                Log.e(TAG, "Meta Native Ad failed to load: " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(com.facebook.ads.Ad ad) {
-                if (isFinishing() || isDestroyed()) {
-                    return;
-                }
-                if (metaNativeAd != null && metaNativeAd == ad) {
-                    inflateMetaNativeAd(metaNativeAd);
-                }
-            }
-
-            @Override
-            public void onAdClicked(com.facebook.ads.Ad ad) {
-                Log.d(TAG, "Meta Ad Clicked");
-            }
-
-            @Override
-            public void onLoggingImpression(com.facebook.ads.Ad ad) {
-                Log.d(TAG, "Meta Logging Impression");
-            }
-        };
-
-        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig()
-                .withAdListener(nativeAdListener)
-                .build());
+        // Ads disabled in main app
     }
 
     private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {
@@ -388,49 +327,18 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void loadRewardedInterstitialAd() {
-        RewardedInterstitialAd.load(this, getString(R.string.admob_rewarded_interstitial_ad_unit_id),
-                new AdRequest.Builder().build(), new RewardedInterstitialAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull RewardedInterstitialAd ad) {
-                        rewardedInterstitialAd = ad;
-                        Log.d(TAG, "✅ Rewarded Interstitial Ad loaded.");
-
-                        // Setup Server-Side Verification (SSV) options using our user ID
-                        com.google.android.gms.ads.rewarded.ServerSideVerificationOptions options =
-                                new com.google.android.gms.ads.rewarded.ServerSideVerificationOptions.Builder()
-                                        .setUserId(myUid)
-                                        .setCustomData(myUid)
-                                        .build();
-                        rewardedInterstitialAd.setServerSideVerificationOptions(options);
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        Log.e(TAG, "❌ Rewarded Interstitial Ad failed to load: " + loadAdError.getMessage());
-                        rewardedInterstitialAd = null;
-                    }
-                });
+        // Ads disabled in main app
     }
 
     private void showRewardedAd() {
-        if (rewardedInterstitialAd != null) {
-            rewardedInterstitialAd.show(this, new OnUserEarnedRewardListener() {
-                @Override
-                public void onUserEarnedReward(@NonNull com.google.android.gms.ads.rewarded.RewardItem rewardItem) {
-                    Log.d(TAG, "🎉 User earned reward from video ad!");
-                    runOnUiThread(() -> {
-                        android.widget.Toast.makeText(ConnectingActivity.this, "Extra call credited! Resuming matchmaking...", android.widget.Toast.LENGTH_SHORT).show();
-                        // Reset start time and rejoin queue
-                        searchStartTime = System.currentTimeMillis();
-                        setupSocketListeners();
-                        joinQueue();
-                    });
-                }
-            });
-        } else {
-            android.widget.Toast.makeText(this, "Ad is not ready yet. Please try again in a moment.", android.widget.Toast.LENGTH_SHORT).show();
-            loadRewardedInterstitialAd();
-        }
+        Log.d(TAG, "🎉 User earned reward directly (ads disabled)!");
+        runOnUiThread(() -> {
+            android.widget.Toast.makeText(ConnectingActivity.this, "Extra call credited! Resuming matchmaking...", android.widget.Toast.LENGTH_SHORT).show();
+            // Reset start time and rejoin queue
+            searchStartTime = System.currentTimeMillis();
+            setupSocketListeners();
+            joinQueue();
+        });
     }
 
     private void showLimitExceededDialog() {
@@ -442,16 +350,27 @@ public class ConnectingActivity extends BaseActivity {
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Daily Limit Reached")
-                .setMessage("You have reached your daily free video call limit.\n\nWatch a quick video ad to get another free call instantly, or upgrade to premium for unlimited calls!")
+                .setMessage("You have reached your daily free video call limit.\n\nSupport Camverz! Rate us 5 Stars on Play Store to get another free call instantly, or upgrade to premium for unlimited calls!")
                 .setCancelable(false)
-                .setPositiveButton("Watch Video Ad", (dialog, which) -> {
-                    showRewardedAd();
+                .setPositiveButton("Rate 5 Stars ⭐", (dialog, which) -> {
+                    redirectToPlayStoreAndReward();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {
                     leaveQueue();
                     finish();
                 })
                 .show();
+    }
+
+    private void redirectToPlayStoreAndReward() {
+        try {
+            Intent playStoreIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=" + getPackageName()));
+            playStoreIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            startActivity(playStoreIntent);
+        } catch (android.content.ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+        }
+        showRewardedAd();
     }
 
     @Override

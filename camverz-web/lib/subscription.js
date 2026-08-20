@@ -18,12 +18,12 @@ export const PRICING_MATRIX = {
       no_ads: { price: 170, currency: '₹', displayPrice: '₹170', link: 'https://rzp.io/rzp/XJPN9Fk' }
     },
     regional: {
-      with_ads: { price: 3, currency: '$', displayPrice: '$3', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 5, currency: '$', displayPrice: '$5', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 1.30, currency: '$', displayPrice: '$1.30', link: 'https://rzp.io/rzp/bHc6zCa' },
+      no_ads: { price: 1.70, currency: '$', displayPrice: '$1.70', link: 'https://rzp.io/rzp/U4o0bEP' }
     },
     international: {
-      with_ads: { price: 7, currency: '$', displayPrice: '$7', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 10, currency: '$', displayPrice: '$10', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 1.00, currency: '$', displayPrice: '$1.00', link: 'https://rzp.io/rzp/m7lJpaEG' },
+      no_ads: { price: 2.00, currency: '$', displayPrice: '$2.00', link: 'https://rzp.io/rzp/RUN9vJe1' }
     }
   },
   '10-days': {
@@ -32,16 +32,16 @@ export const PRICING_MATRIX = {
     durationDays: 10,
     durationHours: 240,
     india: {
-      with_ads: { price: 299, currency: '₹', displayPrice: '₹299', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 379, currency: '₹', displayPrice: '₹379', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 299, currency: '₹', displayPrice: '₹299', link: 'https://rzp.io/rzp/eHos15KW' },
+      no_ads: { price: 379, currency: '₹', displayPrice: '₹379', link: 'https://rzp.io/rzp/rujZOejh' }
     },
     regional: {
-      with_ads: { price: 7, currency: '$', displayPrice: '$7', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 10, currency: '$', displayPrice: '$10', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 2.99, currency: '$', displayPrice: '$2.99', link: 'https://rzp.io/rzp/qMiXZMKm' },
+      no_ads: { price: 3.79, currency: '$', displayPrice: '$3.79', link: 'https://rzp.io/rzp/BEBATwU' }
     },
     international: {
-      with_ads: { price: 15, currency: '$', displayPrice: '$15', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 19, currency: '$', displayPrice: '$19', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 6.00, currency: '$', displayPrice: '$6.00', link: 'https://rzp.io/rzp/KmjPHDFw' },
+      no_ads: { price: 8.00, currency: '$', displayPrice: '$8.00', link: 'https://rzp.io/rzp/amIBKn1E' }
     }
   },
   '1-month': {
@@ -50,16 +50,52 @@ export const PRICING_MATRIX = {
     durationDays: 30,
     durationHours: 720,
     india: {
-      with_ads: { price: 449, currency: '₹', displayPrice: '₹449', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 499, currency: '₹', displayPrice: '₹499', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 449, currency: '₹', displayPrice: '₹449', link: 'https://rzp.io/rzp/neqa5jn' },
+      no_ads: { price: 499, currency: '₹', displayPrice: '₹499', link: 'https://rzp.io/rzp/866PNkC0' }
     },
     regional: {
-      with_ads: { price: 12, currency: '$', displayPrice: '$12', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 18, currency: '$', displayPrice: '$18', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 4.49, currency: '$', displayPrice: '$4.49', link: 'https://rzp.io/rzp/OXuUB5jj' },
+      no_ads: { price: 4.99, currency: '$', displayPrice: '$4.99', link: 'https://rzp.io/rzp/SBKqmutM' }
     },
     international: {
-      with_ads: { price: 25, currency: '$', displayPrice: '$25', link: 'https://rzp.io/rzp/0hqC5wl' },
-      no_ads: { price: 35, currency: '$', displayPrice: '$35', link: 'https://rzp.io/rzp/XJPN9Fk' }
+      with_ads: { price: 15.00, currency: '$', displayPrice: '$15.00', link: 'https://rzp.io/rzp/70W31XiP' },
+      no_ads: { price: 20.00, currency: '$', displayPrice: '$20.00', link: 'https://rzp.io/rzp/ySfZ6If' }
+    }
+  },
+  'community-7-days': {
+    id: 'community-7-days',
+    title: 'Community 7 Days Pass',
+    durationDays: 7,
+    durationHours: 168,
+    india: {
+      with_ads: { price: 699, currency: '₹', displayPrice: '₹699', link: 'https://rzp.io/rzp/eHos15KW' },
+      no_ads: { price: 850, currency: '₹', displayPrice: '₹850', link: 'https://rzp.io/rzp/rujZOejh' }
+    },
+    regional: {
+      with_ads: { price: 6.99, currency: '$', displayPrice: '$6.99', link: 'https://rzp.io/rzp/qMiXZMKm' },
+      no_ads: { price: 8.50, currency: '$', displayPrice: '$8.50', link: 'https://rzp.io/rzp/BEBATwU' }
+    },
+    international: {
+      with_ads: { price: 12.00, currency: '$', displayPrice: '$12.00', link: 'https://rzp.io/rzp/KmjPHDFw' },
+      no_ads: { price: 15.00, currency: '$', displayPrice: '$15.00', link: 'https://rzp.io/rzp/amIBKn1E' }
+    }
+  },
+  'community-1-month': {
+    id: 'community-1-month',
+    title: 'Community 1 Month VIP',
+    durationDays: 30,
+    durationHours: 720,
+    india: {
+      with_ads: { price: 1199, currency: '₹', displayPrice: '₹1199', link: 'https://rzp.io/rzp/neqa5jn' },
+      no_ads: { price: 1399, currency: '₹', displayPrice: '₹1399', link: 'https://rzp.io/rzp/866PNkC0' }
+    },
+    regional: {
+      with_ads: { price: 11.99, currency: '$', displayPrice: '$11.99', link: 'https://rzp.io/rzp/OXuUB5jj' },
+      no_ads: { price: 13.99, currency: '$', displayPrice: '$13.99', link: 'https://rzp.io/rzp/SBKqmutM' }
+    },
+    international: {
+      with_ads: { price: 20.00, currency: '$', displayPrice: '$20.00', link: 'https://rzp.io/rzp/70W31XiP' },
+      no_ads: { price: 28.00, currency: '$', displayPrice: '$28.00', link: 'https://rzp.io/rzp/ySfZ6If' }
     }
   }
 };
@@ -72,8 +108,9 @@ export function calculatePlanExpiry(durationKey) {
   const startedAt = now.toISOString();
   
   let hoursToAdd = 24;
+  if (durationKey === 'community-7-days' || durationKey === '7-days') hoursToAdd = 168;
   if (durationKey === '10-days') hoursToAdd = 240;
-  if (durationKey === '1-month') hoursToAdd = 720;
+  if (durationKey === '1-month' || durationKey === 'community-1-month') hoursToAdd = 720;
   
   const expiresAtDate = new Date(now.getTime() + hoursToAdd * 60 * 60 * 1000);
   const expiresAt = expiresAtDate.toISOString();

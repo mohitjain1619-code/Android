@@ -267,10 +267,24 @@ public class MainScreenActivity extends BaseActivity {
             } else if (itemId == R.id.action_share_app) {
                 shareApp();
                 return true;
+            } else if (itemId == R.id.action_rate_app) {
+                openPlayStoreForRating();
+                return true;
             }
             return false;
         });
         popup.show();
+    }
+
+    private void openPlayStoreForRating() {
+        try {
+            Intent playStoreIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=" + getPackageName()));
+            playStoreIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            startActivity(playStoreIntent);
+        } catch (android.content.ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+        }
+        Toast.makeText(this, "Thank you for rating Camverz 5 Stars! ⭐", Toast.LENGTH_LONG).show();
     }
 
     private void shareApp() {
@@ -497,18 +511,7 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void loadBannerAd() {
-        adView = new com.google.android.gms.ads.AdView(this);
-        adView.setAdUnitId(getString(R.string.admob_banner_ad_unit_id));
-        adView.setAdSize(com.google.android.gms.ads.AdSize.BANNER);
-
-        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
-        if (adContainer != null) {
-            adContainer.removeAllViews();
-            adContainer.addView(adView);
-            com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-            Log.d(TAG, "✅ AdMob Banner Ad requested for MainScreen");
-        }
+        // Ads disabled in main app
     }
 
     private void proceedToConnectingDirectly() {
@@ -518,53 +521,7 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void loadLevelPlayRewardedVideoAd() {
-        try {
-            levelPlayRewardedAd = new com.unity3d.mediation.rewarded.LevelPlayRewardedAd("onddt1lewzexkb5q");
-            levelPlayRewardedAd.setListener(new com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener() {
-                @Override
-                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    isRewardedVideoAvailable = true;
-                    Log.d(TAG, "ironSource Rewarded Ad is loaded and available");
-                }
-
-                @Override
-                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
-                    isRewardedVideoAvailable = false;
-                    Log.w(TAG, "ironSource Rewarded Ad failed to load: " + error.getErrorMessage());
-                }
-
-                @Override
-                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.d(TAG, "ironSource Rewarded Ad is shown");
-                }
-
-                @Override
-                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.e(TAG, "ironSource Rewarded Ad failed to show: " + error.getErrorMessage());
-                    isRewardedVideoAvailable = false;
-                    levelPlayRewardedAd.loadAd(); // Reload for next time
-                    proceedToConnectingDirectly();
-                }
-
-                @Override
-                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
-
-                @Override
-                public void onAdRewarded(com.unity3d.mediation.rewarded.LevelPlayReward reward, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.d(TAG, "ironSource Rewarded Ad successfully rewarded user");
-                }
-
-                @Override
-                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    isRewardedVideoAvailable = false;
-                    levelPlayRewardedAd.loadAd(); // Reload for next time
-                    proceedToConnectingDirectly();
-                }
-            });
-            levelPlayRewardedAd.loadAd();
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading ironSource Rewarded Ad: " + e.getMessage());
-        }
+        // Ads disabled in main app
     }
 
     @Override

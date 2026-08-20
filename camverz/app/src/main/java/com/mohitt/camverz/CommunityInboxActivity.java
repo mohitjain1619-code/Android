@@ -126,8 +126,15 @@ public class CommunityInboxActivity extends BaseActivity {
             RealMeetRequest req = list.get(position);
 
             String genderBadge = " ♂️ ";
-            String verifiedBadge = " ✔️";
-            holder.tvInboxNameAge.setText(req.getApplicantName() + genderBadge + req.getApplicantAge() + verifiedBadge);
+            if (req.getApplicantGender() != null && req.getApplicantGender().toLowerCase().startsWith("f")) {
+                genderBadge = " ♀️ ";
+            }
+
+            boolean isMale = req.getApplicantGender() == null || !req.getApplicantGender().toLowerCase().startsWith("f");
+            boolean isVerified = isMale || req.isApplicantVerified();
+            String verifiedBadge = isVerified ? " ✔️" : "";
+
+            holder.tvInboxNameAge.setText(req.getApplicantName() + " " + genderBadge + " " + req.getApplicantAge() + verifiedBadge);
             holder.tvInboxSubtext.setText("📍 " + (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby") + " • For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Community Meet"));
             holder.tvInboxLastMessage.setText(req.getMessage() != null && !req.getMessage().isEmpty() ? req.getMessage() : "Tap to open 1-on-1 community chat");
 

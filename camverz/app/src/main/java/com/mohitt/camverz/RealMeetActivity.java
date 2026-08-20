@@ -67,6 +67,7 @@ public class RealMeetActivity extends BaseActivity {
     private LinearLayout cityFilterContainer;
     private TextView chipFilterGlobal, chipFilterCity;
     private EditText etSearch;
+    private TextView tvHeaderTitle, tvHeaderSubtitle;
 
     // Bottom Floating Dock Views
     private View dockTabMeet, dockTabFantasy, dockTabParty, dockTabProfile;
@@ -118,6 +119,8 @@ public class RealMeetActivity extends BaseActivity {
         btnHeaderRequests = findViewById(R.id.btnHeaderRequests);
         btnHeaderInbox = findViewById(R.id.btnHeaderInbox);
         etSearch = findViewById(R.id.etSearch);
+        tvHeaderTitle = findViewById(R.id.tvHeaderTitle);
+        tvHeaderSubtitle = findViewById(R.id.tvHeaderSubtitle);
 
         dockTabMeet = findViewById(R.id.dockTabMeet);
         dockTabFantasy = findViewById(R.id.dockTabFantasy);
@@ -377,6 +380,25 @@ public class RealMeetActivity extends BaseActivity {
 
     private void switchTab(Tab tab) {
         currentTab = tab;
+
+        if (tvHeaderTitle != null && tvHeaderSubtitle != null) {
+            if (tab == Tab.REAL_MEET) {
+                tvHeaderTitle.setText("REAL MEET");
+                tvHeaderSubtitle.setText("See who wants to meet you in real life today");
+            } else if (tab == Tab.FANTASY) {
+                tvHeaderTitle.setText("FANTASY");
+                tvHeaderSubtitle.setText("Share your fantasy & find like-minded people");
+            } else if (tab == Tab.PARTY) {
+                tvHeaderTitle.setText("REAL PARTY");
+                tvHeaderSubtitle.setText("Host the real life party or host the real event in your city");
+            } else if (tab == Tab.REQUESTS) {
+                tvHeaderTitle.setText("REQUESTS");
+                tvHeaderSubtitle.setText("See incoming meet or chat requests");
+            } else if (tab == Tab.PROFILE) {
+                tvHeaderTitle.setText("MY PROFILE");
+                tvHeaderSubtitle.setText("Manage your post history & persona");
+            }
+        }
 
         if (tvTextMeet != null) tvTextMeet.setTextColor(tab == Tab.REAL_MEET ? Color.WHITE : Color.parseColor("#8E8E93"));
         if (tvTextFantasy != null) tvTextFantasy.setTextColor(tab == Tab.FANTASY ? Color.WHITE : Color.parseColor("#8E8E93"));
@@ -650,6 +672,8 @@ public class RealMeetActivity extends BaseActivity {
                     msg,
                     selectedPref[0],
                     "PENDING",
+                    currentUserGender,
+                    tokenManager.isVerified(),
                     System.currentTimeMillis()
             );
 
@@ -868,6 +892,8 @@ public class RealMeetActivity extends BaseActivity {
                     location,
                     selectedTime[0],
                     description,
+                    currentUserGender,
+                    tokenManager.isVerified(),
                     System.currentTimeMillis()
             );
 
@@ -962,6 +988,8 @@ public class RealMeetActivity extends BaseActivity {
                     capacity,
                     targetGender,
                     selectedTime[0],
+                    currentUserGender,
+                    tokenManager.isVerified(),
                     System.currentTimeMillis()
             );
 
@@ -1036,6 +1064,8 @@ public class RealMeetActivity extends BaseActivity {
                     status,
                     description,
                     interests.isEmpty() ? "General" : interests,
+                    currentUserGender,
+                    tokenManager.isVerified(),
                     System.currentTimeMillis()
             );
 

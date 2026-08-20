@@ -114,37 +114,37 @@
 
                     <!-- Combined Community, Real Meet, Fantasy Quick Chip -->
                     <LinearLayout
-                        android:id="@+id/chip_community_hub"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/bg_floating_glass"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="12dp">
+                         android:id="@+id/chip_community_hub"
+                         android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:layout_marginEnd="10dp"
+                         android:background="@drawable/bg_community_hot_gradient"
+                         android:clickable="true"
+                         android:focusable="true"
+                         android:gravity="center_vertical"
+                         android:orientation="horizontal"
+                         android:paddingHorizontal="16dp"
+                         android:paddingVertical="12dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="💬 Community, Real Meet, Fantasy "
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                         <TextView
+                             android:layout_width="wrap_content"
+                             android:layout_height="wrap_content"
+                             android:text="💬 Real Meet, Real Party, Fantasy "
+                             android:textColor="#FFFFFF"
+                             android:textSize="14sp"
+                             android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_btn_primary_gradient"
-                            android:paddingHorizontal="8dp"
-                            android:paddingVertical="3dp"
-                            android:text="HOT 🔥"
-                            android:textColor="#FFFFFF"
-                            android:textSize="10sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                         <TextView
+                             android:layout_width="wrap_content"
+                             android:layout_height="wrap_content"
+                             android:background="@drawable/bg_btn_primary_gradient"
+                             android:paddingHorizontal="8dp"
+                             android:paddingVertical="3dp"
+                             android:text="HOT 🔥"
+                             android:textColor="#FFFFFF"
+                             android:textSize="10sp"
+                             android:textStyle="bold" />
+                     </LinearLayout>
 
                     <!-- Friends Quick Chip -->
                     <LinearLayout

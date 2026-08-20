@@ -9,6 +9,7 @@ import LoginModal from './LoginModal';
 import OnboardingModal from './OnboardingModal';
 import GenderVerificationModal from './GenderVerificationModal';
 import AppRedirectModal from './AppRedirectModal';
+import { motion } from 'motion/react';
 
 import { captureFromURL } from '../lib/affiliateTracker';
 
@@ -50,7 +51,14 @@ export default function ClientLayoutWrapper({ children }) {
       {!isCallPage && <Navbar />}
       
       <main style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
-        {children}
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {children}
+        </motion.div>
       </main>
       
       {!isCallPage && <Footer />}

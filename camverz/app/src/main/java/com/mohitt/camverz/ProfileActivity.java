@@ -992,60 +992,7 @@ public class ProfileActivity extends BaseActivity {
     }
 
     private void loadLevelPlayNativeAd() {
-        try {
-            if (levelPlayNativeAd != null) {
-                levelPlayNativeAd.destroyAd();
-                levelPlayNativeAd = null;
-            }
-
-            // ironSource LevelPlay Native Ad Builder
-            levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
-                    .withPlacementName("4178n3sq2cj8dahz")
-                    .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
-                        @Override
-                        public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                            android.util.Log.d("ProfileActivity", "ironSource Native Ad loaded successfully");
-                            runOnUiThread(() -> {
-                                if (nativeAdContainer != null && nativeAdLayout != null) {
-                                    nativeAdContainer.setVisibility(android.view.View.VISIBLE);
-                                    nativeAdLayout.removeAllViews();
-                                    
-                                    // Inflate custom layout assets inside NativeAdLayout
-                                    android.view.LayoutInflater.from(ProfileActivity.this)
-                                            .inflate(R.layout.layout_native_ad_levelplay, nativeAdLayout, true);
-                                            
-                                    // Map views to layout setters
-                                    nativeAdLayout.setTitleView(nativeAdLayout.findViewById(R.id.ad_title));
-                                    nativeAdLayout.setBodyView(nativeAdLayout.findViewById(R.id.ad_body));
-                                    nativeAdLayout.setAdvertiserView(nativeAdLayout.findViewById(R.id.ad_advertiser));
-                                    nativeAdLayout.setCallToActionView(nativeAdLayout.findViewById(R.id.ad_cta));
-                                    nativeAdLayout.setIconView(nativeAdLayout.findViewById(R.id.ad_icon));
-                                    nativeAdLayout.setMediaView((com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView) nativeAdLayout.findViewById(R.id.ad_media));
-                                    
-                                    // Register views to register impressions/clicks
-                                    nativeAdLayout.registerNativeAdViews(nativeAd);
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.logger.IronSourceError error) {
-                            android.util.Log.e("ProfileActivity", "ironSource Native Ad load failed: " + error.getErrorMessage());
-                            runOnUiThread(() -> loadMetaNativeAd());
-                        }
-
-                        @Override
-                        public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-
-                        @Override
-                        public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                    })
-                    .build();
-
-            levelPlayNativeAd.loadAd();
-        } catch (Exception e) {
-            android.util.Log.e("ProfileActivity", "Error loading ironSource Native Ad: " + e.getMessage());
-        }
+        // Ads disabled in main app
     }
 
     private int dpToPx(int dp) {
@@ -1053,37 +1000,7 @@ public class ProfileActivity extends BaseActivity {
     }
 
     private void loadMetaNativeAd() {
-        if (com.mohitt.camverz.BuildConfig.DEBUG) {
-            com.facebook.ads.AdSettings.setTestMode(true);
-        }
-        metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167733142869");
-        com.facebook.ads.NativeAdListener nativeAdListener = new com.facebook.ads.NativeAdListener() {
-            @Override
-            public void onMediaDownloaded(com.facebook.ads.Ad ad) {}
-
-            @Override
-            public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
-                android.util.Log.e("ProfileActivity", "Meta Native Ad failed to load: " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(com.facebook.ads.Ad ad) {
-                if (isFinishing() || isDestroyed()) return;
-                if (metaNativeAd != null && metaNativeAd == ad) {
-                    inflateMetaNativeAd(metaNativeAd);
-                }
-            }
-
-            @Override
-            public void onAdClicked(com.facebook.ads.Ad ad) {}
-
-            @Override
-            public void onLoggingImpression(com.facebook.ads.Ad ad) {}
-        };
-
-        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig()
-                .withAdListener(nativeAdListener)
-                .build());
+        // Ads disabled in main app
     }
 
     private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {

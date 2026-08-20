@@ -44,7 +44,14 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
         FantasyPost post = postList.get(position);
 
         String genderIcon = " ♂️ ";
-        String verifiedBadge = " ✔️";
+        if (post.getGender() != null && post.getGender().toLowerCase().startsWith("f")) {
+            genderIcon = " ♀️ ";
+        }
+
+        boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
+        boolean isVerified = isMale || post.isVerified();
+        String verifiedBadge = isVerified ? " ✔️" : "";
+
         holder.tvFantasyNameAge.setText(post.getUserName() + genderIcon + post.getAge() + verifiedBadge);
         holder.tvStatusChip.setText(post.getRelationshipStatus());
         holder.tvInterests.setText("✨ " + post.getInterests());

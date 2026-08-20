@@ -100,7 +100,13 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
                                 comment.setText(obj.has("text") ? obj.get("text").getAsString() : "");
                                 comment.setUserId(obj.has("userId") ? obj.get("userId").getAsString() : "");
                                 comment.setParentId(obj.has("parentId") && !obj.get("parentId").isJsonNull() ? obj.get("parentId").getAsString() : null);
-                                comment.setUserName(obj.has("username") ? obj.get("username").getAsString() : "User");
+                                String commentUserName = "Camverz member";
+                                if (obj.has("username") && !obj.get("username").isJsonNull()) {
+                                    commentUserName = obj.get("username").getAsString();
+                                } else if (obj.has("userName") && !obj.get("userName").isJsonNull()) {
+                                    commentUserName = obj.get("userName").getAsString();
+                                }
+                                comment.setUserName(commentUserName);
                                 comment.setUserAvatar(obj.has("userAvatar") ? obj.get("userAvatar").getAsString() : "");
                                 comment.setUserPhotoUrl(obj.has("userPhotoUrl") && !obj.get("userPhotoUrl").isJsonNull() ? obj.get("userPhotoUrl").getAsString() : "");
                                 comment.setLikeCount(obj.has("likeCount") ? obj.get("likeCount").getAsInt() : 0);

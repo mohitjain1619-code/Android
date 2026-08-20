@@ -14,6 +14,8 @@ public class RealMeetRequest {
     private String message;
     private String contactPreference; // "Private Video Call", "Direct Chat", "Meet at Spot"
     private String status; // "PENDING", "ACCEPTED", "DECLINED"
+    private String applicantGender;
+    private boolean applicantVerified;
     private long createdAt;
 
     public RealMeetRequest() {}
@@ -32,6 +34,25 @@ public class RealMeetRequest {
         this.message = message;
         this.contactPreference = contactPreference;
         this.status = status;
+        this.createdAt = createdAt;
+    }
+
+    public RealMeetRequest(String id, String postId, String postTitle, String posterUserId, String applicantUserId, String applicantName, String applicantAvatar, String applicantPhotoUrl, int applicantAge, String applicantCity, String message, String contactPreference, String status, String applicantGender, boolean applicantVerified, long createdAt) {
+        this.id = id;
+        this.postId = postId;
+        this.postTitle = postTitle;
+        this.posterUserId = posterUserId;
+        this.applicantUserId = applicantUserId;
+        this.applicantName = applicantName;
+        this.applicantAvatar = applicantAvatar;
+        this.applicantPhotoUrl = applicantPhotoUrl;
+        this.applicantAge = applicantAge;
+        this.applicantCity = applicantCity;
+        this.message = message;
+        this.contactPreference = contactPreference;
+        this.status = status;
+        this.applicantGender = applicantGender;
+        this.applicantVerified = applicantVerified;
         this.createdAt = createdAt;
     }
 
@@ -73,6 +94,12 @@ public class RealMeetRequest {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getApplicantGender() { return applicantGender; }
+    public void setApplicantGender(String applicantGender) { this.applicantGender = applicantGender; }
+
+    public boolean isApplicantVerified() { return applicantVerified; }
+    public void setApplicantVerified(boolean applicantVerified) { this.applicantVerified = applicantVerified; }
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }

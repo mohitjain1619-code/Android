@@ -521,3 +521,41 @@
   color: var(--text-muted);
   margin-top: 6px;
 }
+
+/* Pricing Category Tabs Switcher */
+.categoryToggleGroup {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px;
+  border-radius: 50px;
+  gap: 8px;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.categoryBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.categoryBtn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.categoryBtnActive {
+  background: linear-gradient(135deg, #7000FF, #FF2D55, #FF9500);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(255, 45, 85, 0.35);
+}

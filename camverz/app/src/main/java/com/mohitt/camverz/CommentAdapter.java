@@ -50,8 +50,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         Comment comment = commentList.get(position);
 
-        holder.username.setText(comment.getUserName());
-        AvatarHelper.loadAvatar(context, comment.getUserPhotoUrl(), comment.getUserAvatar(), comment.getUserName(), holder.profileImage);
+        String displayName = comment.getUserName();
+        if (displayName == null || displayName.trim().isEmpty()) {
+            displayName = "Camverz member";
+        }
+        holder.username.setText(displayName);
+        AvatarHelper.loadAvatar(context, comment.getUserPhotoUrl(), comment.getUserAvatar(), displayName, holder.profileImage);
 
         holder.commentText.setText(comment.getText());
         holder.timestamp.setText(getTimestampString(comment.getTimestamp()));

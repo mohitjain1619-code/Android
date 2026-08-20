@@ -3,39 +3,39 @@
     <!-- Premium Glassmorphism & Material 3 Color System -->
 
     <!-- Ambient & Page Backgrounds -->
-    <color name="bg_primary">#F8FAFC</color>
-    <color name="bg_ambient_start">#EEF2FF</color> <!-- Soft Blue Tint -->
-    <color name="bg_ambient_end">#F5F3FF</color>   <!-- Soft Purple Tint -->
-    <color name="bg_card">#FFFFFF</color>
-    <color name="bg_glass_card">#F2FFFFFF</color> <!-- 95% White Translucent -->
-    <color name="bg_glass_input">#0D000000</color>
-    <color name="bg_elevated">#F1F5F9</color>
-    <color name="bg_dark">#0F172A</color>
-    <color name="surface_dark">#1E293B</color>
-    <color name="surface_elevated">#334155</color>
+    <color name="bg_primary">#0B1115</color>
+    <color name="bg_ambient_start">#13252A</color>
+    <color name="bg_ambient_end">#211A20</color>
+    <color name="bg_card">#142126</color>
+    <color name="bg_glass_card">#D9142126</color>
+    <color name="bg_glass_input">#1AFFFFFF</color>
+    <color name="bg_elevated">#1A2B31</color>
+    <color name="bg_dark">#0B1115</color>
+    <color name="surface_dark">#142126</color>
+    <color name="surface_elevated">#203239</color>
 
     <!-- Navigation & Capsule Tints -->
-    <color name="nav_active_pill">#E0E7FF</color>
-    <color name="nav_active_icon">#4F46E5</color>
-    <color name="nav_inactive_icon">#94A3B8</color>
-    <color name="nav_glass_bg">#EDFFFFFF</color>
+    <color name="nav_active_pill">#2A4C50</color>
+    <color name="nav_active_icon">#54D6D2</color>
+    <color name="nav_inactive_icon">#89A2A5</color>
+    <color name="nav_glass_bg">#E6142126</color>
 
     <!-- Text -->
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#475569</color>
-    <color name="text_muted">#94A3B8</color>
+    <color name="text_primary">#F4FAF9</color>
+    <color name="text_secondary">#B8CCCB</color>
+    <color name="text_muted">#789092</color>
     <color name="text_white">#FFFFFF</color>
 
     <!-- Brand Accents -->
-    <color name="accent_primary">#6366F1</color>  <!-- Indigo / Violet -->
-    <color name="accent_indigo">#4F46E5</color>
-    <color name="accent_purple">#8B5CF6</color>
-    <color name="accent_emerald">#10B981</color>
-    <color name="accent_rose">#F43F5E</color>
-    <color name="accent_pink">#EC4899</color>
-    <color name="accent_cyan">#0EA5E9</color>
-    <color name="accent_amber">#F59E0B</color>
-    <color name="accent_orange">#FF6B00</color>
+    <color name="accent_primary">#FF6B5F</color>
+    <color name="accent_indigo">#FF806F</color>
+    <color name="accent_purple">#A78BFA</color>
+    <color name="accent_emerald">#63D6A0</color>
+    <color name="accent_rose">#FF6B5F</color>
+    <color name="accent_pink">#FF8D86</color>
+    <color name="accent_cyan">#54D6D2</color>
+    <color name="accent_amber">#F6D365</color>
+    <color name="accent_orange">#FF9B71</color>
 
     <!-- Gradient Accents for Cards -->
     <color name="card_straight_start">#FFF7ED</color>
@@ -46,23 +46,23 @@
     <color name="card_lesbian_end">#FCE7F3</color>
 
     <!-- Borders, Hairlines & Dividers -->
-    <color name="divider">#E2E8F0</color>
-    <color name="border">#CBD5E1</color>
-    <color name="glass_stroke">#1A4F46E5</color>
+    <color name="divider">#263B40</color>
+    <color name="border">#3A555A</color>
+    <color name="glass_stroke">#2A54D6D2</color>
     <color name="hairline_border">#12000000</color>
     <color name="hairline_light">#20FFFFFF</color>
 
     <!-- Skeleton Loading -->
-    <color name="skeleton_bg">#E2E8F0</color>
-    <color name="skeleton_shimmer">#F1F5F9</color>
+    <color name="skeleton_bg">#1A2B31</color>
+    <color name="skeleton_shimmer">#294148</color>
 
     <!-- Compatibility Aliases -->
-    <color name="purple_200">#C7D2FE</color>
-    <color name="purple_500">#6366F1</color>
-    <color name="purple_700">#4338CA</color>
-    <color name="teal_200">#38BDF8</color>
-    <color name="teal_700">#0284C7</color>
-    <color name="black">#0F172A</color>
+    <color name="purple_200">#A78BFA</color>
+    <color name="purple_500">#FF6B5F</color>
+    <color name="purple_700">#D94D48</color>
+    <color name="teal_200">#54D6D2</color>
+    <color name="teal_700">#2CA7A6</color>
+    <color name="black">#0B1115</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="light_gray">#CBD5E1</color>
+    <color name="light_gray">#B8CCCB</color>
 </resources>
