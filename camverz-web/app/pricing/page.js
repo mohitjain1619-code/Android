@@ -220,14 +220,14 @@ export default function PricingPage() {
         {
           type: 'Without Ads (Ad-Free)',
           isAdFree: true,
-          tag: 'Hub VIP Gold',
+          tag: 'Hub VIP Premium',
           tagClass: styles.tagNoAds,
           isFeatured: true,
           features: [
             '100% Ad-Free Community Inbox',
             'Triple (3X) Post Visibility Boost',
             'Unlimited Real Meet Requests',
-            'Special Gold profile layout in feed',
+            'Special Premium profile layout in feed',
             'Instant priority request notifications',
           ],
           btnClass: styles.btnPro,

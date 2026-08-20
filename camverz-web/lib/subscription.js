@@ -22,8 +22,8 @@ export const PRICING_MATRIX = {
       no_ads: { price: 1.70, currency: '$', displayPrice: '$1.70', link: 'https://rzp.io/rzp/U4o0bEP' }
     },
     international: {
-      with_ads: { price: 1.00, currency: '$', displayPrice: '$1.00', link: 'https://rzp.io/rzp/m7lJpaEG' },
-      no_ads: { price: 2.00, currency: '$', displayPrice: '$2.00', link: 'https://rzp.io/rzp/RUN9vJe1' }
+      with_ads: { price: 5.00, currency: '$', displayPrice: '$5.00', link: 'https://rzp.io/rzp/m7lJpaEG' },
+      no_ads: { price: 7.00, currency: '$', displayPrice: '$7.00', link: 'https://rzp.io/rzp/RUN9vJe1' }
     }
   },
   '10-days': {
@@ -40,8 +40,8 @@ export const PRICING_MATRIX = {
       no_ads: { price: 3.79, currency: '$', displayPrice: '$3.79', link: 'https://rzp.io/rzp/BEBATwU' }
     },
     international: {
-      with_ads: { price: 6.00, currency: '$', displayPrice: '$6.00', link: 'https://rzp.io/rzp/KmjPHDFw' },
-      no_ads: { price: 8.00, currency: '$', displayPrice: '$8.00', link: 'https://rzp.io/rzp/amIBKn1E' }
+      with_ads: { price: 10.00, currency: '$', displayPrice: '$10.00', link: 'https://rzp.io/rzp/KmjPHDFw' },
+      no_ads: { price: 12.00, currency: '$', displayPrice: '$12.00', link: 'https://rzp.io/rzp/amIBKn1E' }
     }
   },
   '1-month': {

@@ -52,9 +52,16 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
         String verifiedBadge = isVerified ? " ✔️" : "";
+        String crownBadge = post.isPremium() ? " 👑" : "";
 
-        holder.tvNameAge.setText(post.getUserName() + genderIcon + post.getAge() + verifiedBadge);
+        holder.tvNameAge.setText(post.getUserName() + " " + genderIcon + " " + post.getAge() + crownBadge + verifiedBadge);
         holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : "Nearby"));
+
+        if (post.isPremium()) {
+            holder.itemView.setBackgroundResource(R.drawable.bg_community_hot_gradient);
+        } else {
+            holder.itemView.setBackgroundResource(R.drawable.bg_real_meet_gradient_card);
+        }
         holder.tvPurpose.setText(post.getPurpose());
         holder.tvLocation.setText("🏢 " + post.getLocation());
         holder.tvTime.setText("⏰ " + post.getTime());

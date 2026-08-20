@@ -14,6 +14,7 @@ public class PartyPost {
     private String partyTime;
     private String gender;
     private boolean verified;
+    private boolean premium;
     private long createdAt;
 
     public PartyPost() {}
@@ -47,6 +48,24 @@ public class PartyPost {
         this.partyTime = partyTime;
         this.gender = gender;
         this.verified = verified;
+        this.createdAt = createdAt;
+    }
+
+    public PartyPost(String id, String hostUserId, String hostName, String hostAvatar, String hostPhotoUrl, int hostAge, String venue, String purpose, int capacity, String targetGender, String partyTime, String gender, boolean verified, boolean premium, long createdAt) {
+        this.id = id;
+        this.hostUserId = hostUserId;
+        this.hostName = hostName;
+        this.hostAvatar = hostAvatar;
+        this.hostPhotoUrl = hostPhotoUrl;
+        this.hostAge = hostAge;
+        this.venue = venue;
+        this.purpose = purpose;
+        this.capacity = capacity;
+        this.targetGender = targetGender;
+        this.partyTime = partyTime;
+        this.gender = gender;
+        this.verified = verified;
+        this.premium = premium;
         this.createdAt = createdAt;
     }
 
@@ -88,6 +107,9 @@ public class PartyPost {
 
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
+
+    public boolean isPremium() { return premium; }
+    public void setPremium(boolean premium) { this.premium = premium; }
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }

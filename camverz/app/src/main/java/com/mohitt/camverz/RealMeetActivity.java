@@ -894,6 +894,7 @@ public class RealMeetActivity extends BaseActivity {
                     description,
                     currentUserGender,
                     tokenManager.isVerified(),
+                    tokenManager.isVerified(),
                     System.currentTimeMillis()
             );
 
@@ -990,6 +991,7 @@ public class RealMeetActivity extends BaseActivity {
                     selectedTime[0],
                     currentUserGender,
                     tokenManager.isVerified(),
+                    tokenManager.isVerified(),
                     System.currentTimeMillis()
             );
 
@@ -1065,6 +1067,7 @@ public class RealMeetActivity extends BaseActivity {
                     description,
                     interests.isEmpty() ? "General" : interests,
                     currentUserGender,
+                    tokenManager.isVerified(),
                     tokenManager.isVerified(),
                     System.currentTimeMillis()
             );

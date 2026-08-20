@@ -51,9 +51,16 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
         String verifiedBadge = isVerified ? " ✔️" : "";
+        String crownBadge = post.isPremium() ? " 👑" : "";
 
-        holder.tvFantasyNameAge.setText(post.getUserName() + genderIcon + post.getAge() + verifiedBadge);
+        holder.tvFantasyNameAge.setText(post.getUserName() + " " + genderIcon + " " + post.getAge() + crownBadge + verifiedBadge);
         holder.tvStatusChip.setText(post.getRelationshipStatus());
+
+        if (post.isPremium()) {
+            holder.itemView.setBackgroundResource(R.drawable.bg_community_hot_gradient);
+        } else {
+            holder.itemView.setBackgroundResource(R.drawable.bg_fantasy_gradient_card);
+        }
         holder.tvInterests.setText("✨ " + post.getInterests());
         holder.tvFantasyText.setText(post.getDescription());
 

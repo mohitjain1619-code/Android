@@ -51,9 +51,16 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
         String verifiedBadge = isVerified ? " ✔️" : "";
+        String crownBadge = post.isPremium() ? " 👑" : "";
 
-        holder.tvHostNameAge.setText(post.getHostName() + genderIcon + post.getHostAge() + verifiedBadge);
+        holder.tvHostNameAge.setText(post.getHostName() + " " + genderIcon + " " + post.getHostAge() + crownBadge + verifiedBadge);
         holder.tvTargetGender.setText(post.getTargetGender());
+
+        if (post.isPremium()) {
+            holder.itemView.setBackgroundResource(R.drawable.bg_community_hot_gradient);
+        } else {
+            holder.itemView.setBackgroundResource(R.drawable.bg_party_gradient_card);
+        }
         holder.tvCapacity.setText("👥 " + post.getCapacity() + " People Max");
         holder.tvPartyPurpose.setText(post.getPurpose());
         holder.tvPartyVenue.setText("📍 " + post.getVenue());
