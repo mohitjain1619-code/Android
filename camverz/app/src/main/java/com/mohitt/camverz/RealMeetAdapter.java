@@ -44,17 +44,17 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         RealMeetPost post = postList.get(position);
 
-        String genderIcon = " ♂️ ";
-        if (post.getGender() != null && post.getGender().toLowerCase().startsWith("f")) {
-            genderIcon = " ♀️ ";
-        }
-
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
-        String verifiedBadge = isVerified ? " ✔️" : "";
-        String crownBadge = post.isPremium() ? " 👑" : "";
 
-        holder.tvNameAge.setText(post.getUserName() + " " + genderIcon + " " + post.getAge() + crownBadge + verifiedBadge);
+        holder.tvNameAge.setText(TextHelper.getFormattedHeader(
+                context,
+                post.getUserName(),
+                post.getGender(),
+                post.getAge(),
+                post.isPremium(),
+                isVerified
+        ));
         holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : "Nearby"));
 
         if (post.isPremium()) {

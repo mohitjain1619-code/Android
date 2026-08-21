@@ -222,3 +222,29 @@
   .logoText { font-size: 1.05rem; }
   .profileBtn { padding-right: 7px; }
 }
+
+.pricingPill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(189, 0, 255, 0.06);
+  border: 1px solid rgba(189, 0, 255, 0.4);
+  border-radius: 9999px;
+  text-decoration: none;
+  color: #E2E8F0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(189, 0, 255, 0.08);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pricingPill:hover {
+  background: rgba(189, 0, 255, 0.14);
+  border-color: rgba(189, 0, 255, 0.8);
+  box-shadow: 0 0 15px rgba(189, 0, 255, 0.25);
+  transform: translateY(-0.5px);
+  color: #FFFFFF;
+}

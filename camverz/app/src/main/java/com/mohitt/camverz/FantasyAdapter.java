@@ -43,17 +43,17 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         FantasyPost post = postList.get(position);
 
-        String genderIcon = " ♂️ ";
-        if (post.getGender() != null && post.getGender().toLowerCase().startsWith("f")) {
-            genderIcon = " ♀️ ";
-        }
-
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
-        String verifiedBadge = isVerified ? " ✔️" : "";
-        String crownBadge = post.isPremium() ? " 👑" : "";
 
-        holder.tvFantasyNameAge.setText(post.getUserName() + " " + genderIcon + " " + post.getAge() + crownBadge + verifiedBadge);
+        holder.tvFantasyNameAge.setText(TextHelper.getFormattedHeader(
+                context,
+                post.getUserName(),
+                post.getGender(),
+                post.getAge(),
+                post.isPremium(),
+                isVerified
+        ));
         holder.tvStatusChip.setText(post.getRelationshipStatus());
 
         if (post.isPremium()) {

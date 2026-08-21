@@ -161,4 +161,8 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
+
+    private String sexPreference;
+    public String getSexPreference() { return sexPreference != null ? sexPreference : "Straight"; }
+    public void setSexPreference(String sexPreference) { this.sexPreference = sexPreference; }
 }

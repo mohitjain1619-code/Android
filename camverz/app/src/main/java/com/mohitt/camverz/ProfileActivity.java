@@ -64,6 +64,8 @@ public class ProfileActivity extends BaseActivity {
     private String friendshipRequestId = null;
     private LinearLayout otherUserActionsLayout;
     private View mainContentLayout;
+    private LinearLayout sexPreferenceLayout;
+    private TextView tvSexPreference;
 
     private String visitedUserId;
     private String currentUserId;
@@ -139,6 +141,19 @@ public class ProfileActivity extends BaseActivity {
         followButton = findViewById(R.id.follow_button);
         messageButton = findViewById(R.id.message_button);
         otherUserActionsLayout = findViewById(R.id.other_user_actions_layout);
+        sexPreferenceLayout = findViewById(R.id.sex_preference_layout);
+        tvSexPreference = findViewById(R.id.tv_sex_preference);
+
+        if (sexPreferenceLayout != null) {
+            sexPreferenceLayout.setOnClickListener(v -> {
+                if (isUpdating) return;
+                PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, preference -> {
+                    if (tvSexPreference != null) tvSexPreference.setText(preference);
+                    tokenManager.setSexPreference(preference);
+                });
+                dialog.show();
+            });
+        }
         
         Button verifyIdentityButton = findViewById(R.id.verify_identity_button);
         ImageView verificationBadge = findViewById(R.id.verification_badge);
@@ -676,6 +691,15 @@ public class ProfileActivity extends BaseActivity {
         } else {
             Glide.with(this).load(R.drawable.av1).into(profileImageView);
         }
+
+        if (sexPreferenceLayout != null && tvSexPreference != null) {
+            if (currentUserId.equals(visitedUserId)) {
+                sexPreferenceLayout.setVisibility(View.VISIBLE);
+                tvSexPreference.setText(visitedUser.getSexPreference());
+            } else {
+                sexPreferenceLayout.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void loadUserPosts() {
@@ -873,7 +897,12 @@ public class ProfileActivity extends BaseActivity {
                         visitedUser.setDob(userObj.has("dob") && !userObj.get("dob").isJsonNull() ? userObj.get("dob").getAsString() : "");
                         visitedUser.setCustomId(userObj.has("customId") && !userObj.get("customId").isJsonNull() ? userObj.get("customId").getAsString() : "");
                         visitedUser.setVerified(userObj.has("verified") && userObj.get("verified").getAsBoolean());
-                        
+                        visitedUser.setSexPreference(userObj.has("sexPreference") && !userObj.get("sexPreference").isJsonNull() ? userObj.get("sexPreference").getAsString() : "Straight");
+
+                        if (currentUserId.equals(visitedUserId)) {
+                            tokenManager.setSexPreference(visitedUser.getSexPreference());
+                        }
+
                         // Set follower/following stats logic provided by backend
                         visitedUser.setFollowersCount(userObj.has("followersCount") ? userObj.get("followersCount").getAsInt() : 0);
                         visitedUser.setFollowingCount(userObj.has("followingCount") ? userObj.get("followingCount").getAsInt() : 0);

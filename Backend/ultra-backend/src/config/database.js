@@ -115,6 +115,12 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS plan_started_at TIMESTAMPTZ;
     `);
 
+    // 8. Add sex_preference to users
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS sex_preference TEXT NOT NULL DEFAULT 'Straight';
+    `);
+
     console.log("✅ Database migrations applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations:", err.message);

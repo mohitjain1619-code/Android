@@ -368,4 +368,37 @@ export async function adminWipeTrialData() {
   return data;
 }
 
+// ============================================
+// REAL MEET COMMUNITY API
+// ============================================
+export async function getRealMeetFeed() {
+  const { data } = await api.get('/realmeet/feed');
+  return data;
+}
+
+export async function createRealMeetPost(type, post) {
+  const { data } = await api.post('/realmeet/post', { type, post });
+  return data;
+}
+
+export async function deleteRealMeetPost(id) {
+  const { data } = await api.delete(`/realmeet/post/${id}`);
+  return data;
+}
+
+export async function getRealMeetRequests() {
+  const { data } = await api.get('/realmeet/requests');
+  return data;
+}
+
+export async function sendRealMeetRequest(request) {
+  const { data } = await api.post('/realmeet/request', { request });
+  return data;
+}
+
+export async function updateRealMeetRequestStatus(requestId, status) {
+  const { data } = await api.put('/realmeet/request/status', { requestId, status });
+  return data;
+}
+
 export default api;

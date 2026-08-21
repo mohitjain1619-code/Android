@@ -20,6 +20,7 @@ public class TokenManager {
     private static final String KEY_USER_GENDER = "user_gender";
     private static final String KEY_USER_AVATAR = "user_avatar";
     private static final String KEY_USER_VERIFIED = "user_verified";
+    private static final String KEY_USER_PREFERENCE = "sex_preference";
 
     private static TokenManager instance;
     private SharedPreferences prefs;
@@ -102,6 +103,14 @@ public class TokenManager {
 
     public boolean isVerified() {
         return prefs.getBoolean(KEY_USER_VERIFIED, false);
+    }
+
+    public void setSexPreference(String preference) {
+        prefs.edit().putString(KEY_USER_PREFERENCE, preference).apply();
+    }
+
+    public String getSexPreference() {
+        return prefs.getString(KEY_USER_PREFERENCE, "");
     }
 
     // ============================================

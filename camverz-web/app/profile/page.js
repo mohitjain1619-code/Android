@@ -25,6 +25,7 @@ export default function ProfilePage() {
     name: '', bio: '', avatar: '', city: '',
     interests: [], relationshipGoal: '', zodiac: '', height: '',
     education: '', work: '', languages: '', smoking: '', drinking: '', exercise: '',
+    sexPreference: 'Straight',
   });
   const [saving, setSaving] = useState(false);
 
@@ -62,6 +63,7 @@ export default function ProfilePage() {
         smoking: userData.webProfile?.smoking || '',
         drinking: userData.webProfile?.drinking || '',
         exercise: userData.webProfile?.exercise || '',
+        sexPreference: userData.sexPreference || 'Straight',
       });
       getFollowersCount(user.uid).then(setFollowers);
       getFollowingCount(user.uid).then(setFollowing);
@@ -88,6 +90,7 @@ export default function ProfilePage() {
         bio: form.bio,
         avatar: form.avatar,
         city: form.city,
+        sexPreference: form.sexPreference,
         webProfile: {
           interests: form.interests,
           relationshipGoal: form.relationshipGoal,
@@ -306,6 +309,22 @@ export default function ProfilePage() {
             </div>
           ) : (
             <p className={styles.infoText}>{form.relationshipGoal || 'Not specified'}</p>
+          )}
+        </div>
+
+        {/* Primary Sex Preference */}
+        <div className={styles.section}>
+          <h3><Crown size={18} /> Primary Sex Preference</h3>
+          {editing ? (
+            <div className={styles.chipGrid}>
+              {['Straight', 'Gay', 'Lesbian', 'Transgender'].map(p => (
+                <button key={p} className={`chip ${form.sexPreference === p ? 'active' : ''}`} onClick={() => setForm({ ...form, sexPreference: p })}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.infoText}>{form.sexPreference || 'Straight'}</p>
           )}
         </div>
 

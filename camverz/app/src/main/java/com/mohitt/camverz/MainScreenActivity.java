@@ -319,6 +319,7 @@ public class MainScreenActivity extends BaseActivity {
             fetchUnreadMessages();
             fetchUnreadNotificationsCount();
         }
+        checkPreferenceSelection();
     }
 
     private void fetchUnreadNotificationsCount() {
@@ -538,6 +539,15 @@ public class MainScreenActivity extends BaseActivity {
             if (matchFoundListener != null) socket.off("match-found", matchFoundListener);
             // incoming-private-call is managed by IncomingCallHandler (global, not removed here)
             if (newMessageListener != null) socket.off("new_message", newMessageListener);
+        }
+    }
+
+    private void checkPreferenceSelection() {
+        if (tokenManager.isLoggedIn() && tokenManager.getSexPreference().isEmpty()) {
+            PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, preference -> {
+                Toast.makeText(this, "Sex preference updated: " + preference, Toast.LENGTH_SHORT).show();
+            });
+            dialog.show();
         }
     }
 }

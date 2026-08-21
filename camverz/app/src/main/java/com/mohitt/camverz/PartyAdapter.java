@@ -43,17 +43,17 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         PartyPost post = postList.get(position);
 
-        String genderIcon = " ♂️ ";
-        if (post.getGender() != null && post.getGender().toLowerCase().startsWith("f")) {
-            genderIcon = " ♀️ ";
-        }
-
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
-        String verifiedBadge = isVerified ? " ✔️" : "";
-        String crownBadge = post.isPremium() ? " 👑" : "";
 
-        holder.tvHostNameAge.setText(post.getHostName() + " " + genderIcon + " " + post.getHostAge() + crownBadge + verifiedBadge);
+        holder.tvHostNameAge.setText(TextHelper.getFormattedHeader(
+                context,
+                post.getHostName(),
+                post.getGender(),
+                post.getHostAge(),
+                post.isPremium(),
+                isVerified
+        ));
         holder.tvTargetGender.setText(post.getTargetGender());
 
         if (post.isPremium()) {

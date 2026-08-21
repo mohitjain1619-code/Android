@@ -100,7 +100,7 @@ router.get("/:id", async (req, res) => {
 // ============================================
 router.put("/me", async (req, res) => {
   try {
-    const allowedFields = ["name", "gender", "avatar", "bio", "dob", "city", "custom_id", "verified"];
+    const allowedFields = ["name", "gender", "avatar", "bio", "dob", "city", "custom_id", "verified", "sex_preference"];
     const updates = {};
     for (const field of allowedFields) {
       // Support camelCase from client
@@ -326,6 +326,7 @@ function formatUser(user) {
     planIsAdFree: user.plan_is_ad_free,
     planExpiresAt: user.plan_expires_at,
     planStartedAt: user.plan_started_at,
+    sexPreference: user.sex_preference || "Straight",
     subscription: {
       planName: user.plan_name,
       isAdFree: user.plan_is_ad_free,

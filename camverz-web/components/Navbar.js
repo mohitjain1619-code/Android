@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { Menu, X, Video, User, FileText, BookOpen, Info, Mail, LogOut, Crown, MessageSquare, Bell, Zap } from 'lucide-react';
+import { Menu, X, Video, User, FileText, BookOpen, Info, Mail, LogOut, Crown, MessageSquare, Bell, Zap, Sparkles } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -25,9 +25,8 @@ export default function Navbar() {
 
   const links = [
     { href: '/', label: 'Home', icon: Video },
-    { href: '/pricing', label: 'Pricing', icon: Crown },
+    { href: '/realmeet', label: 'Real Meet', icon: Sparkles },
     { href: '/posts', label: 'Posts', icon: FileText },
-    { href: '/affiliate', label: 'Creator Program', icon: Crown },
     { href: '#messages', label: 'Messages', icon: MessageSquare, redirect: 'messages' },
     { href: '#notifications', label: 'Notifications', icon: Bell, redirect: 'notifications' },
     { href: '/blog', label: 'Blog', icon: BookOpen },
@@ -70,6 +69,10 @@ export default function Navbar() {
           </div>
 
           <div className={styles.actions}>
+            <Link href="/pricing" className={styles.pricingPill}>
+              💎 Pricing
+            </Link>
+
             {user ? (
               <Link href="/profile" className={styles.profileBtn}>
                 <img src={avatarSrc} alt="Profile" className={styles.navAvatar} />

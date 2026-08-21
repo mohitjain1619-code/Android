@@ -68,16 +68,16 @@ export const PRICING_MATRIX = {
     durationDays: 7,
     durationHours: 168,
     india: {
-      with_ads: { price: 699, currency: '₹', displayPrice: '₹699', link: 'https://rzp.io/rzp/eHos15KW' },
-      no_ads: { price: 850, currency: '₹', displayPrice: '₹850', link: 'https://rzp.io/rzp/rujZOejh' }
+      with_ads: { price: 699, currency: '₹', displayPrice: '₹699', link: 'https://rzp.io/rzp/OMkARydl' },
+      no_ads: { price: 850, currency: '₹', displayPrice: '₹850', link: 'https://rzp.io/rzp/jSEIM9i' }
     },
     regional: {
-      with_ads: { price: 6.99, currency: '$', displayPrice: '$6.99', link: 'https://rzp.io/rzp/qMiXZMKm' },
-      no_ads: { price: 8.50, currency: '$', displayPrice: '$8.50', link: 'https://rzp.io/rzp/BEBATwU' }
+      with_ads: { price: 6.99, currency: '$', displayPrice: '$6.99', link: 'https://rzp.io/rzp/gDwePSz' },
+      no_ads: { price: 8.50, currency: '$', displayPrice: '$8.50', link: 'https://rzp.io/rzp/uYltJep' }
     },
     international: {
-      with_ads: { price: 12.00, currency: '$', displayPrice: '$12.00', link: 'https://rzp.io/rzp/KmjPHDFw' },
-      no_ads: { price: 15.00, currency: '$', displayPrice: '$15.00', link: 'https://rzp.io/rzp/amIBKn1E' }
+      with_ads: { price: 12.00, currency: '$', displayPrice: '$12.00', link: 'https://rzp.io/rzp/yy6Jwq6' },
+      no_ads: { price: 15.00, currency: '$', displayPrice: '$15.00', link: 'https://rzp.io/rzp/OuK9DpQ' }
     }
   },
   'community-1-month': {
@@ -86,16 +86,16 @@ export const PRICING_MATRIX = {
     durationDays: 30,
     durationHours: 720,
     india: {
-      with_ads: { price: 1199, currency: '₹', displayPrice: '₹1199', link: 'https://rzp.io/rzp/neqa5jn' },
-      no_ads: { price: 1399, currency: '₹', displayPrice: '₹1399', link: 'https://rzp.io/rzp/866PNkC0' }
+      with_ads: { price: 1199, currency: '₹', displayPrice: '₹1199', link: 'https://rzp.io/rzp/WFeYvTyy' },
+      no_ads: { price: 1399, currency: '₹', displayPrice: '₹1399', link: 'https://rzp.io/rzp/dDMMX0vd' }
     },
     regional: {
-      with_ads: { price: 11.99, currency: '$', displayPrice: '$11.99', link: 'https://rzp.io/rzp/OXuUB5jj' },
-      no_ads: { price: 13.99, currency: '$', displayPrice: '$13.99', link: 'https://rzp.io/rzp/SBKqmutM' }
+      with_ads: { price: 11.99, currency: '$', displayPrice: '$11.99', link: 'https://rzp.io/rzp/lXNc5Eg' },
+      no_ads: { price: 13.99, currency: '$', displayPrice: '$13.99', link: 'https://rzp.io/rzp/2b6EuHqV' }
     },
     international: {
-      with_ads: { price: 20.00, currency: '$', displayPrice: '$20.00', link: 'https://rzp.io/rzp/70W31XiP' },
-      no_ads: { price: 28.00, currency: '$', displayPrice: '$28.00', link: 'https://rzp.io/rzp/ySfZ6If' }
+      with_ads: { price: 20.00, currency: '$', displayPrice: '$20.00', link: 'https://rzp.io/rzp/58Utuxto' },
+      no_ads: { price: 28.00, currency: '$', displayPrice: '$28.00', link: 'https://rzp.io/rzp/wpdDVW0' }
     }
   }
 };
