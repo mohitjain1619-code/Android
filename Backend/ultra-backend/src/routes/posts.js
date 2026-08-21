@@ -13,6 +13,7 @@ router.get("/", async (req, res) => {
     const { category, userId, limit = 50, offset = 0 } = req.query;
     let sql = `
       SELECT p.*, u.name as username, u.avatar as user_avatar, u.photo_url as user_photo_url,
+             u.verified as verified, u.gender as gender, u.sex_preference as sex_preference,
              (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) as like_count,
              (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count,
              EXISTS(SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = $1) as liked_by_me
@@ -78,12 +79,12 @@ router.post("/", async (req, res) => {
     );
 
     // Get user info for response
-    const user = await queryOne("SELECT name, avatar, photo_url FROM users WHERE id = $1", [req.user.userId]);
+    const user = await queryOne("SELECT name, avatar, photo_url, verified, gender, sex_preference FROM users WHERE id = $1", [req.user.userId]);
 
     return res.json({
       ok: true,
       post: {
-        ...formatPost({ ...post, username: user.name, user_avatar: user.avatar, user_photo_url: user.photo_url, like_count: "0", comment_count: "0", liked_by_me: false }),
+        ...formatPost({ ...post, username: user.name, user_avatar: user.avatar, user_photo_url: user.photo_url, verified: user.verified, gender: user.gender, sex_preference: user.sex_preference, like_count: "0", comment_count: "0", liked_by_me: false }),
       },
     });
   } catch (err) {
@@ -99,6 +100,7 @@ router.get("/:id", async (req, res) => {
   try {
     const post = await queryOne(
       `SELECT p.*, u.name as username, u.avatar as user_avatar, u.photo_url as user_photo_url,
+              u.verified as verified, u.gender as gender, u.sex_preference as sex_preference,
               (SELECT COUNT(*) FROM post_likes pl WHERE pl.post_id = p.id) as like_count,
               (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count,
               EXISTS(SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = $2) as liked_by_me
@@ -354,6 +356,9 @@ function formatPost(p) {
     username: p.username,
     userAvatar: p.user_avatar,
     userPhotoUrl: p.user_photo_url,
+    verified: p.verified || false,
+    gender: p.gender || "male",
+    sexPreference: p.sex_preference || "Straight",
     likeCount: parseInt(p.like_count || "0"),
     commentCount: parseInt(p.comment_count || "0"),
     likedByMe: p.liked_by_me || false,

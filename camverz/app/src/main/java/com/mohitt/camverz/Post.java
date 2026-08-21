@@ -20,6 +20,9 @@ public class Post {
     private boolean likedByMe = false;
     private String expiryAt;
     private String createdAt;
+    private boolean verified;
+    private String gender;
+    private String sexPreference;
 
     public Post() {
         // Default constructor
@@ -62,4 +65,13 @@ public class Post {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public boolean isVerified() { return verified; }
+    public void setVerified(boolean verified) { this.verified = verified; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getSexPreference() { return sexPreference != null ? sexPreference : "Straight"; }
+    public void setSexPreference(String sexPreference) { this.sexPreference = sexPreference; }
 }

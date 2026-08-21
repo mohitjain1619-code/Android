@@ -61,10 +61,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             return;
         }
 
-        // Set user info directly from post data (no need to fetch user separately)
-        holder.usernameTextView.setText(post.getUsername());
-        
-        // Hide verification badge (unless we add it to the backend post response)
+        boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
+        boolean isVerified = isMale || post.isVerified();
+
+        holder.usernameTextView.setText(TextHelper.getPostHeader(
+                context,
+                post.getUsername(),
+                post.getGender(),
+                isVerified,
+                post.getSexPreference()
+        ));
         holder.verificationBadge.setVisibility(View.GONE);
 
         AvatarHelper.loadAvatar(context, post.getUserPhotoUrl(), post.getUserAvatar(), post.getUsername(), holder.profileImageView);

@@ -217,10 +217,14 @@ function PostCard({ post, currentUser }) {
           <div>
             <span className={styles.username}>
               {post.username}
+              {post.gender?.toLowerCase()?.startsWith('f') ? ' ♀️' : ' ♂️'}
               {post.verified && (
-                <svg viewBox="0 0 24 24" fill="#00D9FF" width="14" height="14" style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }}>
+                <svg viewBox="0 0 24 24" fill="#00D9FF" width="14" height="14" style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px', marginRight: '4px' }}>
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10,-4.48 10,-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                 </svg>
+              )}
+              {post.sexPreference && (
+                <span className={styles.prefBadge}>{post.sexPreference}</span>
               )}
             </span>
             <span className={styles.postTime}>

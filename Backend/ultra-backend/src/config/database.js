@@ -121,9 +121,19 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS sex_preference TEXT NOT NULL DEFAULT 'Straight';
     `);
 
-    console.log("✅ Database migrations applied successfully!");
+    // 9. Add database speed indexes to prevent slow queries on active feeds
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_posts_expiry_at ON posts(expiry_at);
+      CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
+      CREATE INDEX IF NOT EXISTS idx_post_likes_post_id ON post_likes(post_id);
+      CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+      CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id);
+      CREATE INDEX IF NOT EXISTS idx_follows_following_id ON follows(following_id);
+    `);
+
+    console.log("✅ Database migrations and speed indexing applied successfully!");
   } catch (err) {
-    console.error("❌ Failed to apply database migrations:", err.message);
+    console.error("❌ Failed to apply database migrations or indexes:", err.message);
   }
 }
 
