@@ -401,4 +401,44 @@ export async function updateRealMeetRequestStatus(requestId, status) {
   return data;
 }
 
+export async function getSavedParties() {
+  const { data } = await api.get('/realmeet/saved-parties');
+  return data;
+}
+
+export async function saveParty(postId) {
+  const { data } = await api.post(`/realmeet/post/${postId}/save`);
+  return data;
+}
+
+export async function unsaveParty(postId) {
+  const { data } = await api.delete(`/realmeet/post/${postId}/save`);
+  return data;
+}
+
+export async function getPartyMembers(partyId) {
+  const { data } = await api.get(`/realmeet/post/${partyId}/members`);
+  return data;
+}
+
+export async function setPartyVisibility(partyId, visibility) {
+  const { data } = await api.put(`/realmeet/post/${partyId}/visibility`, { visibility });
+  return data;
+}
+
+export async function postAnnouncement(partyId, text) {
+  const { data } = await api.post(`/realmeet/post/${partyId}/announcements`, { text });
+  return data;
+}
+
+export async function getAnnouncements(partyId) {
+  const { data } = await api.get(`/realmeet/post/${partyId}/announcements`);
+  return data;
+}
+
+export async function getCommunityNotifications() {
+  const { data } = await api.get('/realmeet/notifications');
+  return data;
+}
+
 export default api;

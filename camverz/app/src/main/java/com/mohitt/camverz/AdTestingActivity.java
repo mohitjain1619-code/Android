@@ -30,24 +30,8 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.OnUserEarnedRewardListener;
 import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.gms.ads.rewarded.RewardItem;
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd;
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback;
-
-import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd;
-import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener;
-import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
-import com.ironsource.mediationsdk.logger.IronSourceError;
-import com.unity3d.ads.IUnityAdsInitializationListener;
-import com.unity3d.ads.IUnityAdsLoadListener;
-import com.unity3d.ads.IUnityAdsShowListener;
-import com.unity3d.ads.UnityAds;
-import com.unity3d.mediation.LevelPlayAdError;
-import com.unity3d.mediation.LevelPlayAdInfo;
-import com.unity3d.mediation.interstitial.LevelPlayInterstitialAd;
-import com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener;
-import com.unity3d.mediation.rewarded.LevelPlayReward;
-import com.unity3d.mediation.rewarded.LevelPlayRewardedAd;
-import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,14 +44,9 @@ public class AdTestingActivity extends AppCompatActivity {
     private RewardedVideoAd metaRewardedVideoAd;
     private NativeAd metaNativeAd;
 
-    // LevelPlay Ads
-    private LevelPlayInterstitialAd lpInterstitialAd;
-    private LevelPlayRewardedAd lpRewardedAd;
-    private LevelPlayNativeAd lpNativeAd;
-
     // AdMob Ads
     private com.google.android.gms.ads.interstitial.InterstitialAd admobInterstitialAd;
-    private RewardedInterstitialAd admobRewardedInterstitialAd;
+    private RewardedAd admobRewardedAd;
     private com.google.android.gms.ads.nativead.NativeAd admobNativeAd;
 
     @Override
@@ -84,18 +63,39 @@ public class AdTestingActivity extends AppCompatActivity {
         findViewById(R.id.btn_meta_rewarded).setOnClickListener(v -> testMetaRewarded());
         findViewById(R.id.btn_meta_native).setOnClickListener(v -> testMetaNative());
 
-        // Unity Buttons (Direct via UnityAds SDK)
-        findViewById(R.id.btn_unity_interstitial).setOnClickListener(v -> testUnityInterstitial());
-        findViewById(R.id.btn_unity_rewarded).setOnClickListener(v -> testUnityRewarded());
+        // Unity Buttons (Direct Unity Ads SDK is removed; redirecting to AdMob testing)
+        findViewById(R.id.btn_unity_interstitial).setOnClickListener(v -> {
+            showToast("Unity direct SDK is removed. Loading AdMob Interstitial instead...");
+            testAdMobInterstitial();
+        });
+        findViewById(R.id.btn_unity_rewarded).setOnClickListener(v -> {
+            showToast("Unity direct SDK is removed. Loading AdMob Rewarded Interstitial instead...");
+            testAdMobRewarded();
+        });
 
-        // ironSource Direct Buttons (Uses LevelPlay APIs but conceptualized as direct)
-        findViewById(R.id.btn_is_interstitial).setOnClickListener(v -> testLevelPlayInterstitial());
-        findViewById(R.id.btn_is_rewarded).setOnClickListener(v -> testLevelPlayRewarded());
+        // ironSource Direct Buttons (Direct ironSource SDK is removed; redirecting to AdMob testing)
+        findViewById(R.id.btn_is_interstitial).setOnClickListener(v -> {
+            showToast("ironSource direct SDK is removed. Loading AdMob Interstitial instead...");
+            testAdMobInterstitial();
+        });
+        findViewById(R.id.btn_is_rewarded).setOnClickListener(v -> {
+            showToast("ironSource direct SDK is removed. Loading AdMob Rewarded Interstitial instead...");
+            testAdMobRewarded();
+        });
 
-        // LevelPlay Mediation Buttons
-        findViewById(R.id.btn_lp_interstitial).setOnClickListener(v -> testLevelPlayInterstitial());
-        findViewById(R.id.btn_lp_rewarded).setOnClickListener(v -> testLevelPlayRewarded());
-        findViewById(R.id.btn_lp_native).setOnClickListener(v -> testLevelPlayNative());
+        // LevelPlay Mediation Buttons (LevelPlay is replaced by AdMob Mediation; redirecting to AdMob testing)
+        findViewById(R.id.btn_lp_interstitial).setOnClickListener(v -> {
+            showToast("LevelPlay is replaced by AdMob Mediation. Loading AdMob Interstitial...");
+            testAdMobInterstitial();
+        });
+        findViewById(R.id.btn_lp_rewarded).setOnClickListener(v -> {
+            showToast("LevelPlay is replaced by AdMob Mediation. Loading AdMob Rewarded...");
+            testAdMobRewarded();
+        });
+        findViewById(R.id.btn_lp_native).setOnClickListener(v -> {
+            showToast("LevelPlay is replaced by AdMob Mediation. Loading AdMob Native...");
+            testAdMobNative();
+        });
 
         // AdMob Mediation Buttons
         findViewById(R.id.btn_admob_interstitial).setOnClickListener(v -> testAdMobInterstitial());
@@ -126,7 +126,7 @@ public class AdTestingActivity extends AppCompatActivity {
 
     private void testMetaRewarded() {
         showToast("Loading Meta Rewarded...");
-        metaRewardedVideoAd = new RewardedVideoAd(this, "1679167109809598_1679167723142870"); // Use same ID or specific rewarded ID if you have
+        metaRewardedVideoAd = new RewardedVideoAd(this, "1679167109809598_1679167723142870");
         metaRewardedVideoAd.loadAd(metaRewardedVideoAd.buildLoadAdConfig().withAdListener(new RewardedVideoAdListener() {
             @Override public void onRewardedVideoCompleted() { showToast("Meta Rewarded Completed"); }
             @Override public void onLoggingImpression(Ad ad) {}
@@ -196,103 +196,6 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // ==========================================
-    // UNITY ADS (DIRECT)
-    // ==========================================
-    private void testUnityInterstitial() {
-        showToast("Loading Unity Interstitial...");
-        UnityAds.load("Interstitial_Android", new IUnityAdsLoadListener() {
-            @Override public void onUnityAdsAdLoaded(String placementId) {
-                showToast("Unity Interstitial Loaded");
-                UnityAds.show(AdTestingActivity.this, placementId, new IUnityAdsShowListener() {
-                    @Override public void onUnityAdsShowFailure(String placementId, UnityAds.UnityAdsShowError error, String message) { showToast("Unity Show Error: " + message); }
-                    @Override public void onUnityAdsShowStart(String placementId) {}
-                    @Override public void onUnityAdsShowClick(String placementId) {}
-                    @Override public void onUnityAdsShowComplete(String placementId, UnityAds.UnityAdsShowCompletionState state) {}
-                });
-            }
-            @Override public void onUnityAdsFailedToLoad(String placementId, UnityAds.UnityAdsLoadError error, String message) { showToast("Unity Load Error: " + message); }
-        });
-    }
-
-    private void testUnityRewarded() {
-        showToast("Loading Unity Rewarded...");
-        UnityAds.load("Rewarded_Android", new IUnityAdsLoadListener() {
-            @Override public void onUnityAdsAdLoaded(String placementId) {
-                showToast("Unity Rewarded Loaded");
-                UnityAds.show(AdTestingActivity.this, placementId, new IUnityAdsShowListener() {
-                    @Override public void onUnityAdsShowFailure(String placementId, UnityAds.UnityAdsShowError error, String message) {}
-                    @Override public void onUnityAdsShowStart(String placementId) {}
-                    @Override public void onUnityAdsShowClick(String placementId) {}
-                    @Override public void onUnityAdsShowComplete(String placementId, UnityAds.UnityAdsShowCompletionState state) { showToast("Unity Rewarded Completed"); }
-                });
-            }
-            @Override public void onUnityAdsFailedToLoad(String placementId, UnityAds.UnityAdsLoadError error, String message) { showToast("Unity Load Error: " + message); }
-        });
-    }
-
-    // ==========================================
-    // LEVELPLAY MEDIATION ADS
-    // ==========================================
-    private void testLevelPlayInterstitial() {
-        showToast("Loading LevelPlay Interstitial...");
-        lpInterstitialAd = new LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
-        lpInterstitialAd.setListener(new LevelPlayInterstitialAdListener() {
-            @Override public void onAdLoaded(LevelPlayAdInfo adInfo) { showToast("LevelPlay Interstitial Loaded"); lpInterstitialAd.showAd(AdTestingActivity.this); }
-            @Override public void onAdLoadFailed(LevelPlayAdError error) { showToast("LevelPlay Interstitial Error: " + error.getErrorMessage()); }
-            @Override public void onAdDisplayed(LevelPlayAdInfo adInfo) {}
-            @Override public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) { showToast("LevelPlay Show Error: " + error.getErrorMessage()); }
-            @Override public void onAdClicked(LevelPlayAdInfo adInfo) {}
-            @Override public void onAdClosed(LevelPlayAdInfo adInfo) {}
-        });
-        lpInterstitialAd.loadAd();
-    }
-
-    private void testLevelPlayRewarded() {
-        showToast("Loading LevelPlay Rewarded...");
-        lpRewardedAd = new LevelPlayRewardedAd("onddt1lewzexkb5q");
-        lpRewardedAd.setListener(new LevelPlayRewardedAdListener() {
-            @Override public void onAdLoaded(LevelPlayAdInfo adInfo) { showToast("LevelPlay Rewarded Loaded"); lpRewardedAd.showAd(AdTestingActivity.this); }
-            @Override public void onAdLoadFailed(LevelPlayAdError error) { showToast("LevelPlay Rewarded Error: " + error.getErrorMessage()); }
-            @Override public void onAdDisplayed(LevelPlayAdInfo adInfo) {}
-            @Override public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) { showToast("LevelPlay Show Error: " + error.getErrorMessage()); }
-            @Override public void onAdClicked(LevelPlayAdInfo adInfo) {}
-            @Override public void onAdClosed(LevelPlayAdInfo adInfo) {}
-            @Override public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) { showToast("LevelPlay Rewarded User"); }
-        });
-        lpRewardedAd.loadAd();
-    }
-
-    private void testLevelPlayNative() {
-        showToast("Loading LevelPlay Native...");
-        lpNativeAd = new LevelPlayNativeAd.Builder()
-                .withPlacementName("4178n3sq2cj8dahz")
-                .withListener(new LevelPlayNativeAdListener() {
-                    @Override
-                    public void onAdLoaded(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
-                        showToast("LevelPlay Native Loaded");
-                        FrameLayout container = findViewById(R.id.ad_testing_lp_native_container);
-                        com.ironsource.mediationsdk.ads.nativead.NativeAdLayout layout = findViewById(R.id.ad_testing_lp_native_layout);
-                        container.setVisibility(View.VISIBLE);
-                        layout.removeAllViews();
-                        getLayoutInflater().inflate(R.layout.layout_native_ad_levelplay, layout, true);
-                        
-                        layout.setTitleView(layout.findViewById(R.id.ad_title));
-                        layout.setBodyView(layout.findViewById(R.id.ad_body));
-                        layout.setAdvertiserView(layout.findViewById(R.id.ad_advertiser));
-                        layout.setCallToActionView(layout.findViewById(R.id.ad_cta));
-                        layout.setIconView(layout.findViewById(R.id.ad_icon));
-                        layout.setMediaView((com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView) layout.findViewById(R.id.ad_media));
-                        layout.registerNativeAdViews(nativeAd);
-                    }
-                    @Override public void onAdLoadFailed(LevelPlayNativeAd nativeAd, IronSourceError error) { showToast("LevelPlay Native Error: " + error.getErrorMessage()); }
-                    @Override public void onAdClicked(LevelPlayNativeAd nativeAd, AdInfo adInfo) {}
-                    @Override public void onAdImpression(LevelPlayNativeAd nativeAd, AdInfo adInfo) {}
-                })
-                .build();
-        lpNativeAd.loadAd();
-    }
-
-    // ==========================================
     // ADMOB MEDIATION ADS
     // ==========================================
     private void testAdMobInterstitial() {
@@ -321,20 +224,20 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void testAdMobRewarded() {
-        showToast("Loading AdMob Rewarded Interstitial...");
+        showToast("Loading AdMob Rewarded...");
         AdRequest adRequest = new AdRequest.Builder().build();
-        RewardedInterstitialAd.load(this, getString(R.string.admob_rewarded_interstitial_ad_unit_id), adRequest,
-            new RewardedInterstitialAdLoadCallback() {
+        RewardedAd.load(this, getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+            new RewardedAdLoadCallback() {
                 @Override
-                public void onAdLoaded(@NonNull RewardedInterstitialAd ad) {
+                public void onAdLoaded(@NonNull RewardedAd ad) {
                     showToast("AdMob Rewarded Loaded");
-                    admobRewardedInterstitialAd = ad;
-                    admobRewardedInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+                    admobRewardedAd = ad;
+                    admobRewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
                         @Override public void onAdDismissedFullScreenContent() { showToast("AdMob Rewarded Dismissed"); }
                         @Override public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) { showToast("AdMob Rewarded Show Failed: " + adError.getMessage()); }
                         @Override public void onAdShowedFullScreenContent() { showToast("AdMob Rewarded Displayed"); }
                     });
-                    admobRewardedInterstitialAd.show(AdTestingActivity.this, new OnUserEarnedRewardListener() {
+                    admobRewardedAd.show(AdTestingActivity.this, new OnUserEarnedRewardListener() {
                         @Override
                         public void onUserEarnedReward(@NonNull RewardItem rewardItem) {
                             showToast("AdMob Reward Earned: " + rewardItem.getAmount() + " " + rewardItem.getType());
@@ -345,7 +248,7 @@ public class AdTestingActivity extends AppCompatActivity {
                 @Override
                 public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                     showToast("AdMob Rewarded Load Failed: " + loadAdError.getMessage());
-                    admobRewardedInterstitialAd = null;
+                    admobRewardedAd = null;
                 }
             });
     }

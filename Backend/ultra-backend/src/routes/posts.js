@@ -10,6 +10,9 @@ router.use(requireAuth);
 // ============================================
 router.get("/", async (req, res) => {
   try {
+    // Delete expired posts physically from database on feed fetch
+    await query("DELETE FROM posts WHERE expiry_at <= NOW()");
+
     const { category, userId, limit = 50, offset = 0 } = req.query;
     let sql = `
       SELECT p.*, u.name as username, u.avatar as user_avatar, u.photo_url as user_photo_url,
@@ -69,8 +72,29 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Category is required" });
     }
 
-    // 2 hours expiry
-    const expiryAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    // Delete expired posts physically from the database before checking cooldown
+    await query("DELETE FROM posts WHERE expiry_at <= NOW()");
+
+    // 7 minutes cooldown check using PostgreSQL NOW() and INTERVAL (fully timezone independent)
+    const lastPost = await queryOne(
+      `SELECT EXTRACT(EPOCH FROM (NOW() - created_at)) AS elapsed_seconds 
+       FROM posts 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC LIMIT 1`,
+      [req.user.userId]
+    );
+    
+    if (lastPost && lastPost.elapsed_seconds !== null) {
+      const elapsedSeconds = parseFloat(lastPost.elapsed_seconds);
+      const cooldownSeconds = 7 * 60; // 420 seconds
+      if (elapsedSeconds < cooldownSeconds) {
+        const remainingMin = Math.ceil((cooldownSeconds - elapsedSeconds) / 60);
+        return res.status(429).json({ error: `You can only post once every 7 minutes. Please wait ${remainingMin} more minutes.` });
+      }
+    }
+
+    // 7 minutes expiry
+    const expiryAt = new Date(Date.now() + 7 * 60 * 1000);
 
     const post = await queryOne(
       `INSERT INTO posts (user_id, text, category, expiry_at)

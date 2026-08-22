@@ -15,6 +15,7 @@ public class RealMeetPost {
     private String gender;
     private boolean verified;
     private boolean premium;
+    private String sexPreference;
     private long createdAt;
 
     public RealMeetPost() {}
@@ -69,6 +70,25 @@ public class RealMeetPost {
         this.createdAt = createdAt;
     }
 
+    public RealMeetPost(String id, String userId, String userName, String userAvatar, String photoUrl, int age, String city, String purpose, String location, String time, String description, String gender, boolean verified, boolean premium, String sexPreference, long createdAt) {
+        this.id = id;
+        this.userId = userId;
+        this.userName = userName;
+        this.userAvatar = userAvatar;
+        this.photoUrl = photoUrl;
+        this.age = age;
+        this.city = city;
+        this.purpose = purpose;
+        this.location = location;
+        this.time = time;
+        this.description = description;
+        this.gender = gender;
+        this.verified = verified;
+        this.premium = premium;
+        this.sexPreference = sexPreference;
+        this.createdAt = createdAt;
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -110,6 +130,9 @@ public class RealMeetPost {
 
     public boolean isPremium() { return premium; }
     public void setPremium(boolean premium) { this.premium = premium; }
+
+    public String getSexPreference() { return sexPreference != null ? sexPreference : "Straight"; }
+    public void setSexPreference(String sexPreference) { this.sexPreference = sexPreference; }
 
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }

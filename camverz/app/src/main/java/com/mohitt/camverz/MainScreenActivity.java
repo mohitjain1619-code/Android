@@ -16,6 +16,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.gson.JsonObject;
@@ -61,7 +62,6 @@ public class MainScreenActivity extends BaseActivity {
     private TextView notificationBadge;
 
     private com.google.android.gms.ads.AdView adView;
-    private com.unity3d.mediation.rewarded.LevelPlayRewardedAd levelPlayRewardedAd;
     private boolean isRewardedVideoAvailable = false;
     private String pendingCategory = "straight";
 
@@ -87,6 +87,24 @@ public class MainScreenActivity extends BaseActivity {
             
             // Initialize global incoming call handler (works from any screen)
             IncomingCallHandler.getInstance().init(getApplication(), socket);
+
+            // Sync user ad-free plan details
+            api.getMe().enqueue(new retrofit2.Callback<JsonObject>() {
+                @Override
+                public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        JsonObject data = response.body();
+                        if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
+                            JsonObject userObj = data.getAsJsonObject("user");
+                            boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
+                            tokenManager.savePlanIsAdFree(planIsAdFree);
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
+            });
         }
 
         cardGay = findViewById(R.id.cardGay);
@@ -215,8 +233,7 @@ public class MainScreenActivity extends BaseActivity {
             adContainer.setVisibility(View.GONE);
         }
 
-        // Preload ironSource Rewarded Ad once LevelPlay init succeeds
-        BaseActivity.runOnLevelPlayInit(this::loadLevelPlayRewardedVideoAd);
+        // AdMob is initialized, no LevelPlay/ironSource initialization anymore.
     }
 
     private void addTouchScaleFeedback(View... views) {
@@ -497,18 +514,116 @@ public class MainScreenActivity extends BaseActivity {
         }
         pendingCategory = category;
 
-        // Increment call attempt counter
-        android.content.SharedPreferences prefs = getSharedPreferences("app_stats", MODE_PRIVATE);
-        int attempts = prefs.getInt("call_attempts", 0);
-        attempts++;
-        prefs.edit().putInt("call_attempts", attempts).apply();
+        checkCallLimitsAndProceed(() -> {
+            // Increment call attempt counter
+            android.content.SharedPreferences prefs = getSharedPreferences("app_stats", MODE_PRIVATE);
+            int attempts = prefs.getInt("call_attempts", 0);
+            attempts++;
+            prefs.edit().putInt("call_attempts", attempts).apply();
 
-        Log.d(TAG, "Call attempt #" + attempts);
+            Log.d(TAG, "Call attempt #" + attempts);
+            proceedToConnectingDirectly();
+        });
+    }
 
-        if (attempts % 3 == 0) {
-            Log.d(TAG, "Attempt #" + attempts + " - proceeding to connecting without pre-roll ad.");
+    private void checkCallLimitsAndProceed(Runnable onPassed) {
+        if (tokenManager.isPlanAdFree()) {
+            onPassed.run();
+            return;
         }
-        proceedToConnectingDirectly();
+
+        if (CallLimitManager.isBlocked(this)) {
+            showExceededBlockDialog();
+            return;
+        }
+
+        long secondsLeft = CallLimitManager.getFreeSecondsLeft(this);
+        if (secondsLeft <= 0) {
+            int tier = CallLimitManager.getRewardedTier(this);
+            if (tier == 1) {
+                showWatchAdsDialog(onPassed);
+            } else {
+                CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
+                CallLimitManager.setRewardedTier(this, 3);
+                showExceededBlockDialog();
+            }
+            return;
+        }
+
+        onPassed.run();
+    }
+
+    private void showExceededBlockDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Limit Exceeded")
+            .setMessage("For today you have exceeded all your limit, come back after 10 hours.")
+            .setCancelable(false)
+            .setPositiveButton("OK", (dialog, which) -> {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com"));
+                startActivity(browserIntent);
+            })
+            .show();
+    }
+
+    private void showWatchAdsDialog(Runnable onPassed) {
+        int watched = CallLimitManager.getRewardedAdsWatched(this);
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Daily Limit Hit")
+            .setMessage("Daily free call limit reached.\n\nWatch 3 short video ads to get 5 more minutes of calling!\n\nAds Watched: " + watched + "/3")
+            .setCancelable(false)
+            .setPositiveButton("Watch Ad", (dialog, which) -> {
+                loadAndShowRewardedAd(() -> {
+                    CallLimitManager.incrementRewardedAdsWatched(this);
+                    int newWatched = CallLimitManager.getRewardedAdsWatched(this);
+                    if (newWatched >= 3) {
+                        CallLimitManager.setRewardedTier(this, 2);
+                        CallLimitManager.addFreeSeconds(this, 300);
+                        CallLimitManager.resetRewardedAdsWatched(this);
+                        Toast.makeText(this, "Success! You received 5 extra minutes.", Toast.LENGTH_LONG).show();
+                        onPassed.run();
+                    } else {
+                        showWatchAdsDialog(onPassed);
+                    }
+                }, () -> {
+                    Toast.makeText(this, "Failed to load ad. Please try again.", Toast.LENGTH_SHORT).show();
+                });
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
+    }
+
+    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
+        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Loading ad...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        com.google.android.gms.ads.rewarded.RewardedAd.load(this, 
+            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
+                    progressDialog.dismiss();
+                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {}
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                            runOnUiThread(onFailure);
+                        }
+                    });
+                    ad.show(MainScreenActivity.this, rewardItem -> {
+                        runOnUiThread(onSuccess);
+                    });
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                    progressDialog.dismiss();
+                    runOnUiThread(onFailure);
+                }
+            });
     }
 
     private void loadBannerAd() {
@@ -521,9 +636,6 @@ public class MainScreenActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    private void loadLevelPlayRewardedVideoAd() {
-        // Ads disabled in main app
-    }
 
     @Override
     protected void onDestroy() {

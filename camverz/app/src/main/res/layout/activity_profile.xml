@@ -436,7 +436,7 @@
                     android:layout_marginBottom="24dp"
                     android:visibility="gone">
 
-                    <com.ironsource.mediationsdk.ads.nativead.NativeAdLayout
+                    <FrameLayout
                         android:id="@+id/ironsource_native_ad_layout"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />

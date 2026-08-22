@@ -131,6 +131,71 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_follows_following_id ON follows(following_id);
     `);
 
+    // 10. Create Real Meet Community Posts Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS community_posts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        purpose TEXT DEFAULT '',
+        location TEXT DEFAULT '',
+        meeting_time TEXT DEFAULT '',
+        description TEXT DEFAULT '',
+        capacity INTEGER DEFAULT 0,
+        target_gender TEXT DEFAULT '',
+        relationship_status TEXT DEFAULT '',
+        interests TEXT DEFAULT '',
+        list_visibility TEXT NOT NULL DEFAULT 'PRIVATE',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_community_posts_type ON community_posts(type);
+      CREATE INDEX IF NOT EXISTS idx_community_posts_user_id ON community_posts(user_id);
+    `);
+
+    // 11. Create Real Meet Community Requests Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS community_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        post_id UUID NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+        poster_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        applicant_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        message TEXT DEFAULT '',
+        contact_preference TEXT DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'PENDING',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(post_id, applicant_user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_community_requests_post_id ON community_requests(post_id);
+      CREATE INDEX IF NOT EXISTS idx_community_requests_applicant ON community_requests(applicant_user_id);
+    `);
+
+    // 12. Create Saved Party Posts Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS saved_parties (
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        post_id UUID NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (user_id, post_id)
+      );
+    `);
+
+    // 13. Create Host Announcements for Parties Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS party_announcements (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        party_id UUID NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+        host_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        text TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    // 14. Add community_post_id to notifications
+    await pool.query(`
+      ALTER TABLE notifications 
+      ADD COLUMN IF NOT EXISTS community_post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE;
+    `);
+
     console.log("✅ Database migrations and speed indexing applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations or indexes:", err.message);

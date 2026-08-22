@@ -8,11 +8,13 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import com.google.gson.JsonObject;
 import com.mohitt.camverz.api.ApiClient;
 import com.mohitt.camverz.api.ApiService;
+import com.mohitt.camverz.api.TokenManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +34,7 @@ public class CreatePostActivity extends BaseActivity {
     private Button postButton;
     private RadioGroup categoryGroup;
     private ApiService api;
+    private TokenManager tokenManager;
     private boolean isPosting = false;
 
     @Override
@@ -46,6 +49,7 @@ public class CreatePostActivity extends BaseActivity {
         findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
 
         api = ApiClient.getInstance(this).getApi();
+        tokenManager = TokenManager.getInstance(this);
 
         postText = findViewById(R.id.post_text);
         postButton = findViewById(R.id.post_button);
@@ -77,11 +81,24 @@ public class CreatePostActivity extends BaseActivity {
             return;
         }
 
-        isPosting = true;
-        postButton.setEnabled(false);
-
         RadioButton selectedCategory = findViewById(selectedCategoryId);
         String category = selectedCategory.getText().toString().toLowerCase();
+
+        if (tokenManager.isPlanAdFree()) {
+            proceedToUpload(text, category);
+        } else {
+            loadAndShowRewardedAd(() -> {
+                proceedToUpload(text, category);
+            }, () -> {
+                // Ad fail fallback to prevent blockages
+                proceedToUpload(text, category);
+            });
+        }
+    }
+
+    private void proceedToUpload(String text, String category) {
+        isPosting = true;
+        postButton.setEnabled(false);
 
         Map<String, String> body = new HashMap<>();
         body.put("text", text);
@@ -98,7 +115,17 @@ public class CreatePostActivity extends BaseActivity {
                         return;
                     }
                 }
-                Toast.makeText(CreatePostActivity.this, "Failed to upload post", Toast.LENGTH_SHORT).show();
+                String errorMsg = "Failed to upload post";
+                if (response.code() == 429) {
+                    try {
+                        String errStr = response.errorBody().string();
+                        com.google.gson.JsonObject errObj = com.google.gson.JsonParser.parseString(errStr).getAsJsonObject();
+                        if (errObj.has("error")) {
+                            errorMsg = errObj.get("error").getAsString();
+                        }
+                    } catch (Exception e) {}
+                }
+                Toast.makeText(CreatePostActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                 isPosting = false;
                 postButton.setEnabled(true);
             }
@@ -111,5 +138,39 @@ public class CreatePostActivity extends BaseActivity {
                 postButton.setEnabled(true);
             }
         });
+    }
+
+    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
+        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Loading ad...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        com.google.android.gms.ads.rewarded.RewardedAd.load(this, 
+            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
+                    progressDialog.dismiss();
+                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {}
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                            runOnUiThread(onFailure);
+                        }
+                    });
+                    ad.show(CreatePostActivity.this, rewardItem -> {
+                        runOnUiThread(onSuccess);
+                    });
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                    progressDialog.dismiss();
+                    runOnUiThread(onFailure);
+                }
+            });
     }
 }

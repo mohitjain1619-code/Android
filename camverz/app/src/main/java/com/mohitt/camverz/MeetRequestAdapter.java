@@ -96,7 +96,8 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         holder.itemView.setOnClickListener(v -> {
             if (context instanceof RealMeetActivity) {
                 ((RealMeetActivity) context).openFullPostDetailDialog(
-                        req.getApplicantName(), req.getApplicantAge(), req.getApplicantCity(), req.getPostTitle(), req.getContactPreference(), "Incoming Request", req.getMessage(), req.getApplicantAvatar(), req.getApplicantUserId(), req.getPostId()
+                        req.getApplicantName(), req.getApplicantAge(), req.getApplicantCity(), req.getPostTitle(), req.getContactPreference(), "Incoming Request", req.getMessage(), req.getApplicantAvatar(), req.getApplicantUserId(), req.getPostId(),
+                        req.getApplicantGender(), isVerified, null, null, null
                 );
             }
         });

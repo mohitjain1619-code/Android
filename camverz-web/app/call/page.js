@@ -77,13 +77,56 @@ function CallPageInner() {
     };
   }, []);
 
+  const checkCallLimitAndProceed = () => {
+    const isAdFree = userData?.planIsAdFree || userData?.subscription?.isAdFree || false;
+    if (isAdFree) return true;
+
+    const blockTime = localStorage.getItem('web_call_block_time');
+    if (blockTime) {
+      const elapsed = Date.now() - parseInt(blockTime);
+      const cooldown = 10 * 60 * 60 * 1000;
+      if (elapsed < cooldown) {
+        alert('For today you have exceeded all your limit, come back after 10 hours.');
+        router.push('/pricing');
+        return false;
+      } else {
+        localStorage.removeItem('web_call_block_time');
+        localStorage.setItem('web_call_seconds_left', '180');
+      }
+    }
+
+    const left = parseInt(localStorage.getItem('web_call_seconds_left') || '180');
+    if (left <= 0) {
+      localStorage.setItem('web_call_block_time', Date.now().toString());
+      alert('For today you have exceeded all your limit, come back after 10 hours.');
+      router.push('/pricing');
+      return false;
+    }
+
+    return true;
+  };
+
+  useEffect(() => {
+    if (loading || !userData) return;
+    checkCallLimitAndProceed();
+  }, [userData, loading]);
+
   // Call timer
   useEffect(() => {
     if (state === 'in-call') {
-      callTimerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+      callTimerRef.current = setInterval(() => {
+        setTimer(t => t + 1);
+        const isAdFree = userData?.planIsAdFree || userData?.subscription?.isAdFree || false;
+        if (!isAdFree) {
+          const left = parseInt(localStorage.getItem('web_call_seconds_left') || '180');
+          if (left > 0) {
+            localStorage.setItem('web_call_seconds_left', (left - 1).toString());
+          }
+        }
+      }, 1000);
     }
     return () => clearInterval(callTimerRef.current);
-  }, [state]);
+  }, [state, userData]);
 
   // Auto-hide controls
   useEffect(() => {
@@ -116,6 +159,8 @@ function CallPageInner() {
   };
 
   const startConnecting = async () => {
+    if (!checkCallLimitAndProceed()) return;
+
     if (!userData || !userData.gender) {
       setShowOnboarding(true);
       return;
@@ -250,6 +295,16 @@ function CallPageInner() {
     setState('idle');
     setPeerData(null);
     setTimer(0);
+
+    const isAdFree = userData?.planIsAdFree || userData?.subscription?.isAdFree || false;
+    if (!isAdFree) {
+      const left = parseInt(localStorage.getItem('web_call_seconds_left') || '180');
+      if (left <= 0) {
+        localStorage.setItem('web_call_block_time', Date.now().toString());
+        alert('For today you have exceeded all your limit, come back after 10 hours.');
+        router.push('/pricing');
+      }
+    }
   };
 
   const nextCall = () => {

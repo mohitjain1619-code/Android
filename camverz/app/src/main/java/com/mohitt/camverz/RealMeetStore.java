@@ -258,4 +258,38 @@ public class RealMeetStore {
         requests.removeIf(r -> r.getId().equalsIgnoreCase(requestId));
         saveMeetRequests(requests);
     }
+
+    // ==========================================
+    // SAVED PARTIES LOCAL CACHE
+    // ==========================================
+    private static final String KEY_SAVED_PARTIES = "key_saved_parties_v3";
+
+    public synchronized List<String> getSavedParties() {
+        String json = prefs.getString(KEY_SAVED_PARTIES, null);
+        if (json == null) return new ArrayList<>();
+        Type type = new TypeToken<ArrayList<String>>() {}.getType();
+        List<String> list = gson.fromJson(json, type);
+        return list != null ? list : new ArrayList<>();
+    }
+
+    public synchronized void saveSavedParties(List<String> list) {
+        String json = gson.toJson(list);
+        prefs.edit().putString(KEY_SAVED_PARTIES, json).apply();
+    }
+
+    public synchronized boolean isPartySaved(String partyId) {
+        if (partyId == null) return false;
+        return getSavedParties().contains(partyId);
+    }
+
+    public synchronized void togglePartySaved(String partyId) {
+        if (partyId == null) return;
+        List<String> list = getSavedParties();
+        if (list.contains(partyId)) {
+            list.remove(partyId);
+        } else {
+            list.add(partyId);
+        }
+        saveSavedParties(list);
+    }
 }

@@ -27,6 +27,7 @@ const verificationRoutes = require("./src/routes/verification");
 const friendRoutes = require("./src/routes/friends");
 const affiliateRoutes = require("./src/routes/affiliate");
 const adsRoutes = require("./src/routes/ads");
+const realMeetRoutes = require("./src/routes/realmeet");
 
 // Services
 const { startCleanupCron } = require("./src/services/cleanup");
@@ -60,81 +61,6 @@ app.get("/", (req, res) => {
   res.status(200).send("Ultra-Backend is running (VPS-Ready)");
 });
 
-// Real Meet Global Server Store (Broadcasting cross-device)
-let realMeetPostsStore = [];
-let partyPostsStore = [];
-let fantasyPostsStore = [];
-let realMeetRequestsStore = [];
-
-app.get("/api/realmeet/feed", (req, res) => {
-  res.json({
-    ok: true,
-    realMeetPosts: realMeetPostsStore,
-    partyPosts: partyPostsStore,
-    fantasyPosts: fantasyPostsStore
-  });
-});
-
-app.post("/api/realmeet/post", (req, res) => {
-  const { type, post } = req.body;
-  if (!post || !post.id) return res.status(400).json({ ok: false, message: "Invalid post payload" });
-  if (type === "REAL_MEET") {
-    realMeetPostsStore = realMeetPostsStore.filter(p => p.id !== post.id);
-    realMeetPostsStore.unshift(post);
-  } else if (type === "PARTY") {
-    partyPostsStore = partyPostsStore.filter(p => p.id !== post.id);
-    partyPostsStore.unshift(post);
-  } else if (type === "FANTASY") {
-    fantasyPostsStore = fantasyPostsStore.filter(p => p.id !== post.id);
-    fantasyPostsStore.unshift(post);
-  }
-  try {
-    io.emit("realmeet-post-updated", { type, post });
-  } catch (e) {}
-  res.json({ ok: true, message: "Post created successfully" });
-});
-
-app.delete("/api/realmeet/post/:id", (req, res) => {
-  const { id } = req.params;
-  if (!id) return res.status(400).json({ ok: false, message: "Invalid post ID" });
-  realMeetPostsStore = realMeetPostsStore.filter(p => p.id !== id);
-  partyPostsStore = partyPostsStore.filter(p => p.id !== id);
-  fantasyPostsStore = fantasyPostsStore.filter(p => p.id !== id);
-  try {
-    io.emit("realmeet-post-deleted", { postId: id });
-  } catch (e) {}
-  res.json({ ok: true, message: "Post deleted successfully" });
-});
-
-app.get("/api/realmeet/requests", (req, res) => {
-  res.json({ ok: true, requests: realMeetRequestsStore });
-});
-
-app.post("/api/realmeet/request", (req, res) => {
-  const { request } = req.body;
-  if (!request) return res.status(400).json({ ok: false, message: "Invalid request payload" });
-  realMeetRequestsStore.unshift(request);
-  try {
-    io.emit("realmeet-request-sent", request);
-  } catch (e) {}
-  res.json({ ok: true, message: "Request sent successfully" });
-});
-
-app.put("/api/realmeet/request/status", (req, res) => {
-  const { requestId, status } = req.body;
-  if (!requestId || !status) return res.status(400).json({ ok: false, message: "Invalid request data" });
-  for (let reqObj of realMeetRequestsStore) {
-    if (reqObj.id === requestId) {
-      reqObj.status = status;
-      break;
-    }
-  }
-  try {
-    io.emit("realmeet-status-updated", { requestId, status });
-  } catch (e) {}
-  res.json({ ok: true, message: "Status updated successfully" });
-});
-
 app.get("/health", async (req, res) => {
   const dbOk = await dbHealthCheck();
   const redisOk = await redisHealthCheck();
@@ -159,6 +85,7 @@ app.use("/api/verify", verificationRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/ads", adsRoutes);
+app.use("/api/realmeet", realMeetRoutes);
 app.use("/api", adsRoutes);
 
 // ============================================

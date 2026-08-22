@@ -164,6 +164,9 @@ public class FeedActivity extends BaseActivity {
                                 post.setCommentCount(postObj.has("commentCount") ? postObj.get("commentCount").getAsInt() : 0);
                                 post.setLikedByMe(postObj.has("likedByMe") && postObj.get("likedByMe").getAsBoolean());
                                 post.setCreatedAt(postObj.has("createdAt") ? postObj.get("createdAt").getAsString() : "");
+                                post.setVerified(postObj.has("verified") && postObj.get("verified").getAsBoolean());
+                                post.setGender(postObj.has("gender") && !postObj.get("gender").isJsonNull() ? postObj.get("gender").getAsString() : "male");
+                                post.setSexPreference(postObj.has("sexPreference") && !postObj.get("sexPreference").isJsonNull() ? postObj.get("sexPreference").getAsString() : "Straight");
                                 
                                 // Enforce post privacy based on current user's gender
                                 String postCat = post.getCategory();

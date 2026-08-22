@@ -36,6 +36,30 @@ public interface ApiService {
     @PUT("realmeet/request/status")
     Call<JsonObject> updateRealMeetServerRequestStatus(@Body Map<String, Object> body);
 
+    @GET("realmeet/saved-parties")
+    Call<JsonObject> getSavedParties();
+
+    @POST("realmeet/post/{id}/save")
+    Call<JsonObject> saveParty(@Path("id") String postId);
+
+    @DELETE("realmeet/post/{id}/save")
+    Call<JsonObject> unsaveParty(@Path("id") String postId);
+
+    @GET("realmeet/post/{id}/members")
+    Call<JsonObject> getPartyMembers(@Path("id") String partyId);
+
+    @PUT("realmeet/post/{id}/visibility")
+    Call<JsonObject> setPartyVisibility(@Path("id") String partyId, @Body Map<String, Object> body);
+
+    @POST("realmeet/post/{id}/announcements")
+    Call<JsonObject> postAnnouncement(@Path("id") String partyId, @Body Map<String, Object> body);
+
+    @GET("realmeet/post/{id}/announcements")
+    Call<JsonObject> getAnnouncements(@Path("id") String partyId);
+
+    @GET("realmeet/notifications")
+    Call<JsonObject> getCommunityNotifications();
+
     // ============================================
     // AUTH
     // ============================================

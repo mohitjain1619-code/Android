@@ -145,6 +145,21 @@
             tools:text="Full untruncated description text goes here..." />
     </ScrollView>
 
+    <TextView
+        android:id="@+id/tvFullTargetAudience"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_luxury_pill_dark"
+        android:padding="8dp"
+        android:gravity="center"
+        android:textColor="#34C759"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:text="🎯 Preferred Audience: Female Only" />
+
     <!-- Action Button in Full Dialog -->
     <TextView
         android:id="@+id/btnFullDialogAction"

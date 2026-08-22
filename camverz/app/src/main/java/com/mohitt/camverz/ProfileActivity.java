@@ -83,9 +83,7 @@ public class ProfileActivity extends BaseActivity {
     
     private ApiService api;
     private TokenManager tokenManager;
-    private com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout;
     private android.widget.FrameLayout nativeAdContainer;
-    private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
     private com.facebook.ads.NativeAd metaNativeAd;
 
     @Override
@@ -191,10 +189,8 @@ public class ProfileActivity extends BaseActivity {
         checkBlockStatusAndLoad();
         setupUI();
 
-        // Initialize ironSource native ad layouts and load once LevelPlay init is complete
+        // Initialize native ad layout (AdMob/Meta)
         nativeAdContainer = findViewById(R.id.ironsource_native_container);
-        nativeAdLayout = findViewById(R.id.ironsource_native_ad_layout);
-        BaseActivity.runOnLevelPlayInit(this::loadLevelPlayNativeAd);
     }
 
     private void checkBlockStatusAndLoad() {
@@ -736,6 +732,9 @@ public class ProfileActivity extends BaseActivity {
                                 post.setCommentCount(postObj.has("commentCount") ? postObj.get("commentCount").getAsInt() : 0);
                                 post.setLikedByMe(postObj.has("likedByMe") && postObj.get("likedByMe").getAsBoolean());
                                 post.setCreatedAt(postObj.has("createdAt") ? postObj.get("createdAt").getAsString() : "");
+                                post.setVerified(postObj.has("verified") && postObj.get("verified").getAsBoolean());
+                                post.setGender(postObj.has("gender") && !postObj.get("gender").isJsonNull() ? postObj.get("gender").getAsString() : "male");
+                                post.setSexPreference(postObj.has("sexPreference") && !postObj.get("sexPreference").isJsonNull() ? postObj.get("sexPreference").getAsString() : "Straight");
                                 
                                 postList.add(post);
                             }
@@ -1023,9 +1022,6 @@ public class ProfileActivity extends BaseActivity {
         builder.show();
     }
 
-    private void loadLevelPlayNativeAd() {
-        // Ads disabled in main app
-    }
 
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
@@ -1087,10 +1083,6 @@ public class ProfileActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        if (levelPlayNativeAd != null) {
-            levelPlayNativeAd.destroyAd();
-            levelPlayNativeAd = null;
-        }
         if (metaAvatarInterstitialAd != null) {
             metaAvatarInterstitialAd.destroy();
             metaAvatarInterstitialAd = null;

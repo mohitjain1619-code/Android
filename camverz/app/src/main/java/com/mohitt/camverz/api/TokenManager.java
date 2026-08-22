@@ -21,6 +21,7 @@ public class TokenManager {
     private static final String KEY_USER_AVATAR = "user_avatar";
     private static final String KEY_USER_VERIFIED = "user_verified";
     private static final String KEY_USER_PREFERENCE = "sex_preference";
+    private static final String KEY_PLAN_IS_AD_FREE = "plan_is_ad_free";
 
     private static TokenManager instance;
     private SharedPreferences prefs;
@@ -111,6 +112,14 @@ public class TokenManager {
 
     public String getSexPreference() {
         return prefs.getString(KEY_USER_PREFERENCE, "");
+    }
+
+    public void savePlanIsAdFree(boolean isAdFree) {
+        prefs.edit().putBoolean(KEY_PLAN_IS_AD_FREE, isAdFree).apply();
+    }
+
+    public boolean isPlanAdFree() {
+        return prefs.getBoolean(KEY_PLAN_IS_AD_FREE, false);
     }
 
     // ============================================

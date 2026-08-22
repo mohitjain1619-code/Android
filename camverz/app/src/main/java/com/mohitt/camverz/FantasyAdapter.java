@@ -46,13 +46,18 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
 
-        holder.tvFantasyNameAge.setText(TextHelper.getFormattedHeader(
+        holder.tvFantasyNameAge.setText(TextHelper.getPostHeader(
                 context,
                 post.getUserName(),
-                post.getGender(),
+                null,
+                isVerified,
+                null
+        ));
+        
+        holder.tvFantasyMetadata.setText(TextHelper.getHostMetadata(
+                context,
                 post.getAge(),
-                post.isPremium(),
-                isVerified
+                post.getGender()
         ));
         holder.tvStatusChip.setText(post.getRelationshipStatus());
 
@@ -95,7 +100,8 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
         holder.itemView.setOnClickListener(v -> {
             if (context instanceof RealMeetActivity) {
                 ((RealMeetActivity) context).openFullPostDetailDialog(
-                        post.getUserName(), post.getAge(), post.getRelationshipStatus(), post.getInterests(), "Fantasy Vibe", "Anytime", post.getDescription(), post.getUserAvatar(), post.getUserId(), post.getId()
+                        post.getUserName(), post.getAge(), null, post.getInterests(), "Fantasy Vibe", "Anytime", post.getDescription(), post.getUserAvatar(), post.getUserId(), post.getId(),
+                        post.getGender(), isVerified, null, null, post.getRelationshipStatus()
                 );
             }
         });
@@ -122,12 +128,13 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivFantasyAvatar;
-        TextView tvFantasyNameAge, tvStatusChip, tvInterests, tvFantasyText, btnConnectFantasy;
+        TextView tvFantasyNameAge, tvFantasyMetadata, tvStatusChip, tvInterests, tvFantasyText, btnConnectFantasy;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivFantasyAvatar = itemView.findViewById(R.id.ivFantasyAvatar);
             tvFantasyNameAge = itemView.findViewById(R.id.tvFantasyNameAge);
+            tvFantasyMetadata = itemView.findViewById(R.id.tvFantasyMetadata);
             tvStatusChip = itemView.findViewById(R.id.tvStatusChip);
             tvInterests = itemView.findViewById(R.id.tvInterests);
             tvFantasyText = itemView.findViewById(R.id.tvFantasyText);

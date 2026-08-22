@@ -195,12 +195,12 @@ public class CallActivity extends AppCompatActivity {
     private Emitter.Listener callControlListener;
 
     private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
-    private com.facebook.ads.InterstitialAd metaInterstitialAd;
-    private boolean isUnityInterstitialLoaded = false;
-    private int retryAttempt;
+    private boolean isAdLoading = false;
     private boolean isInitiator = false;
-    private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd levelPlayPrivateCallAd = null;
-    private boolean isPrivateCallAdLoaded = false;
+
+    private long callConnectedTime = 0;
+    private android.os.Handler limitCountdownHandler;
+    private Runnable limitCountdownRunnable;
 
     private final android.content.BroadcastReceiver headsetReceiver = new android.content.BroadcastReceiver() {
         @Override
@@ -270,46 +270,8 @@ public class CallActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
 
-        // Preload Unity Interstitial Ad
-        loadUnityInterstitialAd();
-
-        // Preload AdMob Interstitial Ad
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        com.google.android.gms.ads.interstitial.InterstitialAd.load(this, getString(R.string.admob_interstitial_ad_unit_id), adRequest,
-            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
-                    interstitialAd = ad;
-                    retryAttempt = 0;
-                    interstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {
-                            interstitialAd = null;
-                            finish();
-                        }
-
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                            interstitialAd = null;
-                            finish();
-                        }
-                    });
-                }
-
-                @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    interstitialAd = null;
-                    Log.w(TAG, "AdMob interstitial failed, loading Meta fallback: " + loadAdError.getMessage());
-                    loadMetaInterstitialAd();
-                    retryAttempt++;
-                    int delayMillis = (int) Math.min(Math.pow(2, Math.min(6, retryAttempt)) * 1000, 30000);
-                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        // Re-try loading
-                        com.google.android.gms.ads.AdRequest retryRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-                        com.google.android.gms.ads.interstitial.InterstitialAd.load(CallActivity.this, getString(R.string.admob_interstitial_ad_unit_id), retryRequest, this);
-                    }, delayMillis);
-                }
-            });
+        // Preload AdMob Mediated Interstitial Ad (Meta/InMobi bid inside AdMob mediation)
+        preloadAdMobInterstitial();
 
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
@@ -344,8 +306,7 @@ public class CallActivity extends AppCompatActivity {
         initUI();
         checkPermissions();
         
-        // Preload Unity Interstitial ad
-        loadUnityInterstitialAd();
+
     }
 
     @Override
@@ -454,7 +415,6 @@ public class CallActivity extends AppCompatActivity {
         }
         startConnectionAnimation();
         loadPeerUserInfo();
-        loadPrivateCallAdIfNeeded();
     }
 
     private void checkPermissions() {
@@ -683,6 +643,10 @@ public class CallActivity extends AppCompatActivity {
                 if (s == PeerConnection.IceConnectionState.CONNECTED || s == PeerConnection.IceConnectionState.COMPLETED) {
                     timeoutHandler.removeCallbacks(timeoutRunnable);
                     Log.d(TAG, "WebRTC connected, timeout cancelled.");
+                    if (callConnectedTime == 0) {
+                        callConnectedTime = System.currentTimeMillis();
+                        startLimitCountdown();
+                    }
                 }
                 if (s == PeerConnection.IceConnectionState.FAILED && !turnFallbackAttempted) {
                     Log.w(TAG, "STUN failed, attempting TURN fallback...");
@@ -853,7 +817,10 @@ public class CallActivity extends AppCompatActivity {
         } catch (JSONException e) {
             Log.e(TAG, "Error rejoining call room after ICE refresh", e);
         }
-        timeoutHandler.postDelayed(timeoutRunnable, 15000);
+        if (!isPrivateCall || isCallAccepted) {
+            timeoutHandler.removeCallbacks(timeoutRunnable);
+            timeoutHandler.postDelayed(timeoutRunnable, 15000);
+        }
     }
     
     private void setupButtonAnimations() {
@@ -1378,6 +1345,12 @@ public class CallActivity extends AppCompatActivity {
         if (callEnded) return;
         callEnded = true;
 
+        if (limitCountdownHandler != null && limitCountdownRunnable != null) {
+            limitCountdownHandler.removeCallbacks(limitCountdownRunnable);
+            limitCountdownHandler = null;
+            limitCountdownRunnable = null;
+        }
+
         CallManager.setCallActive(false);
         timeoutHandler.removeCallbacks(timeoutRunnable);
         autoHideHandler.removeCallbacks(autoHideRunnable);
@@ -1497,8 +1470,34 @@ public class CallActivity extends AppCompatActivity {
                     prefs.edit().putInt("call_counter", currentCount).apply();
                 } catch (Exception e) {}
 
-                // Finish immediately without showing post-call interstitial ads
-                finish();
+                // Enforce post-call ads logic
+                long durationMs = callConnectedTime > 0 ? (System.currentTimeMillis() - callConnectedTime) : 0;
+                long durationSec = durationMs / 1000;
+                Log.d(TAG, "📞 Call finished. Duration: " + durationSec + " seconds.");
+
+                if (isPrivateCall && durationSec >= 30 && !tokenManager.isPlanAdFree()) {
+                    loadAndShowRewardedAdAndFinish();
+                } else {
+                    boolean shouldShowAd = false;
+                    if (durationSec >= 120) {
+                        shouldShowAd = true;
+                    } else if (callConnectedTime > 0) {
+                        // Short call (< 2 min) — increment short call counter
+                        android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
+                        int shortCalls = statsPrefs.getInt("short_call_count", 0);
+                        shortCalls++;
+                        statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
+                        if (shortCalls % 2 == 0) {
+                            shouldShowAd = true;
+                        }
+                    }
+
+                    if (shouldShowAd && !tokenManager.isPlanAdFree()) {
+                        showInterstitialAndFinish();
+                    } else {
+                        finish();
+                    }
+                }
             });
         }).start();
     }
@@ -1744,38 +1743,39 @@ public class CallActivity extends AppCompatActivity {
         privateCallCancelledListener = null;
     }
 
-    private void loadMetaInterstitialAd() {
+    private void preloadAdMobInterstitial() {
+        if (tokenManager != null && tokenManager.isPlanAdFree()) return;
         if (isFinishing() || isDestroyed()) return;
-        if (com.mohitt.camverz.BuildConfig.DEBUG) {
-            com.facebook.ads.AdSettings.setTestMode(true);
-        }
-        if (metaInterstitialAd != null) {
-            metaInterstitialAd.destroy();
-            metaInterstitialAd = null;
-        }
-        metaInterstitialAd = new com.facebook.ads.InterstitialAd(this, "1679167109809598_1679167723142870");
-        com.facebook.ads.InterstitialAdListener listener = new com.facebook.ads.InterstitialAdListener() {
-            @Override public void onInterstitialDisplayed(com.facebook.ads.Ad ad) {}
-            @Override
-            public void onInterstitialDismissed(com.facebook.ads.Ad ad) {
-                if (metaInterstitialAd != null) {
-                    metaInterstitialAd.destroy();
-                    metaInterstitialAd = null;
+        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+        com.google.android.gms.ads.interstitial.InterstitialAd.load(
+            this,
+            getString(R.string.admob_interstitial_ad_unit_id),
+            adRequest,
+            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
+                    interstitialAd = ad;
+                    Log.d(TAG, "✅ AdMob Interstitial (mediated) loaded in CallActivity");
+                    interstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {
+                            interstitialAd = null;
+                            finish();
+                        }
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                            interstitialAd = null;
+                            finish();
+                        }
+                    });
                 }
-                finish();
+                @Override
+                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                    interstitialAd = null;
+                    Log.w(TAG, "AdMob Interstitial failed to load: " + loadAdError.getMessage());
+                }
             }
-            @Override
-            public void onError(com.facebook.ads.Ad ad, com.facebook.ads.AdError adError) {
-                Log.e(TAG, "Meta Interstitial failed: " + adError.getErrorMessage() + ", falling back to Unity Interstitial");
-                showUnityInterstitialAndFinish();
-            }
-            @Override public void onAdLoaded(com.facebook.ads.Ad ad) {
-                Log.d(TAG, "✅ Meta Interstitial loaded.");
-            }
-            @Override public void onAdClicked(com.facebook.ads.Ad ad) {}
-            @Override public void onLoggingImpression(com.facebook.ads.Ad ad) {}
-        };
-        metaInterstitialAd.loadAd(metaInterstitialAd.buildLoadAdConfig().withAdListener(listener).build());
+        );
     }
 
     @Override
@@ -1790,126 +1790,68 @@ public class CallActivity extends AppCompatActivity {
             interstitialAd.setFullScreenContentCallback(null);
             interstitialAd = null;
         }
-        if (metaInterstitialAd != null) {
-            metaInterstitialAd.destroy();
-            metaInterstitialAd = null;
-        }
         super.onDestroy();
     }
 
-    private String loadedUnityPlacementId = null;
-
-    private void loadUnityInterstitialAd() {
-        if (!com.unity3d.ads.UnityAds.isInitialized()) {
-            com.unity3d.ads.UnityAds.initialize(getApplicationContext(), "800356158", false, new com.unity3d.ads.IUnityAdsInitializationListener() {
-                @Override
-                public void onInitializationComplete() {
-                    Log.d(TAG, "Unity Ads initialized in CallActivity");
-                    preloadInterstitialInternal("800356158_interstitial");
-                }
-
-                @Override
-                public void onInitializationFailed(com.unity3d.ads.UnityAds.UnityAdsInitializationError error, String message) {
-                    Log.e(TAG, "Unity Ads initialization failed in CallActivity: " + message);
-                }
-            });
-        } else {
-            preloadInterstitialInternal("800356158_interstitial");
-        }
-    }
-
-    private void loadPrivateCallAdIfNeeded() {
-        boolean isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
-        if (isPrivateCall) {
-            try {
-                levelPlayPrivateCallAd = new com.unity3d.mediation.interstitial.LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
-                levelPlayPrivateCallAd.setListener(new com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener() {
-                    @Override
-                    public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                        isPrivateCallAdLoaded = true;
-                        Log.d(TAG, "LevelPlay Interstitial for private call loaded successfully");
-                    }
-
-                    @Override
-                    public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
-                        isPrivateCallAdLoaded = false;
-                        Log.e(TAG, "LevelPlay Interstitial for private call load failed: " + error.getErrorMessage());
-                    }
-
-                    @Override
-                    public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
-
-                    @Override
-                    public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                        isPrivateCallAdLoaded = false;
-                        finish();
-                    }
-
-                    @Override
-                    public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
-
-                    @Override
-                    public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                        finish();
-                    }
-                });
-                BaseActivity.runOnLevelPlayInit(() -> {
-                    if (levelPlayPrivateCallAd != null) levelPlayPrivateCallAd.loadAd();
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "Error initializing LevelPlay Interstitial for private call: " + e.getMessage());
-            }
-        }
-    }
-
-    private void preloadInterstitialInternal(String placementId) {
-        com.unity3d.ads.UnityAds.load(placementId, new com.unity3d.ads.IUnityAdsLoadListener() {
+    private void startLimitCountdown() {
+        if (tokenManager.isPlanAdFree()) return;
+        limitCountdownHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        limitCountdownRunnable = new Runnable() {
             @Override
-            public void onUnityAdsAdLoaded(String pId) {
-                isUnityInterstitialLoaded = true;
-                loadedUnityPlacementId = pId;
-                Log.d(TAG, "Unity Interstitial loaded successfully with placement: " + pId);
-            }
-
-            @Override
-            public void onUnityAdsFailedToLoad(String pId, com.unity3d.ads.UnityAds.UnityAdsLoadError error, String message) {
-                Log.e(TAG, "Unity Interstitial failed for placement " + pId + ": " + message);
-                if ("800356158_interstitial".equals(pId)) {
-                    preloadInterstitialInternal("Interstitial_Android");
-                } else if ("Interstitial_Android".equals(pId)) {
-                    preloadInterstitialInternal("interstitial");
-                } else {
-                    isUnityInterstitialLoaded = false;
+            public void run() {
+                CallLimitManager.decrementFreeSeconds(CallActivity.this);
+                long secondsLeft = CallLimitManager.getFreeSecondsLeft(CallActivity.this);
+                Log.d(TAG, "⏱️ Free seconds left: " + secondsLeft);
+                if (limitCountdownHandler != null) {
+                    limitCountdownHandler.postDelayed(this, 1000);
                 }
             }
-        });
+        };
+        limitCountdownHandler.postDelayed(limitCountdownRunnable, 1000);
     }
 
-    private void showUnityInterstitialAndFinish() {
-        if (isUnityInterstitialLoaded && loadedUnityPlacementId != null) {
-            com.unity3d.ads.UnityAds.show(this, loadedUnityPlacementId, new com.unity3d.ads.IUnityAdsShowListener() {
-                @Override
-                public void onUnityAdsShowStart(String placementId) {
-                    Log.d(TAG, "Unity Interstitial started displaying: " + placementId);
-                }
-
-                @Override
-                public void onUnityAdsShowClick(String placementId) {}
-
-                @Override
-                public void onUnityAdsShowComplete(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowCompletionState state) {
-                    Log.d(TAG, "Unity Interstitial completed displaying: " + state);
-                    finish();
-                }
-
-                @Override
-                public void onUnityAdsShowFailure(String placementId, com.unity3d.ads.UnityAds.UnityAdsShowError error, String message) {
-                    Log.e(TAG, "Unity Interstitial failed to display: " + message);
-                    finish();
-                }
-            });
+    private void showInterstitialAndFinish() {
+        if (interstitialAd != null) {
+            interstitialAd.show(this);
         } else {
+            // Ad not loaded yet — just finish (AdMob mediation handles Meta/InMobi bidding internally)
             finish();
         }
+    }
+
+    private void loadAndShowRewardedAdAndFinish() {
+        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Loading ad...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        com.google.android.gms.ads.rewarded.RewardedAd.load(this, 
+            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
+                    progressDialog.dismiss();
+                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {
+                            finish();
+                        }
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                            finish();
+                        }
+                    });
+                    ad.show(CallActivity.this, rewardItem -> {
+                        // User watched rewarded ad after private call
+                    });
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                    progressDialog.dismiss();
+                    finish();
+                }
+            });
     }
 }

@@ -120,4 +120,46 @@ public class TextHelper {
 
         return builder;
     }
+
+    public static SpannableStringBuilder getUserMetadata(Context context, int age, String gender, String sexPreference) {
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        builder.append(age + " Yrs");
+        if (gender != null && !gender.isEmpty()) {
+            builder.append(" • ");
+            int start = builder.length();
+            String genLower = gender.toLowerCase();
+            if (genLower.startsWith("f")) {
+                builder.append("♀️");
+                builder.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                builder.append("♂️");
+                builder.setSpan(new ForegroundColorSpan(Color.parseColor("#007AFF")), start, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        if (sexPreference != null && !sexPreference.isEmpty()) {
+            builder.append(" • ");
+            int start = builder.length();
+            builder.append(sexPreference.toUpperCase());
+            builder.setSpan(new ForegroundColorSpan(Color.parseColor("#00E5FF")), start, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return builder;
+    }
+
+    public static SpannableStringBuilder getHostMetadata(Context context, int age, String gender) {
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        builder.append(age + " Yrs");
+        if (gender != null && !gender.isEmpty()) {
+            builder.append(" • ");
+            int start = builder.length();
+            String genLower = gender.toLowerCase();
+            if (genLower.startsWith("f")) {
+                builder.append("♀️");
+                builder.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                builder.append("♂️");
+                builder.setSpan(new ForegroundColorSpan(Color.parseColor("#007AFF")), start, builder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+        return builder;
+    }
 }

@@ -55,6 +55,16 @@
                 tools:text="Name, 22" />
 
             <TextView
+                android:id="@+id/tvFantasyMetadata"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:textColor="#E5E5EA"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                tools:text="22 Yrs • ♀️" />
+
+            <TextView
                 android:id="@+id/tvStatusChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

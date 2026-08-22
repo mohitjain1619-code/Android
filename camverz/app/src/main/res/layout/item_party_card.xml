@@ -45,6 +45,7 @@
             android:textColor="#34C759"
             android:textSize="9sp"
             android:textStyle="bold"
+            android:visibility="gone"
             tools:text="Everyone" />
     </LinearLayout>
 
@@ -93,6 +94,16 @@
                 tools:text="Host Name, 25" />
 
             <TextView
+                android:id="@+id/tvHostMetadata"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:textColor="#E5E5EA"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                tools:text="25 Yrs • ♀️" />
+
+            <TextView
                 android:id="@+id/tvCapacity"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -104,22 +115,12 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Event Title Heading -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="EVENT TITLE"
-        android:textColor="#8E8E93"
-        android:textSize="8sp"
-        android:textStyle="bold" />
-
     <!-- Party Title / Purpose -->
     <TextView
         android:id="@+id/tvPartyPurpose"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="#FFFFFF"
@@ -127,22 +128,12 @@
         android:textStyle="bold"
         tools:text="🎉 House Party Title" />
 
-    <!-- Party Venue Heading -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="PARTY VENUE"
-        android:textColor="#8E8E93"
-        android:textSize="8sp"
-        android:textStyle="bold" />
-
     <!-- Venue Location -->
     <TextView
         android:id="@+id/tvPartyVenue"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textColor="#34C759"
@@ -150,21 +141,11 @@
         android:textStyle="bold"
         tools:text="📍 Party Venue Address" />
 
-    <!-- Schedule Heading -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="SCHEDULED TIME"
-        android:textColor="#8E8E93"
-        android:textSize="8sp"
-        android:textStyle="bold" />
-
     <!-- Party Time Glass Box -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="8dp"
         android:background="@drawable/bg_luxury_pill_dark"
         android:gravity="center_vertical"
         android:paddingHorizontal="10dp"
@@ -180,20 +161,40 @@
             tools:text="⏰ Upcoming 9:00 PM" />
     </LinearLayout>
 
-    <!-- Neon Emerald Join Party CTA Button -->
-    <TextView
-        android:id="@+id/btnJoinParty"
+    <!-- Join Party & Save Button Row -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:background="@drawable/bg_neon_emerald_button"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:paddingVertical="9dp"
-        android:text="🎉 Join Party"
-        android:textColor="#000000"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/btnJoinParty"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_neon_emerald_button"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingVertical="9dp"
+            android:text="🎉 Join Party"
+            android:textColor="#000000"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btnSaveParty"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_luxury_chip"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp"
+            android:src="@drawable/ic_bookmark_unselected"
+            app:tint="#FFD60A" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -71,15 +71,57 @@
         android:layout_below="@id/topInboxHeader"
         android:background="#1A1A24" />
 
-    <!-- RecyclerView for active community chats -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/inboxRecyclerView"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/inboxDivider"
-        android:clipToPadding="false"
-        android:paddingTop="10dp"
-        android:paddingBottom="20dp" />
+        android:orientation="vertical">
+
+        <!-- Active Stories / Users Bar -->
+        <LinearLayout
+            android:id="@+id/active_now_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="6dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="Friends Online"
+                android:textColor="#00FFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:clipToPadding="false"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/active_users_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+        </LinearLayout>
+
+        <!-- RecyclerView for active community chats -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/inboxRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="10dp"
+            android:paddingBottom="20dp" />
+    </LinearLayout>
 
     <!-- Empty State -->
     <LinearLayout

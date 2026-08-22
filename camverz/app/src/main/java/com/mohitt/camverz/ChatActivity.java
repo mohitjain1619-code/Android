@@ -64,9 +64,8 @@ public class ChatActivity extends BaseActivity {
     
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
-    private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd ironSourceInterstitialAd;
-    private com.unity3d.mediation.interstitial.LevelPlayInterstitialAd messageLevelPlayAd;
-    private boolean isMessageAdLoaded = false;
+    private com.google.android.gms.ads.interstitial.InterstitialAd admobInterstitialAd;
+    private boolean isAdLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,9 +99,9 @@ public class ChatActivity extends BaseActivity {
         AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
 
         View.OnClickListener profileListener = v -> {
-            if (ironSourceInterstitialAd != null && ironSourceInterstitialAd.isAdReady()) {
-                Log.d(TAG, "📺 Showing ironSource Interstitial on profile click");
-                ironSourceInterstitialAd.showAd(ChatActivity.this);
+            if (admobInterstitialAd != null && isAdLoaded) {
+                Log.d(TAG, "📺 Showing AdMob Interstitial on profile click");
+                admobInterstitialAd.show(ChatActivity.this);
             } else {
                 navigateToProfileDirectly();
             }
@@ -110,43 +109,8 @@ public class ChatActivity extends BaseActivity {
         toolbarAvatar.setOnClickListener(profileListener);
         toolbarUsername.setOnClickListener(profileListener);
 
-        // Preload ironSource Interstitial
-        try {
-            ironSourceInterstitialAd = new com.unity3d.mediation.interstitial.LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
-            ironSourceInterstitialAd.setListener(new com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener() {
-                @Override
-                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.d(TAG, "ironSource Interstitial loaded successfully");
-                }
-
-                @Override
-                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
-                    Log.e(TAG, "ironSource Interstitial failed to load: " + error.getErrorMessage());
-                }
-
-                @Override
-                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
-
-                @Override
-                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.e(TAG, "ironSource Interstitial failed to show: " + error.getErrorMessage());
-                    navigateToProfileDirectly();
-                }
-
-                @Override
-                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
-
-                @Override
-                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    navigateToProfileDirectly();
-                }
-            });
-            BaseActivity.runOnLevelPlayInit(() -> {
-                if (ironSourceInterstitialAd != null) ironSourceInterstitialAd.loadAd();
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error preloading ironSource Interstitial: " + e.getMessage());
-        }
+        // Preload AdMob Interstitial (Meta/InMobi bid inside AdMob mediation)
+        loadAdMobInterstitial();
         
         videoCallBtn.setOnClickListener(v -> initiateCall(true));
         voiceCallBtn.setOnClickListener(v -> initiateCall(false));
@@ -183,7 +147,6 @@ public class ChatActivity extends BaseActivity {
 
         setupSocket();
         checkBlockStatus();
-        loadMessageLevelPlayAd();
     }
     
     @Override
@@ -302,7 +265,9 @@ public class ChatActivity extends BaseActivity {
                             chatId = data.get("chatId").getAsString();
                         }
                         loadMessages(); // reload to show sent message
-                        showMessageLevelPlayAd();
+                        if (admobInterstitialAd != null && isAdLoaded) {
+                            admobInterstitialAd.show(ChatActivity.this);
+                        }
                     } else {
                         Toast.makeText(ChatActivity.this, "Failed to send", Toast.LENGTH_SHORT).show();
                     }
@@ -457,61 +422,49 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         socket.off("new_message");
-    }
-
-    private void loadMessageLevelPlayAd() {
-        try {
-            messageLevelPlayAd = new com.unity3d.mediation.interstitial.LevelPlayInterstitialAd("yw7j51u0q3eg5aai");
-            messageLevelPlayAd.setListener(new com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener() {
-                @Override
-                public void onAdLoaded(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    isMessageAdLoaded = true;
-                    Log.d(TAG, "✅ LevelPlay Interstitial for messages loaded successfully");
-                }
-
-                @Override
-                public void onAdLoadFailed(com.unity3d.mediation.LevelPlayAdError error) {
-                    isMessageAdLoaded = false;
-                    Log.e(TAG, "❌ LevelPlay Interstitial for messages load failed: " + error.getErrorMessage());
-                }
-
-                @Override
-                public void onAdDisplayed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.d(TAG, "📺 LevelPlay Interstitial for messages displayed");
-                }
-
-                @Override
-                public void onAdDisplayFailed(com.unity3d.mediation.LevelPlayAdError error, com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.e(TAG, "❌ LevelPlay Interstitial for messages display failed: " + error.getErrorMessage());
-                    isMessageAdLoaded = false;
-                    loadMessageLevelPlayAd();
-                }
-
-                @Override
-                public void onAdClicked(com.unity3d.mediation.LevelPlayAdInfo adInfo) {}
-
-                @Override
-                public void onAdClosed(com.unity3d.mediation.LevelPlayAdInfo adInfo) {
-                    Log.d(TAG, "✅ LevelPlay Interstitial for messages closed");
-                    isMessageAdLoaded = false;
-                    loadMessageLevelPlayAd();
-                }
-            });
-            BaseActivity.runOnLevelPlayInit(() -> {
-                if (messageLevelPlayAd != null) {
-                    Log.d(TAG, "🔍 Loading LevelPlay Interstitial for messages");
-                    messageLevelPlayAd.loadAd();
-                }
-            });
-        } catch (Exception e) {
-            Log.e(TAG, "Error initializing LevelPlay Interstitial for messages: " + e.getMessage());
+        if (admobInterstitialAd != null) {
+            admobInterstitialAd.setFullScreenContentCallback(null);
+            admobInterstitialAd = null;
         }
     }
 
-    private void showMessageLevelPlayAd() {
-        Log.d(TAG, "🔍 showMessageLevelPlayAd called. isLoaded=" + isMessageAdLoaded);
-        if (messageLevelPlayAd != null && (isMessageAdLoaded || messageLevelPlayAd.isAdReady())) {
-            messageLevelPlayAd.showAd(this);
-        }
+    private void loadAdMobInterstitial() {
+        if (tokenManager.isPlanAdFree() || isFinishing() || isDestroyed()) return;
+        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
+        com.google.android.gms.ads.interstitial.InterstitialAd.load(
+            this,
+            getString(R.string.admob_interstitial_ad_unit_id),
+            adRequest,
+            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@androidx.annotation.NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
+                    admobInterstitialAd = ad;
+                    isAdLoaded = true;
+                    Log.d(TAG, "✅ AdMob Interstitial loaded in ChatActivity");
+                    admobInterstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {
+                            admobInterstitialAd = null;
+                            isAdLoaded = false;
+                            navigateToProfileDirectly();
+                            loadAdMobInterstitial(); // preload next
+                        }
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(@androidx.annotation.NonNull com.google.android.gms.ads.AdError adError) {
+                            admobInterstitialAd = null;
+                            isAdLoaded = false;
+                            navigateToProfileDirectly();
+                        }
+                    });
+                }
+                @Override
+                public void onAdFailedToLoad(@androidx.annotation.NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                    admobInterstitialAd = null;
+                    isAdLoaded = false;
+                    Log.w(TAG, "AdMob Interstitial failed to load in ChatActivity: " + loadAdError.getMessage());
+                }
+            }
+        );
     }
 }
+

@@ -8,7 +8,15 @@ import {
   getRealMeetRequests, 
   sendRealMeetRequest, 
   updateRealMeetRequestStatus,
-  updateMe
+  updateMe,
+  getSavedParties,
+  saveParty,
+  unsaveParty,
+  getPartyMembers,
+  setPartyVisibility,
+  postAnnouncement,
+  getAnnouncements,
+  getCommunityNotifications
 } from '../../lib/api';
 import { 
   Sparkles, 
@@ -23,7 +31,11 @@ import {
   AlertCircle, 
   Check, 
   X as CloseIcon, 
-  ShieldAlert 
+  ShieldAlert,
+  Bookmark,
+  Bell,
+  Megaphone,
+  UserPlus
 } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -49,8 +61,17 @@ export default function RealMeetPage() {
   const [fantasyPosts, setFantasyPosts] = useState([]);
   const [requests, setRequests] = useState([]);
   
-  // Device Lock State
   const [isAndroid, setIsAndroid] = useState(false);
+
+  // New persistent states
+  const [savedParties, setSavedParties] = useState([]);
+  const [savedPartyIds, setSavedPartyIds] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotificationsDrawer, setShowNotificationsDrawer] = useState(false);
+  const [notifTab, setNotifTab] = useState('meet');
+  const [partyMembers, setPartyMembers] = useState({});
+  const [partyAnnouncements, setPartyAnnouncements] = useState({});
+  const [announcementTexts, setAnnouncementTexts] = useState({});
 
   // Preferences Modal State
   const [showPreferencePopup, setShowPreferencePopup] = useState(false);
@@ -105,6 +126,23 @@ export default function RealMeetPage() {
         setRealMeetPosts(feedRes.realMeetPosts || []);
         setPartyPosts(feedRes.partyPosts || []);
         setFantasyPosts(feedRes.fantasyPosts || []);
+
+        // Load members list & announcements for party events
+        const pPosts = feedRes.partyPosts || [];
+        for (let post of pPosts) {
+          try {
+            const memRes = await getPartyMembers(post.id);
+            if (memRes.ok) {
+              setPartyMembers(prev => ({ ...prev, [post.id]: memRes.members }));
+            }
+          } catch (e) {}
+          try {
+            const annRes = await getAnnouncements(post.id);
+            if (annRes.ok) {
+              setPartyAnnouncements(prev => ({ ...prev, [post.id]: annRes.announcements }));
+            }
+          } catch (e) {}
+        }
       }
       
       // Requests
@@ -112,10 +150,70 @@ export default function RealMeetPage() {
       if (reqRes.ok) {
         setRequests(reqRes.requests || []);
       }
+
+      // Saved Parties
+      const savedRes = await getSavedParties();
+      if (savedRes.ok) {
+        setSavedParties(savedRes.savedParties || []);
+        setSavedPartyIds((savedRes.savedParties || []).map(p => p.id));
+      }
+
+      // Notifications
+      const notRes = await getCommunityNotifications();
+      if (notRes.ok) {
+        setNotifications(notRes.notifications || []);
+      }
     } catch (err) {
       console.error('Error loading Real Meet data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSaveParty = async (postId) => {
+    if (!user) return;
+    try {
+      const isSaved = savedPartyIds.includes(postId);
+      if (isSaved) {
+        setSavedPartyIds(prev => prev.filter(id => id !== postId));
+        await unsaveParty(postId);
+      } else {
+        setSavedPartyIds(prev => [...prev, postId]);
+        await saveParty(postId);
+      }
+      const savedRes = await getSavedParties();
+      if (savedRes.ok) {
+        setSavedParties(savedRes.savedParties || []);
+      }
+    } catch (err) {
+      console.error('Failed to toggle party save state:', err);
+    }
+  };
+
+  const handleUpdateVisibility = async (postId, visibility) => {
+    try {
+      const res = await setPartyVisibility(postId, visibility);
+      if (res.ok) {
+        alert(`Guest list visibility changed to ${visibility}`);
+        await fetchFeedData();
+      }
+    } catch (err) {
+      console.error('Failed to update visibility:', err);
+    }
+  };
+
+  const handlePostAnnouncement = async (postId) => {
+    const text = announcementTexts[postId];
+    if (!text) return;
+    try {
+      const res = await postAnnouncement(postId, text);
+      if (res.ok) {
+        alert('Announcement posted successfully!');
+        setAnnouncementTexts(prev => ({ ...prev, [postId]: '' }));
+        await fetchFeedData();
+      }
+    } catch (err) {
+      console.error('Failed to post announcement:', err);
     }
   };
 
@@ -166,6 +264,7 @@ export default function RealMeetPage() {
             gender: userData?.gender || 'male',
             verified: userData?.verified || false,
             premium: userData?.verified || false, // verified are premium
+            sexPreference: userData?.sexPreference || 'Straight',
             createdAt: Date.now()
           };
         } else if (activeTab === 'party') {
@@ -253,7 +352,6 @@ export default function RealMeetPage() {
     }
   };
 
-  // 6. Request to Meet Handler
   const handleSendRequest = async (post) => {
     checkLockAndExecute('messages', async () => {
       // Prevent multiple requests
@@ -262,6 +360,16 @@ export default function RealMeetPage() {
       if (alreadyRequested) {
         alert('You have already sent a request to this user.');
         return;
+      }
+
+      // Enforce Verified Female Only constraint for party posts
+      if (post.targetGender === 'Female Only') {
+        const isFemale = userData?.gender === 'female';
+        const isVerified = userData?.verified === true;
+        if (!isFemale || !isVerified) {
+          alert('🔒 Only verified females can join this party event.');
+          return;
+        }
       }
 
       try {
@@ -336,9 +444,25 @@ export default function RealMeetPage() {
       <div className={styles.inner}>
         
         {/* Header */}
-        <header className={styles.header}>
-          <h1 className="neon-text">Real Meet Hub</h1>
-          <p>Facilitating authentic real-world connections, social house parties, and shared fantasies.</p>
+        <header className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 className="neon-text">Real Meet Hub</h1>
+            <p>Facilitating authentic real-world connections, social house parties, and shared fantasies.</p>
+          </div>
+          {user && (
+            <button 
+              className={styles.bellBtn} 
+              onClick={() => setShowNotificationsDrawer(true)}
+              style={{ position: 'relative', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', padding: '10px', borderRadius: '50%', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <Bell size={20} color="#00FFFF" />
+              {notifications.length > 0 && (
+                <span className={styles.notifBadge} style={{ position: 'absolute', top: '-5px', right: '-5px', background: '#EF4444', color: '#FFFFFF', borderRadius: '50%', padding: '2px 6px', fontSize: '10px', fontWeight: 'bold' }}>
+                  {notifications.length}
+                </span>
+              )}
+            </button>
+          )}
         </header>
 
         {/* Tab Selection */}
@@ -414,7 +538,7 @@ export default function RealMeetPage() {
                                 {post.premium && ' 👑'}
                                 {(post.gender?.startsWith('m') || post.verified) && <VerifiedBadge />}
                               </span>
-                              <span className={styles.userAge}>{post.age} Yrs old</span>
+                              <span className={styles.userAge}>{post.age} Yrs old • <span style={{ color: '#00E5FF', fontWeight: 'bold', fontSize: '11px' }}>{post.sexPreference?.toUpperCase() || 'STRAIGHT'}</span></span>
                             </div>
                           </div>
                           <span className={styles.cityBadge}>📍 {post.city}</span>
@@ -505,22 +629,99 @@ export default function RealMeetPage() {
                           <span>Target Audience: <b>{post.targetGender}</b></span>
                         </div>
 
+                        {/* Guest List and Announcement Blocks */}
+                        {post.hostUserId === user.uid ? (
+                          <div className={styles.hostPartyControls}>
+                            <div className={styles.controlRow}>
+                              <label>Guest List Visibility:</label>
+                              <select 
+                                className={styles.selectInputSmall}
+                                value={post.listVisibility || 'PRIVATE'}
+                                onChange={(e) => handleUpdateVisibility(post.id, e.target.value)}
+                              >
+                                <option value="PRIVATE">Private (Only Accepted)</option>
+                                <option value="PUBLIC">Public (Everyone)</option>
+                              </select>
+                            </div>
+                            <div className={styles.announcementPublisher}>
+                              <input 
+                                type="text"
+                                placeholder="Broadcast a party announcement..."
+                                value={announcementTexts[post.id] || ''}
+                                onChange={(e) => setAnnouncementTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
+                              />
+                              <button onClick={() => handlePostAnnouncement(post.id)}>Broadcast</button>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Display Accepted Guests List */}
+                        {((post.listVisibility === 'PUBLIC') || 
+                          (post.hostUserId === user.uid) || 
+                          partyMembers[post.id]?.some(m => m.userId === user.uid)) && (
+                          <div className={styles.membersSection}>
+                            <h4>👥 Guest List ({partyMembers[post.id]?.length || 0} accepted)</h4>
+                            <div className={styles.membersGrid}>
+                              {(partyMembers[post.id] || []).map(member => (
+                                <div key={member.userId} className={styles.memberAvatarWrapper}>
+                                  <img 
+                                    src={`/avatars/${member.avatar || 'av1'}.png`} 
+                                    alt={member.name}
+                                    title={member.name}
+                                  />
+                                  <span>{member.name.split(' ')[0]}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Display Announcements */}
+                        {((post.hostUserId === user.uid) || 
+                          partyMembers[post.id]?.some(m => m.userId === user.uid)) && 
+                          partyAnnouncements[post.id]?.length > 0 && (
+                          <div className={styles.announcementsSection}>
+                            <h4>📢 Broadcast Announcements</h4>
+                            <ul>
+                              {(partyAnnouncements[post.id] || []).map(ann => (
+                                <li key={ann.id}>
+                                  <span>{ann.text}</span>
+                                  <small>{new Date(ann.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</small>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
                         {/* Actions Row */}
-                        <div className={styles.requestRow}>
+                        <div className={styles.requestRow} style={{ gap: '10px', display: 'flex', alignItems: 'center' }}>
                           {post.hostUserId === user.uid ? (
-                            <button className="btn-neon" onClick={() => handleDeletePost(post.id)} style={{ padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', borderColor: '#EF4444', color: '#EF4444' }}>
+                            <button className="btn-neon" onClick={() => handleDeletePost(post.id)} style={{ flex: 1, padding: '6px 12px', background: 'rgba(239, 68, 68, 0.15)', borderColor: '#EF4444', color: '#EF4444' }}>
                               <Trash2 size={14} /> Delete Event
                             </button>
                           ) : (
-                            requests.some(r => r.fromUserId === user.uid && r.postId === post.id) ? (
-                              <span className={styles.requestedIndicator}>
-                                <Check size={14} /> Requested to Join
-                              </span>
-                            ) : (
-                              <button className="btn-neon" onClick={() => handleSendRequest(post)}>
-                                📩 Request Invite
+                            <>
+                              {requests.some(r => r.fromUserId === user.uid && r.postId === post.id) ? (
+                                <span className={styles.requestedIndicator} style={{ flex: 1 }}>
+                                  <Check size={14} /> Requested to Join
+                                </span>
+                              ) : (
+                                <button className="btn-neon" onClick={() => handleSendRequest(post)} style={{ flex: 1 }}>
+                                  📩 Request Invite
+                                </button>
+                              )}
+                              <button 
+                                className="btn-neon" 
+                                onClick={() => toggleSaveParty(post.id)}
+                                style={{ 
+                                  padding: '8px', 
+                                  background: savedPartyIds.includes(post.id) ? 'rgba(84, 214, 210, 0.15)' : 'transparent',
+                                  borderColor: savedPartyIds.includes(post.id) ? 'var(--neon-cyan)' : 'var(--glass-border)'
+                                }}
+                              >
+                                <Bookmark size={16} color={savedPartyIds.includes(post.id) ? 'var(--neon-cyan)' : '#FFFFFF'} />
                               </button>
-                            )
+                            </>
                           )}
                         </div>
                       </div>
@@ -707,7 +908,6 @@ export default function RealMeetPage() {
                               <option value="Everyone">Everyone</option>
                               <option value="Female Only">Female Only</option>
                               <option value="Male Only">Male Only</option>
-                              <option value="Couples Only">Couples Only</option>
                             </select>
                           </div>
                         </div>
@@ -816,12 +1016,148 @@ export default function RealMeetPage() {
                     ))
                   )}
                 </div>
+
+                {/* Saved Parties Section */}
+                <h3 className={styles.requestsHeader} style={{ marginTop: '24px' }}>
+                  🔖 Saved Parties ({savedParties.length})
+                </h3>
+                <div className={styles.requestsList} style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                  {savedParties.length === 0 ? (
+                    <p style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '10px 0' }}>
+                      No saved parties yet.
+                    </p>
+                  ) : (
+                    savedParties.map(savedPost => (
+                      <div key={savedPost.id} className={styles.requestInboxCard} style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '12px', borderRadius: '8px', marginBottom: '10px' }}>
+                        <div className={styles.requestInboxHeader} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className={styles.requestProfile} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <img src={`/avatars/${savedPost.hostAvatar || 'av1'}.png`} alt="Avatar" className={styles.requestAvatar} style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+                            <div>
+                              <span className={styles.requestSenderName} style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+                                {savedPost.hostName}
+                                {savedPost.gender?.startsWith('f') ? ' ♀️' : ' ♂️'}
+                                {savedPost.verified && <VerifiedBadge />}
+                              </span>
+                              <div className={styles.requestMeta} style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>📍 {savedPost.venue}</div>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => toggleSaveParty(savedPost.id)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EF4444', fontSize: '0.75rem', fontWeight: 'bold' }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <div className={styles.requestPurpose} style={{ marginTop: '8px', fontSize: '0.8rem', color: '#FFFFFF' }}>
+                          🎉 <b>Title:</b> {savedPost.purpose} <br />
+                          ⏰ <b>Time:</b> {savedPost.partyTime}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </>
             )}
           </div>
         </div>
       </div>
     </div>
+
+    {/* Bell Notifications Drawer */}
+    {showNotificationsDrawer && (
+      <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setShowNotificationsDrawer(false)}>
+        <div className={styles.notificationsDrawer} onClick={e => e.stopPropagation()} style={{ width: '400px', height: '100%', position: 'fixed', right: 0, top: 0, background: '#09090D', borderLeft: '1px solid #1A1A24', padding: '24px', display: 'flex', flexDirection: 'column', color: '#FFFFFF', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold' }}>🔔 Community Alerts</h3>
+            <button onClick={() => setShowNotificationsDrawer(false)} style={{ background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}>
+              <CloseIcon size={20} />
+            </button>
+          </div>
+
+          {/* Alert Tabs */}
+          <div className={styles.tabsContainer} style={{ marginBottom: '16px', display: 'flex', gap: '8px' }}>
+            {['meet', 'fantasy', 'party'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setNotifTab(tab)}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: notifTab === tab ? 'var(--neon-cyan)' : 'rgba(255,255,255,0.05)',
+                  color: notifTab === tab ? '#000000' : '#8E8E93',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {notifications.filter(n => {
+              const postType = n.postType || '';
+              if (notifTab === 'meet' && postType === 'REAL_MEET') return true;
+              if (notifTab === 'fantasy' && postType === 'FANTASY') return true;
+              if (notifTab === 'party' && (postType === 'PARTY' || n.type === 'party_announcement')) return true;
+              return false;
+            }).length === 0 ? (
+              <p style={{ fontStyle: 'italic', textAlign: 'center', color: '#8E8E93', marginTop: '40px' }}>No notifications here.</p>
+            ) : (
+              notifications.filter(n => {
+                const postType = n.postType || '';
+                if (notifTab === 'meet' && postType === 'REAL_MEET') return true;
+                if (notifTab === 'fantasy' && postType === 'FANTASY') return true;
+                if (notifTab === 'party' && (postType === 'PARTY' || n.type === 'party_announcement')) return true;
+                return false;
+              }).map(notif => (
+                <div key={notif.id} className={styles.requestInboxCard} style={{ background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <img 
+                      src={`/avatars/${notif.triggeringUser?.avatar || 'av1'}.png`} 
+                      alt="Avatar" 
+                      style={{ width: '36px', height: '36px', borderRadius: '50%' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontSize: '0.85rem' }}>
+                        <b>{notif.triggeringUser?.name || 'Someone'}</b>{' '}
+                        {notif.type === 'realmeet_request' ? 'requested to connect on your post: ' : 
+                         notif.type === 'realmeet_accepted' ? 'accepted your request for post: ' : 
+                         'posted an announcement for party: '}
+                        <b>"{notif.postTitle || 'Community Post'}"</b>
+                      </p>
+                      <small style={{ color: '#8E8E93' }}>
+                        {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </small>
+                    </div>
+                  </div>
+                  {notif.type === 'realmeet_request' && notif.friendshipStatus === 'PENDING' && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                      <button 
+                        onClick={() => handleUpdateStatus(notif.friendRequestId, 'ACCEPTED')}
+                        style={{ flex: 1, padding: '4px 8px', background: '#10B981', color: '#000000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
+                      >
+                        Accept
+                      </button>
+                      <button 
+                        onClick={() => handleUpdateStatus(notif.friendRequestId, 'REJECTED')}
+                        style={{ flex: 1, padding: '4px 8px', background: '#EF4444', color: '#FFFFFF', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold' }}
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    )}
 
     {showPreferencePopup && (
       <div className="modal-overlay" style={{ zIndex: 1000 }}>

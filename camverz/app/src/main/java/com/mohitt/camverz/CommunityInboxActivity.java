@@ -13,10 +13,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.mohitt.camverz.api.ApiClient;
+import com.mohitt.camverz.api.ApiService;
 import com.mohitt.camverz.api.TokenManager;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CommunityInboxActivity extends BaseActivity {
 
@@ -25,8 +34,12 @@ public class CommunityInboxActivity extends BaseActivity {
     private RecyclerView inboxRecyclerView;
     private LinearLayout emptyView;
 
+    private LinearLayout activeNowLayout;
+    private LinearLayout activeUsersContainer;
+
     private RealMeetStore store;
     private TokenManager tokenManager;
+    private ApiService api;
     private String currentUserId;
     private CommunityInboxAdapter adapter;
     private final List<RealMeetRequest> activeConnections = new ArrayList<>();
@@ -40,12 +53,15 @@ public class CommunityInboxActivity extends BaseActivity {
 
         store = RealMeetStore.getInstance(this);
         tokenManager = TokenManager.getInstance(this);
+        api = ApiClient.getInstance(this).getApi();
         currentUserId = tokenManager.getUserId();
 
         btnBack = findViewById(R.id.btnBack);
         tvActiveCount = findViewById(R.id.tvActiveCount);
         inboxRecyclerView = findViewById(R.id.inboxRecyclerView);
         emptyView = findViewById(R.id.emptyView);
+        activeNowLayout = findViewById(R.id.active_now_layout);
+        activeUsersContainer = findViewById(R.id.active_users_container);
 
         btnBack.setOnClickListener(v -> finish());
 
@@ -72,6 +88,72 @@ public class CommunityInboxActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         loadAcceptedConnections();
+        updateActiveUsersRow();
+    }
+
+    private void updateActiveUsersRow() {
+        if (activeNowLayout == null || activeUsersContainer == null) return;
+        if (!tokenManager.isLoggedIn()) {
+            activeNowLayout.setVisibility(View.GONE);
+            return;
+        }
+
+        api.getOnlineFriends().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("friends")) {
+                        JsonArray friendsArray = data.getAsJsonArray("friends");
+                        if (friendsArray.size() > 0) {
+                            activeNowLayout.setVisibility(View.VISIBLE);
+                            activeUsersContainer.removeAllViews();
+
+                            for (JsonElement element : friendsArray) {
+                                JsonObject friendObj = element.getAsJsonObject();
+                                String friendId = friendObj.has("id") ? friendObj.get("id").getAsString() : "";
+                                String friendName = friendObj.has("name") ? friendObj.get("name").getAsString() : "";
+                                String friendAvatar = friendObj.has("avatar") ? friendObj.get("avatar").getAsString() : "";
+                                String friendPhotoUrl = friendObj.has("photoUrl") && !friendObj.get("photoUrl").isJsonNull() ? friendObj.get("photoUrl").getAsString() : "";
+
+                                View itemView = LayoutInflater.from(CommunityInboxActivity.this).inflate(R.layout.item_active_user_avatar, activeUsersContainer, false);
+                                ImageView avatarView = itemView.findViewById(R.id.active_user_avatar);
+                                TextView nameView = itemView.findViewById(R.id.active_user_name);
+
+                                String displayName = friendName;
+                                if (displayName.contains(" ")) {
+                                    displayName = displayName.substring(0, displayName.indexOf(" "));
+                                }
+                                if (displayName.length() > 8) {
+                                    displayName = displayName.substring(0, 8) + "..";
+                                }
+                                nameView.setText(displayName);
+
+                                AvatarHelper.loadAvatar(CommunityInboxActivity.this, friendPhotoUrl, friendAvatar, friendName, avatarView);
+
+                                itemView.setOnClickListener(v -> {
+                                    Intent intent = new Intent(CommunityInboxActivity.this, CommunityChatActivity.class);
+                                    intent.putExtra("targetUserId", friendId);
+                                    intent.putExtra("targetUserName", friendName);
+                                    intent.putExtra("targetUserAvatar", friendAvatar);
+                                    intent.putExtra("contactPreference", "Direct Chat");
+                                    startActivity(intent);
+                                });
+
+                                activeUsersContainer.addView(itemView);
+                            }
+                        } else {
+                            activeNowLayout.setVisibility(View.GONE);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                activeNowLayout.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void loadAcceptedConnections() {

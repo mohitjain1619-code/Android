@@ -47,15 +47,28 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
 
-        holder.tvNameAge.setText(TextHelper.getFormattedHeader(
+        holder.tvNameAge.setText(TextHelper.getPostHeader(
                 context,
                 post.getUserName(),
-                post.getGender(),
-                post.getAge(),
-                post.isPremium(),
-                isVerified
+                null,
+                isVerified,
+                null
         ));
-        holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : "Nearby"));
+        
+        holder.tvUserMetadata.setText(TextHelper.getUserMetadata(
+                context,
+                post.getAge(),
+                post.getGender(),
+                post.getSexPreference()
+        ));
+
+        CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
+                post.getCreatedAt(),
+                System.currentTimeMillis(),
+                DateUtils.MINUTE_IN_MILLIS
+        );
+        holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : "Nearby") + " • " + relativeTime);
+        holder.tvTimeAgo.setVisibility(View.GONE);
 
         if (post.isPremium()) {
             holder.itemView.setBackgroundResource(R.drawable.bg_community_hot_gradient);
@@ -66,13 +79,6 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
         holder.tvLocation.setText("🏢 " + post.getLocation());
         holder.tvTime.setText("⏰ " + post.getTime());
         holder.tvDescription.setText(post.getDescription());
-
-        CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(
-                post.getCreatedAt(),
-                System.currentTimeMillis(),
-                DateUtils.MINUTE_IN_MILLIS
-        );
-        holder.tvTimeAgo.setText(relativeTime);
 
         AvatarHelper.loadAvatar(context, post.getPhotoUrl(), post.getUserAvatar(), post.getUserName(), holder.ivAvatar);
 
@@ -105,7 +111,8 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
         holder.itemView.setOnClickListener(v -> {
             if (context instanceof RealMeetActivity) {
                 ((RealMeetActivity) context).openFullPostDetailDialog(
-                        post.getUserName(), post.getAge(), post.getCity(), post.getPurpose(), post.getLocation(), post.getTime(), post.getDescription(), post.getUserAvatar(), post.getUserId(), post.getId()
+                        post.getUserName(), post.getAge(), post.getCity(), post.getPurpose(), post.getLocation(), post.getTime(), post.getDescription(), post.getUserAvatar(), post.getUserId(), post.getId(),
+                        post.getGender(), isVerified, post.getSexPreference(), null, null
                 );
             }
         });
@@ -132,12 +139,13 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAvatar;
-        TextView tvNameAge, tvCity, tvTimeAgo, tvPurpose, tvLocation, tvTime, tvDescription, btnConnect;
+        TextView tvNameAge, tvUserMetadata, tvCity, tvTimeAgo, tvPurpose, tvLocation, tvTime, tvDescription, btnConnect;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivAvatar = itemView.findViewById(R.id.ivAvatar);
             tvNameAge = itemView.findViewById(R.id.tvNameAge);
+            tvUserMetadata = itemView.findViewById(R.id.tvUserMetadata);
             tvCity = itemView.findViewById(R.id.tvCity);
             tvTimeAgo = itemView.findViewById(R.id.tvTimeAgo);
             tvPurpose = itemView.findViewById(R.id.tvPurpose);

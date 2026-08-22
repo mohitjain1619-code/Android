@@ -56,7 +56,7 @@ public class ConnectingActivity extends BaseActivity {
     private RewardedInterstitialAd rewardedInterstitialAd;
 
     private long searchStartTime = 0;
-    private static final long MIN_SEARCH_DURATION_MS = 0; // Delay disabled (ads removed)
+    private static final long MIN_SEARCH_DURATION_MS = 5000; // 5 seconds minimum to show native ad
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,16 +76,17 @@ public class ConnectingActivity extends BaseActivity {
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
-        // Load AdMob mediated native ads and rewarded interstitial ads after initialization
-        com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
-            runOnUiThread(() -> {
-                loadNativeAd();
-                loadRewardedInterstitialAd();
+        // Load native ads only for non ad-free users
+        if (!tokenManager.isPlanAdFree()) {
+            com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
+                runOnUiThread(() -> {
+                    loadNativeAd();
+                    loadRewardedInterstitialAd();
+                });
             });
-        });
-
-        // Load Meta Native Ad immediately without waiting for AdMob SDK initialization
-        loadMetaNativeAd();
+            // Load Meta Native Ad immediately without waiting for AdMob SDK initialization
+            loadMetaNativeAd();
+        }
 
         checkAndRequestLocationPermission();
         setupSocketListeners();
@@ -202,7 +203,23 @@ public class ConnectingActivity extends BaseActivity {
     // --- Google AdMob Mediated Native Ad Integration ---
 
     private void loadNativeAd() {
-        // Ads disabled in main app
+        if (isFinishing() || isDestroyed()) return;
+        AdLoader adLoader = new AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
+            .forNativeAd(ad -> {
+                if (nativeAd != null) nativeAd.destroy();
+                nativeAd = ad;
+                if (!isFinishing() && !isDestroyed()) {
+                    inflateAdMobNativeAd(ad);
+                }
+            })
+            .withAdListener(new com.google.android.gms.ads.AdListener() {
+                @Override
+                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    Log.w(TAG, "AdMob Native failed: " + loadAdError.getMessage() + ", Meta native will be used.");
+                }
+            })
+            .build();
+        adLoader.loadAd(new AdRequest.Builder().build());
     }
 
     private void inflateAdMobNativeAd(NativeAd ad) {
@@ -267,7 +284,29 @@ public class ConnectingActivity extends BaseActivity {
     // --- Meta Audience Network Direct Native Ad Integration ---
 
     private void loadMetaNativeAd() {
-        // Ads disabled in main app
+        if (isFinishing() || isDestroyed()) return;
+        if (com.mohitt.camverz.BuildConfig.DEBUG) {
+            com.facebook.ads.AdSettings.setTestMode(true);
+        }
+        metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167723142870");
+        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig().withAdListener(new NativeAdListener() {
+            @Override
+            public void onMediaDownloaded(Ad ad) {}
+            @Override
+            public void onError(Ad ad, AdError adError) {
+                Log.w(TAG, "Meta Native failed: " + adError.getErrorMessage());
+            }
+            @Override
+            public void onAdLoaded(Ad ad) {
+                if (!isFinishing() && !isDestroyed() && nativeAd == null) {
+                    inflateMetaNativeAd(metaNativeAd);
+                }
+            }
+            @Override
+            public void onAdClicked(Ad ad) {}
+            @Override
+            public void onLoggingImpression(Ad ad) {}
+        }).build());
     }
 
     private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {
