@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
 import { 
   getRealMeetFeed, 
@@ -48,8 +49,10 @@ function VerifiedBadge() {
   );
 }
 
-export default function RealMeetPage() {
+function RealMeetContent() {
   const { user, userData, loading: authLoading, setShowLogin, setShowAppRedirect } = useAuth();
+  const searchParams = useSearchParams();
+  const action = searchParams.get('action');
   
   // Selected Tab: 'meet' | 'party' | 'fantasy'
   const [activeTab, setActiveTab] = useState('meet');
@@ -108,9 +111,24 @@ export default function RealMeetPage() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const ua = navigator.userAgent || navigator.vendor || window.opera;
-      setIsAndroid(/android/i.test(ua));
+      setIsAndroid(/android/i.test(ua) || /windows/i.test(ua));
     }
   }, []);
+
+  // 1b. Handle search query action parameters (for messages/notifications feature parity)
+  useEffect(() => {
+    if (!action) return;
+    if (action === 'notifications') {
+      setShowNotificationsDrawer(true);
+    } else if (action === 'messages') {
+      setTimeout(() => {
+        const el = document.getElementById('realmeet-inbox');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 600);
+    }
+  }, [action]);
 
   // 2. Fetch Feed and Requests
   const fetchFeedData = async () => {
@@ -967,7 +985,7 @@ export default function RealMeetPage() {
                 </div>
 
                 {/* Inbox Requests Section (Received Requests) */}
-                <h3 className={styles.requestsHeader}>
+                <h3 id="realmeet-inbox" className={styles.requestsHeader}>
                   📩 Real Meet Inbox ({requests.filter(r => r.toUserId === user.uid).length})
                 </h3>
                 <div className={styles.requestsList}>
@@ -1218,5 +1236,22 @@ export default function RealMeetPage() {
       </div>
     )}
     </>
+  );
+}
+
+export default function RealMeetPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#060612', color: 'rgba(255, 255, 255, 0.7)' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0, 229, 255, 0.1)', borderTopColor: '#00E5FF', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style dangerouslySetInnerHTML={{__html: `
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}} />
+      </div>
+    }>
+      <RealMeetContent />
+    </Suspense>
   );
 }

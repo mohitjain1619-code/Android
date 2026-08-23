@@ -215,9 +215,8 @@ export default function PostsPage() {
                       }}
                     >
                       <option value="all">🌐 Everyone (All)</option>
-                      <option value="straight">👫 Straight</option>
-                      {(!userData || userData.gender === 'male') && <option value="gay">👨 Gay</option>}
-                      {(!userData || userData.gender === 'female') && <option value="lesbian">👩 Lesbian</option>}
+                      {(!userData || userData.gender === 'male') && <option value="male">👨 Male</option>}
+                      {(!userData || userData.gender === 'female') && <option value="female">👩 Female</option>}
                     </select>
                   </div>
 

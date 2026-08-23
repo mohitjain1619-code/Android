@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { Menu, X, Video, User, FileText, BookOpen, Info, Mail, LogOut, Crown, MessageSquare, Bell, Zap, Sparkles } from 'lucide-react';
 import styles from './Navbar.module.css';
@@ -10,7 +10,18 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, userData, signOut, setShowLogin, setShowAppRedirect } = useAuth();
+
+  const handleRedirect = (redirectKey) => {
+    const isAndroid = typeof window !== 'undefined' && /android/i.test(navigator.userAgent);
+    const isWindows = typeof window !== 'undefined' && /windows/i.test(navigator.userAgent);
+    if (isAndroid || isWindows) {
+      setShowAppRedirect(redirectKey);
+    } else {
+      router.push(`/realmeet?action=${redirectKey}`);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -53,7 +64,7 @@ export default function Navbar() {
                 return (
                   <button
                     key={l.label}
-                    onClick={() => setShowAppRedirect(l.redirect)}
+                    onClick={() => handleRedirect(l.redirect)}
                     className={styles.navLink}
                   >
                     {l.label}
@@ -102,7 +113,7 @@ export default function Navbar() {
                   style={{ animationDelay: `${i * 0.05}s` }}
                   onClick={() => {
                     setMenuOpen(false);
-                    setShowAppRedirect(l.redirect);
+                    handleRedirect(l.redirect);
                   }}
                 >
                   <l.icon size={20} />

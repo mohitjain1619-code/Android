@@ -170,7 +170,9 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
           setShowVerification(true);
         }
       } catch (e) {
-        console.error(e);
+        console.error('Failed to complete onboarding update:', e);
+        const errMsg = e.response?.data?.message || e.response?.data?.error || e.message || "Failed to save profile. Please check your connection and try again.";
+        alert("Error: " + errMsg);
       }
       setLoading(false);
     }

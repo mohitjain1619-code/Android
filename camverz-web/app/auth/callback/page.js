@@ -10,12 +10,25 @@ export default function AuthCallback() {
         const params = new URLSearchParams(hash.substring(1));
         const idToken = params.get('id_token');
         
-        if (idToken && window.opener) {
-          // Send token back to the parent window (auth-context.js handleMessage listener)
-          window.opener.postMessage(
-            { type: 'google-auth', idToken },
-            window.location.origin
-          );
+        if (idToken) {
+          try {
+            localStorage.setItem('google_auth_token_temp', idToken);
+          } catch (e) {
+            console.error('Failed to set localStorage token fallback:', e);
+          }
+          
+          if (window.opener) {
+            // Send token back to the parent window (auth-context.js handleMessage listener)
+            window.opener.postMessage(
+              { type: 'google-auth', idToken },
+              window.location.origin
+            );
+          }
+          
+          // Auto-close popup window after a short delay to allow parent window to read it
+          setTimeout(() => {
+            window.close();
+          }, 800);
         }
       }
     } catch (err) {

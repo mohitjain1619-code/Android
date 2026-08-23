@@ -20,6 +20,7 @@ export default function GenderVerificationModal({ onClose }) {
   // Model & Alignment State
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [isFaceAligned, setIsFaceAligned] = useState(false);
+  const [showManualCaptureFallback, setShowManualCaptureFallback] = useState(false);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -124,6 +125,19 @@ export default function GenderVerificationModal({ onClose }) {
       stopCamera();
     };
   }, [userData]);
+
+  // Trigger manual capture fallback button if face is not aligned after 5 seconds of camera usage
+  useEffect(() => {
+    let timeoutId;
+    if (stream) {
+      timeoutId = setTimeout(() => {
+        setShowManualCaptureFallback(true);
+      }, 5000);
+    } else {
+      setShowManualCaptureFallback(false);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [stream]);
 
   const startCamera = async () => {
     try {
@@ -521,7 +535,7 @@ export default function GenderVerificationModal({ onClose }) {
         {/* Actions Controls */}
         <div className={styles.controls}>
           {status === 'idle' && (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '10px' }}>
               {isModelLoading ? (
                 <button className="btn-neon" disabled style={{ opacity: 0.7 }}>
                   <Loader size={16} className={styles.spinner} style={{ animation: 'spinSlow 2s linear infinite', marginRight: 8 }} /> Loading Face Guide...
@@ -541,7 +555,23 @@ export default function GenderVerificationModal({ onClose }) {
                   {isFaceAligned ? "✓ Face Aligned! Hold Still..." : "⚠️ Align Face in Oval to Scan"}
                 </button>
               )}
-            </>
+              
+              {showManualCaptureFallback && (
+                <button 
+                  className="btn-neon" 
+                  onClick={captureImage}
+                  style={{ 
+                    width: '100%',
+                    background: 'linear-gradient(135deg, var(--neon-pink), var(--neon-purple))',
+                    boxShadow: '0 4px 15px rgba(255, 0, 92, 0.3)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📸 Capture Photo Manually
+                </button>
+              )}
+            </div>
           )}
 
           {status === 'countdown' && (

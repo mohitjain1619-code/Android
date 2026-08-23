@@ -115,53 +115,89 @@ export function AuthProvider({ children }) {
       
       return new Promise((resolve, reject) => {
         let checkClosed;
+        let pollStorage;
         const popup = window.open(authUrl, 'google-signin', 
           `width=${width},height=${height},left=${left},top=${top}`
         );
         
+        const cleanUp = () => {
+          window.removeEventListener('message', handleMessage);
+          if (checkClosed) clearInterval(checkClosed);
+          if (pollStorage) clearInterval(pollStorage);
+          try {
+            localStorage.removeItem('google_auth_token_temp');
+          } catch (e) {}
+        };
+
+        const handleAuthSuccess = async (idToken) => {
+          cleanUp();
+          popup?.close();
+          
+          setAuthStage('authenticating');
+          try {
+            const result = await authWithGoogle(idToken);
+            if (result.ok) {
+              setUser({ uid: result.user.id, ...result.user });
+              setUserData(result.user);
+              
+              if (result.deviceAccountWarning) {
+                alert("Notice: Multiple accounts detected on this device. Free trial benefits apply to 1 account per device.");
+              }
+              
+              if ((result.isNewUser || !result.user.gender) && window.location.pathname !== '/affiliate') {
+                setShowOnboarding(true);
+              }
+              setAuthStage('idle');
+              resolve(result);
+            }
+          } catch (err) {
+            setAuthStage('idle');
+            const errMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Authentication failed";
+            alert(errMsg);
+            reject(err);
+          }
+        };
+
         // Listen for the callback message
         const handleMessage = async (event) => {
           if (event.origin !== window.location.origin) return;
           if (event.data?.type === 'google-auth' && event.data?.idToken) {
-            window.removeEventListener('message', handleMessage);
-            if (checkClosed) clearInterval(checkClosed);
-            popup?.close();
-            
-            setAuthStage('authenticating');
-            try {
-              const result = await authWithGoogle(event.data.idToken);
-              if (result.ok) {
-                setUser({ uid: result.user.id, ...result.user });
-                setUserData(result.user);
-                
-                if (result.deviceAccountWarning) {
-                  alert("Notice: Multiple accounts detected on this device. Free trial benefits apply to 1 account per device.");
-                }
-                
-                if ((result.isNewUser || !result.user.gender) && window.location.pathname !== '/affiliate') {
-                  setShowOnboarding(true);
-                }
-                setAuthStage('idle');
-                resolve(result);
-              }
-            } catch (err) {
-              setAuthStage('idle');
-              const errMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Authentication failed";
-              alert(errMsg);
-              reject(err);
-            }
+            await handleAuthSuccess(event.data.idToken);
           }
         };
         
         window.addEventListener('message', handleMessage);
         
+        // Poll LocalStorage as a robust fallback for mobile web / Safari popup issues
+        pollStorage = setInterval(() => {
+          try {
+            const tempToken = localStorage.getItem('google_auth_token_temp');
+            if (tempToken) {
+              handleAuthSuccess(tempToken);
+            }
+          } catch (e) {}
+        }, 500);
+        
         // Cleanup on popup close
         checkClosed = setInterval(() => {
           if (popup?.closed) {
-            clearInterval(checkClosed);
-            window.removeEventListener('message', handleMessage);
-            setAuthStage('idle');
-            reject('Google sign in popup closed');
+            // Give a short delay to check localstorage fallback one last time
+            setTimeout(() => {
+              try {
+                const tempToken = localStorage.getItem('google_auth_token_temp');
+                if (tempToken) {
+                  handleAuthSuccess(tempToken);
+                } else {
+                  cleanUp();
+                  setAuthStage('idle');
+                  reject('Google sign in popup closed');
+                }
+              } catch (e) {
+                cleanUp();
+                setAuthStage('idle');
+                reject('Google sign in popup closed');
+              }
+            }, 800);
           }
         }, 1000);
       });
