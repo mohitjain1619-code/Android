@@ -242,6 +242,23 @@ public class RealMeetActivity extends BaseActivity {
         });
 
         chipFilterCity.setOnClickListener(v -> {
+            if (!tokenManager.isPlanAdFree()) {
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Premium Feature 🏙️")
+                        .setMessage("Filtering posts by city is a Premium feature. Please upgrade your subscription to unlock local matching!")
+                        .setPositiveButton("Upgrade Now", (dialog, which) -> {
+                            try {
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com/pricing"));
+                                startActivity(browserIntent);
+                            } catch (Exception e) {
+                                Toast.makeText(this, "Could not open browser", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                return;
+            }
+
             if (currentUserCity == null || currentUserCity.isEmpty()) {
                 Toast.makeText(this, "Please set your city in your profile first", Toast.LENGTH_SHORT).show();
                 return;

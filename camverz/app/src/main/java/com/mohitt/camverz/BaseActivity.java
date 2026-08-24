@@ -21,47 +21,63 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize InMobi SDK
+        // Initialize InMobi SDK safely
         org.json.JSONObject consentObject = new org.json.JSONObject();
         try {
             consentObject.put("gdpr", "0");
         } catch (Exception e) {}
         
         if (com.mohitt.camverz.BuildConfig.DEBUG) {
-            com.inmobi.sdk.InMobiSdk.setLogLevel(com.inmobi.sdk.InMobiSdk.LogLevel.DEBUG);
+            try {
+                com.inmobi.sdk.InMobiSdk.setLogLevel(com.inmobi.sdk.InMobiSdk.LogLevel.DEBUG);
+            } catch (Exception e) {
+                Log.e("InMobi", "Failed to set log level", e);
+            }
         }
 
-        com.inmobi.sdk.InMobiSdk.init(this, "cf32cb0f880544468e1a4077d1febf0d", consentObject, new com.inmobi.sdk.SdkInitializationListener() {
-            @Override
-            public void onInitializationComplete(@androidx.annotation.Nullable Error error) {
-                if (error != null) {
-                    android.util.Log.e("InMobi", "InMobi Init failed: " + error.getMessage());
-                } else {
-                    android.util.Log.d("InMobi", "InMobi Init Successful");
+        try {
+            com.inmobi.sdk.InMobiSdk.init(this, "cf32cb0f880544468e1a4077d1febf0d", consentObject, new com.inmobi.sdk.SdkInitializationListener() {
+                @Override
+                public void onInitializationComplete(@androidx.annotation.Nullable Error error) {
+                    if (error != null) {
+                        android.util.Log.e("InMobi", "InMobi Init failed: " + error.getMessage());
+                    } else {
+                        android.util.Log.d("InMobi", "InMobi Init Successful");
+                    }
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            Log.e("InMobi", "Failed to initialize InMobi SDK", e);
+        }
 
-        // Enable edge-to-edge window insets
-        androidx.activity.EdgeToEdge.enable(this);
-        
-        // Ensure status bar icons are white on dark ambient backgrounds
-        WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+        try {
+            // Enable edge-to-edge window insets
+            androidx.activity.EdgeToEdge.enable(this);
+            
+            // Ensure status bar icons are white on dark ambient backgrounds
+            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to enable edge-to-edge / status bar styling", e);
+        }
 
         boolean isDebug = com.mohitt.camverz.BuildConfig.DEBUG;
         if (ENABLE_SCREENSHOT_PROTECTION && !isDebug) {
-            getWindow().setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE
-            );
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            try {
                 getWindow().setFlags(
                     WindowManager.LayoutParams.FLAG_SECURE,
                     WindowManager.LayoutParams.FLAG_SECURE
                 );
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    getWindow().setFlags(
+                        WindowManager.LayoutParams.FLAG_SECURE,
+                        WindowManager.LayoutParams.FLAG_SECURE
+                    );
+                }
+                Log.d(TAG, "✅ Screenshot/Recording Protection: ON");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to set SECURE flag", e);
             }
-            Log.d(TAG, "✅ Screenshot/Recording Protection: ON");
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }

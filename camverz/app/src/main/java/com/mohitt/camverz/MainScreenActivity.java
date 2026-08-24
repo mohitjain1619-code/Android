@@ -74,38 +74,47 @@ public class MainScreenActivity extends BaseActivity {
         applyWindowInsets(findViewById(R.id.top_nav_bar), findViewById(R.id.bottom_nav_bar));
 
         tokenManager = TokenManager.getInstance(this);
+        if (!tokenManager.isLoggedIn()) {
+            Log.w(TAG, "Session inactive on MainScreen launch. Redirecting to LoginActivity.");
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         api = ApiClient.getInstance(this).getApi();
         socket = SocketManager.getInstance();
 
-        if (tokenManager.isLoggedIn()) {
-            // Register current user on socket for private calls
-            try {
-                JSONObject obj = new JSONObject();
-                obj.put("uid", tokenManager.getUserId());
-                socket.emit("register-user", obj);
-            } catch (JSONException e) { e.printStackTrace(); }
-            
-            // Initialize global incoming call handler (works from any screen)
-            IncomingCallHandler.getInstance().init(getApplication(), socket);
+        // Register current user on socket for private calls
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put("uid", tokenManager.getUserId());
+            socket.emit("register-user", obj);
+        } catch (JSONException e) { e.printStackTrace(); }
+        
+        // Initialize global incoming call handler (works from any screen)
+        IncomingCallHandler.getInstance().init(getApplication(), socket);
 
-            // Sync user ad-free plan details
-            api.getMe().enqueue(new retrofit2.Callback<JsonObject>() {
-                @Override
-                public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        JsonObject data = response.body();
-                        if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
-                            JsonObject userObj = data.getAsJsonObject("user");
-                            boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
-                            tokenManager.savePlanIsAdFree(planIsAdFree);
-                        }
+        // Sync user ad-free plan details
+        api.getMe().enqueue(new retrofit2.Callback<JsonObject>() {
+            @Override
+            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
+                        JsonObject userObj = data.getAsJsonObject("user");
+                        boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
+                        tokenManager.savePlanIsAdFree(planIsAdFree);
                     }
+                } else if (response.code() == 401) {
+                    Log.w(TAG, "Sync failed: 401 Unauthorized. Redirecting to LoginActivity...");
+                    logout();
                 }
+            }
 
-                @Override
-                public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
-            });
-        }
+            @Override
+            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
+        });
 
         cardGay = findViewById(R.id.cardGay);
         cardLesbian = findViewById(R.id.cardLesbian);

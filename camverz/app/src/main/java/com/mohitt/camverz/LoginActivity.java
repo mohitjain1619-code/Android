@@ -88,25 +88,27 @@ public class LoginActivity extends AppCompatActivity {
             appSubtitle.animate().alpha(1f).setDuration(800).setStartDelay(350).start();
         }
 
-        // Button Micro-interaction
-        getStartedButton.setOnTouchListener((v, event) -> {
-            switch (event.getAction()) {
-                case android.view.MotionEvent.ACTION_DOWN:
-                    v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
-                    break;
-                case android.view.MotionEvent.ACTION_UP:
-                case android.view.MotionEvent.ACTION_CANCEL:
-                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
-                    break;
-            }
-            return false;
-        });
+        if (getStartedButton != null) {
+            // Button Micro-interaction
+            getStartedButton.setOnTouchListener((v, event) -> {
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        v.animate().scaleX(0.96f).scaleY(0.96f).setDuration(120).start();
+                        break;
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                        break;
+                }
+                return false;
+            });
 
-        getStartedButton.setOnClickListener(v -> {
-            Log.d(TAG, "🔐 Get Started button clicked");
-            showLoadingState();
-            signInWithGoogle();
-        });
+            getStartedButton.setOnClickListener(v -> {
+                Log.d(TAG, "🔐 Get Started button clicked");
+                showLoadingState();
+                signInWithGoogle();
+            });
+        }
 
         TextView tvTermsPrivacy = findViewById(R.id.tv_terms_privacy);
         if (tvTermsPrivacy != null) {
@@ -117,10 +119,12 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         TextView testerLoginLink = findViewById(R.id.tester_login_link);
-        testerLoginLink.setOnClickListener(v -> {
-            Log.d(TAG, "🔓 Tester login link clicked");
-            showTesterLoginDialog();
-        });
+        if (testerLoginLink != null) {
+            testerLoginLink.setOnClickListener(v -> {
+                Log.d(TAG, "🔓 Tester login link clicked");
+                showTesterLoginDialog();
+            });
+        }
 
         // Secret Developer Easter Egg: tap logo 5 times to reveal tester login link
         View logoHeroContainer = findViewById(R.id.logo_hero_container);
@@ -412,11 +416,13 @@ public class LoginActivity extends AppCompatActivity {
         final android.widget.EditText emailInput = new android.widget.EditText(this);
         emailInput.setHint("Tester Email");
         emailInput.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        emailInput.setText("tester@camverz.com");
         layout.addView(emailInput);
 
         final android.widget.EditText passwordInput = new android.widget.EditText(this);
         passwordInput.setHint("Password");
         passwordInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        passwordInput.setText("camverz_tester_2026");
         layout.addView(passwordInput);
 
         builder.setView(layout);
