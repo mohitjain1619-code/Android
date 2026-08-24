@@ -58,6 +58,27 @@ async function runMigrations() {
   try {
     console.log("🔄 Checking database migrations...");
     
+    // Check if users table exists (to detect fresh database)
+    const checkTable = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'users'
+      );
+    `);
+    const tableExists = checkTable.rows[0].exists;
+
+    if (!tableExists) {
+      console.log("🚀 Fresh database detected! Initializing base schema from schema.sql...");
+      const fs = require("fs");
+      const path = require("path");
+      const schemaPath = path.join(__dirname, "../../db/schema.sql");
+      const schemaSql = fs.readFileSync(schemaPath, "utf8");
+      
+      // Execute the schema SQL
+      await pool.query(schemaSql);
+      console.log("✅ Base schema imported successfully!");
+    }
+
     // 1. Add has_free_trial to users if not exists
     await pool.query(`
       ALTER TABLE users 
