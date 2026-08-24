@@ -64,8 +64,6 @@ public class ChatActivity extends BaseActivity {
     
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
-    private com.google.android.gms.ads.interstitial.InterstitialAd admobInterstitialAd;
-    private boolean isAdLoaded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,19 +96,9 @@ public class ChatActivity extends BaseActivity {
         toolbarUsername.setText(receiverName);
         AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
 
-        View.OnClickListener profileListener = v -> {
-            if (admobInterstitialAd != null && isAdLoaded) {
-                Log.d(TAG, "📺 Showing AdMob Interstitial on profile click");
-                admobInterstitialAd.show(ChatActivity.this);
-            } else {
-                navigateToProfileDirectly();
-            }
-        };
+        View.OnClickListener profileListener = v -> navigateToProfileDirectly();
         toolbarAvatar.setOnClickListener(profileListener);
         toolbarUsername.setOnClickListener(profileListener);
-
-        // Preload AdMob Interstitial (Meta/InMobi bid inside AdMob mediation)
-        loadAdMobInterstitial();
         
         videoCallBtn.setOnClickListener(v -> initiateCall(true));
         voiceCallBtn.setOnClickListener(v -> initiateCall(false));
@@ -265,9 +253,6 @@ public class ChatActivity extends BaseActivity {
                             chatId = data.get("chatId").getAsString();
                         }
                         loadMessages(); // reload to show sent message
-                        if (admobInterstitialAd != null && isAdLoaded) {
-                            admobInterstitialAd.show(ChatActivity.this);
-                        }
                     } else {
                         Toast.makeText(ChatActivity.this, "Failed to send", Toast.LENGTH_SHORT).show();
                     }
@@ -422,49 +407,6 @@ public class ChatActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         socket.off("new_message");
-        if (admobInterstitialAd != null) {
-            admobInterstitialAd.setFullScreenContentCallback(null);
-            admobInterstitialAd = null;
-        }
     }
 
-    private void loadAdMobInterstitial() {
-        if (tokenManager.isPlanAdFree() || isFinishing() || isDestroyed()) return;
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        com.google.android.gms.ads.interstitial.InterstitialAd.load(
-            this,
-            getString(R.string.admob_interstitial_ad_unit_id),
-            adRequest,
-            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@androidx.annotation.NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
-                    admobInterstitialAd = ad;
-                    isAdLoaded = true;
-                    Log.d(TAG, "✅ AdMob Interstitial loaded in ChatActivity");
-                    admobInterstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {
-                            admobInterstitialAd = null;
-                            isAdLoaded = false;
-                            navigateToProfileDirectly();
-                            loadAdMobInterstitial(); // preload next
-                        }
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(@androidx.annotation.NonNull com.google.android.gms.ads.AdError adError) {
-                            admobInterstitialAd = null;
-                            isAdLoaded = false;
-                            navigateToProfileDirectly();
-                        }
-                    });
-                }
-                @Override
-                public void onAdFailedToLoad(@androidx.annotation.NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    admobInterstitialAd = null;
-                    isAdLoaded = false;
-                    Log.w(TAG, "AdMob Interstitial failed to load in ChatActivity: " + loadAdError.getMessage());
-                }
-            }
-        );
-    }
 }
-
