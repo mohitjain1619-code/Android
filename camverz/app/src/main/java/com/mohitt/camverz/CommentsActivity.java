@@ -8,9 +8,17 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.rewarded.RewardedAd;
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import android.app.ProgressDialog;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -181,6 +189,19 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
             return;
         }
 
+        if (tokenManager.isPlanAdFree()) {
+            proceedToPostComment(commentText);
+        } else {
+            loadAndShowRewardedAd(() -> {
+                proceedToPostComment(commentText);
+            }, () -> {
+                // Fallback to post comment anyway if ad fails
+                proceedToPostComment(commentText);
+            });
+        }
+    }
+
+    private void proceedToPostComment(String commentText) {
         Map<String, String> body = new HashMap<>();
         body.put("text", commentText);
         if (replyingToCommentId != null) {
@@ -293,5 +314,39 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         Intent intent = new Intent(this, ProfileActivity.class);
         intent.putExtra("userId", userId);
         startActivity(intent);
+    }
+
+    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
+        AdRequest adRequest = new AdRequest.Builder().build();
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading ad...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        RewardedAd.load(this, 
+            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+            new RewardedAdLoadCallback() {
+                @Override
+                public void onAdLoaded(@NonNull RewardedAd ad) {
+                    progressDialog.dismiss();
+                    ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+                        @Override
+                        public void onAdDismissedFullScreenContent() {}
+                        @Override
+                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
+                            runOnUiThread(onFailure);
+                        }
+                    });
+                    ad.show(CommentsActivity.this, rewardItem -> {
+                        runOnUiThread(onSuccess);
+                    });
+                }
+
+                @Override
+                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                    progressDialog.dismiss();
+                    runOnUiThread(onFailure);
+                }
+            });
     }
 }
