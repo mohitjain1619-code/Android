@@ -105,6 +105,10 @@ public class MainScreenActivity extends BaseActivity {
                         JsonObject userObj = data.getAsJsonObject("user");
                         boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
                         tokenManager.savePlanIsAdFree(planIsAdFree);
+
+                        String planName = userObj.has("planName") && !userObj.get("planName").isJsonNull() ? userObj.get("planName").getAsString() : "";
+                        boolean hasActivePlan = !planName.isEmpty() && !planName.equalsIgnoreCase("free");
+                        tokenManager.saveHasActivePlan(hasActivePlan);
                     }
                 } else if (response.code() == 401) {
                     Log.w(TAG, "Sync failed: 401 Unauthorized. Redirecting to LoginActivity...");
@@ -536,7 +540,7 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void checkCallLimitsAndProceed(Runnable onPassed) {
-        if (tokenManager.isPlanAdFree()) {
+        if (tokenManager.isPlanAdFree() || tokenManager.hasActivePlan()) {
             onPassed.run();
             return;
         }
