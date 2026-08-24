@@ -549,7 +549,7 @@ public class MainScreenActivity extends BaseActivity {
         long secondsLeft = CallLimitManager.getFreeSecondsLeft(this);
         if (secondsLeft <= 0) {
             int tier = CallLimitManager.getRewardedTier(this);
-            if (tier == 1) {
+            if (tier == 1 || tier == 2) {
                 showWatchAdsDialog(onPassed);
             } else {
                 CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
@@ -576,16 +576,22 @@ public class MainScreenActivity extends BaseActivity {
 
     private void showWatchAdsDialog(Runnable onPassed) {
         int watched = CallLimitManager.getRewardedAdsWatched(this);
+        int currentTier = CallLimitManager.getRewardedTier(this);
+        String message = currentTier == 1 
+            ? "Daily free call limit reached.\n\nWatch 3 short video ads to get 5 more minutes of calling!\n\nAds Watched: " + watched + "/3"
+            : "Second call limit reached.\n\nWatch 3 more video ads to get another 5 minutes of calling!\n\nAds Watched: " + watched + "/3";
+
         new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Daily Limit Hit")
-            .setMessage("Daily free call limit reached.\n\nWatch 3 short video ads to get 5 more minutes of calling!\n\nAds Watched: " + watched + "/3")
+            .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("Watch Ad", (dialog, which) -> {
                 loadAndShowRewardedAd(() -> {
                     CallLimitManager.incrementRewardedAdsWatched(this);
                     int newWatched = CallLimitManager.getRewardedAdsWatched(this);
                     if (newWatched >= 3) {
-                        CallLimitManager.setRewardedTier(this, 2);
+                        int nextTier = currentTier + 1; // Tier 1 goes to 2, Tier 2 goes to 3
+                        CallLimitManager.setRewardedTier(this, nextTier);
                         CallLimitManager.addFreeSeconds(this, 300);
                         CallLimitManager.resetRewardedAdsWatched(this);
                         Toast.makeText(this, "Success! You received 5 extra minutes.", Toast.LENGTH_LONG).show();
