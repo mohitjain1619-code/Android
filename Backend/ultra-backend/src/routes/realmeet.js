@@ -10,6 +10,7 @@ function formatPost(r) {
   return {
     id: r.id,
     userId: r.user_id,
+    type: r.type,
     hostUserId: r.user_id, // For Party parity
     userName: r.user_name,
     hostName: r.user_name,

@@ -95,6 +95,19 @@
             android:name=".MainScreenActivity"
             android:exported="false" />
 
+        <!-- Story Creator Activity -->
+        <activity
+            android:name=".StoryCreatorActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <!-- Story Viewer Activity -->
+        <activity
+            android:name=".StoryViewerActivity"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:exported="false" />
+
         <!-- Connecting Activity -->
         <activity
             android:name=".ConnectingActivity"

@@ -217,6 +217,22 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS community_post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE;
     `);
 
+    // 15. Create Stories Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS stories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL,
+        media_url TEXT,
+        text_content TEXT,
+        text_color TEXT,
+        bg_gradient TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '24 hours')
+      );
+      CREATE INDEX IF NOT EXISTS idx_stories_expires_at ON stories(expires_at);
+    `);
+
     console.log("✅ Database migrations and speed indexing applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations or indexes:", err.message);

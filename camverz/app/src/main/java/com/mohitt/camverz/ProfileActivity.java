@@ -82,7 +82,9 @@ public class ProfileActivity extends BaseActivity {
     private ApiService api;
     private TokenManager tokenManager;
     private android.widget.FrameLayout nativeAdContainer;
-    private com.facebook.ads.NativeAd metaNativeAd;
+    private String activePlanDetails = "";
+    private LinearLayout subscriptionCardLayout;
+    private TextView tvCardPlanName, tvCardPlanExpiry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,6 +141,9 @@ public class ProfileActivity extends BaseActivity {
         otherUserActionsLayout = findViewById(R.id.other_user_actions_layout);
         sexPreferenceLayout = findViewById(R.id.sex_preference_layout);
         tvSexPreference = findViewById(R.id.tv_sex_preference);
+        subscriptionCardLayout = findViewById(R.id.subscription_card_layout);
+        tvCardPlanName = findViewById(R.id.tv_card_plan_name);
+        tvCardPlanExpiry = findViewById(R.id.tv_card_plan_expiry);
 
         if (sexPreferenceLayout != null) {
             sexPreferenceLayout.setOnClickListener(v -> {
@@ -612,7 +617,11 @@ public class ProfileActivity extends BaseActivity {
     private void updateProfileUI() {
         if (isBlocked || isBlockedByOther) return;
 
-        profileName.setText(visitedUser.getName());
+        String name = visitedUser.getName();
+        if (currentUserId.equals(visitedUserId) && tokenManager.hasActivePlan()) {
+            name = "👑 " + name;
+        }
+        profileName.setText(name);
         bio.setText(visitedUser.getBio());
         profileDetails.setText(String.format("%d, %s", getAge(visitedUser.getDob()), visitedUser.getCity()));
         
@@ -622,7 +631,7 @@ public class ProfileActivity extends BaseActivity {
         String customId = visitedUser.getCustomId();
         String idText = "ID: " + ((customId == null || customId.isEmpty()) ? (currentUserId.equals(visitedUserId) ? currentUserId.substring(0, 8) : "N/A") : customId);
         if (currentUserId.equals(visitedUserId) && visitedUser.getEmail() != null && !visitedUser.getEmail().isEmpty()) {
-            userId.setText(idText + "\n" + visitedUser.getEmail());
+            userId.setText(idText + "\n" + visitedUser.getEmail() + activePlanDetails);
         } else {
             userId.setText(idText);
         }
@@ -684,6 +693,12 @@ public class ProfileActivity extends BaseActivity {
             }
         } else {
             Glide.with(this).load(R.drawable.av1).into(profileImageView);
+        }
+
+        if (currentUserId.equals(visitedUserId) && tokenManager.hasActivePlan()) {
+            profileImageView.setBorderColor(Color.parseColor("#FFD700")); // Gold border for Premium users
+        } else {
+            profileImageView.setBorderColor(Color.parseColor("#00FFFF")); // Cyan border for standard users
         }
 
         if (sexPreferenceLayout != null && tvSexPreference != null) {
@@ -897,6 +912,71 @@ public class ProfileActivity extends BaseActivity {
 
                         if (currentUserId.equals(visitedUserId)) {
                             tokenManager.setSexPreference(visitedUser.getSexPreference());
+
+                            // Parse active plan details
+                            String planName = userObj.has("planName") && !userObj.get("planName").isJsonNull()
+                                    ? userObj.get("planName").getAsString() : "";
+
+                            // Check expiry
+                            boolean planNotExpired = false;
+                            String planExpiryText = "";
+                            if (userObj.has("planExpiresAt") && !userObj.get("planExpiresAt").isJsonNull()) {
+                                try {
+                                    String expiresAtStr = userObj.get("planExpiresAt").getAsString();
+                                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
+                                    sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                    java.util.Date expiresAt = sdf.parse(expiresAtStr);
+                                    if (expiresAt != null) {
+                                        if (expiresAt.after(new java.util.Date())) {
+                                            planNotExpired = true;
+                                            java.text.SimpleDateFormat localFormat = new java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault());
+                                            planExpiryText = " (Expires: " + localFormat.format(expiresAt) + ")";
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    android.util.Log.w("ProfileActivity", "Error formatting expiry: " + e.getMessage());
+                                }
+                            }
+
+                            boolean hasActivePlan = !planName.isEmpty() && !planName.equalsIgnoreCase("free") && planNotExpired;
+                            if (hasActivePlan) {
+                                activePlanDetails = "\nActive Plan: " + planName + planExpiryText;
+                                tokenManager.savePlanName(planName);
+                                tokenManager.saveHasActivePlan(true);
+                                boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
+                                tokenManager.savePlanIsAdFree(planIsAdFree);
+
+                                // Update subscription card view
+                                if (subscriptionCardLayout != null && tvCardPlanName != null && tvCardPlanExpiry != null) {
+                                    subscriptionCardLayout.setVisibility(View.VISIBLE);
+                                    tvCardPlanName.setText(planName);
+
+                                    // Parse exact expiry time in ms
+                                    try {
+                                        String expiresAtStr = userObj.get("planExpiresAt").getAsString();
+                                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
+                                        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                        java.util.Date expiresAt = sdf.parse(expiresAtStr);
+                                        if (expiresAt != null) {
+                                            tvCardPlanExpiry.setText(getRemainingTimeText(expiresAt.getTime()));
+                                        }
+                                    } catch (Exception e) {}
+                                }
+                            } else {
+                                activePlanDetails = "\nActive Plan: Free Member";
+                                tokenManager.savePlanName("");
+                                tokenManager.saveHasActivePlan(false);
+                                tokenManager.savePlanIsAdFree(false);
+
+                                if (subscriptionCardLayout != null) {
+                                    subscriptionCardLayout.setVisibility(View.GONE);
+                                }
+                            }
+                        } else {
+                            activePlanDetails = "";
+                            if (subscriptionCardLayout != null) {
+                                subscriptionCardLayout.setVisibility(View.GONE);
+                            }
                         }
 
                         // Set follower/following stats logic provided by backend
@@ -1024,58 +1104,26 @@ public class ProfileActivity extends BaseActivity {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
-    private void loadMetaNativeAd() {
-        // Ads disabled in main app
-    }
 
-    private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {
-        android.widget.FrameLayout adContainer = findViewById(R.id.metaNativeAdContainer);
-        if (adContainer == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(android.view.View.VISIBLE);
 
-        com.facebook.ads.NativeAdLayout adLayout = new com.facebook.ads.NativeAdLayout(this);
-        adLayout.setLayoutParams(new android.widget.FrameLayout.LayoutParams(
-                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-                android.widget.FrameLayout.LayoutParams.WRAP_CONTENT));
+    private String getRemainingTimeText(long expiryMs) {
+        long diffMs = expiryMs - System.currentTimeMillis();
+        if (diffMs <= 0) return "Expired";
 
-        android.widget.LinearLayout innerContainer = new android.widget.LinearLayout(this);
-        innerContainer.setOrientation(android.widget.LinearLayout.VERTICAL);
-        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        innerContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        long diffSec = diffMs / 1000;
+        long diffMin = diffSec / 60;
+        long diffHour = diffMin / 60;
+        long diffDay = diffHour / 24;
 
-        android.widget.TextView adHeadline = new android.widget.TextView(this);
-        adHeadline.setText(ad.getAdHeadline());
-        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
-        adHeadline.setTextSize(16);
-        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(adHeadline);
-
-        android.widget.TextView adBody = new android.widget.TextView(this);
-        adBody.setText(ad.getAdBodyText());
-        adBody.setTextColor(getResources().getColor(R.color.text_secondary));
-        adBody.setTextSize(12);
-        adBody.setPadding(0, dpToPx(4), 0, dpToPx(8));
-        innerContainer.addView(adBody);
-
-        android.widget.Button callToAction = new android.widget.Button(this);
-        callToAction.setText(ad.getAdCallToAction());
-        callToAction.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        callToAction.setTextColor(getResources().getColor(R.color.accent_primary));
-        callToAction.setTextSize(14);
-        callToAction.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(callToAction);
-
-        adLayout.addView(innerContainer);
-
-        java.util.List<android.view.View> clickableViews = new java.util.ArrayList<>();
-        clickableViews.add(adHeadline);
-        clickableViews.add(callToAction);
-        
-        com.facebook.ads.MediaView mediaView = new com.facebook.ads.MediaView(this);
-        ad.registerViewForInteraction(adLayout, mediaView, clickableViews);
-
-        adContainer.addView(adLayout);
+        if (diffDay > 0) {
+            long remainingHours = diffHour % 24;
+            return "⏱️ " + diffDay + " days " + remainingHours + " hours remaining";
+        } else if (diffHour > 0) {
+            long remainingMin = diffMin % 60;
+            return "⏱️ " + diffHour + " hours " + remainingMin + " minutes remaining";
+        } else {
+            return "⏱️ " + diffMin + " minutes remaining";
+        }
     }
 
     @Override

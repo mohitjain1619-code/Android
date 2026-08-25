@@ -18,6 +18,8 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.RecyclerView;
+import java.util.List;
 
 import com.google.gson.JsonObject;
 import com.mohitt.camverz.api.ApiClient;
@@ -64,6 +66,12 @@ public class MainScreenActivity extends BaseActivity {
     private com.google.android.gms.ads.AdView adView;
     private boolean isRewardedVideoAvailable = false;
     private String pendingCategory = "straight";
+    private boolean isAdLoading = false;
+    private Runnable currentAdSuccessCallback = null;
+    private Runnable currentAdFailureCallback = null;
+    private RecyclerView storiesRecyclerView;
+    private StoriesAdapter storiesAdapter;
+    private List<UserStories> userStoriesList = new java.util.ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,12 +111,46 @@ public class MainScreenActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
                         JsonObject userObj = data.getAsJsonObject("user");
-                        boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
-                        tokenManager.savePlanIsAdFree(planIsAdFree);
 
-                        String planName = userObj.has("planName") && !userObj.get("planName").isJsonNull() ? userObj.get("planName").getAsString() : "";
-                        boolean hasActivePlan = !planName.isEmpty() && !planName.equalsIgnoreCase("free");
+                        // Check planName
+                        String planName = userObj.has("planName") && !userObj.get("planName").isJsonNull()
+                                ? userObj.get("planName").getAsString() : "";
+
+                        // Check planExpiresAt — plan must not be expired
+                        boolean planNotExpired = false;
+                        if (userObj.has("planExpiresAt") && !userObj.get("planExpiresAt").isJsonNull()) {
+                            try {
+                                String expiresAtStr = userObj.get("planExpiresAt").getAsString();
+                                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
+                                sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                                java.util.Date expiresAt = sdf.parse(expiresAtStr);
+                                if (expiresAt != null && expiresAt.after(new java.util.Date())) {
+                                    planNotExpired = true;
+                                }
+                            } catch (Exception e) {
+                                Log.w(TAG, "Could not parse planExpiresAt: " + e.getMessage());
+                            }
+                        }
+
+                        boolean hasActivePlan = !planName.isEmpty() && !planName.equalsIgnoreCase("free") && planNotExpired;
+                        boolean planIsAdFree = hasActivePlan && userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
+
+                        tokenManager.savePlanIsAdFree(planIsAdFree);
                         tokenManager.saveHasActivePlan(hasActivePlan);
+                        tokenManager.savePlanName(planName);
+
+                        Log.d(TAG, "Plan sync: name=" + planName + ", adFree=" + planIsAdFree + ", active=" + hasActivePlan);
+
+                        runOnUiThread(() -> {
+                            if (tvUserName != null && tokenManager.getUserName() != null && !tokenManager.getUserName().isEmpty()) {
+                                String name = tokenManager.getUserName();
+                                if (hasActivePlan) {
+                                    name = "👑 " + name;
+                                }
+                                tvUserName.setText(name);
+                            }
+                        });
+                        preloadRewardedAd();
                     }
                 } else if (response.code() == 401) {
                     Log.w(TAG, "Sync failed: 401 Unauthorized. Redirecting to LoginActivity...");
@@ -140,7 +182,32 @@ public class MainScreenActivity extends BaseActivity {
         chipFriends = findViewById(R.id.chip_friends);
 
         if (tvUserName != null && tokenManager.getUserName() != null && !tokenManager.getUserName().isEmpty()) {
-            tvUserName.setText(tokenManager.getUserName());
+            String name = tokenManager.getUserName();
+            if (tokenManager.hasActivePlan()) {
+                name = "👑 " + name;
+            }
+            tvUserName.setText(name);
+        }
+        preloadRewardedAd();
+
+        storiesRecyclerView = findViewById(R.id.storiesRecyclerView);
+        if (storiesRecyclerView != null) {
+            storiesRecyclerView.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this, androidx.recyclerview.widget.LinearLayoutManager.HORIZONTAL, false));
+            storiesAdapter = new StoriesAdapter(this, userStoriesList, tokenManager.getUserEmail(), new StoriesAdapter.OnStoryActionListener() {
+                @Override
+                public void onStorySelected(UserStories us) {
+                    Intent intent = new Intent(MainScreenActivity.this, StoryViewerActivity.class);
+                    intent.putExtra("userStories", us);
+                    startActivity(intent);
+                }
+
+                @Override
+                public void onAddStorySelected() {
+                    Intent intent = new Intent(MainScreenActivity.this, StoryCreatorActivity.class);
+                    startActivity(intent);
+                }
+            });
+            storiesRecyclerView.setAdapter(storiesAdapter);
         }
 
         if (tvUserName != null) {
@@ -237,16 +304,51 @@ public class MainScreenActivity extends BaseActivity {
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
 
-        // Initialize AdMob SDK for ads
-        com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {});
-        com.facebook.ads.AudienceNetworkAds.initialize(this);
+        // Initialize ironSource LevelPlay SDK
+        String ironSourceAppKey = "16c31bfd5";
+        com.ironsource.mediationsdk.IronSource.init(this, ironSourceAppKey, 
+            com.ironsource.mediationsdk.IronSource.AD_UNIT.INTERSTITIAL, 
+            com.ironsource.mediationsdk.IronSource.AD_UNIT.REWARDED_VIDEO, 
+            com.ironsource.mediationsdk.IronSource.AD_UNIT.BANNER);
 
-        FrameLayout adContainer = findViewById(R.id.banner_ad_container);
-        if (adContainer != null) {
-            adContainer.setVisibility(View.GONE);
-        }
+        // Setup the global LevelPlay Rewarded Video listener
+        com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+            @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                Log.d(TAG, "ironSource Rewarded Video Available");
+            }
+            @Override public void onAdUnavailable() {
+                Log.d(TAG, "ironSource Rewarded Video Unavailable");
+            }
+            @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                Log.e(TAG, "ironSource Rewarded Show Failed: " + error.getErrorMessage());
+                if (currentAdFailureCallback != null) {
+                    runOnUiThread(currentAdFailureCallback);
+                    currentAdFailureCallback = null;
+                }
+            }
+            @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                Log.d(TAG, "ironSource Rewarded Video completed");
+                if (currentAdSuccessCallback != null) {
+                    runOnUiThread(currentAdSuccessCallback);
+                    currentAdSuccessCallback = null;
+                }
+            }
+            @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+        });
+    }
 
-        // AdMob is initialized, no LevelPlay/ironSource initialization anymore.
+    @Override
+    protected void onResume() {
+        super.onResume();
+        com.ironsource.mediationsdk.IronSource.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        com.ironsource.mediationsdk.IronSource.onPause(this);
     }
 
     private void addTouchScaleFeedback(View... views) {
@@ -350,6 +452,7 @@ public class MainScreenActivity extends BaseActivity {
             fetchUnreadNotificationsCount();
         }
         checkPreferenceSelection();
+        fetchActiveStories();
     }
 
     private void fetchUnreadNotificationsCount() {
@@ -540,7 +643,7 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void checkCallLimitsAndProceed(Runnable onPassed) {
-        if (tokenManager.isPlanAdFree() || tokenManager.hasActivePlan()) {
+        if (tokenManager.hasVideoCallPlan()) {
             onPassed.run();
             return;
         }
@@ -611,38 +714,52 @@ public class MainScreenActivity extends BaseActivity {
             .show();
     }
 
+    private void preloadRewardedAd() {
+        // ironSource handles rewarded video preloading automatically
+    }
+
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
-        progressDialog.setMessage("Loading ad...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            Log.d(TAG, "Showing ironSource rewarded video...");
+            currentAdSuccessCallback = onSuccess;
+            currentAdFailureCallback = onFailure;
+            com.ironsource.mediationsdk.IronSource.showRewardedVideo();
+        } else {
+            Log.w(TAG, "ironSource Rewarded video not ready.");
+            runOnUiThread(onFailure);
+        }
+    }
 
-        com.google.android.gms.ads.rewarded.RewardedAd.load(this, 
-            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
-            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
-                    progressDialog.dismiss();
-                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {}
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                            runOnUiThread(onFailure);
+    private void fetchActiveStories() {
+        if (!tokenManager.isLoggedIn()) return;
+        api.getActiveStories().enqueue(new retrofit2.Callback<JsonObject>() {
+            @Override
+            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("usersWithStories")) {
+                        com.google.gson.JsonArray arr = data.getAsJsonArray("usersWithStories");
+                        List<UserStories> activeStories = new java.util.ArrayList<>();
+                        com.google.gson.Gson gson = new com.google.gson.Gson();
+                        for (com.google.gson.JsonElement el : arr) {
+                            activeStories.add(gson.fromJson(el, UserStories.class));
                         }
-                    });
-                    ad.show(MainScreenActivity.this, rewardItem -> {
-                        runOnUiThread(onSuccess);
-                    });
+                        runOnUiThread(() -> {
+                            userStoriesList.clear();
+                            userStoriesList.addAll(activeStories);
+                            if (storiesAdapter != null) {
+                                storiesAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
                 }
+            }
 
-                @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    progressDialog.dismiss();
-                    runOnUiThread(onFailure);
-                }
-            });
+            @Override
+            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
+                Log.e("MainScreenActivity", "Fetch active stories failed", t);
+            }
+        });
     }
 
     private void loadBannerAd() {

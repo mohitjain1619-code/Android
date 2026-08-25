@@ -84,7 +84,7 @@ public class CreatePostActivity extends BaseActivity {
         RadioButton selectedCategory = findViewById(selectedCategoryId);
         String category = selectedCategory.getText().toString().toLowerCase();
 
-        if (tokenManager.isPlanAdFree()) {
+        if (tokenManager.isCommunityAdFree()) {
             proceedToUpload(text, category);
         } else {
             loadAndShowRewardedAd(() -> {

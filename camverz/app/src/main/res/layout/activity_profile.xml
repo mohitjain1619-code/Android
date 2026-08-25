@@ -202,6 +202,50 @@
                         android:visibility="gone"
                         app:backgroundTint="@null" />
 
+                    <!-- Luxury Subscription Plan Card -->
+                    <LinearLayout
+                        android:id="@+id/subscription_card_layout"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/bg_feature_chip"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:visibility="gone">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:src="@drawable/ic_verified_badge"
+                                app:tint="#FFD700" />
+
+                            <TextView
+                                android:id="@+id/tv_card_plan_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:text="Premium VIP Pass" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tv_card_plan_expiry"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textColor="#E2E8F0"
+                            android:textSize="12sp"
+                            android:text="⏱️ Loading plan status..." />
+                    </LinearLayout>
+
                     <!-- Stats Section Pills -->
                     <LinearLayout
                         android:layout_width="match_parent"

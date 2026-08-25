@@ -155,15 +155,17 @@ dependencies {
     // implementation 'com.applovin.mediation:inmobi-adapter:+'
     // implementation 'com.applovin.mediation:bytedance-adapter:+'
 
-    // Google Mobile Ads (AdMob) SDK — Primary Mediation Hub
-    // Meta, InMobi bidding happens inside AdMob mediation (configured on AdMob console).
+    // Google Mobile Ads (AdMob) SDK (Still needed as a dependency for the AdMob LevelPlay adapter)
     implementation 'com.google.android.gms:play-services-ads:23.2.0'
-    // Meta Audience Network adapter — bidding partner inside AdMob mediation
-    implementation 'com.google.ads.mediation:facebook:6.22.0.0'
     implementation 'com.facebook.android:audience-network-sdk:6.22.0'
-    // InMobi adapter — bidding partner inside AdMob mediation for Tier-2/3 countries
-    implementation 'com.google.ads.mediation:inmobi:10.7.5.0'
-    implementation 'com.inmobi.monetization:inmobi-ads-kotlin:10.7.5'
+
+    // ironSource (LevelPlay) SDK - Main Mediation SDK
+    implementation 'com.ironsource.sdk:mediationsdk:8.1.0'
+
+    // LevelPlay adapters for bidding networks
+    implementation 'com.ironsource.adapters:admobadapter:4.3.49'
+    implementation 'com.ironsource.adapters:facebookadapter:4.3.47'
+    implementation 'com.ironsource.adapters:unityadsadapter:4.3.38'
     implementation 'androidx.media3:media3-exoplayer:1.4.1'
     implementation 'androidx.browser:browser:1.8.0'
 

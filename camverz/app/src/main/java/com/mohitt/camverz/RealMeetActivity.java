@@ -60,7 +60,10 @@ public class RealMeetActivity extends BaseActivity {
     private static final String KEY_LAST_INTERSTITIAL_TIME = "last_realmeet_interstitial_time";
     private static final long INTERSTITIAL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-    private enum Tab { REAL_MEET, FANTASY, PARTY, REQUESTS, PROFILE }
+    private enum Tab {
+        REAL_MEET, FANTASY, PARTY, REQUESTS, PROFILE
+    }
+
     private Tab currentTab = Tab.REAL_MEET;
 
     private boolean isCityFilterActive = false;
@@ -114,7 +117,7 @@ public class RealMeetActivity extends BaseActivity {
     // Interstitial ad timer
     private final Handler interstitialAdHandler = new Handler(Looper.getMainLooper());
     private Runnable interstitialAdRunnable;
-    private com.google.android.gms.ads.interstitial.InterstitialAd mInterstitialAd;
+    // ironSource Interstitial uses static helper methods, no member variable needed
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -174,40 +177,53 @@ public class RealMeetActivity extends BaseActivity {
         profileRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         if (savedPartiesRecyclerView != null) {
             savedPartiesRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-            savedPartiesAdapter = new PartyAdapter(this, savedPartiesList, currentUserId, new PartyAdapter.OnPartyActionListener() {
-                @Override
-                public void onJoinPartyClicked(PartyPost post) {
-                    openSendRequestModal(post.getId(), "Party: " + post.getPurpose(), post.getHostUserId(), post.getHostName());
-                }
+            savedPartiesAdapter = new PartyAdapter(this, savedPartiesList, currentUserId,
+                    new PartyAdapter.OnPartyActionListener() {
+                        @Override
+                        public void onJoinPartyClicked(PartyPost post) {
+                            openSendRequestModal(post.getId(), "Party: " + post.getPurpose(), post.getHostUserId(),
+                                    post.getHostName());
+                        }
 
-                @Override
-                public void onDeletePartyClicked(PartyPost post) {
-                    store.deletePartyPost(post.getId());
-                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
-                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                        @Override
+                        public void onDeletePartyClicked(PartyPost post) {
+                            store.deletePartyPost(post.getId());
+                            api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                                @Override
+                                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                }
+
+                                @Override
+                                public void onFailure(Call<JsonObject> call, Throwable t) {
+                                }
+                            });
+                            updateProfileUI();
+                        }
+
+                        @Override
+                        public void onSavePartyClicked(PartyPost post) {
+                            handleToggleSaveParty(post);
+                        }
                     });
-                    updateProfileUI();
-                }
-
-                @Override
-                public void onSavePartyClicked(PartyPost post) {
-                    handleToggleSaveParty(post);
-                }
-            });
             savedPartiesRecyclerView.setAdapter(savedPartiesAdapter);
         }
 
         // Return to Random Video Calling listener
         btnReturnToVideo.setOnClickListener(v -> finish());
-        if (btnHeaderRequests != null) btnHeaderRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
-        if (btnHeaderInbox != null) btnHeaderInbox.setOnClickListener(v -> startActivity(new Intent(this, CommunityInboxActivity.class)));
+        if (btnHeaderRequests != null)
+            btnHeaderRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
+        if (btnHeaderInbox != null)
+            btnHeaderInbox.setOnClickListener(v -> startActivity(new Intent(this, CommunityInboxActivity.class)));
 
         // Dock Tab click listeners
-        if (dockTabMeet != null) dockTabMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));
-        if (dockTabFantasy != null) dockTabFantasy.setOnClickListener(v -> switchTab(Tab.FANTASY));
-        if (dockTabParty != null) dockTabParty.setOnClickListener(v -> switchTab(Tab.PARTY));
-        if (dockTabProfile != null) dockTabProfile.setOnClickListener(v -> switchTab(Tab.PROFILE));
+        if (dockTabMeet != null)
+            dockTabMeet.setOnClickListener(v -> switchTab(Tab.REAL_MEET));
+        if (dockTabFantasy != null)
+            dockTabFantasy.setOnClickListener(v -> switchTab(Tab.FANTASY));
+        if (dockTabParty != null)
+            dockTabParty.setOnClickListener(v -> switchTab(Tab.PARTY));
+        if (dockTabProfile != null)
+            dockTabProfile.setOnClickListener(v -> switchTab(Tab.PROFILE));
 
         // Notifications button
         View btnHeaderNotifications = findViewById(R.id.btnHeaderNotifications);
@@ -221,7 +237,8 @@ public class RealMeetActivity extends BaseActivity {
         if (etSearch != null) {
             etSearch.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
 
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -230,7 +247,8 @@ public class RealMeetActivity extends BaseActivity {
                 }
 
                 @Override
-                public void afterTextChanged(Editable s) {}
+                public void afterTextChanged(Editable s) {
+                }
             });
         }
 
@@ -242,13 +260,14 @@ public class RealMeetActivity extends BaseActivity {
         });
 
         chipFilterCity.setOnClickListener(v -> {
-            if (!tokenManager.isPlanAdFree()) {
+            if (!tokenManager.hasCommunityPlan()) {
                 new androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("Premium Feature 🏙️")
-                        .setMessage("Filtering posts by city is a Premium feature. Please upgrade your subscription to unlock local matching!")
-                        .setPositiveButton("Upgrade Now", (dialog, which) -> {
+                        .setTitle("Access Required")
+                        .setMessage("You don't have access to local city filtering. Tap OK to learn more.")
+                        .setPositiveButton("OK", (dialog, which) -> {
                             try {
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com/pricing"));
+                                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                                        android.net.Uri.parse("https://camverz.com"));
                                 startActivity(browserIntent);
                             } catch (Exception e) {
                                 Toast.makeText(this, "Could not open browser", Toast.LENGTH_SHORT).show();
@@ -271,12 +290,41 @@ public class RealMeetActivity extends BaseActivity {
         // FAB listener
         fabCreate.setOnClickListener(v -> onFabClicked());
 
-        // Initialize AdMob SDK for ads in this activity
-        if (!tokenManager.isPlanAdFree()) {
-            com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
-                Log.d(TAG, "AdMob SDK initialized for RealMeetActivity");
-                preloadInterstitialAd();
+        // Initialize ironSource LevelPlay SDK Interstitial Listener in this activity
+        if (!tokenManager.isCommunityAdFree()) {
+            com.ironsource.mediationsdk.IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
+                @Override
+                public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    Log.d(TAG, "ironSource Interstitial ready");
+                }
+
+                @Override
+                public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
+                    Log.w(TAG, "ironSource Interstitial failed to load: " + error.getErrorMessage());
+                }
+
+                @Override
+                public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                @Override
+                public void onAdShowSuccess(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                @Override
+                public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    Log.e(TAG, "ironSource Interstitial show failed: " + error.getErrorMessage());
+                    com.ironsource.mediationsdk.IronSource.loadInterstitial();
+                }
+
+                @Override
+                public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                @Override
+                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    Log.d(TAG, "ironSource Interstitial closed");
+                    com.ironsource.mediationsdk.IronSource.loadInterstitial();
+                }
             });
+            preloadInterstitialAd();
         }
 
         setupSocketListeners();
@@ -328,11 +376,13 @@ public class RealMeetActivity extends BaseActivity {
                         String applicantName = obj.optString("applicantName");
                         if (currentUserId != null && currentUserId.equalsIgnoreCase(posterId)) {
                             runOnUiThread(() -> {
-                                Toast.makeText(RealMeetActivity.this, "📩 Live Meet Request from " + applicantName + "!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(RealMeetActivity.this,
+                                        "📩 Live Meet Request from " + applicantName + "!", Toast.LENGTH_LONG).show();
                                 fetchFeedFromServer();
                             });
                         }
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                 }
             });
 
@@ -379,7 +429,8 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {}
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+            }
         });
 
         api.getRealMeetServerRequests().enqueue(new Callback<JsonObject>() {
@@ -401,12 +452,14 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {}
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+            }
         });
     }
 
     private void fetchUserProfileDetails() {
-        if (currentUserId == null || currentUserId.isEmpty()) return;
+        if (currentUserId == null || currentUserId.isEmpty())
+            return;
         api.getMe().enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -428,19 +481,22 @@ public class RealMeetActivity extends BaseActivity {
                         }
                         runOnUiThread(() -> {
                             updateProfileUI();
-                            if (isCityFilterActive) loadCurrentTabFeed();
+                            if (isCityFilterActive)
+                                loadCurrentTabFeed();
                         });
                     }
                 }
             }
 
             @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {}
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+            }
         });
     }
 
     private int calculateAgeFromDob(String dob) {
-        if (dob == null || dob.isEmpty()) return 22;
+        if (dob == null || dob.isEmpty())
+            return 22;
         try {
             String[] parts = dob.split("/");
             if (parts.length == 3) {
@@ -456,7 +512,9 @@ public class RealMeetActivity extends BaseActivity {
                 }
                 return Math.max(18, age);
             }
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return 22;
     }
 
@@ -482,10 +540,14 @@ public class RealMeetActivity extends BaseActivity {
             }
         }
 
-        if (tvTextMeet != null) tvTextMeet.setTextColor(tab == Tab.REAL_MEET ? Color.WHITE : Color.parseColor("#8E8E93"));
-        if (tvTextFantasy != null) tvTextFantasy.setTextColor(tab == Tab.FANTASY ? Color.WHITE : Color.parseColor("#8E8E93"));
-        if (tvTextParty != null) tvTextParty.setTextColor(tab == Tab.PARTY ? Color.WHITE : Color.parseColor("#8E8E93"));
-        if (tvTextProfile != null) tvTextProfile.setTextColor(tab == Tab.PROFILE ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextMeet != null)
+            tvTextMeet.setTextColor(tab == Tab.REAL_MEET ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextFantasy != null)
+            tvTextFantasy.setTextColor(tab == Tab.FANTASY ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextParty != null)
+            tvTextParty.setTextColor(tab == Tab.PARTY ? Color.WHITE : Color.parseColor("#8E8E93"));
+        if (tvTextProfile != null)
+            tvTextProfile.setTextColor(tab == Tab.PROFILE ? Color.WHITE : Color.parseColor("#8E8E93"));
 
         cityFilterContainer.setVisibility(tab == Tab.REAL_MEET ? View.VISIBLE : View.GONE);
         profileContainer.setVisibility(tab == Tab.PROFILE ? View.VISIBLE : View.GONE);
@@ -505,12 +567,15 @@ public class RealMeetActivity extends BaseActivity {
     }
 
     private void updateFilterChipsUI() {
-        chipFilterGlobal.setBackgroundResource(isCityFilterActive ? R.drawable.bg_luxury_tab_unselected : R.drawable.bg_luxury_tab_selected);
+        chipFilterGlobal.setBackgroundResource(
+                isCityFilterActive ? R.drawable.bg_luxury_tab_unselected : R.drawable.bg_luxury_tab_selected);
         chipFilterGlobal.setTextColor(isCityFilterActive ? Color.parseColor("#8E8E93") : Color.BLACK);
 
-        String cityText = (currentUserCity != null && !currentUserCity.isEmpty()) ? "🏙️ In " + currentUserCity : "🏙️ In My City";
+        String cityText = (currentUserCity != null && !currentUserCity.isEmpty()) ? "🏙️ In " + currentUserCity
+                : "🏙️ In My City";
         chipFilterCity.setText(cityText);
-        chipFilterCity.setBackgroundResource(isCityFilterActive ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
+        chipFilterCity.setBackgroundResource(
+                isCityFilterActive ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
         chipFilterCity.setTextColor(isCityFilterActive ? Color.BLACK : Color.parseColor("#8E8E93"));
     }
 
@@ -520,7 +585,8 @@ public class RealMeetActivity extends BaseActivity {
             List<RealMeetPost> allPosts = store.getRealMeetPosts();
             List<RealMeetPost> filtered = new ArrayList<>();
             for (RealMeetPost p : allPosts) {
-                boolean cityMatches = !isCityFilterActive || (currentUserCity != null && currentUserCity.equalsIgnoreCase(p.getCity()));
+                boolean cityMatches = !isCityFilterActive
+                        || (currentUserCity != null && currentUserCity.equalsIgnoreCase(p.getCity()));
                 boolean searchMatches = searchQuery.isEmpty() ||
                         (p.getPurpose() != null && p.getPurpose().toLowerCase().contains(searchQuery)) ||
                         (p.getLocation() != null && p.getLocation().toLowerCase().contains(searchQuery)) ||
@@ -532,25 +598,33 @@ public class RealMeetActivity extends BaseActivity {
             }
             if (filtered.isEmpty()) {
                 emptyView.setVisibility(View.VISIBLE);
-                tvEmptyText.setText(isCityFilterActive ? "No Real Meet posts in " + currentUserCity + " yet." : "No Real Meet posts available right now.");
+                tvEmptyText.setText(isCityFilterActive ? "No Real Meet posts in " + currentUserCity + " yet."
+                        : "No Real Meet posts available right now.");
             }
-            RealMeetAdapter adapter = new RealMeetAdapter(this, filtered, currentUserId, new RealMeetAdapter.OnPostActionListener() {
-                @Override
-                public void onConnectClicked(RealMeetPost post) {
-                    openSendRequestModal(post.getId(), post.getPurpose() + " at " + post.getLocation(), post.getUserId(), post.getUserName());
-                }
+            RealMeetAdapter adapter = new RealMeetAdapter(this, filtered, currentUserId,
+                    new RealMeetAdapter.OnPostActionListener() {
+                        @Override
+                        public void onConnectClicked(RealMeetPost post) {
+                            openSendRequestModal(post.getId(), post.getPurpose() + " at " + post.getLocation(),
+                                    post.getUserId(), post.getUserName());
+                        }
 
-                @Override
-                public void onDeleteClicked(RealMeetPost post) {
-                    store.deleteRealMeetPost(post.getId());
-                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
-                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                        @Override
+                        public void onDeleteClicked(RealMeetPost post) {
+                            store.deleteRealMeetPost(post.getId());
+                            api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                                @Override
+                                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                }
+
+                                @Override
+                                public void onFailure(Call<JsonObject> call, Throwable t) {
+                                }
+                            });
+                            loadCurrentTabFeed();
+                            Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
+                        }
                     });
-                    loadCurrentTabFeed();
-                    Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
-                }
-            });
             recyclerView.setAdapter(adapter);
 
         } else if (currentTab == Tab.PARTY) {
@@ -569,35 +643,46 @@ public class RealMeetActivity extends BaseActivity {
                 emptyView.setVisibility(View.VISIBLE);
                 tvEmptyText.setText("No parties hosted right now matching search.");
             }
-            PartyAdapter adapter = new PartyAdapter(this, filtered, currentUserId, new PartyAdapter.OnPartyActionListener() {
-                @Override
-                public void onJoinPartyClicked(PartyPost post) {
-                    if ("female only".equalsIgnoreCase(post.getTargetGender())) {
-                        boolean isFemale = currentUserGender != null && currentUserGender.toLowerCase().startsWith("f");
-                        boolean isVerified = tokenManager.isVerified();
-                        if (!isFemale || !isVerified) {
-                            Toast.makeText(RealMeetActivity.this, "🔒 Only verified females can join this party event.", Toast.LENGTH_LONG).show();
-                            return;
+            PartyAdapter adapter = new PartyAdapter(this, filtered, currentUserId,
+                    new PartyAdapter.OnPartyActionListener() {
+                        @Override
+                        public void onJoinPartyClicked(PartyPost post) {
+                            if ("female only".equalsIgnoreCase(post.getTargetGender())) {
+                                boolean isFemale = currentUserGender != null
+                                        && currentUserGender.toLowerCase().startsWith("f");
+                                boolean isVerified = tokenManager.isVerified();
+                                if (!isFemale || !isVerified) {
+                                    Toast.makeText(RealMeetActivity.this,
+                                            "🔒 Only verified females can join this party event.", Toast.LENGTH_LONG)
+                                            .show();
+                                    return;
+                                }
+                            }
+                            openSendRequestModal(post.getId(), "Party: " + post.getPurpose(), post.getHostUserId(),
+                                    post.getHostName());
                         }
-                    }
-                    openSendRequestModal(post.getId(), "Party: " + post.getPurpose(), post.getHostUserId(), post.getHostName());
-                }
 
-                @Override
-                public void onDeletePartyClicked(PartyPost post) {
-                    store.deletePartyPost(post.getId());
-                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
-                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                        @Override
+                        public void onDeletePartyClicked(PartyPost post) {
+                            store.deletePartyPost(post.getId());
+                            api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                                @Override
+                                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                }
+
+                                @Override
+                                public void onFailure(Call<JsonObject> call, Throwable t) {
+                                }
+                            });
+                            loadCurrentTabFeed();
+                            Toast.makeText(RealMeetActivity.this, "Party deleted", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onSavePartyClicked(PartyPost post) {
+                            handleToggleSaveParty(post);
+                        }
                     });
-                    loadCurrentTabFeed();
-                    Toast.makeText(RealMeetActivity.this, "Party deleted", Toast.LENGTH_SHORT).show();
-                }
-                @Override
-                public void onSavePartyClicked(PartyPost post) {
-                    handleToggleSaveParty(post);
-                }
-            });
             recyclerView.setAdapter(adapter);
 
         } else if (currentTab == Tab.FANTASY) {
@@ -607,7 +692,8 @@ public class RealMeetActivity extends BaseActivity {
                 boolean searchMatches = searchQuery.isEmpty() ||
                         (p.getDescription() != null && p.getDescription().toLowerCase().contains(searchQuery)) ||
                         (p.getInterests() != null && p.getInterests().toLowerCase().contains(searchQuery)) ||
-                        (p.getRelationshipStatus() != null && p.getRelationshipStatus().toLowerCase().contains(searchQuery));
+                        (p.getRelationshipStatus() != null
+                                && p.getRelationshipStatus().toLowerCase().contains(searchQuery));
                 if (searchMatches) {
                     filtered.add(p);
                 }
@@ -616,30 +702,38 @@ public class RealMeetActivity extends BaseActivity {
                 emptyView.setVisibility(View.VISIBLE);
                 tvEmptyText.setText("No fantasy posts matching search.");
             }
-            FantasyAdapter adapter = new FantasyAdapter(this, filtered, currentUserId, new FantasyAdapter.OnFantasyActionListener() {
-                @Override
-                public void onFantasyConnectClicked(FantasyPost post) {
-                    openSendRequestModal(post.getId(), "Fantasy: " + post.getInterests(), post.getUserId(), post.getUserName());
-                }
+            FantasyAdapter adapter = new FantasyAdapter(this, filtered, currentUserId,
+                    new FantasyAdapter.OnFantasyActionListener() {
+                        @Override
+                        public void onFantasyConnectClicked(FantasyPost post) {
+                            openSendRequestModal(post.getId(), "Fantasy: " + post.getInterests(), post.getUserId(),
+                                    post.getUserName());
+                        }
 
-                @Override
-                public void onDeleteFantasyClicked(FantasyPost post) {
-                    store.deleteFantasyPost(post.getId());
-                    api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
-                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                        @Override
+                        public void onDeleteFantasyClicked(FantasyPost post) {
+                            store.deleteFantasyPost(post.getId());
+                            api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                                @Override
+                                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                }
+
+                                @Override
+                                public void onFailure(Call<JsonObject> call, Throwable t) {
+                                }
+                            });
+                            loadCurrentTabFeed();
+                            Toast.makeText(RealMeetActivity.this, "Fantasy deleted", Toast.LENGTH_SHORT).show();
+                        }
                     });
-                    loadCurrentTabFeed();
-                    Toast.makeText(RealMeetActivity.this, "Fantasy deleted", Toast.LENGTH_SHORT).show();
-                }
-            });
             recyclerView.setAdapter(adapter);
 
         } else if (currentTab == Tab.REQUESTS) {
             List<RealMeetRequest> allRequests = store.getMeetRequests();
             List<RealMeetRequest> myIncomingRequests = new ArrayList<>();
             for (RealMeetRequest r : allRequests) {
-                if (currentUserId == null || r.getPosterUserId() == null || currentUserId.equalsIgnoreCase(r.getPosterUserId()) || r.getPosterUserId().isEmpty()) {
+                if (currentUserId == null || r.getPosterUserId() == null
+                        || currentUserId.equalsIgnoreCase(r.getPosterUserId()) || r.getPosterUserId().isEmpty()) {
                     myIncomingRequests.add(r);
                 }
             }
@@ -647,51 +741,59 @@ public class RealMeetActivity extends BaseActivity {
                 emptyView.setVisibility(View.VISIBLE);
                 tvEmptyText.setText("No incoming meet requests right now.");
             }
-            MeetRequestAdapter adapter = new MeetRequestAdapter(this, myIncomingRequests, new MeetRequestAdapter.OnRequestActionListener() {
-                @Override
-                public void onStartCallClicked(RealMeetRequest request) {
-                    Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
-                    intent.putExtra("targetUserId", request.getApplicantUserId());
-                    intent.putExtra("targetUserName", request.getApplicantName());
-                    intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
-                    intent.putExtra("contactPreference", "Private Video Call");
-                    startActivity(intent);
-                }
+            MeetRequestAdapter adapter = new MeetRequestAdapter(this, myIncomingRequests,
+                    new MeetRequestAdapter.OnRequestActionListener() {
+                        @Override
+                        public void onStartCallClicked(RealMeetRequest request) {
+                            Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
+                            intent.putExtra("targetUserId", request.getApplicantUserId());
+                            intent.putExtra("targetUserName", request.getApplicantName());
+                            intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
+                            intent.putExtra("contactPreference", "Private Video Call");
+                            startActivity(intent);
+                        }
 
-                @Override
-                public void onOpenChatClicked(RealMeetRequest request) {
-                    Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
-                    intent.putExtra("targetUserId", request.getApplicantUserId());
-                    intent.putExtra("targetUserName", request.getApplicantName());
-                    intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
-                    intent.putExtra("contactPreference", request.getContactPreference());
-                    startActivity(intent);
-                }
+                        @Override
+                        public void onOpenChatClicked(RealMeetRequest request) {
+                            Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
+                            intent.putExtra("targetUserId", request.getApplicantUserId());
+                            intent.putExtra("targetUserName", request.getApplicantName());
+                            intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
+                            intent.putExtra("contactPreference", request.getContactPreference());
+                            startActivity(intent);
+                        }
 
-                @Override
-                public void onToggleAcceptClicked(RealMeetRequest request) {
-                    String newStatus = "ACCEPTED".equalsIgnoreCase(request.getStatus()) ? "PENDING" : "ACCEPTED";
-                    store.updateRequestStatus(request.getId(), newStatus);
+                        @Override
+                        public void onToggleAcceptClicked(RealMeetRequest request) {
+                            String newStatus = "ACCEPTED".equalsIgnoreCase(request.getStatus()) ? "PENDING"
+                                    : "ACCEPTED";
+                            store.updateRequestStatus(request.getId(), newStatus);
 
-                    Map<String, Object> body = new HashMap<>();
-                    body.put("requestId", request.getId());
-                    body.put("status", newStatus);
-                    api.updateRealMeetServerRequestStatus(body).enqueue(new Callback<JsonObject>() {
-                        @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                        @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                            Map<String, Object> body = new HashMap<>();
+                            body.put("requestId", request.getId());
+                            body.put("status", newStatus);
+                            api.updateRealMeetServerRequestStatus(body).enqueue(new Callback<JsonObject>() {
+                                @Override
+                                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                                }
+
+                                @Override
+                                public void onFailure(Call<JsonObject> call, Throwable t) {
+                                }
+                            });
+
+                            loadCurrentTabFeed();
+                            Toast.makeText(RealMeetActivity.this, "Request status updated to " + newStatus,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onDeleteRequestClicked(RealMeetRequest request) {
+                            store.deleteMeetRequest(request.getId());
+                            loadCurrentTabFeed();
+                            Toast.makeText(RealMeetActivity.this, "Request deleted", Toast.LENGTH_SHORT).show();
+                        }
                     });
-
-                    loadCurrentTabFeed();
-                    Toast.makeText(RealMeetActivity.this, "Request status updated to " + newStatus, Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onDeleteRequestClicked(RealMeetRequest request) {
-                    store.deleteMeetRequest(request.getId());
-                    loadCurrentTabFeed();
-                    Toast.makeText(RealMeetActivity.this, "Request deleted", Toast.LENGTH_SHORT).show();
-                }
-            });
             recyclerView.setAdapter(adapter);
         }
     }
@@ -722,7 +824,7 @@ public class RealMeetActivity extends BaseActivity {
 
         tvDialogSub.setText("Connecting with " + (posterName != null ? posterName : "Post Owner"));
 
-        final String[] selectedPref = {"Private Video Call"};
+        final String[] selectedPref = { "Private Video Call" };
 
         chipIce1.setOnClickListener(v -> etRequestMessage.setText(chipIce1.getText().toString()));
         chipIce2.setOnClickListener(v -> etRequestMessage.setText(chipIce2.getText().toString()));
@@ -768,8 +870,7 @@ public class RealMeetActivity extends BaseActivity {
                     "PENDING",
                     currentUserGender,
                     tokenManager.isVerified(),
-                    System.currentTimeMillis()
-            );
+                    System.currentTimeMillis());
 
             store.addMeetRequest(req);
 
@@ -777,20 +878,25 @@ public class RealMeetActivity extends BaseActivity {
             reqPayload.put("request", req);
             api.createRealMeetServerRequest(reqPayload).enqueue(new Callback<JsonObject>() {
                 @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                }
 
                 @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {}
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                }
             });
 
             dialog.dismiss();
-            Toast.makeText(this, "📩 Request sent to " + (posterName != null ? posterName : "post owner") + "!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "📩 Request sent to " + (posterName != null ? posterName : "post owner") + "!",
+                    Toast.LENGTH_LONG).show();
         });
 
         dialog.show();
     }
 
-    public void openFullPostDetailDialog(String name, int age, String city, String title, String venue, String time, String description, String avatar, String posterUserId, String postId, String gender, boolean isVerified, String sexPreference, String targetGender, String relationshipStatus) {
+    public void openFullPostDetailDialog(String name, int age, String city, String title, String venue, String time,
+            String description, String avatar, String posterUserId, String postId, String gender, boolean isVerified,
+            String sexPreference, String targetGender, String relationshipStatus) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_view_full_post, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
 
@@ -806,7 +912,7 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnFullDialogAction = dialogView.findViewById(R.id.btnFullDialogAction);
 
         tvFullNameAge.setText(TextHelper.getPostHeader(this, name, null, isVerified, null));
-        
+
         SpannableStringBuilder meta = new SpannableStringBuilder();
         meta.append(age + " Yrs");
         if (gender != null && !gender.isEmpty()) {
@@ -815,17 +921,20 @@ public class RealMeetActivity extends BaseActivity {
             String genLower = gender.toLowerCase();
             if (genLower.startsWith("f")) {
                 meta.append("♀️");
-                meta.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, meta.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                meta.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, meta.length(),
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             } else {
                 meta.append("♂️");
-                meta.setSpan(new ForegroundColorSpan(Color.parseColor("#007AFF")), start, meta.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                meta.setSpan(new ForegroundColorSpan(Color.parseColor("#007AFF")), start, meta.length(),
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
         if (sexPreference != null && !sexPreference.isEmpty()) {
             meta.append(" • ");
             int start = meta.length();
             meta.append(sexPreference.toUpperCase());
-            meta.setSpan(new ForegroundColorSpan(Color.parseColor("#00E5FF")), start, meta.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            meta.setSpan(new ForegroundColorSpan(Color.parseColor("#00E5FF")), start, meta.length(),
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         if (relationshipStatus != null && !relationshipStatus.isEmpty()) {
             meta.append(" • ").append(relationshipStatus.toUpperCase());
@@ -833,7 +942,7 @@ public class RealMeetActivity extends BaseActivity {
         if (city != null && !city.isEmpty()) {
             meta.append(" • 📍 ").append(city);
         }
-        
+
         tvFullSubtext.setText(meta);
 
         tvFullTitle.setText(title != null ? title : "Community Post");
@@ -849,6 +958,20 @@ public class RealMeetActivity extends BaseActivity {
         }
 
         AvatarHelper.loadAvatar(this, null, avatar, name, ivFullAvatar);
+
+        ivFullAvatar.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(RealMeetActivity.this, ProfileActivity.class);
+            intent.putExtra("userId", posterUserId);
+            startActivity(intent);
+        });
+
+        tvFullNameAge.setOnClickListener(v -> {
+            dialog.dismiss();
+            Intent intent = new Intent(RealMeetActivity.this, ProfileActivity.class);
+            intent.putExtra("userId", posterUserId);
+            startActivity(intent);
+        });
 
         btnCloseFullDialog.setOnClickListener(v -> dialog.dismiss());
 
@@ -884,14 +1007,24 @@ public class RealMeetActivity extends BaseActivity {
 
         if (isSaved) {
             api.unsaveParty(postId).enqueue(new Callback<JsonObject>() {
-                @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                }
             });
             Toast.makeText(this, "Removed from saved parties", Toast.LENGTH_SHORT).show();
         } else {
             api.saveParty(postId).enqueue(new Callback<JsonObject>() {
-                @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                }
             });
             Toast.makeText(this, "Saved to your list!", Toast.LENGTH_SHORT).show();
         }
@@ -899,7 +1032,8 @@ public class RealMeetActivity extends BaseActivity {
 
     private void updateProfileUI() {
         tvProfileNameAge.setText((currentUserName != null ? currentUserName : "User") + ", " + currentUserAge);
-        tvProfileCityGender.setText("📍 " + (currentUserCity != null ? currentUserCity : "N/A") + " • " + (currentUserGender != null ? currentUserGender : "Unspecified"));
+        tvProfileCityGender.setText("📍 " + (currentUserCity != null ? currentUserCity : "N/A") + " • "
+                + (currentUserGender != null ? currentUserGender : "Unspecified"));
 
         AvatarHelper.loadAvatar(this, null, currentUserAvatar, currentUserName, ivProfileAvatar);
 
@@ -910,16 +1044,30 @@ public class RealMeetActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
+                        JsonObject userObj = data.has("user") ? data.getAsJsonObject("user") : null;
+                        String bio = "";
+                        if (userObj != null && userObj.has("bio") && !userObj.get("bio").isJsonNull()) {
+                            bio = userObj.get("bio").getAsString();
+                        }
+                        final String finalBio = bio;
                         int followers = data.has("followersCount") ? data.get("followersCount").getAsInt() : 0;
                         int following = data.has("followingCount") ? data.get("followingCount").getAsInt() : 0;
                         runOnUiThread(() -> {
-                            if (tvFollowersCount != null) tvFollowersCount.setText(String.valueOf(followers));
-                            if (tvFollowingCount != null) tvFollowingCount.setText(String.valueOf(following));
+                            if (tvFollowersCount != null)
+                                tvFollowersCount.setText(String.valueOf(followers));
+                            if (tvFollowingCount != null)
+                                tvFollowingCount.setText(String.valueOf(following));
+                            if (tvProfileBio != null) {
+                                tvProfileBio.setText(finalBio.isEmpty() ? "No bio set yet." : finalBio);
+                            }
                         });
                     }
                 }
             }
-            @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+            }
         });
 
         // Fetch Saved Parties from Server
@@ -939,12 +1087,16 @@ public class RealMeetActivity extends BaseActivity {
                         }
                         store.saveSavedParties(savedIds);
                         runOnUiThread(() -> {
-                            if (savedPartiesAdapter != null) savedPartiesAdapter.notifyDataSetChanged();
+                            if (savedPartiesAdapter != null)
+                                savedPartiesAdapter.notifyDataSetChanged();
                         });
                     }
                 }
             }
-            @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+            }
         });
 
         List<RealMeetPost> myMeetPosts = new ArrayList<>();
@@ -954,21 +1106,28 @@ public class RealMeetActivity extends BaseActivity {
             }
         }
 
-        RealMeetAdapter profileAdapter = new RealMeetAdapter(this, myMeetPosts, currentUserId, new RealMeetAdapter.OnPostActionListener() {
-            @Override
-            public void onConnectClicked(RealMeetPost post) {}
+        RealMeetAdapter profileAdapter = new RealMeetAdapter(this, myMeetPosts, currentUserId,
+                new RealMeetAdapter.OnPostActionListener() {
+                    @Override
+                    public void onConnectClicked(RealMeetPost post) {
+                    }
 
-            @Override
-            public void onDeleteClicked(RealMeetPost post) {
-                store.deleteRealMeetPost(post.getId());
-                api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
-                    @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                    @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    @Override
+                    public void onDeleteClicked(RealMeetPost post) {
+                        store.deleteRealMeetPost(post.getId());
+                        api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                            @Override
+                            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                            }
+
+                            @Override
+                            public void onFailure(Call<JsonObject> call, Throwable t) {
+                            }
+                        });
+                        updateProfileUI();
+                        Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
+                    }
                 });
-                updateProfileUI();
-                Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
-            }
-        });
         profileRecyclerView.setAdapter(profileAdapter);
     }
 
@@ -989,7 +1148,9 @@ public class RealMeetActivity extends BaseActivity {
         if (existingPost != null) {
             new AlertDialog.Builder(this)
                     .setTitle("Active Post Exists Today")
-                    .setMessage("You already have an active Real Meet post today:\n\"" + existingPost.getPurpose() + "\" at " + existingPost.getLocation() + ".\n\nYou can only post 1 Real Meet per day. Would you like to replace your previous post?")
+                    .setMessage("You already have an active Real Meet post today:\n\"" + existingPost.getPurpose()
+                            + "\" at " + existingPost.getLocation()
+                            + ".\n\nYou can only post 1 Real Meet per day. Would you like to replace your previous post?")
                     .setPositiveButton("Replace Post", (dialog, which) -> openRealMeetDialog(existingPost))
                     .setNegativeButton("Cancel", null)
                     .show();
@@ -1016,30 +1177,36 @@ public class RealMeetActivity extends BaseActivity {
         int curMin = nowCal.get(Calendar.MINUTE);
         String initialAmPm = curHour >= 12 ? "PM" : "AM";
         int initialFormattedHour = curHour % 12;
-        if (initialFormattedHour == 0) initialFormattedHour = 12;
-        String initialTime = String.format(Locale.getDefault(), "Today at %d:%02d %s", initialFormattedHour, curMin, initialAmPm);
+        if (initialFormattedHour == 0)
+            initialFormattedHour = 12;
+        String initialTime = String.format(Locale.getDefault(), "Today at %d:%02d %s", initialFormattedHour, curMin,
+                initialAmPm);
 
-        final String[] selectedTime = {initialTime};
+        final String[] selectedTime = { initialTime };
         tvSelectedTime.setText("⏰ " + initialTime);
 
         btnPickTime.setOnClickListener(v -> {
             Calendar mcurrentTime = Calendar.getInstance();
             int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
             int minute = mcurrentTime.get(Calendar.MINUTE);
-            TimePickerDialog mTimePicker = new TimePickerDialog(RealMeetActivity.this, (timePicker, selectedHour, selectedMinute) -> {
-                String amPm = selectedHour >= 12 ? "PM" : "AM";
-                int formattedHour = selectedHour % 12;
-                if (formattedHour == 0) formattedHour = 12;
-                selectedTime[0] = String.format(Locale.getDefault(), "Today at %d:%02d %s", formattedHour, selectedMinute, amPm);
-                tvSelectedTime.setText("⏰ " + selectedTime[0]);
-            }, hour, minute, false);
+            TimePickerDialog mTimePicker = new TimePickerDialog(RealMeetActivity.this,
+                    (timePicker, selectedHour, selectedMinute) -> {
+                        String amPm = selectedHour >= 12 ? "PM" : "AM";
+                        int formattedHour = selectedHour % 12;
+                        if (formattedHour == 0)
+                            formattedHour = 12;
+                        selectedTime[0] = String.format(Locale.getDefault(), "Today at %d:%02d %s", formattedHour,
+                                selectedMinute, amPm);
+                        tvSelectedTime.setText("⏰ " + selectedTime[0]);
+                    }, hour, minute, false);
             mTimePicker.setTitle("Select Meeting Time");
             mTimePicker.show();
         });
 
         etDescription.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -1047,7 +1214,8 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
@@ -1073,8 +1241,13 @@ public class RealMeetActivity extends BaseActivity {
             if (oldPostToReplace != null) {
                 store.deleteRealMeetPost(oldPostToReplace.getId());
                 api.deleteRealMeetServerPost(oldPostToReplace.getId()).enqueue(new Callback<JsonObject>() {
-                    @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                    @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    }
+
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {
+                    }
                 });
             }
 
@@ -1094,26 +1267,35 @@ public class RealMeetActivity extends BaseActivity {
                     tokenManager.isVerified(),
                     tokenManager.isVerified(),
                     tokenManager.getSexPreference() != null ? tokenManager.getSexPreference() : "Straight",
-                    System.currentTimeMillis()
-            );
+                    System.currentTimeMillis());
 
             store.addRealMeetPost(newPost);
 
             Map<String, Object> body = new HashMap<>();
             body.put("type", "REAL_MEET");
             body.put("post", newPost);
+            Toast.makeText(this, "Publishing post...", Toast.LENGTH_SHORT).show();
             api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                 @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    runOnUiThread(() -> {
+                        dialog.dismiss();
+                        fetchFeedFromServer();
+                        Toast.makeText(RealMeetActivity.this, "✨ Real Meet post published!", Toast.LENGTH_LONG).show();
+                        showPostCreationRewardAd();
+                    });
+                }
 
                 @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {}
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    runOnUiThread(() -> {
+                        dialog.dismiss();
+                        Toast.makeText(RealMeetActivity.this, "Failed to publish post. Try again.", Toast.LENGTH_SHORT)
+                                .show();
+                        fetchFeedFromServer();
+                    });
+                }
             });
-
-            dialog.dismiss();
-            loadCurrentTabFeed();
-            Toast.makeText(this, "✨ Real Meet post published!", Toast.LENGTH_LONG).show();
-            showPostCreationRewardAd();
         });
 
         dialog.show();
@@ -1132,7 +1314,8 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnCancelParty = dialogView.findViewById(R.id.btnCancelParty);
         TextView btnPublishParty = dialogView.findViewById(R.id.btnPublishParty);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Everyone", "Female Only", "Male Only"});
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+                new String[] { "Everyone", "Female Only", "Male Only" });
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTargetGender.setAdapter(adapter);
 
@@ -1141,23 +1324,28 @@ public class RealMeetActivity extends BaseActivity {
         int curPartyMin = nowPartyCal.get(Calendar.MINUTE);
         String initialPartyAmPm = curPartyHour >= 12 ? "PM" : "AM";
         int initialPartyFormattedHour = curPartyHour % 12;
-        if (initialPartyFormattedHour == 0) initialPartyFormattedHour = 12;
-        String initialPartyTime = String.format(Locale.getDefault(), "Upcoming %d:%02d %s", initialPartyFormattedHour, curPartyMin, initialPartyAmPm);
+        if (initialPartyFormattedHour == 0)
+            initialPartyFormattedHour = 12;
+        String initialPartyTime = String.format(Locale.getDefault(), "Upcoming %d:%02d %s", initialPartyFormattedHour,
+                curPartyMin, initialPartyAmPm);
 
-        final String[] selectedTime = {initialPartyTime};
+        final String[] selectedTime = { initialPartyTime };
         tvSelectedPartyTime.setText("⏰ " + initialPartyTime);
 
         btnPickPartyTime.setOnClickListener(v -> {
             Calendar mcurrentTime = Calendar.getInstance();
             int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
             int minute = mcurrentTime.get(Calendar.MINUTE);
-            TimePickerDialog mTimePicker = new TimePickerDialog(RealMeetActivity.this, (timePicker, selectedHour, selectedMinute) -> {
-                String amPm = selectedHour >= 12 ? "PM" : "AM";
-                int formattedHour = selectedHour % 12;
-                if (formattedHour == 0) formattedHour = 12;
-                selectedTime[0] = String.format(Locale.getDefault(), "Upcoming %d:%02d %s", formattedHour, selectedMinute, amPm);
-                tvSelectedPartyTime.setText("⏰ " + selectedTime[0]);
-            }, hour, minute, false);
+            TimePickerDialog mTimePicker = new TimePickerDialog(RealMeetActivity.this,
+                    (timePicker, selectedHour, selectedMinute) -> {
+                        String amPm = selectedHour >= 12 ? "PM" : "AM";
+                        int formattedHour = selectedHour % 12;
+                        if (formattedHour == 0)
+                            formattedHour = 12;
+                        selectedTime[0] = String.format(Locale.getDefault(), "Upcoming %d:%02d %s", formattedHour,
+                                selectedMinute, amPm);
+                        tvSelectedPartyTime.setText("⏰ " + selectedTime[0]);
+                    }, hour, minute, false);
             mTimePicker.setTitle("Select Party Time");
             mTimePicker.show();
         });
@@ -1192,26 +1380,35 @@ public class RealMeetActivity extends BaseActivity {
                     currentUserGender,
                     tokenManager.isVerified(),
                     tokenManager.isVerified(),
-                    System.currentTimeMillis()
-            );
+                    System.currentTimeMillis());
 
             store.addPartyPost(partyPost);
 
             Map<String, Object> body = new HashMap<>();
             body.put("type", "PARTY");
             body.put("post", partyPost);
+            Toast.makeText(this, "Publishing party event...", Toast.LENGTH_SHORT).show();
             api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                 @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    runOnUiThread(() -> {
+                        dialog.dismiss();
+                        fetchFeedFromServer();
+                        Toast.makeText(RealMeetActivity.this, "🎉 Party event published!", Toast.LENGTH_LONG).show();
+                        showPostCreationRewardAd();
+                    });
+                }
 
                 @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {}
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    runOnUiThread(() -> {
+                        dialog.dismiss();
+                        Toast.makeText(RealMeetActivity.this, "Failed to publish party event.", Toast.LENGTH_SHORT)
+                                .show();
+                        fetchFeedFromServer();
+                    });
+                }
             });
-
-            dialog.dismiss();
-            loadCurrentTabFeed();
-            Toast.makeText(this, "🎉 Party event published!", Toast.LENGTH_LONG).show();
-            showPostCreationRewardAd();
         });
 
         dialog.show();
@@ -1228,13 +1425,15 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnCancelFantasy = dialogView.findViewById(R.id.btnCancelFantasy);
         TextView btnPublishFantasy = dialogView.findViewById(R.id.btnPublishFantasy);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Single", "Married", "Divorced", "Widowed"});
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+                new String[] { "Single", "Married", "Divorced", "Widowed" });
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerStatus.setAdapter(adapter);
 
         etFantasyDescription.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -1242,7 +1441,8 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         btnCancelFantasy.setOnClickListener(v -> dialog.dismiss());
@@ -1270,26 +1470,34 @@ public class RealMeetActivity extends BaseActivity {
                     currentUserGender,
                     tokenManager.isVerified(),
                     tokenManager.isVerified(),
-                    System.currentTimeMillis()
-            );
+                    System.currentTimeMillis());
 
             store.addFantasyPost(fantasyPost);
 
             Map<String, Object> body = new HashMap<>();
             body.put("type", "FANTASY");
             body.put("post", fantasyPost);
+            Toast.makeText(this, "Sharing fantasy...", Toast.LENGTH_SHORT).show();
             api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                 @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    runOnUiThread(() -> {
+                        dialog.dismiss();
+                        fetchFeedFromServer();
+                        Toast.makeText(RealMeetActivity.this, "💭 Fantasy shared!", Toast.LENGTH_LONG).show();
+                        showPostCreationRewardAd();
+                    });
+                }
 
                 @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {}
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    runOnUiThread(() -> {
+                        dialog.dismiss();
+                        Toast.makeText(RealMeetActivity.this, "Failed to share fantasy.", Toast.LENGTH_SHORT).show();
+                        fetchFeedFromServer();
+                    });
+                }
             });
-
-            dialog.dismiss();
-            loadCurrentTabFeed();
-            Toast.makeText(this, "💭 Fantasy shared!", Toast.LENGTH_LONG).show();
-            showPostCreationRewardAd();
         });
 
         dialog.show();
@@ -1302,80 +1510,57 @@ public class RealMeetActivity extends BaseActivity {
      * Gated behind ad-free plan check. Fails silently if ad can't load.
      */
     private void showPostCreationRewardAd() {
-        if (tokenManager.isPlanAdFree()) return;
-        if (isFinishing() || isDestroyed()) return;
+        if (tokenManager.isCommunityAdFree())
+            return;
+        if (isFinishing() || isDestroyed())
+            return;
 
         Log.d(TAG, "Loading post-creation rewarded ad...");
         com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
 
         com.google.android.gms.ads.rewarded.RewardedAd.load(this,
-            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
-            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
-                    if (isFinishing() || isDestroyed()) return;
-                    Log.d(TAG, "Post-creation rewarded ad loaded, showing...");
-                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {
-                            Log.d(TAG, "Post-creation rewarded ad dismissed.");
-                        }
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
-                            Log.w(TAG, "Post-creation rewarded ad failed to show: " + adError.getMessage());
-                        }
-                    });
-                    ad.show(RealMeetActivity.this, rewardItem -> {
-                        Log.d(TAG, "User earned reward from post-creation ad.");
-                    });
-                }
+                getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+                new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
+                        if (isFinishing() || isDestroyed())
+                            return;
+                        Log.d(TAG, "Post-creation rewarded ad loaded, showing...");
+                        ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
+                            @Override
+                            public void onAdDismissedFullScreenContent() {
+                                Log.d(TAG, "Post-creation rewarded ad dismissed.");
+                            }
 
-                @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    Log.w(TAG, "Post-creation rewarded ad failed to load: " + loadAdError.getMessage());
-                    // Fail silently — don't block user
-                }
-            });
+                            @Override
+                            public void onAdFailedToShowFullScreenContent(
+                                    @NonNull com.google.android.gms.ads.AdError adError) {
+                                Log.w(TAG, "Post-creation rewarded ad failed to show: " + adError.getMessage());
+                            }
+                        });
+                        ad.show(RealMeetActivity.this, rewardItem -> {
+                            Log.d(TAG, "User earned reward from post-creation ad.");
+                        });
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
+                        Log.w(TAG, "Post-creation rewarded ad failed to load: " + loadAdError.getMessage());
+                        // Fail silently — don't block user
+                    }
+                });
     }
 
     /**
      * Preload an interstitial ad so it's ready when the timer fires.
      */
     private void preloadInterstitialAd() {
-        if (tokenManager.isPlanAdFree()) return;
-        if (isFinishing() || isDestroyed()) return;
+        if (tokenManager.isCommunityAdFree())
+            return;
+        if (isFinishing() || isDestroyed())
+            return;
 
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        com.google.android.gms.ads.interstitial.InterstitialAd.load(this,
-            getString(R.string.admob_interstitial_ad_unit_id), adRequest,
-            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
-                    mInterstitialAd = ad;
-                    Log.d(TAG, "Interstitial ad preloaded.");
-                    mInterstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {
-                            Log.d(TAG, "Interstitial ad dismissed.");
-                            mInterstitialAd = null;
-                            // Preload next one right away
-                            preloadInterstitialAd();
-                        }
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
-                            Log.w(TAG, "Interstitial ad failed to show: " + adError.getMessage());
-                            mInterstitialAd = null;
-                            preloadInterstitialAd();
-                        }
-                    });
-                }
-
-                @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    Log.w(TAG, "Interstitial ad failed to preload: " + loadAdError.getMessage());
-                    mInterstitialAd = null;
-                }
-            });
+        com.ironsource.mediationsdk.IronSource.loadInterstitial();
     }
 
     /**
@@ -1385,7 +1570,8 @@ public class RealMeetActivity extends BaseActivity {
      * Otherwise, schedule for the remaining time.
      */
     private void scheduleInterstitialAd() {
-        if (tokenManager.isPlanAdFree()) return;
+        if (tokenManager.isCommunityAdFree())
+            return;
 
         cancelInterstitialAdSchedule();
 
@@ -1396,7 +1582,8 @@ public class RealMeetActivity extends BaseActivity {
 
         long delay;
         if (lastShownTime == 0 || elapsed >= INTERSTITIAL_INTERVAL_MS) {
-            // First time ever, or 5+ min already passed — show after a small 3s grace period
+            // First time ever, or 5+ min already passed — show after a small 3s grace
+            // period
             // (don't slam the user with an ad the instant they open the screen)
             delay = 3000;
         } else {
@@ -1428,18 +1615,21 @@ public class RealMeetActivity extends BaseActivity {
      * Show the preloaded interstitial ad and update the last-shown timestamp.
      */
     private void showScheduledInterstitialAd() {
-        if (tokenManager.isPlanAdFree()) return;
-        if (isFinishing() || isDestroyed()) return;
+        if (tokenManager.isCommunityAdFree())
+            return;
+        if (isFinishing() || isDestroyed())
+            return;
 
-        // Update timestamp regardless of whether ad shows (prevents rapid re-triggering)
+        // Update timestamp regardless of whether ad shows (prevents rapid
+        // re-triggering)
         android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
         prefs.edit().putLong(KEY_LAST_INTERSTITIAL_TIME, System.currentTimeMillis()).apply();
 
-        if (mInterstitialAd != null) {
-            Log.d(TAG, "Showing scheduled interstitial ad.");
-            mInterstitialAd.show(this);
+        if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
+            Log.d(TAG, "Showing scheduled ironSource interstitial ad.");
+            com.ironsource.mediationsdk.IronSource.showInterstitial();
         } else {
-            Log.d(TAG, "Interstitial ad not ready, preloading for next cycle.");
+            Log.d(TAG, "ironSource Interstitial ad not ready, preloading for next cycle.");
             preloadInterstitialAd();
         }
     }

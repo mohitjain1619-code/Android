@@ -17,8 +17,10 @@ import {
   setPartyVisibility,
   postAnnouncement,
   getAnnouncements,
-  getCommunityNotifications
+  getCommunityNotifications,
+  getActiveStories
 } from '../../lib/api';
+import { StoryUploadModal, StoryViewerModal } from '../../components/StoryModals';
 import { 
   Sparkles, 
   MapPin, 
@@ -57,6 +59,9 @@ function RealMeetContent() {
   // Selected Tab: 'meet' | 'party' | 'fantasy'
   const [activeTab, setActiveTab] = useState('meet');
   const [loading, setLoading] = useState(true);
+  const [stories, setStories] = useState([]);
+  const [showUploadStory, setShowUploadStory] = useState(false);
+  const [selectedUserStory, setSelectedUserStory] = useState(null);
   
   // Feeds data
   const [realMeetPosts, setRealMeetPosts] = useState([]);
@@ -180,6 +185,12 @@ function RealMeetContent() {
       const notRes = await getCommunityNotifications();
       if (notRes.ok) {
         setNotifications(notRes.notifications || []);
+      }
+
+      // Fetch Stories
+      const storiesRes = await getActiveStories();
+      if (storiesRes.ok) {
+        setStories(storiesRes.usersWithStories || []);
       }
     } catch (err) {
       console.error('Error loading Real Meet data:', err);
@@ -514,6 +525,37 @@ function RealMeetContent() {
           
           {/* Left Column: Feed and inbox requests */}
           <div className={styles.feedSection}>
+            
+            {/* Stories Horizontal Tray */}
+            {user && (
+              <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', padding: '12px 4px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                {/* Admin Add Story Circle */}
+                {userData?.email === 'mohitjain1619@gmail.com' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }} onClick={() => setShowUploadStory(true)}>
+                    <div style={{ position: 'relative', width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1.5px dashed rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontSize: '28px', color: '#ffd700', lineHeight: 1 }}>+</span>
+                    </div>
+                    <span style={{ fontSize: '11px', marginTop: '6px', color: '#8e8e93' }}>Add Story</span>
+                  </div>
+                )}
+
+                {/* Active Stories circles */}
+                {stories.map(us => (
+                  <div key={us.userId} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '72px', cursor: 'pointer' }} onClick={() => setSelectedUserStory(us)}>
+                    <div style={{ padding: '3px', borderRadius: '50%', background: 'linear-gradient(135deg, #E040FB, #00E5FF)' }}>
+                      <img
+                        src={us.userAvatar ? `/avatars/${us.userAvatar}.png` : '/avatars/av1.png'}
+                        alt={us.userName}
+                        style={{ width: '54px', height: '54px', borderRadius: '50%', border: '2px solid #000', objectFit: 'cover' }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '11px', marginTop: '6px', color: '#fff', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', width: '68px', textAlign: 'center' }}>
+                      {us.userName}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Feed Loader */}
             {loading ? (
@@ -1234,6 +1276,24 @@ function RealMeetContent() {
           </button>
         </div>
       </div>
+    )}
+
+    {/* Admin Story Upload Modal Overlay */}
+    {showUploadStory && (
+      <StoryUploadModal
+        onClose={() => setShowUploadStory(false)}
+        onUploadSuccess={fetchFeedData}
+      />
+    )}
+
+    {/* Story Viewer Modal Overlay */}
+    {selectedUserStory && (
+      <StoryViewerModal
+        userStories={selectedUserStory}
+        loggedInEmail={userData?.email}
+        onClose={() => setSelectedUserStory(null)}
+        onDeleteSuccess={fetchFeedData}
+      />
     )}
     </>
   );

@@ -441,4 +441,29 @@ export async function getCommunityNotifications() {
   return data;
 }
 
+// ============================================
+// STORIES
+// ============================================
+export async function getActiveStories() {
+  const { data } = await api.get('/stories/active');
+  return data;
+}
+
+export async function uploadTextStory(body) {
+  const { data } = await api.post('/stories/upload', body);
+  return data;
+}
+
+export async function uploadMediaStory(formData) {
+  const { data } = await api.post('/stories/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return data;
+}
+
+export async function deleteStory(storyId) {
+  const { data } = await api.delete(`/stories/${storyId}`);
+  return data;
+}
+
 export default api;

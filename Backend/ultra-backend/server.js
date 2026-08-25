@@ -28,6 +28,7 @@ const friendRoutes = require("./src/routes/friends");
 const affiliateRoutes = require("./src/routes/affiliate");
 const adsRoutes = require("./src/routes/ads");
 const realMeetRoutes = require("./src/routes/realmeet");
+const storiesRoutes = require("./src/routes/stories");
 
 // Services
 const { startCleanupCron } = require("./src/services/cleanup");
@@ -40,7 +41,22 @@ const app = express();
 // Security
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
+
+// IMPORTANT: Razorpay webhook needs raw body for HMAC signature verification
+// Must be registered BEFORE express.json() to capture raw bytes on this route
+app.use("/api/affiliate/webhook/razorpay", express.raw({ type: "application/json" }), (req, res, next) => {
+  // Attach rawBody string for signature verification, then parse JSON into req.body
+  try {
+    req.rawBody = req.body.toString("utf8");
+    req.body = JSON.parse(req.rawBody);
+  } catch (e) {
+    return res.status(400).json({ error: "Invalid JSON body" });
+  }
+  next();
+});
+
 app.use(express.json({ limit: "5mb" }));
+
 
 // Global rate limiter
 app.set('trust proxy', 1);
@@ -86,7 +102,17 @@ app.use("/api/friends", friendRoutes);
 app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api/realmeet", realMeetRoutes);
+app.use("/api/stories", storiesRoutes);
 app.use("/api", adsRoutes);
+
+// Optimized Static Media Serving (Stories, verification, profile attachments)
+const path = require("path");
+app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
+  maxAge: "365d",
+  setHeaders: (res, path) => {
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+  }
+}));
 
 // ============================================
 // ICE SERVERS ENDPOINT (WebRTC)

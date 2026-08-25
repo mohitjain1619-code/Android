@@ -189,7 +189,7 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
             return;
         }
 
-        if (tokenManager.isPlanAdFree()) {
+        if (tokenManager.isCommunityAdFree()) {
             proceedToPostComment(commentText);
         } else {
             loadAndShowRewardedAd(() -> {

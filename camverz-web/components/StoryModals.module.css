@@ -1,0 +1,294 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+}
+
+.modalContent {
+  background: #121214;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 460px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+  color: #fff;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #ffd700;
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  color: #8e8e93;
+  margin-bottom: 6px;
+}
+
+.select, .input, .textarea {
+  width: 100%;
+  background: #1c1c1e;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.select:focus, .input:focus, .textarea:focus {
+  border-color: #ffd700;
+}
+
+.textarea {
+  resize: none;
+  height: 100px;
+}
+
+.canvasPreview {
+  width: 100%;
+  height: 320px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.canvasText {
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  padding: 20px;
+}
+
+.themeSelector {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.themeCircle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.themeCircleActive {
+  border-color: #ffd700;
+}
+
+.publishBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.publishBtn:active {
+  transform: scale(0.98);
+}
+
+.publishBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Stories Viewer CSS */
+.viewerContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+}
+
+.viewerCanvas {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: #111;
+}
+
+.viewerMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.viewerTextOnly {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+}
+
+.viewerOverlayText {
+  position: absolute;
+  bottom: 80px;
+  left: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Nav triggers overlay */
+.navClickLeft, .navClickRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.navClickLeft {
+  left: 0;
+  width: 25%;
+}
+
+.navClickRight {
+  right: 0;
+  width: 75%;
+}
+
+/* Top control elements */
+.viewerHeader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+  z-index: 20;
+}
+
+.progressBarGroup {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.progressBarContainer {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: #fff;
+  width: 0%;
+}
+
+.viewerUserRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+}
+
+.viewerUserMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.viewerAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #ffd700;
+}
+
+.viewerName {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Delete Story */
+.deleteStoryBtn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(255, 45, 85, 0.2);
+  border: 1px solid #ff2d55;
+  color: #ff2d55;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 20;
+  transition: background-color 0.2s;
+}
+
+.deleteStoryBtn:hover {
+  background: rgba(255, 45, 85, 0.4);
+}

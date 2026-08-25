@@ -821,13 +821,17 @@ router.post("/webhook/razorpay", async (req, res) => {
   
   if (secret) {
     const signature = req.headers["x-razorpay-signature"] || "";
-    const bodyStr = JSON.stringify(req.body);
+    // MUST use rawBody set by server.js raw middleware — NOT JSON.stringify(req.body)
+    // Re-serializing parsed JSON can change key order and break HMAC match
+    const bodyStr = req.rawBody || JSON.stringify(req.body);
     const expected = crypto.createHmac("sha256", secret).update(bodyStr).digest("hex");
     
     if (signature !== expected) {
-      console.error("[Affiliate Webhook] Invalid signature verification failed!");
+      console.error("[Affiliate Webhook] Invalid signature! sig:", signature, "expected:", expected);
       return res.status(400).json({ error: "Invalid signature" });
     }
+  } else {
+    console.warn("[Affiliate Webhook] RAZORPAY_WEBHOOK_SECRET not set — signature verification skipped!");
   }
 
   const { event, payload } = req.body;
@@ -862,19 +866,36 @@ router.post("/webhook/razorpay", async (req, res) => {
       }
 
       // Activate subscription
-      let durationDays = 30; // default to 30 days
+      let durationDays = 1; // default to 1 day (safest minimum, not 30)
       const planKey = (notes.pkgId || notes.plan_name || notes.product_name || "").toLowerCase();
       
-      if (planKey.includes("7-days") || planKey.includes("7days") || planKey.includes("week")) {
+      // IMPORTANT: Check longer matches first to avoid '1-day' matching inside '10-days'
+      if (planKey.includes("1-month") || planKey.includes("1month") || planKey.includes("community-1-month")) {
+        durationDays = 30;
+      } else if (planKey.includes("10-days") || planKey.includes("10days")) {
+        durationDays = 10;
+      } else if (planKey.includes("7-days") || planKey.includes("7days") || planKey.includes("community-7-days") || planKey.includes("week")) {
         durationDays = 7;
       } else if (planKey.includes("1-day") || planKey.includes("1day") || planKey.includes("daily")) {
         durationDays = 1;
-      } else if (planKey.includes("10-days") || planKey.includes("10days")) {
-        durationDays = 10;
+      } else {
+        // Fallback: amount-based guess
+        if (amountInr >= 400) durationDays = 30;
+        else if (amountInr >= 200) durationDays = 10;
+        else durationDays = 1;
+        console.warn(`[Webhook] Could not detect plan duration from planKey="${planKey}", guessing ${durationDays} days from amount ₹${amountInr}`);
       }
       
-      const isAdFree = notes.adFree === "true" || planKey.includes("noads") || planKey.includes("ad-free") || planKey.includes("adfree") || planKey.includes("premium");
-      const planNameFormatted = isAdFree ? "VIP Ad-Free Pass" : "VIP Pass (With Ads)";
+      const isAdFree = notes.adFree === "true" || planKey.includes("noads") || planKey.includes("no_ads") || planKey.includes("ad-free") || planKey.includes("adfree") || planKey.includes("premium");
+      const isCommunity = planKey.includes("community");
+      
+      let planNameFormatted;
+      if (isCommunity) {
+        planNameFormatted = isAdFree ? `Community VIP Ad-Free Pass (${durationDays}d)` : `Community VIP Pass (${durationDays}d)`;
+      } else {
+        planNameFormatted = isAdFree ? `VIP Ad-Free Pass (${durationDays}d)` : `VIP Pass With Ads (${durationDays}d)`;
+      }
+      
       const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
       const startedAt = new Date();
 
@@ -884,7 +905,8 @@ router.post("/webhook/razorpay", async (req, res) => {
          WHERE id = $5`,
         [planNameFormatted, isAdFree, expiresAt, startedAt, user.id]
       );
-      console.log(`[Webhook] Activated plan "${planNameFormatted}" for ${user.email} (valid for ${durationDays} days)`);
+      console.log(`[Webhook] ✅ Activated plan "${planNameFormatted}" for ${user.email} (valid for ${durationDays} days, expires: ${expiresAt.toISOString()})`);
+
 
       // Track conversion
       const signup = await queryOne("SELECT * FROM affiliate_signups WHERE referred_user_id = $1", [user.id]);

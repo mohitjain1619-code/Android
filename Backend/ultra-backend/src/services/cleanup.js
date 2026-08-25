@@ -18,6 +18,35 @@ function startCleanupCron() {
     }
   });
 
+  // Expired stories and media files cleanup (runs every 10 minutes)
+  cron.schedule("*/10 * * * *", async () => {
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const expiredStories = await queryMany(
+        "SELECT id, media_url FROM stories WHERE expires_at <= NOW() AND media_url IS NOT NULL"
+      );
+
+      for (const story of expiredStories) {
+        if (story.media_url) {
+          const filename = path.basename(story.media_url);
+          const filePath = path.join(__dirname, "../../uploads/stories", filename);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log(`🧹 Deleted story file: ${filename}`);
+          }
+        }
+      }
+
+      const result = await query("DELETE FROM stories WHERE expires_at <= NOW()");
+      if (result.rowCount > 0) {
+        console.log(`🧹 Cleaned up ${result.rowCount} expired stories from database`);
+      }
+    } catch (err) {
+      console.error("Expired stories cleanup error:", err);
+    }
+  });
+
   console.log("✅ Cleanup cron started (every 5 min)");
 }
 

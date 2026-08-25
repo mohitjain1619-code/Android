@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <!-- Main Story Presentation canvas -->
+    <FrameLayout
+        android:id="@+id/storyViewerCanvas"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Image Story View -->
+        <ImageView
+            android:id="@+id/ivStoryImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <!-- Video Story View -->
+        <VideoView
+            android:id="@+id/vvStoryVideo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <!-- Text Story View (centered TextView inside colored canvas) -->
+        <TextView
+            android:id="@+id/tvStoryTextOnly"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:padding="24dp"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <!-- Overlay Text (For Image/Video Stories) -->
+        <TextView
+            android:id="@+id/tvStoryOverlayText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="90dp"
+            android:background="#99000000"
+            android:gravity="center"
+            android:padding="12dp"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Tap navigations overlay -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/navLeftClick"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <View
+            android:id="@+id/navRightClick"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3" />
+    </LinearLayout>
+
+    <!-- Top Controls Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@drawable/bg_real_meet_gradient_card"
+        android:layout_alignParentTop="true">
+
+        <!-- Instagram segmented progress indicators container -->
+        <LinearLayout
+            android:id="@+id/progressBarsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp"
+            android:weightSum="1" />
+
+        <!-- User details header in viewer -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_alignParentStart="true">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/ivViewerAvatar"
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:src="@drawable/av1" />
+
+                <TextView
+                    android:id="@+id/tvViewerName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="Mohit"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnStoryClose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:text="✕"
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"/>
+        </RelativeLayout>
+    </LinearLayout>
+
+    <!-- Admin actions (Delete Story option) -->
+    <ImageView
+        android:id="@+id/btnDeleteStory"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="24dp"
+        android:src="@android:drawable/ic_menu_delete"
+        android:tint="#FF2D55"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"/>
+</RelativeLayout>

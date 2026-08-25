@@ -219,4 +219,26 @@ public interface ApiService {
     // ============================================
     @GET("webrtc/ice")
     Call<JsonObject> getIceServers(@Query("useTurn") boolean useTurn);
+
+    // ============================================
+    // STORIES
+    // ============================================
+    @GET("stories/active")
+    Call<JsonObject> getActiveStories();
+
+    @Multipart
+    @POST("stories/upload")
+    Call<JsonObject> uploadMediaStory(
+            @Part MultipartBody.Part file,
+            @Part("type") RequestBody type,
+            @Part("textContent") RequestBody textContent,
+            @Part("textColor") RequestBody textColor,
+            @Part("bgGradient") RequestBody bgGradient
+    );
+
+    @POST("stories/upload")
+    Call<JsonObject> uploadTextStory(@Body Map<String, Object> body);
+
+    @DELETE("stories/{id}")
+    Call<JsonObject> deleteStory(@Path("id") String storyId);
 }

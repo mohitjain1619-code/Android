@@ -23,6 +23,7 @@ public class TokenManager {
     private static final String KEY_USER_PREFERENCE = "sex_preference";
     private static final String KEY_PLAN_IS_AD_FREE = "plan_is_ad_free";
     private static final String KEY_HAS_ACTIVE_PLAN = "has_active_plan";
+    private static final String KEY_PLAN_NAME = "plan_name";
 
     private static TokenManager instance;
     private SharedPreferences prefs;
@@ -129,6 +130,30 @@ public class TokenManager {
 
     public boolean hasActivePlan() {
         return prefs.getBoolean(KEY_HAS_ACTIVE_PLAN, false);
+    }
+
+    public void savePlanName(String planName) {
+        prefs.edit().putString(KEY_PLAN_NAME, planName).apply();
+    }
+
+    public String getPlanName() {
+        return prefs.getString(KEY_PLAN_NAME, "");
+    }
+
+    public boolean hasVideoCallPlan() {
+        return hasActivePlan() && !getPlanName().toLowerCase().contains("community");
+    }
+
+    public boolean isVideoCallAdFree() {
+        return isPlanAdFree() && !getPlanName().toLowerCase().contains("community");
+    }
+
+    public boolean hasCommunityPlan() {
+        return hasActivePlan() && getPlanName().toLowerCase().contains("community");
+    }
+
+    public boolean isCommunityAdFree() {
+        return isPlanAdFree() && getPlanName().toLowerCase().contains("community");
     }
 
     // ============================================

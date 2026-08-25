@@ -83,18 +83,70 @@ public class AdTestingActivity extends AppCompatActivity {
             testAdMobRewarded();
         });
 
-        // LevelPlay Mediation Buttons (LevelPlay is replaced by AdMob Mediation; redirecting to AdMob testing)
+        // LevelPlay Mediation Buttons
         findViewById(R.id.btn_lp_interstitial).setOnClickListener(v -> {
-            showToast("LevelPlay is replaced by AdMob Mediation. Loading AdMob Interstitial...");
-            testAdMobInterstitial();
+            showToast("Loading LevelPlay Interstitial...");
+            com.ironsource.mediationsdk.IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
+                @Override
+                public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    showToast("LevelPlay Interstitial Ready");
+                    com.ironsource.mediationsdk.IronSource.showInterstitial();
+                }
+                @Override
+                public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
+                    showToast("LevelPlay Interstitial Load Failed: " + error.getErrorMessage());
+                }
+                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdShowSuccess(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    showToast("LevelPlay Interstitial Show Failed: " + error.getErrorMessage());
+                }
+                @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            });
+            com.ironsource.mediationsdk.IronSource.loadInterstitial();
         });
         findViewById(R.id.btn_lp_rewarded).setOnClickListener(v -> {
-            showToast("LevelPlay is replaced by AdMob Mediation. Loading AdMob Rewarded...");
-            testAdMobRewarded();
+            showToast("Checking LevelPlay Rewarded Video...");
+            if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+                com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+                    @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdUnavailable() {}
+                    @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                        showToast("LevelPlay Rewarded Show Failed: " + error.getErrorMessage());
+                    }
+                    @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                        showToast("LevelPlay Rewarded Video Completed! User rewarded.");
+                    }
+                    @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                });
+                com.ironsource.mediationsdk.IronSource.showRewardedVideo();
+            } else {
+                showToast("LevelPlay Rewarded Video not available yet.");
+            }
         });
         findViewById(R.id.btn_lp_native).setOnClickListener(v -> {
-            showToast("LevelPlay is replaced by AdMob Mediation. Loading AdMob Native...");
-            testAdMobNative();
+            showToast("Loading LevelPlay Native Ad...");
+            com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
+                .withAdUnitId("16c31bfd5")
+                .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
+                    @Override
+                    public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                        showToast("LevelPlay Native Ad Loaded");
+                        inflateLevelPlayNativeAd(ad);
+                    }
+                    @Override
+                    public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
+                        showToast("LevelPlay Native Ad Load Failed: " + error.getErrorMessage());
+                    }
+                    @Override public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdOpened(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdClosed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                })
+                .build();
+            nativeAd.loadAd();
         });
 
         // AdMob Mediation Buttons
@@ -316,5 +368,57 @@ public class AdTestingActivity extends AppCompatActivity {
         adView.setNativeAd(ad);
 
         adContainer.addView(adView);
+    }
+
+    private void inflateLevelPlayNativeAd(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad) {
+        FrameLayout adContainer = findViewById(R.id.ad_testing_lp_native_container);
+        if (adContainer == null) return;
+        adContainer.removeAllViews();
+        adContainer.setVisibility(View.VISIBLE);
+
+        View adView = android.view.LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, null);
+
+        ImageView adIcon = adView.findViewById(R.id.ad_icon);
+        TextView adTitle = adView.findViewById(R.id.ad_title);
+        TextView adAdvertiser = adView.findViewById(R.id.ad_advertiser);
+        TextView adBody = adView.findViewById(R.id.ad_body);
+        com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView mediaView = adView.findViewById(R.id.ad_media);
+        Button adCta = adView.findViewById(R.id.ad_cta);
+
+        if (ad.getIcon() != null && adIcon != null) {
+            adIcon.setImageDrawable(ad.getIcon());
+        }
+        if (ad.getTitle() != null && adTitle != null) {
+            adTitle.setText(ad.getTitle());
+        }
+        if (ad.getAdvertiser() != null && adAdvertiser != null) {
+            adAdvertiser.setText(ad.getAdvertiser());
+        }
+        if (ad.getBody() != null && adBody != null) {
+            adBody.setText(ad.getBody());
+        }
+        if (ad.getCallToAction() != null && adCta != null) {
+            adCta.setText(ad.getCallToAction());
+        }
+
+        java.util.List<View> clickableViews = new java.util.ArrayList<>();
+        if (adTitle != null) clickableViews.add(adTitle);
+        if (adCta != null) clickableViews.add(adCta);
+
+        ad.registerView(adView, mediaView, adIcon, clickableViews);
+
+        adContainer.addView(adView);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        com.ironsource.mediationsdk.IronSource.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        com.ironsource.mediationsdk.IronSource.onPause(this);
     }
 }

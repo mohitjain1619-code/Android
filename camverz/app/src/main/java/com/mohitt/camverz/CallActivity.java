@@ -1475,7 +1475,7 @@ public class CallActivity extends AppCompatActivity {
                 long durationSec = durationMs / 1000;
                 Log.d(TAG, "📞 Call finished. Duration: " + durationSec + " seconds.");
 
-                if (isPrivateCall && durationSec >= 30 && !tokenManager.isPlanAdFree()) {
+                if (isPrivateCall && durationSec >= 30 && !tokenManager.isVideoCallAdFree()) {
                     loadAndShowRewardedAdAndFinish();
                 } else {
                     boolean shouldShowAd = false;
@@ -1492,7 +1492,7 @@ public class CallActivity extends AppCompatActivity {
                         }
                     }
 
-                    if (shouldShowAd && !tokenManager.isPlanAdFree()) {
+                    if (shouldShowAd && !tokenManager.isVideoCallAdFree()) {
                         showInterstitialAndFinish();
                     } else {
                         finish();
@@ -1744,7 +1744,7 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void preloadAdMobInterstitial() {
-        if (tokenManager != null && tokenManager.isPlanAdFree()) return;
+        if (tokenManager != null && tokenManager.isVideoCallAdFree()) return;
         if (isFinishing() || isDestroyed()) return;
         com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
         com.google.android.gms.ads.interstitial.InterstitialAd.load(
@@ -1794,7 +1794,7 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void startLimitCountdown() {
-        if (tokenManager.isPlanAdFree()) return;
+        if (tokenManager.hasVideoCallPlan()) return;
         limitCountdownHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         limitCountdownRunnable = new Runnable() {
             @Override

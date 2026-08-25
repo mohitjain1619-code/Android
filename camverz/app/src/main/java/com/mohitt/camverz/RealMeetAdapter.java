@@ -82,6 +82,12 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
 
         AvatarHelper.loadAvatar(context, post.getPhotoUrl(), post.getUserAvatar(), post.getUserName(), holder.ivAvatar);
 
+        holder.ivAvatar.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(context, ProfileActivity.class);
+            intent.putExtra("userId", post.getUserId());
+            context.startActivity(intent);
+        });
+
         RealMeetStore store = RealMeetStore.getInstance(context);
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
 

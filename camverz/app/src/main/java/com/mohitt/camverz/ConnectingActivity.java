@@ -28,12 +28,7 @@ import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoa
 import com.google.android.gms.ads.OnUserEarnedRewardListener;
 import androidx.annotation.NonNull;
 
-// Import Meta Audience Network classes
-import com.facebook.ads.Ad;
-import com.facebook.ads.AdError;
-import com.facebook.ads.NativeAdListener;
-import com.facebook.ads.NativeAdLayout;
-import com.facebook.ads.MediaView;
+
 
 public class ConnectingActivity extends BaseActivity {
 
@@ -50,10 +45,9 @@ public class ConnectingActivity extends BaseActivity {
     private boolean isWaiting = false;
     private boolean matchAccepted = false;
 
-    // Google AdMob Mediated Native Ad & Delay
-    private NativeAd nativeAd;
-    private com.facebook.ads.NativeAd metaNativeAd;
-    private RewardedInterstitialAd rewardedInterstitialAd;
+    // ironSource LevelPlay Native Ad
+    private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
+    private com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd rewardedInterstitialAd;
 
     private long searchStartTime = 0;
     private static final long MIN_SEARCH_DURATION_MS = 5000; // 5 seconds minimum to show native ad
@@ -77,15 +71,8 @@ public class ConnectingActivity extends BaseActivity {
         searchStartTime = System.currentTimeMillis();
 
         // Load native ads only for non ad-free users
-        if (!tokenManager.isPlanAdFree()) {
-            com.google.android.gms.ads.MobileAds.initialize(this, initializationStatus -> {
-                runOnUiThread(() -> {
-                    loadNativeAd();
-                    loadRewardedInterstitialAd();
-                });
-            });
-            // Load Meta Native Ad immediately without waiting for AdMob SDK initialization
-            loadMetaNativeAd();
+        if (!tokenManager.isVideoCallAdFree()) {
+            loadLevelPlayNativeAd();
         }
 
         checkAndRequestLocationPermission();
@@ -200,79 +187,74 @@ public class ConnectingActivity extends BaseActivity {
         finish();
     }
 
-    // --- Google AdMob Mediated Native Ad Integration ---
+    // --- ironSource LevelPlay Native Ad Integration ---
 
-    private void loadNativeAd() {
+    private void loadLevelPlayNativeAd() {
         if (isFinishing() || isDestroyed()) return;
-        AdLoader adLoader = new AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
-            .forNativeAd(ad -> {
-                if (nativeAd != null) nativeAd.destroy();
-                nativeAd = ad;
-                if (!isFinishing() && !isDestroyed()) {
-                    inflateAdMobNativeAd(ad);
-                }
-            })
-            .withAdListener(new com.google.android.gms.ads.AdListener() {
-                @Override
-                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                    Log.w(TAG, "AdMob Native failed: " + loadAdError.getMessage() + ", Meta native will be used.");
-                }
-            })
-            .build();
-        adLoader.loadAd(new AdRequest.Builder().build());
+
+        levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
+                .withAdUnitId("16c31bfd5") // ironSource App Key / Native Placement ID
+                .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
+                    @Override
+                    public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                        Log.d(TAG, "LevelPlay Native Ad loaded");
+                        runOnUiThread(() -> inflateLevelPlayNativeAd(ad));
+                    }
+
+                    @Override
+                    public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
+                        Log.w(TAG, "LevelPlay Native Ad load failed: " + error.getErrorMessage());
+                    }
+
+                    @Override
+                    public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                    @Override
+                    public void onAdOpened(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                    @Override
+                    public void onAdClosed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                })
+                .build();
+        levelPlayNativeAd.loadAd();
     }
 
-    private void inflateAdMobNativeAd(NativeAd ad) {
+    private void inflateLevelPlayNativeAd(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad) {
         FrameLayout adContainer = findViewById(R.id.nativeAdContainer);
         if (adContainer == null) return;
         adContainer.removeAllViews();
         adContainer.setVisibility(View.VISIBLE);
 
-        // Create the NativeAdView container
-        NativeAdView adView = new NativeAdView(this);
-        adView.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT));
+        View adView = LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, null);
 
-        // Build native ad components inside a LinearLayout dynamically
-        LinearLayout innerContainer = new LinearLayout(this);
-        innerContainer.setOrientation(LinearLayout.VERTICAL);
-        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        innerContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+        ImageView adIcon = adView.findViewById(R.id.ad_icon);
+        TextView adTitle = adView.findViewById(R.id.ad_title);
+        TextView adAdvertiser = adView.findViewById(R.id.ad_advertiser);
+        TextView adBody = adView.findViewById(R.id.ad_body);
+        com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView mediaView = adView.findViewById(R.id.ad_media);
+        Button adCta = adView.findViewById(R.id.ad_cta);
 
-        // Headline
-        TextView adHeadline = new TextView(this);
-        adHeadline.setText(ad.getHeadline());
-        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
-        adHeadline.setTextSize(16);
-        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(adHeadline);
-        adView.setHeadlineView(adHeadline);
+        if (ad.getIcon() != null && adIcon != null) {
+            adIcon.setImageDrawable(ad.getIcon());
+        }
+        if (ad.getTitle() != null && adTitle != null) {
+            adTitle.setText(ad.getTitle());
+        }
+        if (ad.getAdvertiser() != null && adAdvertiser != null) {
+            adAdvertiser.setText(ad.getAdvertiser());
+        }
+        if (ad.getBody() != null && adBody != null) {
+            adBody.setText(ad.getBody());
+        }
+        if (ad.getCallToAction() != null && adCta != null) {
+            adCta.setText(ad.getCallToAction());
+        }
 
-        // Body
-        TextView adBody = new TextView(this);
-        adBody.setText(ad.getBody());
-        adBody.setTextColor(getResources().getColor(R.color.text_secondary));
-        adBody.setTextSize(12);
-        adBody.setPadding(0, dpToPx(4), 0, dpToPx(8));
-        innerContainer.addView(adBody);
-        adView.setBodyView(adBody);
+        java.util.List<View> clickableViews = new java.util.ArrayList<>();
+        if (adTitle != null) clickableViews.add(adTitle);
+        if (adCta != null) clickableViews.add(adCta);
 
-        // Call to action button
-        Button callToAction = new Button(this);
-        callToAction.setText(ad.getCallToAction());
-        callToAction.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        callToAction.setTextColor(getResources().getColor(R.color.accent_primary));
-        callToAction.setTextSize(14);
-        callToAction.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(callToAction);
-        adView.setCallToActionView(callToAction);
-
-        // Add elements to NativeAdView wrapper
-        adView.addView(innerContainer);
-
-        // Register native ad object with NativeAdView
-        adView.setNativeAd(ad);
+        ad.registerView(adView, mediaView, adIcon, clickableViews);
 
         adContainer.addView(adView);
     }
@@ -281,89 +263,7 @@ public class ConnectingActivity extends BaseActivity {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
 
-    // --- Meta Audience Network Direct Native Ad Integration ---
 
-    private void loadMetaNativeAd() {
-        if (isFinishing() || isDestroyed()) return;
-        if (com.mohitt.camverz.BuildConfig.DEBUG) {
-            com.facebook.ads.AdSettings.setTestMode(true);
-        }
-        metaNativeAd = new com.facebook.ads.NativeAd(this, "1679167109809598_1679167723142870");
-        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig().withAdListener(new NativeAdListener() {
-            @Override
-            public void onMediaDownloaded(Ad ad) {}
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                Log.w(TAG, "Meta Native failed: " + adError.getErrorMessage());
-            }
-            @Override
-            public void onAdLoaded(Ad ad) {
-                if (!isFinishing() && !isDestroyed() && nativeAd == null) {
-                    inflateMetaNativeAd(metaNativeAd);
-                }
-            }
-            @Override
-            public void onAdClicked(Ad ad) {}
-            @Override
-            public void onLoggingImpression(Ad ad) {}
-        }).build());
-    }
-
-    private void inflateMetaNativeAd(com.facebook.ads.NativeAd ad) {
-        FrameLayout adContainer = findViewById(R.id.metaNativeAdContainer);
-        if (adContainer == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(View.VISIBLE);
-
-        // Main native ad container from Meta
-        com.facebook.ads.NativeAdLayout adLayout = new com.facebook.ads.NativeAdLayout(this);
-        adLayout.setLayoutParams(new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT));
-
-        // Build native ad components inside a LinearLayout dynamically
-        LinearLayout innerContainer = new LinearLayout(this);
-        innerContainer.setOrientation(LinearLayout.VERTICAL);
-        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        innerContainer.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
-
-        // Headline (Title)
-        TextView adHeadline = new TextView(this);
-        adHeadline.setText(ad.getAdHeadline());
-        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
-        adHeadline.setTextSize(16);
-        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(adHeadline);
-
-        // Body (Description)
-        TextView adBody = new TextView(this);
-        adBody.setText(ad.getAdBodyText());
-        adBody.setTextColor(getResources().getColor(R.color.text_secondary));
-        adBody.setTextSize(12);
-        adBody.setPadding(0, dpToPx(4), 0, dpToPx(8));
-        innerContainer.addView(adBody);
-
-        // Call to action button
-        Button callToAction = new Button(this);
-        callToAction.setText(ad.getAdCallToAction());
-        callToAction.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        callToAction.setTextColor(getResources().getColor(R.color.accent_primary));
-        callToAction.setTextSize(14);
-        callToAction.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(callToAction);
-
-        adLayout.addView(innerContainer);
-
-        // Register views for interaction (clicks)
-        List<View> clickableViews = new ArrayList<>();
-        clickableViews.add(adHeadline);
-        clickableViews.add(callToAction);
-        
-        MediaView mediaView = new MediaView(this);
-        ad.registerViewForInteraction(adLayout, mediaView, clickableViews);
-
-        adContainer.addView(adLayout);
-    }
 
     private void loadRewardedInterstitialAd() {
         // Ads disabled in main app
@@ -420,12 +320,9 @@ public class ConnectingActivity extends BaseActivity {
         }
         removeSocketListeners();
 
-        // Clean up AdMob ads
-        if (nativeAd != null) {
-            nativeAd.destroy();
-        }
-        if (metaNativeAd != null) {
-            metaNativeAd.destroy();
+        // Clean up ironSource ad objects
+        if (levelPlayNativeAd != null) {
+            levelPlayNativeAd.destroy();
         }
     }
 
