@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:background="@drawable/bg_party_gradient_card"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="10dp">
+
+    <!-- Host Avatar -->
+    <RelativeLayout
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center_vertical">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/ivHostAvatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_avatar_2"
+            app:shapeAppearanceOverlay="@style/CircleImageStyle" />
+
+        <View
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_avatar_gold_ring" />
+    </RelativeLayout>
+
+    <!-- Details Container -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="6dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Host Name & Title/Purpose -->
+        <TextView
+            android:id="@+id/tvPartyPurpose"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="🎉 House Party Title" />
+
+        <!-- Host Name and metadata -->
+        <TextView
+            android:id="@+id/tvHostNameAge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="#E5E5EA"
+            android:textSize="10sp"
+            tools:text="By Neeraj Jain, 22" />
+
+        <!-- Venue & Time row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvPartyVenue"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#34C759"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                tools:text="📍 Venue Address" />
+
+            <TextView
+                android:id="@+id/tvPartyTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="#FFD60A"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                tools:text="⏰ 9:00 PM" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Save/Unsave Bookmark Button -->
+    <ImageView
+        android:id="@+id/btnSaveParty"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:background="@drawable/bg_luxury_chip"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="6dp"
+        android:src="@drawable/ic_bookmark_unselected"
+        app:tint="#FFD60A" />
+
+    <!-- Hidden views needed by ViewHolder but not visible in small card -->
+    <TextView
+        android:id="@+id/tvTargetGender"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvHostMetadata"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvCapacity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/btnJoinParty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+</LinearLayout>

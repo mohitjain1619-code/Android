@@ -105,7 +105,7 @@
         <activity
             android:name=".StoryViewerActivity"
             android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:theme="@style/Theme.Camverz.Fullscreen"
             android:exported="false" />
 
         <!-- Connecting Activity -->
@@ -122,6 +122,12 @@
         <!-- Community Chat Activity -->
         <activity
             android:name=".CommunityChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Party Board Activity -->
+        <activity
+            android:name=".PartyBoardActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
@@ -169,6 +175,10 @@
 
         <activity
             android:name=".NotificationActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CommunityNotificationActivity"
             android:exported="false" />
 
         <activity

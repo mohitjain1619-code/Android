@@ -29,11 +29,17 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
     private final String currentUserId;
     private final OnPartyActionListener listener;
     private final RealMeetStore store;
+    private final boolean isSavedList;
 
     public PartyAdapter(Context context, List<PartyPost> postList, String currentUserId, OnPartyActionListener listener) {
+        this(context, postList, currentUserId, false, listener);
+    }
+
+    public PartyAdapter(Context context, List<PartyPost> postList, String currentUserId, boolean isSavedList, OnPartyActionListener listener) {
         this.context = context;
         this.postList = postList;
         this.currentUserId = currentUserId;
+        this.isSavedList = isSavedList;
         this.listener = listener;
         this.store = RealMeetStore.getInstance(context);
     }
@@ -41,7 +47,8 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_party_card, parent, false);
+        int layoutId = isSavedList ? R.layout.item_party_card_small : R.layout.item_party_card;
+        View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
         return new ViewHolder(view);
     }
 
@@ -52,40 +59,54 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
         boolean isMale = post.getGender() == null || !post.getGender().toLowerCase().startsWith("f");
         boolean isVerified = isMale || post.isVerified();
 
-        holder.tvHostNameAge.setText(TextHelper.getPostHeader(
-                context,
-                post.getHostName(),
-                null,
-                isVerified,
-                null
-        ));
-        
-        holder.tvHostMetadata.setText(TextHelper.getHostMetadata(
-                context,
-                post.getHostAge(),
-                post.getGender()
-        ));
-        holder.tvTargetGender.setVisibility(View.GONE);
+        if (isSavedList) {
+            holder.tvHostNameAge.setText("By " + post.getHostName() + ", " + post.getHostAge() + " Yrs");
+            if (holder.tvHostMetadata != null) {
+                holder.tvHostMetadata.setVisibility(View.GONE);
+            }
+            if (holder.tvCapacity != null) {
+                holder.tvCapacity.setVisibility(View.GONE);
+            }
+        } else {
+            holder.tvHostNameAge.setText(TextHelper.getPostHeader(
+                    context,
+                    post.getHostName(),
+                    null,
+                    isVerified,
+                    null
+            ));
+            
+            if (holder.tvHostMetadata != null) {
+                holder.tvHostMetadata.setText(TextHelper.getHostMetadata(
+                        context,
+                        post.getHostAge(),
+                        post.getGender()
+                ));
+            }
+            holder.tvTargetGender.setVisibility(View.GONE);
+
+            SpannableStringBuilder capacityBuilder = new SpannableStringBuilder();
+            capacityBuilder.append("👥 " + post.getCapacity() + " Max • ");
+            int start = capacityBuilder.length();
+            String target = post.getTargetGender() != null ? post.getTargetGender().toUpperCase() : "EVERYONE";
+            capacityBuilder.append(target);
+            if (target.contains("FEMALE")) {
+                capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if (target.contains("MALE")) {
+                capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#007AFF")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#34C759")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+            if (holder.tvCapacity != null) {
+                holder.tvCapacity.setText(capacityBuilder);
+            }
+        }
 
         if (post.isPremium()) {
             holder.itemView.setBackgroundResource(R.drawable.bg_community_hot_gradient);
         } else {
             holder.itemView.setBackgroundResource(R.drawable.bg_party_gradient_card);
         }
-
-        SpannableStringBuilder capacityBuilder = new SpannableStringBuilder();
-        capacityBuilder.append("👥 " + post.getCapacity() + " Max • ");
-        int start = capacityBuilder.length();
-        String target = post.getTargetGender() != null ? post.getTargetGender().toUpperCase() : "EVERYONE";
-        capacityBuilder.append(target);
-        if (target.contains("FEMALE")) {
-            capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else if (target.contains("MALE")) {
-            capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#007AFF")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#34C759")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        holder.tvCapacity.setText(capacityBuilder);
 
         holder.tvPartyPurpose.setText(post.getPurpose());
         holder.tvPartyVenue.setText("📍 " + post.getVenue());
@@ -95,15 +116,7 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
 
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
 
-        if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getHostUserId())) {
-            holder.btnJoinParty.setText("🗑️ Delete Party");
-            holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_chip);
-            holder.btnJoinParty.setTextColor(Color.WHITE);
-            holder.btnJoinParty.setOnClickListener(v -> {
-                if (listener != null) listener.onDeletePartyClicked(post);
-            });
-            holder.btnSaveParty.setVisibility(View.GONE); // Host doesn't need to save their own party
-        } else {
+        if (isSavedList) {
             holder.btnSaveParty.setVisibility(View.VISIBLE);
             if (store.isPartySaved(post.getId())) {
                 holder.btnSaveParty.setImageResource(R.drawable.ic_bookmark_selected);
@@ -114,21 +127,46 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
             holder.btnSaveParty.setOnClickListener(v -> {
                 if (listener != null) listener.onSavePartyClicked(post);
             });
-
-            if (hasRequested) {
-                holder.btnJoinParty.setText("📩 Requested");
-                holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
-                holder.btnJoinParty.setTextColor(Color.parseColor("#8E8E93"));
+            
+            if (holder.btnJoinParty != null) {
+                holder.btnJoinParty.setVisibility(View.GONE);
+            }
+        } else {
+            if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getHostUserId())) {
+                holder.btnJoinParty.setText("🗑️ Delete Party");
+                holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_chip);
+                holder.btnJoinParty.setTextColor(Color.WHITE);
                 holder.btnJoinParty.setOnClickListener(v -> {
-                    android.widget.Toast.makeText(context, "You have already requested an invite for this party.", android.widget.Toast.LENGTH_SHORT).show();
+                    if (listener != null) listener.onDeletePartyClicked(post);
                 });
+                holder.btnSaveParty.setVisibility(View.GONE); // Host doesn't need to save their own party
             } else {
-                holder.btnJoinParty.setText("🎉 Join Party");
-                holder.btnJoinParty.setBackgroundResource(R.drawable.bg_neon_emerald_button);
-                holder.btnJoinParty.setTextColor(Color.BLACK);
-                holder.btnJoinParty.setOnClickListener(v -> {
-                    if (listener != null) listener.onJoinPartyClicked(post);
+                holder.btnSaveParty.setVisibility(View.VISIBLE);
+                if (store.isPartySaved(post.getId())) {
+                    holder.btnSaveParty.setImageResource(R.drawable.ic_bookmark_selected);
+                } else {
+                    holder.btnSaveParty.setImageResource(R.drawable.ic_bookmark_unselected);
+                }
+
+                holder.btnSaveParty.setOnClickListener(v -> {
+                    if (listener != null) listener.onSavePartyClicked(post);
                 });
+
+                if (hasRequested) {
+                    holder.btnJoinParty.setText("📩 Requested");
+                    holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
+                    holder.btnJoinParty.setTextColor(Color.parseColor("#8E8E93"));
+                    holder.btnJoinParty.setOnClickListener(v -> {
+                        android.widget.Toast.makeText(context, "You have already requested an invite for this party.", android.widget.Toast.LENGTH_SHORT).show();
+                    });
+                } else {
+                    holder.btnJoinParty.setText("🎉 Join Party");
+                    holder.btnJoinParty.setBackgroundResource(R.drawable.bg_neon_emerald_button);
+                    holder.btnJoinParty.setTextColor(Color.BLACK);
+                    holder.btnJoinParty.setOnClickListener(v -> {
+                        if (listener != null) listener.onJoinPartyClicked(post);
+                    });
+                }
             }
         }
 

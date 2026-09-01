@@ -215,7 +215,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
                 ds.setUnderlineText(false);
-                ds.setColor(Color.parseColor("#1F2937"));
+                ds.setColor(Color.parseColor("#54D6D2")); // Bright Teal/Cyan for username
                 ds.setFakeBoldText(true);
             }
         };
@@ -232,7 +232,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             public void updateDrawState(@NonNull TextPaint ds) {
                 super.updateDrawState(ds);
                 ds.setUnderlineText(false);
-                ds.setColor(Color.parseColor("#4B5563"));
+                ds.setColor(Color.parseColor("#F4FAF9")); // Crisp Light Text for notification body
             }
         };
 

@@ -414,6 +414,24 @@
                 android:nestedScrollingEnabled="false" />
 
             <TextView
+                android:id="@+id/tvMyHostedPartiesTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="12dp"
+                android:letterSpacing="0.05"
+                android:text="My Hosted Parties"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/myHostedPartiesRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
                 android:id="@+id/tvSavedPartiesTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

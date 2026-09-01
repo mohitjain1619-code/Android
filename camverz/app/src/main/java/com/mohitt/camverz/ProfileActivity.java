@@ -40,11 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.FullScreenContentCallback;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import retrofit2.Call;
@@ -78,6 +74,7 @@ public class ProfileActivity extends BaseActivity {
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
     private boolean hasLoadedData = false;
+    private boolean isFromRealMeet = false;
     
     private ApiService api;
     private TokenManager tokenManager;
@@ -96,6 +93,18 @@ public class ProfileActivity extends BaseActivity {
         
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
+
+        isFromRealMeet = getIntent().getBooleanExtra("isFromRealMeet", false);
+        if (isFromRealMeet) {
+            View floatingMenu = findViewById(R.id.floating_menu_container);
+            if (floatingMenu != null) {
+                floatingMenu.setVisibility(View.GONE);
+            }
+            View statsContainer = findViewById(R.id.stats_section_container);
+            if (statsContainer != null) {
+                statsContainer.setVisibility(View.GONE);
+            }
+        }
 
         // Back button
         findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
@@ -148,6 +157,21 @@ public class ProfileActivity extends BaseActivity {
         if (sexPreferenceLayout != null) {
             sexPreferenceLayout.setOnClickListener(v -> {
                 if (isUpdating) return;
+
+                // Once set, no change!
+                if (!tokenManager.getSexPreference().isEmpty()) {
+                    Toast.makeText(this, "Sex preference once set cannot be changed.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Female users must be verified
+                String gender = tokenManager.getUserGender();
+                boolean isVerified = tokenManager.isVerified();
+                if ("female".equalsIgnoreCase(gender) && !isVerified) {
+                    Toast.makeText(this, "Please verify your identity before setting preference.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, preference -> {
                     if (tvSexPreference != null) tvSexPreference.setText(preference);
                     tokenManager.setSexPreference(preference);
@@ -290,7 +314,13 @@ public class ProfileActivity extends BaseActivity {
             profileImageView.setClickable(false);
             otherUserActionsLayout.setVisibility(View.VISIBLE);
 
-            followButton.setOnClickListener(v -> followUser());
+            followButton.setOnClickListener(v -> {
+                if (isFromRealMeet) {
+                    followUser();
+                } else {
+                    toggleFollowUser();
+                }
+            });
             messageButton.setOnClickListener(v -> {
                 Intent intent = new Intent(ProfileActivity.this, ChatActivity.class);
                 intent.putExtra("userId", visitedUserId);
@@ -614,6 +644,49 @@ public class ProfileActivity extends BaseActivity {
         }
     }
 
+    private void toggleFollowUser() {
+        if (visitedUserId == null || visitedUser == null) return;
+        setUpdatingState(true);
+
+        if (visitedUser.isFollowedByMe()) {
+            api.unfollowUser(visitedUserId).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    setUpdatingState(false);
+                    if (response.isSuccessful()) {
+                        Toast.makeText(ProfileActivity.this, "Unfollowed", Toast.LENGTH_SHORT).show();
+                        loadData();
+                    } else {
+                        Toast.makeText(ProfileActivity.this, "Failed to unfollow", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    setUpdatingState(false);
+                    Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            api.followUser(visitedUserId).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    setUpdatingState(false);
+                    if (response.isSuccessful()) {
+                        Toast.makeText(ProfileActivity.this, "Following", Toast.LENGTH_SHORT).show();
+                        loadData();
+                    } else {
+                        Toast.makeText(ProfileActivity.this, "Failed to follow", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    setUpdatingState(false);
+                    Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
     private void updateProfileUI() {
         if (isBlocked || isBlockedByOther) return;
 
@@ -637,18 +710,28 @@ public class ProfileActivity extends BaseActivity {
         }
 
         if (!currentUserId.equals(visitedUserId)) {
-            if ("friends".equals(friendshipStatus)) {
-                followButton.setText("Friends");
-                followButton.setBackgroundResource(R.drawable.bg_following_button);
-            } else if ("sent".equals(friendshipStatus)) {
-                followButton.setText("Requested");
-                followButton.setBackgroundResource(R.drawable.bg_following_button);
-            } else if ("received".equals(friendshipStatus)) {
-                followButton.setText("Accept Request");
-                followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+            if (isFromRealMeet) {
+                if ("friends".equals(friendshipStatus)) {
+                    followButton.setText("Friends");
+                    followButton.setBackgroundResource(R.drawable.bg_following_button);
+                } else if ("sent".equals(friendshipStatus)) {
+                    followButton.setText("Requested");
+                    followButton.setBackgroundResource(R.drawable.bg_following_button);
+                } else if ("received".equals(friendshipStatus)) {
+                    followButton.setText("Accept Request");
+                    followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+                } else {
+                    followButton.setText("Add Friend");
+                    followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+                }
             } else {
-                followButton.setText("Add Friend");
-                followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+                if (visitedUser.isFollowedByMe()) {
+                    followButton.setText("Following");
+                    followButton.setBackgroundResource(R.drawable.bg_following_button);
+                } else {
+                    followButton.setText("Follow");
+                    followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+                }
             }
         }
 
@@ -703,8 +786,15 @@ public class ProfileActivity extends BaseActivity {
 
         if (sexPreferenceLayout != null && tvSexPreference != null) {
             if (currentUserId.equals(visitedUserId)) {
-                sexPreferenceLayout.setVisibility(View.VISIBLE);
-                tvSexPreference.setText(visitedUser.getSexPreference());
+                // Female users must be verified to see/interact with sex preference
+                String gender = tokenManager.getUserGender();
+                boolean isVerified = tokenManager.isVerified();
+                if ("female".equalsIgnoreCase(gender) && !isVerified) {
+                    sexPreferenceLayout.setVisibility(View.GONE);
+                } else {
+                    sexPreferenceLayout.setVisibility(View.VISIBLE);
+                    tvSexPreference.setText(visitedUser.getSexPreference());
+                }
             } else {
                 sexPreferenceLayout.setVisibility(View.GONE);
             }

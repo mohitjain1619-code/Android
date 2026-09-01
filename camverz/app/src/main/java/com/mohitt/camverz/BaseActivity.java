@@ -16,39 +16,22 @@ public class BaseActivity extends AppCompatActivity {
 
     private static final boolean ENABLE_SCREENSHOT_PROTECTION = false;
     private static final String TAG = "BaseActivity";
+    private static boolean isIronSourceInitialized = false;
+
+    public static void initializeIronSource(android.app.Activity activity) {
+        if (!isIronSourceInitialized) {
+            String ironSourceAppKey = "27a0e2125";
+            com.ironsource.mediationsdk.IronSource.init(activity, ironSourceAppKey);
+            isIronSourceInitialized = true;
+            Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK Initialized Globally");
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize InMobi SDK safely
-        org.json.JSONObject consentObject = new org.json.JSONObject();
-        try {
-            consentObject.put("gdpr", "0");
-        } catch (Exception e) {}
-        
-        if (com.mohitt.camverz.BuildConfig.DEBUG) {
-            try {
-                com.inmobi.sdk.InMobiSdk.setLogLevel(com.inmobi.sdk.InMobiSdk.LogLevel.DEBUG);
-            } catch (Exception e) {
-                Log.e("InMobi", "Failed to set log level", e);
-            }
-        }
 
-        try {
-            com.inmobi.sdk.InMobiSdk.init(this, "cf32cb0f880544468e1a4077d1febf0d", consentObject, new com.inmobi.sdk.SdkInitializationListener() {
-                @Override
-                public void onInitializationComplete(@androidx.annotation.Nullable Error error) {
-                    if (error != null) {
-                        android.util.Log.e("InMobi", "InMobi Init failed: " + error.getMessage());
-                    } else {
-                        android.util.Log.d("InMobi", "InMobi Init Successful");
-                    }
-                }
-            });
-        } catch (Exception e) {
-            Log.e("InMobi", "Failed to initialize InMobi SDK", e);
-        }
 
         try {
             // Enable edge-to-edge window insets
@@ -141,6 +124,17 @@ public class BaseActivity extends AppCompatActivity {
         });
 
         ViewCompat.requestApplyInsets(decorView);
+    }
+
+    public static boolean isAdShowing = false;
+
+    @Override
+    public void onBackPressed() {
+        if (isAdShowing) {
+            Log.d(TAG, "Back press blocked because an ad is currently playing.");
+            return;
+        }
+        super.onBackPressed();
     }
 
     private int dpToPx(int dp) {

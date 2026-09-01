@@ -85,6 +85,7 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
         holder.ivAvatar.setOnClickListener(v -> {
             android.content.Intent intent = new android.content.Intent(context, ProfileActivity.class);
             intent.putExtra("userId", post.getUserId());
+            intent.putExtra("isFromRealMeet", true);
             context.startActivity(intent);
         });
 

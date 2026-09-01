@@ -6,11 +6,23 @@ import { PRICING_MATRIX, getPaymentUrl, getSubscriptionStatus, REGIONAL_COUNTRIE
 import { Check, Zap, Sparkles, Crown, ShieldCheck, Lock, ArrowRight, Star, Video, MapPin, Globe } from 'lucide-react';
 import styles from './page.module.css';
 
-export default function PricingPage() {
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+function PricingContent() {
   const { user, userData, setShowLogin, setShowOnboarding } = useAuth();
   const [regionMode, setRegionMode] = useState('international'); // 'india' | 'regional' | 'international'
   const [detectedLocation, setDetectedLocation] = useState('Detecting location...');
   const [pricingCategory, setPricingCategory] = useState('video-call'); // 'video-call' | 'community-hub'
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const tab = searchParams?.get('tab');
+    const category = searchParams?.get('category');
+    if (tab === 'realmeet' || category === 'community-hub') {
+      setPricingCategory('community-hub');
+    }
+  }, [searchParams]);
 
   const subStatus = getSubscriptionStatus(userData);
 
@@ -510,5 +522,13 @@ export default function PricingPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '100px 20px', color: '#fff', fontSize: '1.2rem' }}>Loading pricing plans...</div>}>
+      <PricingContent />
+    </Suspense>
   );
 }

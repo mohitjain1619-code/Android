@@ -53,21 +53,50 @@ public class AvatarHelper {
     }
 
     public static void loadAvatar(Context context, String photoUrl, String avatar, String userName, ImageView imageView) {
+        if (context == null || imageView == null) return;
+
         BitmapDrawable initials = getInitialAvatar(context, userName);
         imageView.setImageDrawable(initials);
 
-        if (photoUrl != null && !photoUrl.isEmpty() && (photoUrl.startsWith("http") || photoUrl.contains("/"))) {
-            Glide.with(context)
-                    .load(photoUrl)
-                    .placeholder(initials)
-                    .circleCrop()
-                    .into(imageView);
-        } else if (avatar != null && !avatar.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatar, "drawable", context.getPackageName());
+        // 1. Try photoUrl first if it is a valid HTTP URL or relative path
+        if (photoUrl != null && !photoUrl.isEmpty() && !"null".equalsIgnoreCase(photoUrl)) {
+            if (photoUrl.startsWith("http") || photoUrl.contains("/")) {
+                Glide.with(context)
+                        .load(photoUrl)
+                        .placeholder(initials)
+                        .error(initials)
+                        .circleCrop()
+                        .into(imageView);
+                return;
+            }
+        }
+
+        // 2. Try avatar field (could be HTTP URL or drawable name like av1, av2, etc.)
+        if (avatar != null && !avatar.isEmpty() && !"null".equalsIgnoreCase(avatar)) {
+            if (avatar.startsWith("http") || avatar.contains("/")) {
+                Glide.with(context)
+                        .load(avatar)
+                        .placeholder(initials)
+                        .error(initials)
+                        .circleCrop()
+                        .into(imageView);
+                return;
+            }
+
+            // Strip extension if present (e.g. av1.png -> av1)
+            String cleanAvatar = avatar.replaceAll("(?i)\\.(png|jpg|jpeg|webp)$", "").trim();
+            int avatarResId = context.getResources().getIdentifier(cleanAvatar, "drawable", context.getPackageName());
+            
+            // Fallback for lowercasing avatar resource names
+            if (avatarResId == 0 && cleanAvatar.toLowerCase().startsWith("av")) {
+                avatarResId = context.getResources().getIdentifier(cleanAvatar.toLowerCase(), "drawable", context.getPackageName());
+            }
+
             if (avatarResId != 0) {
                 Glide.with(context)
                         .load(avatarResId)
                         .placeholder(initials)
+                        .error(initials)
                         .circleCrop()
                         .into(imageView);
             }

@@ -8,6 +8,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -54,8 +55,12 @@ public class AdTestingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ad_testing);
 
+        // Initialize LevelPlay SDK for testing
+        BaseActivity.initializeIronSource(this);
+
         if (com.mohitt.camverz.BuildConfig.DEBUG) {
             AdSettings.setTestMode(true);
+            com.ironsource.mediationsdk.integration.IntegrationHelper.validateIntegration(this);
         }
 
         // Meta Buttons
@@ -97,7 +102,7 @@ public class AdTestingActivity extends AppCompatActivity {
                     showToast("LevelPlay Interstitial Load Failed: " + error.getErrorMessage());
                 }
                 @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdShowSuccess(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
                 @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     showToast("LevelPlay Interstitial Show Failed: " + error.getErrorMessage());
                 }
@@ -116,7 +121,7 @@ public class AdTestingActivity extends AppCompatActivity {
                     @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                         showToast("LevelPlay Rewarded Show Failed: " + error.getErrorMessage());
                     }
-                    @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
                     @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                         showToast("LevelPlay Rewarded Video Completed! User rewarded.");
                     }
@@ -130,7 +135,7 @@ public class AdTestingActivity extends AppCompatActivity {
         findViewById(R.id.btn_lp_native).setOnClickListener(v -> {
             showToast("Loading LevelPlay Native Ad...");
             com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd nativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
-                .withAdUnitId("16c31bfd5")
+                .withPlacementName("default")
                 .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
                     @Override
                     public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
@@ -142,8 +147,7 @@ public class AdTestingActivity extends AppCompatActivity {
                         showToast("LevelPlay Native Ad Load Failed: " + error.getErrorMessage());
                     }
                     @Override public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                    @Override public void onAdOpened(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                    @Override public void onAdClosed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    @Override public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
                 })
                 .build();
             nativeAd.loadAd();
@@ -376,7 +380,8 @@ public class AdTestingActivity extends AppCompatActivity {
         adContainer.removeAllViews();
         adContainer.setVisibility(View.VISIBLE);
 
-        View adView = android.view.LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, null);
+        com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout = new com.ironsource.mediationsdk.ads.nativead.NativeAdLayout(this);
+        View adView = android.view.LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, nativeAdLayout, true);
 
         ImageView adIcon = adView.findViewById(R.id.ad_icon);
         TextView adTitle = adView.findViewById(R.id.ad_title);
@@ -386,7 +391,7 @@ public class AdTestingActivity extends AppCompatActivity {
         Button adCta = adView.findViewById(R.id.ad_cta);
 
         if (ad.getIcon() != null && adIcon != null) {
-            adIcon.setImageDrawable(ad.getIcon());
+            adIcon.setImageDrawable(ad.getIcon().getDrawable());
         }
         if (ad.getTitle() != null && adTitle != null) {
             adTitle.setText(ad.getTitle());
@@ -401,13 +406,14 @@ public class AdTestingActivity extends AppCompatActivity {
             adCta.setText(ad.getCallToAction());
         }
 
-        java.util.List<View> clickableViews = new java.util.ArrayList<>();
-        if (adTitle != null) clickableViews.add(adTitle);
-        if (adCta != null) clickableViews.add(adCta);
+        nativeAdLayout.setTitleView(adTitle);
+        nativeAdLayout.setIconView(adIcon);
+        nativeAdLayout.setMediaView(mediaView);
+        nativeAdLayout.setCallToActionView(adCta);
 
-        ad.registerView(adView, mediaView, adIcon, clickableViews);
+        nativeAdLayout.registerNativeAdViews(ad);
 
-        adContainer.addView(adView);
+        adContainer.addView(nativeAdLayout);
     }
 
     @Override

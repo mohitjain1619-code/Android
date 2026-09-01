@@ -16,16 +16,9 @@ import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import java.util.ArrayList;
 import java.util.List;
+import android.view.LayoutInflater;
+import android.widget.ImageView;
 
-// Import Google AdMob classes
-import com.google.android.gms.ads.AdLoader;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.nativead.NativeAd;
-import com.google.android.gms.ads.nativead.NativeAdView;
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd;
-import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback;
-import com.google.android.gms.ads.OnUserEarnedRewardListener;
 import androidx.annotation.NonNull;
 
 
@@ -47,7 +40,7 @@ public class ConnectingActivity extends BaseActivity {
 
     // ironSource LevelPlay Native Ad
     private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
-    private com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd rewardedInterstitialAd;
+    private TextView waitingText;
 
     private long searchStartTime = 0;
     private static final long MIN_SEARCH_DURATION_MS = 5000; // 5 seconds minimum to show native ad
@@ -64,20 +57,20 @@ public class ConnectingActivity extends BaseActivity {
         category = getIntent().getStringExtra("category");
         if (category == null) category = "straight";
 
+        waitingText = findViewById(R.id.waitingText);
         TextView categoryText = findViewById(R.id.categoryText);
         categoryText.setText("Category: " + category.substring(0, 1).toUpperCase() + category.substring(1));
 
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
-        // Load native ads only for non ad-free users
-        if (!tokenManager.isVideoCallAdFree()) {
-            loadLevelPlayNativeAd();
-        }
-
-        checkAndRequestLocationPermission();
         setupSocketListeners();
         loadUserDataAndJoinQueue();
+
+        // Load native ads asynchronously in background for non ad-free users so matching starts immediately
+        if (!tokenManager.isVideoCallAdFree()) {
+            new Handler(Looper.getMainLooper()).post(this::loadLevelPlayNativeAd);
+        }
 
         findViewById(R.id.cancelButton).setOnClickListener(v -> {
             leaveQueue();
@@ -146,6 +139,8 @@ public class ConnectingActivity extends BaseActivity {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String peerId = data.getString("peerId");
+                String peerName = data.has("peerName") ? data.getString("peerName") : "";
+                String peerAvatar = data.has("peerAvatar") ? data.getString("peerAvatar") : "";
                 Log.d(TAG, "📥 match-found details -> peerId: " + peerId + ", myUid: " + myUid);
 
                 if (peerId.equals(myUid)) return;
@@ -153,21 +148,7 @@ public class ConnectingActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     isWaiting = false;
                     removeMatchFoundListener();
-
-                    // Calculate elapsed search duration
-                    long elapsed = System.currentTimeMillis() - searchStartTime;
-                    Log.d(TAG, "⏱️ elapsed matchmaking time: " + elapsed + "ms, searchStartTime: " + searchStartTime);
-                    if (elapsed < MIN_SEARCH_DURATION_MS) {
-                        long remainingDelay = MIN_SEARCH_DURATION_MS - elapsed;
-                        Log.d(TAG, "⏳ Delaying match transition by " + remainingDelay + "ms to show Native ad");
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            if (isFinishing() || isDestroyed()) return;
-                            transitionToCall(peerId);
-                        }, remainingDelay);
-                    } else {
-                        Log.d(TAG, "⚡ Elapsed time is already >= 5s. Transitioning immediately.");
-                        transitionToCall(peerId);
-                    }
+                    startMatchTransitionCountdown(peerId, peerName, peerAvatar);
                 });
 
             } catch (Exception e) {
@@ -177,11 +158,35 @@ public class ConnectingActivity extends BaseActivity {
         socket.on("match-found", matchFoundListener);
     }
 
-    private void transitionToCall(String peerId) {
+    private void startMatchTransitionCountdown(String peerId, String peerName, String peerAvatar) {
+        final int[] secondsRemaining = {5};
+        final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isFinishing() || isDestroyed()) return;
+
+                if (secondsRemaining[0] > 0) {
+                    if (waitingText != null) {
+                        waitingText.setText("Matched! Connecting in " + secondsRemaining[0] + "s...");
+                    }
+                    secondsRemaining[0]--;
+                    handler.postDelayed(this, 1000);
+                } else {
+                    transitionToCall(peerId, peerName, peerAvatar);
+                }
+            }
+        };
+        handler.post(runnable);
+    }
+
+    private void transitionToCall(String peerId, String peerName, String peerAvatar) {
         Log.d(TAG, "🚀 transitionToCall starting CallActivity with peerId: " + peerId);
         matchAccepted = true;
         Intent i = new Intent(ConnectingActivity.this, CallActivity.class);
         i.putExtra("peer", peerId);
+        if (peerName != null && !peerName.isEmpty()) i.putExtra("peerName", peerName);
+        if (peerAvatar != null && !peerAvatar.isEmpty()) i.putExtra("peerAvatar", peerAvatar);
         i.putExtra("category", category);
         startActivity(i);
         finish();
@@ -192,8 +197,11 @@ public class ConnectingActivity extends BaseActivity {
     private void loadLevelPlayNativeAd() {
         if (isFinishing() || isDestroyed()) return;
 
+        // Ensure LevelPlay is initialized as a fallback
+        BaseActivity.initializeIronSource(this);
+
         levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
-                .withAdUnitId("16c31bfd5") // ironSource App Key / Native Placement ID
+                .withPlacementName("default")
                 .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
                     @Override
                     public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
@@ -210,10 +218,7 @@ public class ConnectingActivity extends BaseActivity {
                     public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
 
                     @Override
-                    public void onAdOpened(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-
-                    @Override
-                    public void onAdClosed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
                 })
                 .build();
         levelPlayNativeAd.loadAd();
@@ -225,7 +230,8 @@ public class ConnectingActivity extends BaseActivity {
         adContainer.removeAllViews();
         adContainer.setVisibility(View.VISIBLE);
 
-        View adView = LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, null);
+        com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout = new com.ironsource.mediationsdk.ads.nativead.NativeAdLayout(this);
+        View adView = LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, nativeAdLayout, true);
 
         ImageView adIcon = adView.findViewById(R.id.ad_icon);
         TextView adTitle = adView.findViewById(R.id.ad_title);
@@ -235,7 +241,7 @@ public class ConnectingActivity extends BaseActivity {
         Button adCta = adView.findViewById(R.id.ad_cta);
 
         if (ad.getIcon() != null && adIcon != null) {
-            adIcon.setImageDrawable(ad.getIcon());
+            adIcon.setImageDrawable(ad.getIcon().getDrawable());
         }
         if (ad.getTitle() != null && adTitle != null) {
             adTitle.setText(ad.getTitle());
@@ -250,13 +256,14 @@ public class ConnectingActivity extends BaseActivity {
             adCta.setText(ad.getCallToAction());
         }
 
-        java.util.List<View> clickableViews = new java.util.ArrayList<>();
-        if (adTitle != null) clickableViews.add(adTitle);
-        if (adCta != null) clickableViews.add(adCta);
+        nativeAdLayout.setTitleView(adTitle);
+        nativeAdLayout.setIconView(adIcon);
+        nativeAdLayout.setMediaView(mediaView);
+        nativeAdLayout.setCallToActionView(adCta);
 
-        ad.registerView(adView, mediaView, adIcon, clickableViews);
+        nativeAdLayout.registerNativeAdViews(ad);
 
-        adContainer.addView(adView);
+        adContainer.addView(nativeAdLayout);
     }
 
     private int dpToPx(int dp) {
@@ -265,9 +272,6 @@ public class ConnectingActivity extends BaseActivity {
 
 
 
-    private void loadRewardedInterstitialAd() {
-        // Ads disabled in main app
-    }
 
     private void showRewardedAd() {
         Log.d(TAG, "🎉 User earned reward directly (ads disabled)!");
@@ -322,7 +326,7 @@ public class ConnectingActivity extends BaseActivity {
 
         // Clean up ironSource ad objects
         if (levelPlayNativeAd != null) {
-            levelPlayNativeAd.destroy();
+            levelPlayNativeAd.destroyAd();
         }
     }
 

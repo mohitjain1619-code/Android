@@ -123,6 +123,12 @@ public class FeedActivity extends BaseActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        fetchPosts();
+    }
+
     private void setCategory(String category) {
         currentCategory = category;
         updateFilterButtons();
@@ -197,12 +203,6 @@ public class FeedActivity extends BaseActivity {
                 Toast.makeText(FeedActivity.this, "Network error", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        fetchPosts();
     }
 
     private void loadBannerAd() {

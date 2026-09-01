@@ -4,6 +4,10 @@ const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
 
+const isValidUUID = (str) =>
+  typeof str === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 // All routes require authentication
 router.use(requireAuth);
 
@@ -35,7 +39,12 @@ router.get("/me", async (req, res) => {
 // ============================================
 router.get("/:id", async (req, res) => {
   try {
-    const user = await queryOne("SELECT * FROM users WHERE id = $1", [req.params.id]);
+    let user;
+    if (isValidUUID(req.params.id)) {
+      user = await queryOne("SELECT * FROM users WHERE id = $1", [req.params.id]);
+    } else {
+      user = await queryOne("SELECT * FROM users WHERE custom_id = $1 OR google_id = $1", [req.params.id]);
+    }
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const followers = await queryOne("SELECT COUNT(*) as count FROM follows WHERE following_id = $1", [user.id]);
@@ -143,20 +152,29 @@ router.put("/me", async (req, res) => {
 // ============================================
 router.post("/:id/follow", async (req, res) => {
   try {
-    if (req.params.id === req.user.userId) {
+    let targetUser;
+    if (isValidUUID(req.params.id)) {
+      targetUser = await queryOne("SELECT id FROM users WHERE id = $1", [req.params.id]);
+    } else {
+      targetUser = await queryOne("SELECT id FROM users WHERE custom_id = $1 OR google_id = $1", [req.params.id]);
+    }
+    if (!targetUser) return res.status(404).json({ error: "User not found" });
+
+    const targetId = targetUser.id;
+    if (targetId === req.user.userId) {
       return res.status(400).json({ error: "Cannot follow yourself" });
     }
 
     await query(
       `INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [req.user.userId, req.params.id]
+      [req.user.userId, targetId]
     );
 
     // Create notification
     await query(
       `INSERT INTO notifications (user_id, type, triggering_user_id)
        VALUES ($1, 'follow', $2)`,
-      [req.params.id, req.user.userId]
+      [targetId, req.user.userId]
     );
 
     return res.json({ ok: true });

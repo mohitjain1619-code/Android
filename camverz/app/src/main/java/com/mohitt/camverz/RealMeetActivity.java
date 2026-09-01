@@ -58,6 +58,7 @@ public class RealMeetActivity extends BaseActivity {
     private static final String TAG = "RealMeetActivity";
     private static final String PREFS_AD_TIMER = "realmeet_ad_timer";
     private static final String KEY_LAST_INTERSTITIAL_TIME = "last_realmeet_interstitial_time";
+    private static final String KEY_AD_WATCH_PENDING = "ad_watch_pending";
     private static final long INTERSTITIAL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
     private enum Tab {
@@ -98,9 +99,10 @@ public class RealMeetActivity extends BaseActivity {
     private ImageView ivProfileAvatar;
     private TextView tvProfileNameAge, tvProfileCityGender, tvProfileBio;
     private TextView tvFollowersCount, tvFollowingCount;
-    private RecyclerView profileRecyclerView, savedPartiesRecyclerView;
+    private RecyclerView profileRecyclerView, savedPartiesRecyclerView, myHostedPartiesRecyclerView;
     private final List<PartyPost> savedPartiesList = new ArrayList<>();
-    private PartyAdapter savedPartiesAdapter;
+    private final List<PartyPost> myHostedPartiesList = new ArrayList<>();
+    private PartyAdapter savedPartiesAdapter, myHostedPartiesAdapter;
 
     // User state loaded from profile
     private String currentUserId;
@@ -176,8 +178,8 @@ public class RealMeetActivity extends BaseActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         profileRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         if (savedPartiesRecyclerView != null) {
-            savedPartiesRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
-            savedPartiesAdapter = new PartyAdapter(this, savedPartiesList, currentUserId,
+            savedPartiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            savedPartiesAdapter = new PartyAdapter(this, savedPartiesList, currentUserId, true,
                     new PartyAdapter.OnPartyActionListener() {
                         @Override
                         public void onJoinPartyClicked(PartyPost post) {
@@ -206,6 +208,32 @@ public class RealMeetActivity extends BaseActivity {
                         }
                     });
             savedPartiesRecyclerView.setAdapter(savedPartiesAdapter);
+        }
+
+        myHostedPartiesRecyclerView = findViewById(R.id.myHostedPartiesRecyclerView);
+        if (myHostedPartiesRecyclerView != null) {
+            myHostedPartiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            myHostedPartiesAdapter = new PartyAdapter(this, myHostedPartiesList, currentUserId, true,
+                    new PartyAdapter.OnPartyActionListener() {
+                        @Override
+                        public void onJoinPartyClicked(PartyPost post) {}
+
+                        @Override
+                        public void onDeletePartyClicked(PartyPost post) {
+                            store.deletePartyPost(post.getId());
+                            api.deleteRealMeetServerPost(post.getId()).enqueue(new Callback<JsonObject>() {
+                                @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                                @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+                            });
+                            updateProfileUI();
+                        }
+
+                        @Override
+                        public void onSavePartyClicked(PartyPost post) {
+                            handleToggleSaveParty(post);
+                        }
+                    });
+            myHostedPartiesRecyclerView.setAdapter(myHostedPartiesAdapter);
         }
 
         // Return to Random Video Calling listener
@@ -304,14 +332,19 @@ public class RealMeetActivity extends BaseActivity {
                 }
 
                 @Override
-                public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = true;
+                }
 
                 @Override
-                public void onAdShowSuccess(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
 
                 @Override
                 public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
                     Log.e(TAG, "ironSource Interstitial show failed: " + error.getErrorMessage());
+                    android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+                    prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply();
                     com.ironsource.mediationsdk.IronSource.loadInterstitial();
                 }
 
@@ -320,8 +353,47 @@ public class RealMeetActivity extends BaseActivity {
 
                 @Override
                 public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
                     Log.d(TAG, "ironSource Interstitial closed");
+                    android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+                    prefs.edit()
+                        .putBoolean(KEY_AD_WATCH_PENDING, false)
+                        .putLong(KEY_LAST_INTERSTITIAL_TIME, System.currentTimeMillis())
+                        .apply();
+                    
+                    // Resume scheduling the next ad cycle
+                    scheduleInterstitialAd();
                     com.ironsource.mediationsdk.IronSource.loadInterstitial();
+                }
+            });
+
+            com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+                @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdUnavailable() {}
+                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = true;
+                }
+                @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
+                    Log.e(TAG, "ironSource Rewarded Video show failed (fallback): " + error.getErrorMessage());
+                    android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+                    prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply();
+                }
+                @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
+                    Log.d(TAG, "ironSource Rewarded Video completed (fallback watch)");
+                    android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+                    prefs.edit()
+                        .putBoolean(KEY_AD_WATCH_PENDING, false)
+                        .putLong(KEY_LAST_INTERSTITIAL_TIME, System.currentTimeMillis())
+                        .apply();
+                    
+                    // Resume scheduling the next ad cycle
+                    scheduleInterstitialAd();
+                }
+                @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
                 }
             });
             preloadInterstitialAd();
@@ -337,7 +409,15 @@ public class RealMeetActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         startAutoRefreshLoop();
-        scheduleInterstitialAd();
+
+        android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        boolean adPending = prefs.getBoolean(KEY_AD_WATCH_PENDING, false);
+        if (adPending) {
+            Log.w(TAG, "⚠️ Ad watch was pending (app killed during ad). Showing ad immediately.");
+            showScheduledInterstitialAd();
+        } else {
+            scheduleInterstitialAd();
+        }
     }
 
     @Override
@@ -745,21 +825,20 @@ public class RealMeetActivity extends BaseActivity {
                     new MeetRequestAdapter.OnRequestActionListener() {
                         @Override
                         public void onStartCallClicked(RealMeetRequest request) {
-                            Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
-                            intent.putExtra("targetUserId", request.getApplicantUserId());
-                            intent.putExtra("targetUserName", request.getApplicantName());
-                            intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
-                            intent.putExtra("contactPreference", "Private Video Call");
+                            Intent intent = new Intent(RealMeetActivity.this, ChatActivity.class);
+                            intent.putExtra("userId", request.getApplicantUserId());
+                            intent.putExtra("userName", request.getApplicantName());
+                            intent.putExtra("userAvatar", request.getApplicantAvatar());
+                            intent.putExtra("autoStartCall", true);
                             startActivity(intent);
                         }
 
                         @Override
                         public void onOpenChatClicked(RealMeetRequest request) {
-                            Intent intent = new Intent(RealMeetActivity.this, CommunityChatActivity.class);
-                            intent.putExtra("targetUserId", request.getApplicantUserId());
-                            intent.putExtra("targetUserName", request.getApplicantName());
-                            intent.putExtra("targetUserAvatar", request.getApplicantAvatar());
-                            intent.putExtra("contactPreference", request.getContactPreference());
+                            Intent intent = new Intent(RealMeetActivity.this, ChatActivity.class);
+                            intent.putExtra("userId", request.getApplicantUserId());
+                            intent.putExtra("userName", request.getApplicantName());
+                            intent.putExtra("userAvatar", request.getApplicantAvatar());
                             startActivity(intent);
                         }
 
@@ -963,6 +1042,7 @@ public class RealMeetActivity extends BaseActivity {
             dialog.dismiss();
             Intent intent = new Intent(RealMeetActivity.this, ProfileActivity.class);
             intent.putExtra("userId", posterUserId);
+            intent.putExtra("isFromRealMeet", true);
             startActivity(intent);
         });
 
@@ -970,17 +1050,50 @@ public class RealMeetActivity extends BaseActivity {
             dialog.dismiss();
             Intent intent = new Intent(RealMeetActivity.this, ProfileActivity.class);
             intent.putExtra("userId", posterUserId);
+            intent.putExtra("isFromRealMeet", true);
             startActivity(intent);
         });
 
         btnCloseFullDialog.setOnClickListener(v -> dialog.dismiss());
 
+        boolean isAcceptedMember = false;
+        List<RealMeetRequest> allReqs = store.getMeetRequests();
+        for (RealMeetRequest r : allReqs) {
+            if (postId != null && postId.equalsIgnoreCase(r.getPostId()) 
+                    && currentUserId != null && currentUserId.equalsIgnoreCase(r.getApplicantUserId()) 
+                    && "ACCEPTED".equalsIgnoreCase(r.getStatus())) {
+                isAcceptedMember = true;
+                break;
+            }
+        }
+
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, postId);
         if (currentUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
-            btnFullDialogAction.setText("🗑️ Your Post");
-            btnFullDialogAction.setBackgroundResource(R.drawable.bg_luxury_chip);
+            btnFullDialogAction.setText("📢 Party Board");
+            btnFullDialogAction.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             btnFullDialogAction.setTextColor(Color.WHITE);
-            btnFullDialogAction.setEnabled(false);
+            btnFullDialogAction.setEnabled(true);
+            btnFullDialogAction.setOnClickListener(v -> {
+                dialog.dismiss();
+                Intent intent = new Intent(RealMeetActivity.this, PartyBoardActivity.class);
+                intent.putExtra("postId", postId);
+                intent.putExtra("isHost", true);
+                intent.putExtra("title", title);
+                startActivity(intent);
+            });
+        } else if (isAcceptedMember) {
+            btnFullDialogAction.setText("📢 Party Board");
+            btnFullDialogAction.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
+            btnFullDialogAction.setTextColor(Color.WHITE);
+            btnFullDialogAction.setEnabled(true);
+            btnFullDialogAction.setOnClickListener(v -> {
+                dialog.dismiss();
+                Intent intent = new Intent(RealMeetActivity.this, PartyBoardActivity.class);
+                intent.putExtra("postId", postId);
+                intent.putExtra("isHost", false);
+                intent.putExtra("title", title);
+                startActivity(intent);
+            });
         } else if (hasRequested) {
             btnFullDialogAction.setText("📩 Request Sent");
             btnFullDialogAction.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
@@ -988,6 +1101,7 @@ public class RealMeetActivity extends BaseActivity {
             btnFullDialogAction.setEnabled(false);
         } else {
             btnFullDialogAction.setText("⚡ Send Request");
+            btnFullDialogAction.setEnabled(true);
             btnFullDialogAction.setOnClickListener(v -> {
                 dialog.dismiss();
                 openSendRequestModal(postId, title, posterUserId, name);
@@ -1098,6 +1212,16 @@ public class RealMeetActivity extends BaseActivity {
             public void onFailure(Call<JsonObject> call, Throwable t) {
             }
         });
+
+        myHostedPartiesList.clear();
+        for (PartyPost p : store.getPartyPosts()) {
+            if (currentUserId != null && currentUserId.equalsIgnoreCase(p.getHostUserId())) {
+                myHostedPartiesList.add(p);
+            }
+        }
+        if (myHostedPartiesAdapter != null) {
+            myHostedPartiesAdapter.notifyDataSetChanged();
+        }
 
         List<RealMeetPost> myMeetPosts = new ArrayList<>();
         for (RealMeetPost p : store.getRealMeetPosts()) {
@@ -1510,45 +1634,15 @@ public class RealMeetActivity extends BaseActivity {
      * Gated behind ad-free plan check. Fails silently if ad can't load.
      */
     private void showPostCreationRewardAd() {
-        if (tokenManager.isCommunityAdFree())
-            return;
-        if (isFinishing() || isDestroyed())
-            return;
+        if (tokenManager.isCommunityAdFree()) return;
+        if (isFinishing() || isDestroyed()) return;
 
-        Log.d(TAG, "Loading post-creation rewarded ad...");
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-
-        com.google.android.gms.ads.rewarded.RewardedAd.load(this,
-                getString(R.string.admob_rewarded_ad_unit_id), adRequest,
-                new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
-                        if (isFinishing() || isDestroyed())
-                            return;
-                        Log.d(TAG, "Post-creation rewarded ad loaded, showing...");
-                        ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                Log.d(TAG, "Post-creation rewarded ad dismissed.");
-                            }
-
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(
-                                    @NonNull com.google.android.gms.ads.AdError adError) {
-                                Log.w(TAG, "Post-creation rewarded ad failed to show: " + adError.getMessage());
-                            }
-                        });
-                        ad.show(RealMeetActivity.this, rewardItem -> {
-                            Log.d(TAG, "User earned reward from post-creation ad.");
-                        });
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                        Log.w(TAG, "Post-creation rewarded ad failed to load: " + loadAdError.getMessage());
-                        // Fail silently — don't block user
-                    }
-                });
+        Log.d(TAG, "Checking LevelPlay post-creation rewarded ad...");
+        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
+        } else {
+            Log.d(TAG, "LevelPlay Rewarded Video not available for post-creation.");
+        }
     }
 
     /**
@@ -1620,16 +1714,20 @@ public class RealMeetActivity extends BaseActivity {
         if (isFinishing() || isDestroyed())
             return;
 
-        // Update timestamp regardless of whether ad shows (prevents rapid
-        // re-triggering)
+        // Mark that an ad watch is now pending (to catch app kills/tabs clears during display)
         android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
-        prefs.edit().putLong(KEY_LAST_INTERSTITIAL_TIME, System.currentTimeMillis()).apply();
+        prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, true).apply();
 
         if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
             Log.d(TAG, "Showing scheduled ironSource interstitial ad.");
             com.ironsource.mediationsdk.IronSource.showInterstitial();
+        } else if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            Log.d(TAG, "ironSource Interstitial not ready. Showing fallback Rewarded Video ad.");
+            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
+            preloadInterstitialAd();
         } else {
-            Log.d(TAG, "ironSource Interstitial ad not ready, preloading for next cycle.");
+            Log.d(TAG, "ironSource Interstitial and Rewarded ads not ready, preloading for next cycle.");
+            prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply(); // Clear pending flag since no ad could render
             preloadInterstitialAd();
         }
     }

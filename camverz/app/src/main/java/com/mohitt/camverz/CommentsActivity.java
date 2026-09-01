@@ -189,19 +189,24 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
             return;
         }
 
+        proceedToPostComment(commentText);
+    }
+
+    private void proceedToPostComment(final String commentText) {
         if (tokenManager.isCommunityAdFree()) {
-            proceedToPostComment(commentText);
+            executeCommentUpload(commentText);
         } else {
+            Toast.makeText(this, "Preparing ad to post comment...", Toast.LENGTH_SHORT).show();
             loadAndShowRewardedAd(() -> {
-                proceedToPostComment(commentText);
+                executeCommentUpload(commentText);
             }, () -> {
-                // Fallback to post comment anyway if ad fails
-                proceedToPostComment(commentText);
+                // If ad fails to load, still proceed with the upload so user doesn't lose their data
+                executeCommentUpload(commentText);
             });
         }
     }
 
-    private void proceedToPostComment(String commentText) {
+    private void executeCommentUpload(String commentText) {
         Map<String, String> body = new HashMap<>();
         body.put("text", commentText);
         if (replyingToCommentId != null) {
@@ -317,36 +322,44 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Loading ad...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            final boolean[] rewardEarned = {false};
 
-        RewardedAd.load(this, 
-            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
-            new RewardedAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull RewardedAd ad) {
-                    progressDialog.dismiss();
-                    ad.setFullScreenContentCallback(new FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {}
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                            runOnUiThread(onFailure);
-                        }
-                    });
-                    ad.show(CommentsActivity.this, rewardItem -> {
-                        runOnUiThread(onSuccess);
-                    });
+            com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+                @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdUnavailable() {}
+                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = true;
                 }
-
-                @Override
-                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                    progressDialog.dismiss();
+                
+                @Override 
+                public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
                     runOnUiThread(onFailure);
                 }
+                
+                @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                
+                @Override 
+                public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    rewardEarned[0] = true;
+                }
+                
+                @Override
+                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
+                    if (rewardEarned[0]) {
+                        runOnUiThread(onSuccess);
+                    } else {
+                        runOnUiThread(onFailure);
+                    }
+                }
             });
+
+            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
+        } else {
+            // Ad not available, fall back to upload directly to avoid blocking
+            runOnUiThread(onFailure);
+        }
     }
 }

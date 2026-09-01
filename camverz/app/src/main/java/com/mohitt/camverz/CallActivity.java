@@ -194,7 +194,6 @@ public class CallActivity extends AppCompatActivity {
     private Emitter.Listener peerDisconnectedListener;
     private Emitter.Listener callControlListener;
 
-    private com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd;
     private boolean isAdLoading = false;
     private boolean isInitiator = false;
 
@@ -270,8 +269,8 @@ public class CallActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
 
-        // Preload AdMob Mediated Interstitial Ad (Meta/InMobi bid inside AdMob mediation)
-        preloadAdMobInterstitial();
+        // Preload LevelPlay Interstitial Ad
+        preloadLevelPlayInterstitial();
 
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
@@ -1502,11 +1501,36 @@ public class CallActivity extends AppCompatActivity {
         }).start();
     }
 
+    private String friendStatus = "none";
+
     private void loadPeerUserInfo() {
+        String passedName = getIntent().getStringExtra("peerName");
+        String passedAvatar = getIntent().getStringExtra("peerAvatar");
+
+        if (passedName != null && !passedName.isEmpty()) {
+            peerNameValue = passedName;
+            peerName.setText(peerNameValue);
+            remoteAvatarNameText.setText(peerNameValue);
+        }
+
+        if (passedAvatar != null && !passedAvatar.isEmpty()) {
+            peerAvatarUrl = passedAvatar;
+            int avatarResId = getResources().getIdentifier(peerAvatarUrl, "drawable", getPackageName());
+            if (avatarResId != 0) {
+                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
+                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
+                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
+            }
+        }
+
         if (peerId == null || peerId.isEmpty()) {
-            peerName.setText("Unknown User");
+            if (passedName == null || passedName.isEmpty()) {
+                peerName.setText("User");
+            }
             return;
         }
+
+        checkFriendStatus();
 
         api.getUser(peerId).enqueue(new retrofit2.Callback<JsonObject>() {
             @Override
@@ -1515,9 +1539,8 @@ public class CallActivity extends AppCompatActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
                         JsonObject user = data.getAsJsonObject("user");
-                        peerNameValue = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : "Unknown User";
-                        peerAvatarUrl = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : "";
-                        isFollowing = user.has("isFollowing") && user.get("isFollowing").getAsBoolean();
+                        peerNameValue = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : (passedName != null ? passedName : "User");
+                        peerAvatarUrl = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : (passedAvatar != null ? passedAvatar : "");
 
                         peerName.setText(peerNameValue);
                         remoteAvatarNameText.setText(peerNameValue);
@@ -1532,91 +1555,81 @@ public class CallActivity extends AppCompatActivity {
                                 Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
                                 Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
                             }
-                        } else {
-                            Glide.with(CallActivity.this).load(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
-                            Glide.with(CallActivity.this).load(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
-                            Glide.with(CallActivity.this).load(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
                         }
-                        updateFollowButtonUI();
                         return;
                     }
                 }
-                peerName.setText("Unknown User");
             }
 
             @Override
-            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
-                peerName.setText("Unknown User");
+            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
+        });
+    }
+
+    private void checkFriendStatus() {
+        if (peerId == null || peerId.isEmpty()) return;
+        api.getFriendStatus(peerId).enqueue(new retrofit2.Callback<JsonObject>() {
+            @Override
+            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("status")) {
+                        friendStatus = data.get("status").getAsString();
+                        updateFollowButtonUI();
+                    }
+                }
             }
+
+            @Override
+            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
         });
     }
 
     private void updateFollowButtonUI() {
-        if (isFollowing) {
-            followButton.setText("Following");
+        if (followButton == null) return;
+        if ("friends".equalsIgnoreCase(friendStatus)) {
+            followButton.setText("Friends");
             followButton.setBackgroundResource(R.drawable.bg_following_button);
-        } else {
-            followButton.setText("Follow");
+            followButton.setEnabled(false);
+        } else if ("sent".equalsIgnoreCase(friendStatus)) {
+            followButton.setText("Requested");
+            followButton.setBackgroundResource(R.drawable.bg_following_button);
+            followButton.setEnabled(false);
+        } else if ("received".equalsIgnoreCase(friendStatus)) {
+            followButton.setText("Accept");
             followButton.setBackgroundResource(R.drawable.bg_follow_button);
+            followButton.setEnabled(true);
+        } else {
+            followButton.setText("Add Friend");
+            followButton.setBackgroundResource(R.drawable.bg_follow_button);
+            followButton.setEnabled(true);
         }
     }
 
     private void handleFollowClick() {
-        if (isUpdatingFollow || myUid == null || peerId == null) return;
+        if (isUpdatingFollow || myUid == null || peerId == null || peerId.isEmpty() || "Unknown User".equals(peerId)) return;
         
         isUpdatingFollow = true;
         followButton.setEnabled(false);
 
-        if (isFollowing) {
-            unfollowUser();
-        } else {
-            followUser();
-        }
-    }
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        body.put("targetUserId", peerId);
 
-    private void followUser() {
-        api.followUser(peerId).enqueue(new retrofit2.Callback<JsonObject>() {
+        api.sendFriendRequest(body).enqueue(new retrofit2.Callback<JsonObject>() {
             @Override
             public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
                 isUpdatingFollow = false;
-                followButton.setEnabled(true);
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        isFollowing = true;
+                        friendStatus = "sent";
                         updateFollowButtonUI();
-                        Toast.makeText(CallActivity.this, "Following " + peerNameValue, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(CallActivity.this, "Friend Request Sent!", Toast.LENGTH_SHORT).show();
                         return;
                     }
                 }
-                Toast.makeText(CallActivity.this, "Failed to follow user", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
-                isUpdatingFollow = false;
                 followButton.setEnabled(true);
-                Toast.makeText(CallActivity.this, "Network error", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void unfollowUser() {
-        api.unfollowUser(peerId).enqueue(new retrofit2.Callback<JsonObject>() {
-            @Override
-            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
-                isUpdatingFollow = false;
-                followButton.setEnabled(true);
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject data = response.body();
-                    if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        isFollowing = false;
-                        updateFollowButtonUI();
-                        Toast.makeText(CallActivity.this, "Unfollowed " + peerNameValue, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                }
-                Toast.makeText(CallActivity.this, "Failed to unfollow user", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CallActivity.this, "Friend request already sent or failed", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -1743,39 +1756,42 @@ public class CallActivity extends AppCompatActivity {
         privateCallCancelledListener = null;
     }
 
-    private void preloadAdMobInterstitial() {
+    private void preloadLevelPlayInterstitial() {
         if (tokenManager != null && tokenManager.isVideoCallAdFree()) return;
         if (isFinishing() || isDestroyed()) return;
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        com.google.android.gms.ads.interstitial.InterstitialAd.load(
-            this,
-            getString(R.string.admob_interstitial_ad_unit_id),
-            adRequest,
-            new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd ad) {
-                    interstitialAd = ad;
-                    Log.d(TAG, "✅ AdMob Interstitial (mediated) loaded in CallActivity");
-                    interstitialAd.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {
-                            interstitialAd = null;
-                            finish();
-                        }
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
-                            interstitialAd = null;
-                            finish();
-                        }
-                    });
-                }
-                @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    interstitialAd = null;
-                    Log.w(TAG, "AdMob Interstitial failed to load: " + loadAdError.getMessage());
-                }
+
+        com.ironsource.mediationsdk.IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
+            @Override
+            public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                Log.d(TAG, "LevelPlay Interstitial loaded in CallActivity");
             }
-        );
+
+            @Override
+            public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
+                Log.w(TAG, "LevelPlay Interstitial failed to load: " + error.getErrorMessage());
+            }
+
+            @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = true;
+            }
+            @Override public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = false;
+                android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
+                prefs.edit().putBoolean("ad_watch_pending", false).apply();
+                finish();
+            }
+            @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override
+            public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = false;
+                android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
+                prefs.edit().putBoolean("ad_watch_pending", false).apply();
+                finish();
+            }
+        });
+
+        com.ironsource.mediationsdk.IronSource.loadInterstitial();
     }
 
     @Override
@@ -1785,10 +1801,6 @@ public class CallActivity extends AppCompatActivity {
             unregisterReceiver(headsetReceiver);
         } catch (Exception e) {
             // Ignore if not registered
-        }
-        if (interstitialAd != null) {
-            interstitialAd.setFullScreenContentCallback(null);
-            interstitialAd = null;
         }
         super.onDestroy();
     }
@@ -1811,47 +1823,53 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void showInterstitialAndFinish() {
-        if (interstitialAd != null) {
-            interstitialAd.show(this);
+        android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
+        if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
+            prefs.edit().putBoolean("ad_watch_pending", true).apply();
+            com.ironsource.mediationsdk.IronSource.showInterstitial("default");
+        } else if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            Log.d(TAG, "LevelPlay Interstitial not ready. Falling back to Rewarded Video.");
+            loadAndShowRewardedAdAndFinish();
         } else {
-            // Ad not loaded yet — just finish (AdMob mediation handles Meta/InMobi bidding internally)
             finish();
         }
     }
 
     private void loadAndShowRewardedAdAndFinish() {
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
-        progressDialog.setMessage("Loading ad...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-
-        com.google.android.gms.ads.rewarded.RewardedAd.load(this, 
-            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
-            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
-                    progressDialog.dismiss();
-                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {
-                            finish();
-                        }
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                            finish();
-                        }
-                    });
-                    ad.show(CallActivity.this, rewardItem -> {
-                        // User watched rewarded ad after private call
-                    });
+        android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
+        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            prefs.edit().putBoolean("ad_watch_pending", true).apply();
+            com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+                @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdUnavailable() {}
+                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = true;
                 }
-
+                @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
+                    prefs.edit().putBoolean("ad_watch_pending", false).apply();
+                    if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
+                        com.ironsource.mediationsdk.IronSource.showInterstitial("default");
+                    } else {
+                        finish();
+                    }
+                }
+                @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
                 @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    progressDialog.dismiss();
+                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
+                    prefs.edit().putBoolean("ad_watch_pending", false).apply();
                     finish();
                 }
             });
+            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
+        } else if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
+            Log.d(TAG, "LevelPlay Rewarded Video not available. Falling back to Interstitial.");
+            prefs.edit().putBoolean("ad_watch_pending", true).apply();
+            com.ironsource.mediationsdk.IronSource.showInterstitial("default");
+        } else {
+            finish();
+        }
     }
 }

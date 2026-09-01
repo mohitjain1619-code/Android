@@ -62,6 +62,25 @@ public class PreferenceSelectionDialog extends Dialog {
         MaterialCardView cardTransgender = view.findViewById(R.id.card_transgender);
         MaterialButton btnSave = view.findViewById(R.id.btn_save);
 
+        // Restrict options based on gender
+        String gender = tokenManager.getUserGender();
+        if ("male".equalsIgnoreCase(gender)) {
+            cardStraight.setVisibility(View.VISIBLE);
+            cardGay.setVisibility(View.VISIBLE);
+            cardLesbian.setVisibility(View.GONE);
+            cardTransgender.setVisibility(View.GONE);
+        } else if ("female".equalsIgnoreCase(gender)) {
+            cardStraight.setVisibility(View.VISIBLE);
+            cardGay.setVisibility(View.GONE);
+            cardLesbian.setVisibility(View.VISIBLE);
+            cardTransgender.setVisibility(View.GONE);
+        } else {
+            cardStraight.setVisibility(View.VISIBLE);
+            cardGay.setVisibility(View.VISIBLE);
+            cardLesbian.setVisibility(View.VISIBLE);
+            cardTransgender.setVisibility(View.VISIBLE);
+        }
+
         // Pre-select current preference if already configured
         String currentPreference = tokenManager.getSexPreference();
         if (!currentPreference.isEmpty()) {

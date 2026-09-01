@@ -96,24 +96,33 @@ router.post("/", async (req, res) => {
     // 7 minutes expiry
     const expiryAt = new Date(Date.now() + 7 * 60 * 1000);
 
+    const normalizedCategory = (category || "all").toLowerCase().trim();
+
     const post = await queryOne(
       `INSERT INTO posts (user_id, text, category, expiry_at)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [req.user.userId, text.trim(), category.toLowerCase(), expiryAt]
+      [req.user.userId, text.trim(), normalizedCategory, expiryAt]
     );
 
-    // Get user info for response
-    const user = await queryOne("SELECT name, avatar, photo_url, verified, gender, sex_preference FROM users WHERE id = $1", [req.user.userId]);
+    // Get user info for response with safe fallback
+    const user = (await queryOne("SELECT * FROM users WHERE id = $1", [req.user.userId])) || {
+      name: "Anonymous",
+      avatar: "av1",
+      photo_url: null,
+      verified: false,
+      gender: "male",
+      sex_preference: "Straight"
+    };
 
     return res.json({
       ok: true,
       post: {
-        ...formatPost({ ...post, username: user.name, user_avatar: user.avatar, user_photo_url: user.photo_url, verified: user.verified, gender: user.gender, sex_preference: user.sex_preference, like_count: "0", comment_count: "0", liked_by_me: false }),
+        ...formatPost({ ...post, username: user.name || "Anonymous", user_avatar: user.avatar || "av1", user_photo_url: user.photo_url || null, verified: !!user.verified, gender: user.gender || "male", sex_preference: user.sex_preference || "Straight", like_count: "0", comment_count: "0", liked_by_me: false }),
       },
     });
   } catch (err) {
     console.error("Create post error:", err);
-    return res.status(500).json({ error: "Internal error" });
+    return res.status(500).json({ error: err.message || "Internal error" });
   }
 });
 

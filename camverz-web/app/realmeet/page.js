@@ -385,7 +385,7 @@ function RealMeetContent() {
     checkLockAndExecute('messages', async () => {
       // Prevent multiple requests
       const targetUserId = post.userId || post.hostUserId;
-      const alreadyRequested = requests.some(r => r.fromUserId === user.uid && r.toUserId === targetUserId);
+      const alreadyRequested = requests.some(r => r.applicantUserId === user.uid && r.postId === post.id);
       if (alreadyRequested) {
         alert('You have already sent a request to this user.');
         return;
@@ -401,18 +401,26 @@ function RealMeetContent() {
         }
       }
 
+      const msg = prompt("Introduce yourself to the host:", "Hey! I'm interested in your meet post.");
+      if (msg === null) return; // user cancelled
+
       try {
         const reqPayload = {
           id: Math.random().toString(36).substring(2) + Date.now(),
-          fromUserId: user.uid,
-          fromUserName: userData?.name || 'User',
-          fromUserAvatar: userData?.avatar || 'av1',
-          fromUserGender: userData?.gender || 'male',
-          fromUserVerified: userData?.verified || false,
-          toUserId: targetUserId,
-          postTitle: post.purpose || 'Real Meet Connect',
           postId: post.id,
-          status: 'requested',
+          postTitle: post.purpose || 'Real Meet Connect',
+          posterUserId: targetUserId,
+          applicantUserId: user.uid,
+          applicantName: userData?.name || 'User',
+          applicantAvatar: userData?.avatar || 'av1',
+          applicantPhotoUrl: '',
+          applicantAge: userData?.dob ? calculateAge(userData.dob) : 22,
+          applicantCity: userData?.city || 'Nearby',
+          message: msg || "Hey! I'm interested in your meet post.",
+          contactPreference: 'Private Video Call',
+          status: 'PENDING',
+          applicantGender: userData?.gender || 'male',
+          applicantVerified: userData?.verified || false,
           createdAt: Date.now()
         };
 
@@ -626,7 +634,7 @@ function RealMeetContent() {
                               <Trash2 size={14} /> Delete Post
                             </button>
                           ) : (
-                            requests.some(r => r.fromUserId === user.uid && r.postId === post.id) ? (
+                            requests.some(r => r.applicantUserId === user.uid && r.postId === post.id) ? (
                               <span className={styles.requestedIndicator}>
                                 <Check size={14} /> Requested to Meet
                               </span>
@@ -761,7 +769,7 @@ function RealMeetContent() {
                             </button>
                           ) : (
                             <>
-                              {requests.some(r => r.fromUserId === user.uid && r.postId === post.id) ? (
+                              {requests.some(r => r.applicantUserId === user.uid && r.postId === post.id) ? (
                                 <span className={styles.requestedIndicator} style={{ flex: 1 }}>
                                   <Check size={14} /> Requested to Join
                                 </span>
@@ -833,7 +841,7 @@ function RealMeetContent() {
                               <Trash2 size={14} /> Delete Post
                             </button>
                           ) : (
-                            requests.some(r => r.fromUserId === user.uid && r.postId === post.id) ? (
+                            requests.some(r => r.applicantUserId === user.uid && r.postId === post.id) ? (
                               <span className={styles.requestedIndicator}>
                                 <Check size={14} /> Vibe Connection Requested
                               </span>
@@ -1028,24 +1036,24 @@ function RealMeetContent() {
 
                 {/* Inbox Requests Section (Received Requests) */}
                 <h3 id="realmeet-inbox" className={styles.requestsHeader}>
-                  📩 Real Meet Inbox ({requests.filter(r => r.toUserId === user.uid).length})
+                  📩 Real Meet Inbox ({requests.filter(r => r.posterUserId === user.uid).length})
                 </h3>
                 <div className={styles.requestsList}>
-                  {requests.filter(r => r.toUserId === user.uid).length === 0 ? (
+                  {requests.filter(r => r.posterUserId === user.uid).length === 0 ? (
                     <p style={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: '10px 0' }}>
                       No incoming meet requests yet.
                     </p>
                   ) : (
-                    requests.filter(r => r.toUserId === user.uid).map(req => (
+                    requests.filter(r => r.posterUserId === user.uid).map(req => (
                       <div key={req.id} className={styles.requestInboxCard}>
                         <div className={styles.requestInboxHeader}>
                           <div className={styles.requestProfile}>
-                            <img src={`/avatars/${req.fromUserAvatar || 'av1'}.png`} alt="Avatar" className={styles.requestAvatar} />
+                            <img src={`/avatars/${req.applicantAvatar || 'av1'}.png`} alt="Avatar" className={styles.requestAvatar} />
                             <div>
                               <span className={styles.requestSenderName}>
-                                {req.fromUserName}
-                                {req.fromUserGender?.startsWith('f') ? ' ♀️' : ' ♂️'}
-                                {req.fromUserVerified && <VerifiedBadge />}
+                                {req.applicantName}
+                                {req.applicantGender?.startsWith('f') ? ' ♀️' : ' ♂️'}
+                                {req.applicantVerified && <VerifiedBadge />}
                               </span>
                               <div className={styles.requestMeta}>Wants to join your activity</div>
                             </div>
@@ -1054,22 +1062,22 @@ function RealMeetContent() {
                         <div className={styles.requestPurpose}>
                           🎯 <b>Activity Title:</b> {req.postTitle}
                         </div>
-                        {req.status === 'requested' ? (
+                        {(req.status?.toLowerCase() === 'pending' || req.status?.toLowerCase() === 'requested') ? (
                           <div className={styles.actionsRow}>
-                            <button className={styles.acceptBtn} onClick={() => handleUpdateStatus(req.id, 'accepted')}>
+                            <button className={styles.acceptBtn} onClick={() => handleUpdateStatus(req.id, 'ACCEPTED')}>
                               Accept Request
                             </button>
-                            <button className={styles.rejectBtn} onClick={() => handleUpdateStatus(req.id, 'rejected')}>
+                            <button className={styles.rejectBtn} onClick={() => handleUpdateStatus(req.id, 'REJECTED')}>
                               Reject
                             </button>
                           </div>
                         ) : (
                           <div className={styles.acceptedBadge} style={{
-                            background: req.status === 'accepted' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                            borderColor: req.status === 'accepted' ? '#10B981' : '#EF4444',
-                            color: req.status === 'accepted' ? '#10B981' : '#EF4444',
+                            background: req.status?.toLowerCase() === 'accepted' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                            borderColor: req.status?.toLowerCase() === 'accepted' ? '#10B981' : '#EF4444',
+                            color: req.status?.toLowerCase() === 'accepted' ? '#10B981' : '#EF4444',
                           }}>
-                            {req.status === 'accepted' ? '✓ Accepted Invitation' : '✕ Rejected Invitation'}
+                            {req.status?.toLowerCase() === 'accepted' ? '✓ Accepted Invitation' : '✕ Rejected Invitation'}
                           </div>
                         )}
                       </div>

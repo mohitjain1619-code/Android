@@ -6,19 +6,34 @@ const { isUserOnline } = require("../config/redis");
 const router = express.Router();
 router.use(requireAuth);
 
+const isValidUUID = (str) =>
+  typeof str === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 // ============================================
 // POST /friends/request — Send friend request
 // ============================================
 router.post("/request", async (req, res) => {
   try {
     const { targetUserId } = req.body;
-    if (!targetUserId) return res.status(400).json({ error: "Missing targetUserId" });
-    if (targetUserId === req.user.userId) return res.status(400).json({ error: "Cannot friend yourself" });
+    if (!targetUserId) {
+      return res.status(400).json({ error: "Missing targetUserId" });
+    }
+    let targetUser;
+    if (isValidUUID(targetUserId)) {
+      targetUser = await queryOne("SELECT id FROM users WHERE id = $1", [targetUserId]);
+    } else {
+      targetUser = await queryOne("SELECT id FROM users WHERE custom_id = $1 OR google_id = $1", [targetUserId]);
+    }
+    if (!targetUser) return res.status(404).json({ error: "Target user not found" });
+
+    const resolvedTargetId = targetUser.id;
+    if (resolvedTargetId === req.user.userId) return res.status(400).json({ error: "Cannot friend yourself" });
 
     // Check if already exists
     const existing = await queryOne(
       "SELECT * FROM friend_requests WHERE from_user_id = $1 AND to_user_id = $2",
-      [req.user.userId, targetUserId]
+      [req.user.userId, resolvedTargetId]
     );
     if (existing) {
       return res.status(409).json({ error: "Request already sent", status: existing.status });
@@ -26,13 +41,13 @@ router.post("/request", async (req, res) => {
 
     const request = await queryOne(
       `INSERT INTO friend_requests (from_user_id, to_user_id) VALUES ($1, $2) RETURNING *`,
-      [req.user.userId, targetUserId]
+      [req.user.userId, resolvedTargetId]
     );
 
     // Create notification
     await query(
       `INSERT INTO notifications (user_id, type, triggering_user_id) VALUES ($1, 'friend_request', $2)`,
-      [targetUserId, req.user.userId]
+      [resolvedTargetId, req.user.userId]
     );
 
     return res.json({ ok: true, request: formatRequest(request) });
@@ -153,15 +168,28 @@ router.get("/requests", async (req, res) => {
 router.get("/status/:userId", async (req, res) => {
   try {
     const targetId = req.params.userId;
+    if (!targetId) {
+      return res.json({ ok: true, status: "none", requestId: null });
+    }
+    let targetUser;
+    if (isValidUUID(targetId)) {
+      targetUser = await queryOne("SELECT id FROM users WHERE id = $1", [targetId]);
+    } else {
+      targetUser = await queryOne("SELECT id FROM users WHERE custom_id = $1 OR google_id = $1", [targetId]);
+    }
+    if (!targetUser) {
+      return res.json({ ok: true, status: "none", requestId: null });
+    }
+    const resolvedTargetId = targetUser.id;
 
     // Check if request exists in either direction
     const sent = await queryOne(
       "SELECT * FROM friend_requests WHERE from_user_id = $1 AND to_user_id = $2",
-      [req.user.userId, targetId]
+      [req.user.userId, resolvedTargetId]
     );
     const received = await queryOne(
       "SELECT * FROM friend_requests WHERE from_user_id = $1 AND to_user_id = $2",
-      [targetId, req.user.userId]
+      [resolvedTargetId, req.user.userId]
     );
 
     let status = "none";
@@ -198,6 +226,9 @@ function formatRequest(r) {
 router.delete("/request/:userId", async (req, res) => {
   try {
     const targetId = req.params.userId;
+    if (!targetId || !isValidUUID(targetId)) {
+      return res.status(400).json({ error: "Invalid targetUserId" });
+    }
     // Delete friend request in both directions
     await query(
       `DELETE FROM friend_requests 

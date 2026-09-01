@@ -627,9 +627,17 @@ io.on("connection", (socket) => {
 // ============================================
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Camverz Backend running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
+
+  // Auto-migrate database schema columns if missing
+  try {
+    await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS sex_preference TEXT DEFAULT 'Straight'");
+    console.log("✅ Database auto-migration completed successfully.");
+  } catch (migErr) {
+    console.warn("⚠️ Non-fatal auto-migration log:", migErr.message);
+  }
 
   // Start cleanup cron
   startCleanupCron();

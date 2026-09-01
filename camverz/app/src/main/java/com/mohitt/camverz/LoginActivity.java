@@ -40,14 +40,20 @@ public class LoginActivity extends AppCompatActivity {
     private ApiService api;
     private android.view.View loadingOverlay;
     private Button getStartedButton;
+    private AppUpdateHelper appUpdateHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Initialize ironSource LevelPlay SDK early
+        BaseActivity.initializeIronSource(this);
+
         tokenManager = TokenManager.getInstance(this);
         api = ApiClient.getInstance(this).getApi();
+
+        appUpdateHelper = new AppUpdateHelper(this);
 
         // Check Play Install Referrer for referrals
         checkInstallReferrer();
@@ -58,6 +64,8 @@ public class LoginActivity extends AppCompatActivity {
             goToMainScreen();
             return;
         }
+
+        appUpdateHelper.checkForUpdates();
 
         // Configure Google Sign-In (same as before — still using Google OAuth)
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -203,6 +211,15 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == AppUpdateHelper.RC_APP_UPDATE) {
+            if (resultCode != RESULT_OK) {
+                Log.e(TAG, "Immediate update flow failed or cancelled. Restarting update flow...");
+                if (appUpdateHelper != null) {
+                    appUpdateHelper.checkForUpdates();
+                }
+            }
+        }
 
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -527,6 +544,14 @@ public class LoginActivity extends AppCompatActivity {
                         .setPositiveButton("OK", null)
                         .show();
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (appUpdateHelper != null) {
+            appUpdateHelper.checkUpdateInProgress();
         }
     }
 

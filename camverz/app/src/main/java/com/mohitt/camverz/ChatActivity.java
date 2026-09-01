@@ -135,6 +135,12 @@ public class ChatActivity extends BaseActivity {
 
         setupSocket();
         checkBlockStatus();
+
+        boolean autoStartCall = getIntent().getBooleanExtra("autoStartCall", false);
+        if (autoStartCall) {
+            getIntent().removeExtra("autoStartCall");
+            initiateCall(true);
+        }
     }
     
     @Override

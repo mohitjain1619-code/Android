@@ -55,6 +55,31 @@ public class CreatePostActivity extends BaseActivity {
         postButton = findViewById(R.id.post_button);
         categoryGroup = findViewById(R.id.category_group);
 
+        categoryGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.category_female) {
+                boolean isVerifiedFemale = "female".equalsIgnoreCase(tokenManager.getUserGender()) && tokenManager.isVerified();
+                if (!isVerifiedFemale) {
+                    new AlertDialog.Builder(CreatePostActivity.this)
+                        .setTitle("Premium Audience 👑")
+                        .setMessage("Targeting the Female audience is a premium feature. Would you like to watch a video ad to unlock this selection?")
+                        .setPositiveButton("Watch Ad", (dialog, which) -> {
+                            Toast.makeText(CreatePostActivity.this, "Loading ad...", Toast.LENGTH_SHORT).show();
+                            loadAndShowRewardedAd(() -> {
+                                Toast.makeText(CreatePostActivity.this, "Unlocked Female Audience!", Toast.LENGTH_SHORT).show();
+                            }, () -> {
+                                categoryGroup.check(R.id.category_all);
+                                Toast.makeText(CreatePostActivity.this, "Failed to load ad. Resetting selection.", Toast.LENGTH_SHORT).show();
+                            });
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> {
+                            categoryGroup.check(R.id.category_all);
+                        })
+                        .setCancelable(false)
+                        .show();
+                }
+            }
+        });
+
         postButton.setOnClickListener(v -> {
             if (!isPosting) {
                 uploadPost();
@@ -84,22 +109,27 @@ public class CreatePostActivity extends BaseActivity {
         RadioButton selectedCategory = findViewById(selectedCategoryId);
         String category = selectedCategory.getText().toString().toLowerCase();
 
+        proceedToUpload(text, category);
+    }
+
+    private void proceedToUpload(final String text, final String category) {
+        isPosting = true;
+        postButton.setEnabled(false);
+
         if (tokenManager.isCommunityAdFree()) {
-            proceedToUpload(text, category);
+            executePostUpload(text, category);
         } else {
+            Toast.makeText(this, "Preparing ad to upload post...", Toast.LENGTH_SHORT).show();
             loadAndShowRewardedAd(() -> {
-                proceedToUpload(text, category);
+                executePostUpload(text, category);
             }, () -> {
-                // Ad fail fallback to prevent blockages
-                proceedToUpload(text, category);
+                // If ad fails to load, still proceed with the upload so user doesn't lose their data
+                executePostUpload(text, category);
             });
         }
     }
 
-    private void proceedToUpload(String text, String category) {
-        isPosting = true;
-        postButton.setEnabled(false);
-
+    private void executePostUpload(String text, String category) {
         Map<String, String> body = new HashMap<>();
         body.put("text", text);
         body.put("category", category);
@@ -141,36 +171,44 @@ public class CreatePostActivity extends BaseActivity {
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
-        com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
-        progressDialog.setMessage("Loading ad...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
+        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            final boolean[] rewardEarned = {false};
 
-        com.google.android.gms.ads.rewarded.RewardedAd.load(this, 
-            getString(R.string.admob_rewarded_ad_unit_id), adRequest,
-            new com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
-                @Override
-                public void onAdLoaded(@NonNull com.google.android.gms.ads.rewarded.RewardedAd ad) {
-                    progressDialog.dismiss();
-                    ad.setFullScreenContentCallback(new com.google.android.gms.ads.FullScreenContentCallback() {
-                        @Override
-                        public void onAdDismissedFullScreenContent() {}
-                        @Override
-                        public void onAdFailedToShowFullScreenContent(com.google.android.gms.ads.AdError adError) {
-                            runOnUiThread(onFailure);
-                        }
-                    });
-                    ad.show(CreatePostActivity.this, rewardItem -> {
-                        runOnUiThread(onSuccess);
-                    });
+            com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+                @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdUnavailable() {}
+                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = true;
                 }
-
-                @Override
-                public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError loadAdError) {
-                    progressDialog.dismiss();
+                
+                @Override 
+                public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
                     runOnUiThread(onFailure);
                 }
+                
+                @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                
+                @Override 
+                public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    rewardEarned[0] = true;
+                }
+                
+                @Override
+                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    BaseActivity.isAdShowing = false;
+                    if (rewardEarned[0]) {
+                        runOnUiThread(onSuccess);
+                    } else {
+                        runOnUiThread(onFailure);
+                    }
+                }
             });
+
+            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
+        } else {
+            // Ad not available, fall back to upload directly to avoid blocking
+            runOnUiThread(onFailure);
+        }
     }
 }
