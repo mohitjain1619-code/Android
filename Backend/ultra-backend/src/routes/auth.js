@@ -102,8 +102,11 @@ router.post("/google", async (req, res) => {
       }
     }
 
-    // Find existing user or create new one
-    let user = await queryOne("SELECT * FROM users WHERE google_id = $1", [googleId]);
+    // Find existing user by google_id or email
+    let user = await queryOne(
+      "SELECT * FROM users WHERE google_id = $1 OR (email = $2 AND email != '')",
+      [googleId, email]
+    );
 
     let isNewUser = false;
     let deviceAccountWarning = false;
@@ -124,7 +127,14 @@ router.post("/google", async (req, res) => {
       } catch (e) {}
     }
 
-    if (!user) {
+    if (user) {
+      if (!user.google_id || user.photo_url !== photoUrl) {
+        await query(
+          "UPDATE users SET google_id = $1, photo_url = COALESCE(NULLIF($2, ''), photo_url) WHERE id = $3",
+          [googleId, photoUrl, user.id]
+        );
+      }
+    } else {
       // Create new user (If device was reused, deny free trial)
       isNewUser = true;
       const initialFreeTrial = !deviceAccountWarning;
@@ -132,6 +142,7 @@ router.post("/google", async (req, res) => {
       user = await queryOne(
         `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial)
          VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (email) DO UPDATE SET google_id = EXCLUDED.google_id
          RETURNING *`,
         [googleId, email, name, photoUrl, googleId.substring(0, 8), initialFreeTrial]
       );

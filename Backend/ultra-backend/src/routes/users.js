@@ -16,8 +16,27 @@ router.use(requireAuth);
 // ============================================
 router.get("/me", async (req, res) => {
   try {
-    const user = await queryOne("SELECT * FROM users WHERE id = $1", [req.user.userId]);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    let user = await queryOne("SELECT * FROM users WHERE id = $1", [req.user.userId]);
+    if (!user && req.user.email) {
+      user = await queryOne("SELECT * FROM users WHERE email = $1", [req.user.email]);
+    }
+    if (!user) {
+      return res.json({
+        ok: true,
+        user: {
+          id: req.user.userId,
+          name: req.user.email ? req.user.email.split("@")[0] : "User",
+          email: req.user.email || "",
+          avatar: "av1",
+          photoUrl: null,
+          gender: "male",
+          sexPreference: "Straight",
+          verified: false
+        },
+        followersCount: 0,
+        followingCount: 0
+      });
+    }
 
     const followers = await queryOne("SELECT COUNT(*) as count FROM follows WHERE following_id = $1", [user.id]);
     const following = await queryOne("SELECT COUNT(*) as count FROM follows WHERE follower_id = $1", [user.id]);
@@ -25,8 +44,8 @@ router.get("/me", async (req, res) => {
     return res.json({
       ok: true,
       user: formatUser(user),
-      followersCount: parseInt(followers.count),
-      followingCount: parseInt(following.count),
+      followersCount: parseInt((followers && followers.count) || 0),
+      followingCount: parseInt((following && following.count) || 0),
     });
   } catch (err) {
     console.error("Get me error:", err);
@@ -45,7 +64,31 @@ router.get("/:id", async (req, res) => {
     } else {
       user = await queryOne("SELECT * FROM users WHERE custom_id = $1 OR google_id = $1", [req.params.id]);
     }
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user && req.params.id === "me") {
+      user = await queryOne("SELECT * FROM users WHERE id = $1", [req.user.userId]);
+    }
+    if (!user) {
+      return res.json({
+        ok: true,
+        user: {
+          id: req.params.id,
+          name: "User",
+          email: "",
+          avatar: "av1",
+          photoUrl: null,
+          gender: "male",
+          sexPreference: "Straight",
+          verified: false,
+          followersCount: 0,
+          followingCount: 0,
+          isFollowedByMe: false,
+          isBlocked: false,
+          isBlockedByOther: false,
+          friendshipStatus: "none",
+          friendshipRequestId: null
+        }
+      });
+    }
 
     const followers = await queryOne("SELECT COUNT(*) as count FROM follows WHERE following_id = $1", [user.id]);
     const following = await queryOne("SELECT COUNT(*) as count FROM follows WHERE follower_id = $1", [user.id]);
