@@ -169,9 +169,13 @@ router.put("/me", async (req, res) => {
     let userExists = await queryOne("SELECT id FROM users WHERE id = $1", [req.user.userId]);
     if (!userExists) {
       const email = req.user.email || `${req.user.userId}@camverz.com`;
+      const googleId = req.user.googleId || req.user.userId.replace(/-/g, "").substring(0, 20);
+      const userName = req.user.name || email.split("@")[0];
       await query(
-        `INSERT INTO users (id, email, name, avatar) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
-        [req.user.userId, email, email.split("@")[0], "av1"]
+        `INSERT INTO users (id, google_id, email, name, avatar, custom_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (id) DO NOTHING`,
+        [req.user.userId, googleId, email, userName, "av1", googleId.substring(0, 8)]
       );
     }
 
