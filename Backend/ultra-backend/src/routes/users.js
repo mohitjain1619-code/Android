@@ -165,6 +165,16 @@ router.put("/me", async (req, res) => {
       return res.status(400).json({ error: "No valid fields to update" });
     }
 
+    // Ensure user row exists in DB before updating
+    let userExists = await queryOne("SELECT id FROM users WHERE id = $1", [req.user.userId]);
+    if (!userExists) {
+      const email = req.user.email || `${req.user.userId}@camverz.com`;
+      await query(
+        `INSERT INTO users (id, email, name, avatar) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING`,
+        [req.user.userId, email, email.split("@")[0], "av1"]
+      );
+    }
+
     // Auto-verify male users, and reset verification for female users if they change gender
     if (updates.gender && updates.gender.toLowerCase() === "male") {
       updates.verified = true;
@@ -370,6 +380,7 @@ router.post("/:id/report", async (req, res) => {
 
 // Helper: format user object for API response
 function formatUser(user) {
+  if (!user) return null;
   return {
     id: user.id,
     email: user.email,
