@@ -10,6 +10,37 @@ const router = express.Router();
 (async () => {
   try {
     await query(`
+      CREATE TABLE IF NOT EXISTS affiliates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+        code TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        commission_rate DOUBLE PRECISION NOT NULL DEFAULT 0.25,
+        upi_id TEXT,
+        upi_verified BOOLEAN NOT NULL DEFAULT false,
+        bank_account TEXT,
+        bank_ifsc TEXT,
+        bank_name TEXT,
+        bank_verified BOOLEAN NOT NULL DEFAULT false,
+        bank_details_json TEXT,
+        social_url TEXT,
+        confirm_ownership BOOLEAN NOT NULL DEFAULT false,
+        linkedin_bio_verified BOOLEAN NOT NULL DEFAULT false,
+        linkedin_bio_code TEXT,
+        linkedin_bio_verified_at TIMESTAMPTZ,
+        linkedin_oauth_verified BOOLEAN NOT NULL DEFAULT false,
+        linkedin_oauth_id TEXT,
+        linkedin_oauth_name TEXT,
+        linkedin_oauth_email TEXT,
+        linkedin_oauth_photo TEXT,
+        admin_notes TEXT,
+        min_payout INTEGER NOT NULL DEFAULT 8000,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        approved_at TIMESTAMPTZ
+      );
+
       ALTER TABLE affiliates 
       ADD COLUMN IF NOT EXISTS instagram_url TEXT,
       ADD COLUMN IF NOT EXISTS youtube_url TEXT,
