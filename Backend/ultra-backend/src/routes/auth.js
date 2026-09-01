@@ -134,6 +134,7 @@ router.post("/google", async (req, res) => {
           [googleId, photoUrl, user.id]
         );
       }
+      console.log(`✅ Existing user logged in: ${user.id} (${email})`);
     } else {
       // Create new user (If device was reused, deny free trial)
       isNewUser = true;
@@ -174,8 +175,6 @@ router.post("/google", async (req, res) => {
           console.error("[Affiliate] Signup attribution failed:", affErr);
         }
       }
-    } else {
-      console.log(`✅ Existing user logged in: ${user.id} (${email})`);
     }
 
     // Record / Update device tracking mapping
