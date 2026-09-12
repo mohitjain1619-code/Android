@@ -81,7 +81,7 @@ public class ChatActivity extends BaseActivity {
         receiverAvatar = getIntent().getStringExtra("userAvatar");
         String receiverPhotoUrl = getIntent().getStringExtra("userPhotoUrl");
 
-        RelativeLayout toolbar = findViewById(R.id.toolbar);
+        View toolbar = findViewById(R.id.toolbar);
         findViewById(R.id.back_button).setOnClickListener(v -> finish());
 
         View messageInputLayout = findViewById(R.id.message_input_layout);

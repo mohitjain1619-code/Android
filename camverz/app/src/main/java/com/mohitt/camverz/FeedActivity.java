@@ -43,10 +43,14 @@ public class FeedActivity extends BaseActivity {
     private PostAdapter adapter;
     private List<Post> postList;
     private String currentCategory = "all";
-    
+
     private ApiService api;
     private TokenManager tokenManager;
     private com.google.android.gms.ads.AdView adView;
+
+    private View emptyView;
+    private TextView tvEmptyMessage;
+    private View btnRetryFetch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +100,13 @@ public class FeedActivity extends BaseActivity {
         filterFemale = findViewById(R.id.filter_female);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
 
+        emptyView = findViewById(R.id.empty_view);
+        tvEmptyMessage = findViewById(R.id.tv_empty_message);
+        btnRetryFetch = findViewById(R.id.btn_retry_fetch);
+        if (btnRetryFetch != null) {
+            btnRetryFetch.setOnClickListener(v -> fetchPosts());
+        }
+
         // Hide opposite gender filter tab dynamically based on current user gender
         String userGender = tokenManager.getUserGender();
         if ("male".equalsIgnoreCase(userGender)) {
@@ -142,15 +153,19 @@ public class FeedActivity extends BaseActivity {
     }
 
     private void fetchPosts() {
-        swipeRefreshLayout.setRefreshing(true);
-        
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(true));
+        }
+
         // Use API to fetch posts
         String queryCategory = currentCategory.equals("all") ? null : currentCategory;
-        
+
         api.getPosts(queryCategory, null, 50, 0).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                swipeRefreshLayout.setRefreshing(false);
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(false));
+                }
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
@@ -173,16 +188,14 @@ public class FeedActivity extends BaseActivity {
                                 post.setVerified(postObj.has("verified") && postObj.get("verified").getAsBoolean());
                                 post.setGender(postObj.has("gender") && !postObj.get("gender").isJsonNull() ? postObj.get("gender").getAsString() : "male");
                                 post.setSexPreference(postObj.has("sexPreference") && !postObj.get("sexPreference").isJsonNull() ? postObj.get("sexPreference").getAsString() : "Straight");
-                                
+
                                 // Enforce post privacy based on current user's gender
                                 String postCat = post.getCategory();
                                 String myGender = tokenManager.getUserGender();
                                 if ("male".equalsIgnoreCase(myGender) && "female".equalsIgnoreCase(postCat)) {
-                                    // Skip female-only post for male user
                                     continue;
                                 }
                                 if ("female".equalsIgnoreCase(myGender) && "male".equalsIgnoreCase(postCat)) {
-                                    // Skip male-only post for female user
                                     continue;
                                 }
 
@@ -190,19 +203,47 @@ public class FeedActivity extends BaseActivity {
                             }
                         }
                         adapter.notifyDataSetChanged();
+                        updateEmptyState(false, null);
                         return;
                     }
                 }
-                Toast.makeText(FeedActivity.this, "Failed to load posts", Toast.LENGTH_SHORT).show();
+                updateEmptyState(true, "Failed to load posts.\nTap to try again.");
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                swipeRefreshLayout.setRefreshing(false);
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(false));
+                }
                 Log.e(TAG, "Failed to load posts", t);
-                Toast.makeText(FeedActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                updateEmptyState(true, "Connection timed out or network error.\nPlease check your connection.");
             }
         });
+    }
+
+    private void updateEmptyState(boolean isError, String errorMessage) {
+        if (postList.isEmpty()) {
+            if (emptyView != null) {
+                emptyView.setVisibility(View.VISIBLE);
+            }
+            if (postsRecyclerView != null) {
+                postsRecyclerView.setVisibility(View.GONE);
+            }
+            if (tvEmptyMessage != null) {
+                if (errorMessage != null) {
+                    tvEmptyMessage.setText(errorMessage);
+                } else {
+                    tvEmptyMessage.setText("No posts available right now.\nBe the first to create one!");
+                }
+            }
+        } else {
+            if (emptyView != null) {
+                emptyView.setVisibility(View.GONE);
+            }
+            if (postsRecyclerView != null) {
+                postsRecyclerView.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private void loadBannerAd() {

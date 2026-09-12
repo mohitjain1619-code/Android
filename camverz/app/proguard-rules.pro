@@ -94,6 +94,11 @@
 -keep class com.mohitt.camverz.Conversation { *; }
 -keep class com.mohitt.camverz.Notification { *; }
 -keep class com.mohitt.camverz.VerificationSession { *; }
+-keep class com.mohitt.camverz.RealMeetPost { *; }
+-keep class com.mohitt.camverz.RealMeetRequest { *; }
+-keep class com.mohitt.camverz.PartyPost { *; }
+-keep class com.mohitt.camverz.FantasyPost { *; }
+-keep class com.mohitt.camverz.RealMeetStore { *; }
 
 # ==============================================================================
 # Google Mobile Ads (AdMob)

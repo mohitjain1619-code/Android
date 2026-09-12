@@ -213,6 +213,41 @@ public class ProfileActivity extends BaseActivity {
             return;
         }
 
+        // Dynamically adjust bottom navigation selection depending on whether viewing own or another user's profile
+        View profileCapsule = findViewById(R.id.profile_nav_capsule);
+        ImageView profileIcon = findViewById(R.id.profile_nav_icon);
+        View menuProfileBtn = findViewById(R.id.menu_profile_btn);
+
+        if (!currentUserId.equals(visitedUserId)) {
+            // Viewing another user's profile -> un-highlight the Profile tab
+            if (profileCapsule != null) {
+                profileCapsule.setVisibility(View.GONE);
+            }
+            if (profileIcon != null) {
+                profileIcon.setImageTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.nav_inactive_icon)));
+            }
+            if (menuProfileBtn != null) {
+                menuProfileBtn.setOnClickListener(v -> {
+                    Intent intent = new Intent(this, ProfileActivity.class);
+                    intent.putExtra("userId", currentUserId);
+                    startActivity(intent);
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    finish();
+                });
+            }
+        } else {
+            // Viewing own profile -> highlight Profile tab
+            if (profileCapsule != null) {
+                profileCapsule.setVisibility(View.VISIBLE);
+            }
+            if (profileIcon != null) {
+                profileIcon.setImageTintList(android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.nav_active_icon)));
+            }
+            if (menuProfileBtn != null) {
+                menuProfileBtn.setOnClickListener(v -> {});
+            }
+        }
+
         checkBlockStatusAndLoad();
         setupUI();
 

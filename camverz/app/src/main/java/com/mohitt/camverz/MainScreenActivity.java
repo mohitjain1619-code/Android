@@ -143,6 +143,16 @@ public class MainScreenActivity extends BaseActivity {
                         tokenManager.saveHasActivePlan(hasActivePlan);
                         tokenManager.savePlanName(planName);
 
+                        String sexPref = "";
+                        if (userObj.has("sexPreference") && !userObj.get("sexPreference").isJsonNull()) {
+                            sexPref = userObj.get("sexPreference").getAsString();
+                        } else if (userObj.has("sex_preference") && !userObj.get("sex_preference").isJsonNull()) {
+                            sexPref = userObj.get("sex_preference").getAsString();
+                        }
+                        if (sexPref != null && !sexPref.trim().isEmpty()) {
+                            tokenManager.setSexPreference(sexPref.trim());
+                        }
+
                         Log.d(TAG, "Plan sync: name=" + planName + ", adFree=" + planIsAdFree + ", active=" + hasActivePlan);
 
                         runOnUiThread(() -> {
@@ -153,6 +163,7 @@ public class MainScreenActivity extends BaseActivity {
                                 }
                                 tvUserName.setText(name);
                             }
+                            checkPreferenceSelection();
                         });
                         preloadRewardedAd();
                     }

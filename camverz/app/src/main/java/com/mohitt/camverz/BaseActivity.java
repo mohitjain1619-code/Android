@@ -67,63 +67,88 @@ public class BaseActivity extends AppCompatActivity {
     } // end onCreate
 
     public void applyWindowInsets(final View topView, final View bottomView) {
-        // Set default padding to avoid layout jump before insets are applied
-        if (topView != null) {
-            topView.setPadding(
-                topView.getPaddingLeft(),
-                dpToPx(50),
-                topView.getPaddingRight(),
-                topView.getPaddingBottom()
-            );
+        View contentRoot = findViewById(android.R.id.content);
+        if (contentRoot == null) {
+            contentRoot = getWindow().getDecorView();
         }
 
-        final View decorView = getWindow().getDecorView();
+        // Store initial top padding and bottom margin/padding so insets scale predictably on all devices
+        if (topView != null && topView.getTag(R.id.tag_initial_padding_top) == null) {
+            topView.setTag(R.id.tag_initial_padding_top, topView.getPaddingTop());
+        }
+        if (bottomView != null) {
+            ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
+            if (lp instanceof ViewGroup.MarginLayoutParams) {
+                if (bottomView.getTag(R.id.tag_initial_margin_bottom) == null) {
+                    bottomView.setTag(R.id.tag_initial_margin_bottom, ((ViewGroup.MarginLayoutParams) lp).bottomMargin);
+                }
+            } else {
+                if (bottomView.getTag(R.id.tag_initial_padding_bottom) == null) {
+                    bottomView.setTag(R.id.tag_initial_padding_bottom, bottomView.getPaddingBottom());
+                }
+            }
+        }
 
-        ViewCompat.setOnApplyWindowInsetsListener(decorView, (v, insets) -> {
-            Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
-            Insets displayCutoutInsets = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
-            Insets navigationBarInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars());
-            Insets imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime());
+        final View rootForInsets = contentRoot;
 
-            // Merge status bar and cutout top insets
-            int topMargin = Math.max(statusBarInsets.top, displayCutoutInsets.top);
-            if (topMargin <= 0) {
-                topMargin = dpToPx(38); // Safe fallback
+        ViewCompat.setOnApplyWindowInsetsListener(rootForInsets, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            Insets displayCutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout());
+            Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+
+            int statusBarInset = Math.max(systemBars.top, displayCutout.top);
+            if (statusBarInset <= 0) {
+                statusBarInset = getStatusBarHeightFallback();
             }
 
-            // Merge navigation bar and keyboard bottom insets
-            int bottomMargin = Math.max(navigationBarInsets.bottom, imeInsets.bottom);
-            if (bottomMargin <= 0) {
-                bottomMargin = dpToPx(16); // Safe fallback
-            }
+            int navBarInset = Math.max(systemBars.bottom, ime.bottom);
 
             if (topView != null) {
+                Object initialTag = topView.getTag(R.id.tag_initial_padding_top);
+                int initialTopPadding = initialTag instanceof Integer ? (Integer) initialTag : 0;
                 topView.setPadding(
                     topView.getPaddingLeft(),
-                    topMargin + dpToPx(12),
+                    statusBarInset + initialTopPadding,
                     topView.getPaddingRight(),
                     topView.getPaddingBottom()
                 );
             }
+
             if (bottomView != null) {
                 ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
                 if (lp instanceof ViewGroup.MarginLayoutParams) {
                     ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
-                    mlp.bottomMargin = bottomMargin;
+                    Object initialTag = bottomView.getTag(R.id.tag_initial_margin_bottom);
+                    int initialMarginBottom = initialTag instanceof Integer ? (Integer) initialTag : 0;
+                    mlp.bottomMargin = navBarInset + initialMarginBottom;
                     bottomView.setLayoutParams(mlp);
                 } else {
+                    Object initialTag = bottomView.getTag(R.id.tag_initial_padding_bottom);
+                    int initialPaddingBottom = initialTag instanceof Integer ? (Integer) initialTag : 0;
                     bottomView.setPadding(
                         bottomView.getPaddingLeft(),
                         bottomView.getPaddingTop(),
                         bottomView.getPaddingRight(),
-                        bottomMargin
+                        navBarInset + initialPaddingBottom
                     );
                 }
             }
             return insets;
         });
 
-        ViewCompat.requestApplyInsets(decorView);
+        ViewCompat.requestApplyInsets(rootForInsets);
+    }
+
+    private int getStatusBarHeightFallback() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        if (result <= 0) {
+            result = dpToPx(38); // Safe fallback
+        }
+        return result;
     }
 
     public static boolean isAdShowing = false;

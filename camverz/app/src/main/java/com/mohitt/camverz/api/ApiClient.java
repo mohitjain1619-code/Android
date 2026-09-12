@@ -74,9 +74,9 @@ public class ApiClient {
                 .addInterceptor(authInterceptor)
                 .addInterceptor(unauthorizedInterceptor)
                 .addInterceptor(logging)
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(25, TimeUnit.SECONDS)
+                .readTimeout(25, TimeUnit.SECONDS)
+                .writeTimeout(25, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true)
                 .build();
 

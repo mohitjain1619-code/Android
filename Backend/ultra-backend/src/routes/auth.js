@@ -217,6 +217,8 @@ router.post("/google", async (req, res) => {
         city: user.city,
         customId: user.custom_id,
         photoUrl: user.photo_url,
+        sexPreference: user.sex_preference || null,
+        sex_preference: user.sex_preference || null,
         hasFreeTrial: user.has_free_trial !== false,
         createdAt: user.created_at,
       },

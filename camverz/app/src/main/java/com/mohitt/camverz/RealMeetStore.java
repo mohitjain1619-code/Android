@@ -8,6 +8,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -44,9 +45,8 @@ public class RealMeetStore {
     public synchronized List<RealMeetPost> getRealMeetPosts() {
         String json = prefs.getString(KEY_REAL_MEET_POSTS, null);
         if (json == null) return new ArrayList<>();
-        Type type = new TypeToken<ArrayList<RealMeetPost>>() {}.getType();
-        List<RealMeetPost> posts = gson.fromJson(json, type);
-        return posts != null ? posts : new ArrayList<>();
+        RealMeetPost[] array = gson.fromJson(json, RealMeetPost[].class);
+        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
     }
 
     public synchronized void saveRealMeetPosts(List<RealMeetPost> posts) {
@@ -115,9 +115,8 @@ public class RealMeetStore {
     public synchronized List<PartyPost> getPartyPosts() {
         String json = prefs.getString(KEY_PARTY_POSTS, null);
         if (json == null) return new ArrayList<>();
-        Type type = new TypeToken<ArrayList<PartyPost>>() {}.getType();
-        List<PartyPost> posts = gson.fromJson(json, type);
-        return posts != null ? posts : new ArrayList<>();
+        PartyPost[] array = gson.fromJson(json, PartyPost[].class);
+        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
     }
 
     public synchronized void savePartyPosts(List<PartyPost> posts) {
@@ -164,9 +163,8 @@ public class RealMeetStore {
     public synchronized List<FantasyPost> getFantasyPosts() {
         String json = prefs.getString(KEY_FANTASY_POSTS, null);
         if (json == null) return new ArrayList<>();
-        Type type = new TypeToken<ArrayList<FantasyPost>>() {}.getType();
-        List<FantasyPost> posts = gson.fromJson(json, type);
-        return posts != null ? posts : new ArrayList<>();
+        FantasyPost[] array = gson.fromJson(json, FantasyPost[].class);
+        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
     }
 
     public synchronized void saveFantasyPosts(List<FantasyPost> posts) {
@@ -213,9 +211,8 @@ public class RealMeetStore {
     public synchronized List<RealMeetRequest> getMeetRequests() {
         String json = prefs.getString(KEY_MEET_REQUESTS, null);
         if (json == null) return new ArrayList<>();
-        Type type = new TypeToken<ArrayList<RealMeetRequest>>() {}.getType();
-        List<RealMeetRequest> requests = gson.fromJson(json, type);
-        return requests != null ? requests : new ArrayList<>();
+        RealMeetRequest[] array = gson.fromJson(json, RealMeetRequest[].class);
+        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
     }
 
     public synchronized void saveMeetRequests(List<RealMeetRequest> requests) {
@@ -267,9 +264,8 @@ public class RealMeetStore {
     public synchronized List<String> getSavedParties() {
         String json = prefs.getString(KEY_SAVED_PARTIES, null);
         if (json == null) return new ArrayList<>();
-        Type type = new TypeToken<ArrayList<String>>() {}.getType();
-        List<String> list = gson.fromJson(json, type);
-        return list != null ? list : new ArrayList<>();
+        String[] array = gson.fromJson(json, String[].class);
+        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
     }
 
     public synchronized void saveSavedParties(List<String> list) {

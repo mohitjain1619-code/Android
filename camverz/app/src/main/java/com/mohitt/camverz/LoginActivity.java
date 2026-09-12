@@ -244,6 +244,10 @@ public class LoginActivity extends AppCompatActivity {
      * Backend verifies with Google, creates/finds user in PostgreSQL, returns JWT.
      */
     private void authenticateWithBackend(final String idToken) {
+        authenticateWithBackend(idToken, 1);
+    }
+
+    private void authenticateWithBackend(final String idToken, final int retriesLeft) {
         new Thread(() -> {
             final Map<String, Object> body = new HashMap<>();
             body.put("idToken", idToken);
@@ -306,6 +310,15 @@ public class LoginActivity extends AppCompatActivity {
                                 user.has("avatar") ? user.get("avatar").getAsString() : "",
                                 user.has("verified") && user.get("verified").getAsBoolean()
                         );
+                        String sexPref = "";
+                        if (user.has("sexPreference") && !user.get("sexPreference").isJsonNull()) {
+                            sexPref = user.get("sexPreference").getAsString();
+                        } else if (user.has("sex_preference") && !user.get("sex_preference").isJsonNull()) {
+                            sexPref = user.get("sex_preference").getAsString();
+                        }
+                        if (sexPref != null && !sexPref.trim().isEmpty()) {
+                            tokenManager.setSexPreference(sexPref.trim());
+                        }
 
                         boolean isNewUser = data.has("isNewUser") && data.get("isNewUser").getAsBoolean();
                         boolean deviceAccountWarning = data.has("deviceAccountWarning") && data.get("deviceAccountWarning").getAsBoolean();
@@ -362,6 +375,11 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
+                if (retriesLeft > 0 && (t instanceof java.net.SocketTimeoutException || t instanceof java.io.IOException)) {
+                    Log.w(TAG, "⚠️ Network timeout during auth, auto-retrying authentication... Retries left: " + retriesLeft);
+                    authenticateWithBackend(idToken, retriesLeft - 1);
+                    return;
+                }
                 Log.e(TAG, "❌ Network error during auth", t);
                 hideLoadingState();
                 runOnUiThread(() ->

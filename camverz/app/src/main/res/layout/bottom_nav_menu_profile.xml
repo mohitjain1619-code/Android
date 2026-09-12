@@ -63,6 +63,7 @@
             android:focusable="true">
 
             <ImageView
+                android:id="@+id/messages_nav_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
@@ -70,7 +71,7 @@
                 app:tint="@color/nav_inactive_icon" />
         </FrameLayout>
 
-        <!-- Profile (ACTIVE) -->
+        <!-- Profile (ACTIVE FOR OWN PROFILE) -->
         <FrameLayout
             android:id="@+id/menu_profile_btn"
             android:layout_width="0dp"
@@ -80,12 +81,14 @@
             android:focusable="true">
 
             <View
+                android:id="@+id/profile_nav_capsule"
                 android:layout_width="48dp"
                 android:layout_height="38dp"
                 android:layout_gravity="center"
                 android:background="@drawable/bg_nav_active_capsule" />
 
             <ImageView
+                android:id="@+id/profile_nav_icon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:layout_gravity="center"
