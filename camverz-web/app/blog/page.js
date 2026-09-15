@@ -6,6 +6,17 @@ import styles from './page.module.css';
 
 export const blogPosts = [
   {
+    slug: 'best-free-alternative-of-azar',
+    title: 'Best 100% Free Alternative of Azar: The Ultimate Random Video Call & Community App in 2026',
+    description: 'Looking for the best 100% free alternative of Azar? Compare Azar vs Camverz across video chat, live rooms, LGBTQ+ inclusivity, screenshot protection, real meets, and women safety.',
+    category: 'Comparison',
+    date: 'September 16, 2026',
+    readTime: '18 min read',
+    image: '⚡',
+    gradient: 'linear-gradient(135deg, rgba(0, 229, 255, 0.25) 0%, rgba(189, 0, 255, 0.25) 100%)',
+    border: '#00E5FF'
+  },
+  {
     slug: 'safe-video-calling-tips',
     title: '5 Tips for Safe Video Calling with Strangers',
     description: 'Video calling online is an exciting way to meet new people, but safety should always be your top priority. Here are the 5 rules to stay safe.',

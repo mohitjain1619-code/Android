@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { 
-  Menu, X, Video, User, FileText, BookOpen, Info, Mail, LogOut, Crown, 
+  Menu, X, Video, User, FileText, Info, Mail, LogOut, Crown, 
   MessageSquare, Bell, Zap, Sparkles, Send, Check
 } from 'lucide-react';
 import { 
@@ -50,7 +50,6 @@ export default function Navbar() {
     { href: '/posts', label: 'Posts', icon: FileText },
     { href: '#messages', label: 'Messages', icon: MessageSquare, isDrawer: 'messages' },
     { href: '#notifications', label: 'Notifications', icon: Bell, isDrawer: 'notifications' },
-    { href: '/blog', label: 'Blog', icon: BookOpen },
     { href: '/about', label: 'About', icon: Info },
     { href: '/contact', label: 'Contact', icon: Mail },
   ];

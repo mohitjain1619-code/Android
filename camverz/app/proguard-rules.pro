@@ -7,140 +7,144 @@
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
+# Preserve line numbers and source file attributes for stack traces
 -keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-renamesourcefileattribute SourceFile
 
 # ==============================================================================
-# Retrofit 2
+# General Attributes & Annotations
 # ==============================================================================
 -keepattributes Signature, InnerClasses, EnclosingMethod
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
 -keepattributes RuntimeInvisibleAnnotations, RuntimeInvisibleParameterAnnotations
+-keepattributes *Annotation*
+
+# ==============================================================================
+# Retrofit 2 & OkHttp 3 & Okio
+# (Retrofit, OkHttp, and Okio supply their own AAR consumer rules)
+# ==============================================================================
 -dontwarn retrofit2.**
--keep class retrofit2.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
 -keepclasseswithmembers class * {
     @retrofit2.http.* <methods>;
 }
 
 # ==============================================================================
-# Gson
+# Gson & Model Serialized Fields
+# (Preserve fields annotated with @SerializedName or model class fields for JSON serialization,
+# while allowing class name obfuscation and method optimization/shrinking)
 # ==============================================================================
--keepattributes Signature
--keepattributes *Annotation*
 -dontwarn sun.misc.**
--keep class com.google.gson.** { *; }
--keep class com.mohitt.camverz.api.** { *; }
+-dontwarn com.google.gson.**
 -keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
+# Preserve model class fields for JSON deserialization
+-keepclassmembers class com.mohitt.camverz.User { <fields>; }
+-keepclassmembers class com.mohitt.camverz.Post { <fields>; }
+-keepclassmembers class com.mohitt.camverz.Comment { <fields>; }
+-keepclassmembers class com.mohitt.camverz.Message { <fields>; }
+-keepclassmembers class com.mohitt.camverz.Conversation { <fields>; }
+-keepclassmembers class com.mohitt.camverz.Notification { <fields>; }
+-keepclassmembers class com.mohitt.camverz.VerificationSession { <fields>; }
+-keepclassmembers class com.mohitt.camverz.RealMeetPost { <fields>; }
+-keepclassmembers class com.mohitt.camverz.RealMeetRequest { <fields>; }
+-keepclassmembers class com.mohitt.camverz.PartyPost { <fields>; }
+-keepclassmembers class com.mohitt.camverz.FantasyPost { <fields>; }
+-keepclassmembers class com.mohitt.camverz.RealMeetStore { <fields>; }
+-keepclassmembers class com.mohitt.camverz.StoryItem { <fields>; }
+-keepclassmembers class com.mohitt.camverz.UserStories { <fields>; }
+-keepclassmembers class com.mohitt.camverz.CommunityNotification { <fields>; }
+-keepclassmembers class com.mohitt.camverz.api.** { <fields>; }
+
 # ==============================================================================
 # Socket.IO & Engine.IO
 # ==============================================================================
--keep class io.socket.** { *; }
 -dontwarn io.socket.**
--keep class okhttp3.** { *; }
--dontwarn okhttp3.**
--keep class okio.** { *; }
--dontwarn okio.**
+-keep class io.socket.client.Socket { *; }
+-keep class io.socket.emitter.Emitter { *; }
 
 # ==============================================================================
-# WebRTC SDK
+# WebRTC SDK & JNI Zero
+# (Keep JNI callbacks and native method bindings instead of keeping the whole package)
 # ==============================================================================
--keep class org.webrtc.** { *; }
 -dontwarn org.webrtc.**
-
-# ==============================================================================
-# JNI Zero (WebRTC JNI bindings)
-# ==============================================================================
--keep class org.jni_zero.** { *; }
 -dontwarn org.jni_zero.**
+
+-keepclasseswithmembers class * {
+    native <methods>;
+}
+-keepclasseswithmembers class * {
+    @org.webrtc.CalledByNative *;
+}
+-keepclasseswithmembers class * {
+    @org.jni_zero.CalledByNative *;
+}
+-keepclasseswithmembers class * {
+    @org.jni_zero.NativeMethods *;
+}
+-keep class org.webrtc.EglBase** { *; }
+-keep class org.webrtc.VideoFrame** { *; }
+-keep class org.webrtc.SurfaceViewRenderer { *; }
+-keep class org.webrtc.TextureViewRenderer { *; }
 
 # ==============================================================================
 # Glide
 # ==============================================================================
+-dontwarn com.bumptech.glide.**
 -keep public class * extends com.bumptech.glide.module.AppGlideModule
 -keep public class * extends com.bumptech.glide.module.LibraryGlideModule
--keep class com.bumptech.glide.** { *; }
--dontwarn com.bumptech.glide.**
 -keepclassmembers class * {
     @com.bumptech.glide.annotation.GlideOption <methods>;
     @com.bumptech.glide.annotation.GlideType <methods>;
 }
 
 # ==============================================================================
-# Google Play Services & Sign-In
+# Google Play Services, Auth & Ads (AdMob)
+# (Google Play Services AARs supply their consumer rules. Keep KeepName annotations)
 # ==============================================================================
--keep class com.google.android.gms.auth.api.signin.** { *; }
--keep class com.google.android.gms.common.api.** { *; }
+-dontwarn com.google.android.gms.**
+-keep class com.google.android.gms.common.annotation.KeepName
+-keepnames class * implements com.google.android.gms.common.annotation.KeepName
+-keepclassmembers class * {
+    @com.google.android.gms.common.annotation.KeepName *;
+}
 
 # ==============================================================================
-# Meta Audience Network (Facebook)
+# ironSource / LevelPlay SDK & Mediation Adapters
+# (Keep mediation adapter classes and public interfaces required for reflection lookup)
+# ==============================================================================
+-dontwarn com.ironsource.**
+-dontwarn com.unity3d.mediation.**
+-keepclassmembers class * implements com.ironsource.mediationsdk.sdk.RewardedVideoAdapterApi { *; }
+-keepclassmembers class * implements com.ironsource.mediationsdk.sdk.InterstitialAdapterApi { *; }
+-keepclassmembers class * implements com.ironsource.mediationsdk.sdk.BannerAdapterApi { *; }
+-keep class com.ironsource.mediationsdk.integration.IntegrationHelper { public *; }
+-keep class com.ironsource.adapters.** { *; }
+
+# ==============================================================================
+# Meta Audience Network (Facebook Ads)
 # ==============================================================================
 -dontwarn com.facebook.ads.**
 -dontwarn com.facebook.infer.annotation.**
--keep class com.facebook.ads.** { *; }
+-keep class com.facebook.ads.** { public *; }
 
 # ==============================================================================
-# Model classes (kept to prevent R8 minification from breaking Gson serialization)
+# Unity Ads SDK & InMobi
 # ==============================================================================
--keep class com.mohitt.camverz.User { *; }
--keep class com.mohitt.camverz.Post { *; }
--keep class com.mohitt.camverz.Comment { *; }
--keep class com.mohitt.camverz.Message { *; }
--keep class com.mohitt.camverz.Conversation { *; }
--keep class com.mohitt.camverz.Notification { *; }
--keep class com.mohitt.camverz.VerificationSession { *; }
--keep class com.mohitt.camverz.RealMeetPost { *; }
--keep class com.mohitt.camverz.RealMeetRequest { *; }
--keep class com.mohitt.camverz.PartyPost { *; }
--keep class com.mohitt.camverz.FantasyPost { *; }
--keep class com.mohitt.camverz.RealMeetStore { *; }
-
-# ==============================================================================
-# Google Mobile Ads (AdMob)
-# ==============================================================================
--keep class com.google.android.gms.ads.** { *; }
--dontwarn com.google.android.gms.ads.**
-
-# ==============================================================================
-# InMobi SDK
-# ==============================================================================
--keepattributes SourceFile,LineNumberTable
--keep class com.inmobi.** { *; }
+-dontwarn com.unity3d.ads.**
+-dontwarn com.unity3d.services.**
 -dontwarn com.inmobi.**
 
 # ==============================================================================
-# Google Tink (crypto library used transitively — missing http classes)
+# Google Tink Crypto & Transitive Warnings
 # ==============================================================================
+-dontwarn com.google.crypto.tink.**
 -dontwarn com.google.api.client.http.**
 -dontwarn com.google.api.client.**
 -dontwarn org.joda.time.**
--keep class com.google.crypto.tink.** { *; }
--dontwarn com.google.crypto.tink.**
-
-# ==============================================================================
-# Unity Ads SDK
-# ==============================================================================
--keep class com.unity3d.ads.** { *; }
--dontwarn com.unity3d.ads.**
--keep class com.unity3d.services.** { *; }
--dontwarn com.unity3d.services.**
-
-# ==============================================================================
-# ironSource / LevelPlay SDK
-# ==============================================================================
--keep class com.ironsource.** { *; }
--dontwarn com.ironsource.**
--keep class com.unity3d.mediation.** { *; }
--dontwarn com.unity3d.mediation.**
-
-# ==============================================================================
-# R8 missing_rules.txt catch-all (suppress known transitive missing refs)
-# ==============================================================================
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**
--dontwarn com.google.j2objc.annotations.**
+-dontwarn com.google.j2objc.annotations.****

@@ -163,6 +163,161 @@
   color: var(--text-primary);
 }
 
+.content h3 {
+  font-size: clamp(1.15rem, 2.5vw, 1.4rem);
+  color: var(--text-primary);
+  margin-top: 28px;
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+}
+
+/* PlayStore CTA Button */
+.ctaWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 24px 0 36px 0;
+  gap: 10px;
+}
+
+.playstoreBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #00e5ff 0%, #bd00ff 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 16px 32px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  box-shadow: 0 4px 25px rgba(0, 229, 255, 0.4);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+.playstoreBtn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 35px rgba(189, 0, 255, 0.6);
+  color: #ffffff;
+}
+
+.ctaSubtext {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Table of Contents */
+.tocBox {
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin: 24px 0 40px 0;
+  backdrop-filter: blur(10px);
+}
+
+.tocTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tocList {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.tocList li {
+  margin-bottom: 10px;
+}
+
+.tocList a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+  display: inline-block;
+}
+
+.tocList a:hover {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+}
+
+/* Comparison Table */
+.tableContainer {
+  overflow-x: auto;
+  margin: 28px 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
+}
+
+.comparisonTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+  background: rgba(15, 15, 26, 0.6);
+}
+
+.comparisonTable th {
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--neon-cyan);
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-bottom: 2px solid var(--glass-border);
+}
+
+.comparisonTable td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+.comparisonTable tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.comparisonTable tr:hover {
+  background: rgba(189, 0, 255, 0.05);
+}
+
+.checkMark {
+  color: #00e676;
+  font-weight: bold;
+}
+
+.crossMark {
+  color: #ff5252;
+  font-weight: bold;
+}
+
+.featureCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin: 24px 0;
+}
+
+.featureCard h3 {
+  margin-top: 0;
+  color: var(--neon-purple);
+}
+
 /* Footer CTA in article */
 .footer {
   margin-top: 48px;
