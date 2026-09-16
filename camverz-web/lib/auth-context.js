@@ -116,9 +116,17 @@ export function AuthProvider({ children }) {
       return new Promise((resolve, reject) => {
         let checkClosed;
         let pollStorage;
+        let processed = false;
         const popup = window.open(authUrl, 'google-signin', 
           `width=${width},height=${height},left=${left},top=${top}`
         );
+        
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          setAuthStage('idle');
+          alert('Popup was blocked by your browser. Please allow popups for this site and try again.');
+          reject('Popup blocked');
+          return;
+        }
         
         const cleanUp = () => {
           window.removeEventListener('message', handleMessage);
@@ -130,6 +138,8 @@ export function AuthProvider({ children }) {
         };
 
         const handleAuthSuccess = async (idToken) => {
+          if (processed) return;
+          processed = true;
           cleanUp();
           popup?.close();
           
@@ -187,19 +197,21 @@ export function AuthProvider({ children }) {
                 const tempToken = localStorage.getItem('google_auth_token_temp');
                 if (tempToken) {
                   handleAuthSuccess(tempToken);
-                } else {
+                } else if (!processed) {
                   cleanUp();
                   setAuthStage('idle');
                   reject('Google sign in popup closed');
                 }
               } catch (e) {
-                cleanUp();
-                setAuthStage('idle');
-                reject('Google sign in popup closed');
+                if (!processed) {
+                  cleanUp();
+                  setAuthStage('idle');
+                  reject('Google sign in popup closed');
+                }
               }
-            }, 800);
+            }, 500);
           }
-        }, 1000);
+        }, 500);
       });
     } catch (error) {
       setAuthStage('idle');

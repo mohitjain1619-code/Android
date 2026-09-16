@@ -110,7 +110,7 @@ export default function AffiliatePage() {
   const [adminList, setAdminList] = useState([]);
   const [loadingAdmin, setLoadingAdmin] = useState(false);
   const [updatingAdminId, setUpdatingAdminId] = useState('');
-  const [activeAdminTab, setActiveAdminTab] = useState('creators'); // 'creators' or 'affiliates'
+  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'users' or 'applications'
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all'); // 'all', 'paid', 'free'
   const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female'
@@ -408,11 +408,10 @@ export default function AffiliatePage() {
   };
 
   const renderAdminPanel = () => {
-    // Filter adminList into Creators (have social links) and Affiliates (no social links)
-    const creators = adminList.filter(c => c.instagram_url || c.youtube_url || c.other_url);
-    const affiliates = adminList.filter(c => !c.instagram_url && !c.youtube_url && !c.other_url);
+    // Filter adminList into All Users and Pending Applications
+    const pendingApplications = adminList.filter(c => c.status === 'pending');
 
-    const activeList = activeAdminTab === 'creators' ? creators : affiliates;
+    const activeList = activeAdminTab === 'applications' ? pendingApplications : adminList;
 
     return (
       <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)', width: '100%' }}>
@@ -443,10 +442,10 @@ export default function AffiliatePage() {
         {/* Tab Selection */}
         <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '20px' }}>
           <button 
-            onClick={() => setActiveAdminTab('creators')}
+            onClick={() => setActiveAdminTab('applications')}
             style={{
-              background: activeAdminTab === 'creators' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
-              color: activeAdminTab === 'creators' ? 'var(--neon-purple)' : 'var(--text-secondary)',
+              background: activeAdminTab === 'applications' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+              color: activeAdminTab === 'applications' ? 'var(--neon-purple)' : 'var(--text-secondary)',
               border: 'none',
               padding: '8px 16px',
               borderRadius: '6px',
@@ -456,13 +455,13 @@ export default function AffiliatePage() {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            🎬 Creators ({creators.length})
+            📝 Pending Applications ({pendingApplications.length})
           </button>
           <button 
-            onClick={() => setActiveAdminTab('affiliates')}
+            onClick={() => setActiveAdminTab('users')}
             style={{
-              background: activeAdminTab === 'affiliates' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
-              color: activeAdminTab === 'affiliates' ? 'var(--neon-purple)' : 'var(--text-secondary)',
+              background: activeAdminTab === 'users' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+              color: activeAdminTab === 'users' ? 'var(--neon-purple)' : 'var(--text-secondary)',
               border: 'none',
               padding: '8px 16px',
               borderRadius: '6px',
@@ -472,7 +471,7 @@ export default function AffiliatePage() {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            🤝 Affiliates ({affiliates.length})
+            👥 All Users ({adminList.length})
           </button>
         </div>
 
@@ -490,7 +489,7 @@ export default function AffiliatePage() {
                   <th style={{ textAlign: 'left', padding: '10px' }}>NAME</th>
                   <th style={{ textAlign: 'left', padding: '10px' }}>EMAIL</th>
                   <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
-                  {activeAdminTab === 'creators' && <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>}
+                  {(activeAdminTab === 'users' || activeAdminTab === 'applications') && <th style={{ textAlign: 'left', padding: '10px' }}>PROFILES & VERIFIED STATUS</th>}
                   <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
                   <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
                 </tr>
@@ -501,7 +500,7 @@ export default function AffiliatePage() {
                     <td style={{ padding: '12px 10px', fontWeight: 600 }}>{c.name}</td>
                     <td style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>{c.email}</td>
                     <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>{c.code}</td>
-                    {activeAdminTab === 'creators' && (
+                    {(activeAdminTab === 'users' || activeAdminTab === 'applications') && (
                       <td style={{ padding: '12px 10px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {c.instagram_url && (
@@ -530,6 +529,9 @@ export default function AffiliatePage() {
                                 ({c.other_verified ? 'Verified' : 'Pending'})
                               </span>
                             </div>
+                          )}
+                          {!c.instagram_url && !c.youtube_url && !c.other_url && (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>No profiles linked</span>
                           )}
                         </div>
                       </td>

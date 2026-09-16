@@ -6,81 +6,26 @@ import styles from './page.module.css';
 
 export const blogPosts = [
   {
+    slug: 'best-free-alternative-to-holla-app',
+    title: 'Best 100% Free Alternative to Holla App: Camverz Random Video Call & Community in 2026',
+    description: 'Searching for the best 100% free alternative to Holla App? Compare Holla vs Camverz for screenshot protection, LGBTQ+ & straight matching, women safety, real meetups, and party hosts.',
+    category: 'Comparison',
+    date: 'September 17, 2026',
+    readTime: '18 min read',
+    image: '🔥',
+    gradient: 'linear-gradient(135deg, rgba(255, 0, 110, 0.25) 0%, rgba(189, 0, 255, 0.25) 100%)',
+    border: '#FF006E'
+  },
+  {
     slug: 'best-free-alternative-of-azar',
-    title: 'Best 100% Free Alternative of Azar: The Ultimate Random Video Call & Community App in 2026',
-    description: 'Looking for the best 100% free alternative of Azar? Compare Azar vs Camverz across video chat, live rooms, LGBTQ+ inclusivity, screenshot protection, real meets, and women safety.',
+    title: 'Best 100% Free Alternative to Azar: Camverz Random Video Call & Community App in 2026',
+    description: 'Discover why Camverz is the best 100% free alternative to Azar! Built with screenshot protection, women safety, LGBTQ+ inclusivity, real meetups, party hosts, and zero subscription paywalls.',
     category: 'Comparison',
     date: 'September 16, 2026',
     readTime: '18 min read',
     image: '⚡',
     gradient: 'linear-gradient(135deg, rgba(0, 229, 255, 0.25) 0%, rgba(189, 0, 255, 0.25) 100%)',
     border: '#00E5FF'
-  },
-  {
-    slug: 'safe-video-calling-tips',
-    title: '5 Tips for Safe Video Calling with Strangers',
-    description: 'Video calling online is an exciting way to meet new people, but safety should always be your top priority. Here are the 5 rules to stay safe.',
-    category: 'Safety',
-    date: 'June 20, 2026',
-    readTime: '4 min read',
-    image: '🔒',
-    gradient: 'linear-gradient(135deg, rgba(0, 229, 255, 0.15) 0%, rgba(189, 0, 255, 0.15) 100%)',
-    border: '#00E5FF'
-  },
-  {
-    slug: 'video-chat-online-dating',
-    title: 'How Live Video Chat is Changing Online Networking',
-    description: 'Text profiles are out, live video is in. Discover how real-time, face-to-face virtual matching is changing how people build networks.',
-    category: 'Networking',
-    date: 'June 18, 2026',
-    readTime: '6 min read',
-    image: '🤝',
-    gradient: 'linear-gradient(135deg, rgba(255, 0, 110, 0.15) 0%, rgba(189, 0, 255, 0.15) 100%)',
-    border: '#FF006E'
-  },
-  {
-    slug: 'genuine-connections-digital-age',
-    title: 'Building Genuine Connections in the Digital Age',
-    description: 'In a world dominated by superficial swiping, how do you hold a conversation that matters? Learn the art of deep digital dialogue.',
-    category: 'Relationships',
-    date: 'June 15, 2026',
-    readTime: '5 min read',
-    image: '✨',
-    gradient: 'linear-gradient(135deg, rgba(0, 230, 86, 0.15) 0%, rgba(0, 229, 255, 0.15) 100%)',
-    border: '#00E676'
-  },
-  {
-    slug: 'gender-verification-importance',
-    title: 'Understanding Gender Verification: Why It Matters',
-    description: 'Safety, authenticity, and respect form the pillar of modern virtual video sessions. Read about how gender verification keeps communities safe.',
-    category: 'Community',
-    date: 'June 10, 2026',
-    readTime: '3 min read',
-    image: '🛡️',
-    gradient: 'linear-gradient(135deg, rgba(189, 0, 255, 0.15) 0%, rgba(255, 109, 0, 0.15) 100%)',
-    border: '#BD00FF'
-  },
-  {
-    slug: 'long-distance-relationships-tips',
-    title: 'Long-Distance Relationships: Making Them Work',
-    description: 'Are you in a long-distance relationship or met someone from another country on Camverz? Here are key strategies to maintain the spark.',
-    category: 'Relationships',
-    date: 'June 05, 2026',
-    readTime: '7 min read',
-    image: '✈️',
-    gradient: 'linear-gradient(135deg, rgba(255, 234, 0, 0.15) 0%, rgba(255, 0, 110, 0.15) 100%)',
-    border: '#FFEA00'
-  },
-  {
-    slug: 'online-safety-privacy-guide',
-    title: 'Online Safety Guide: Protecting Your Privacy',
-    description: 'A comprehensive guide to protecting your personal data, reports systems, blocking bad actors, and managing your digital footprint.',
-    category: 'Safety',
-    date: 'May 28, 2026',
-    readTime: '8 min read',
-    image: '🛡️',
-    gradient: 'linear-gradient(135deg, rgba(255, 109, 0, 0.15) 0%, rgba(0, 229, 255, 0.15) 100%)',
-    border: '#FF6D00'
   }
 ];
 
