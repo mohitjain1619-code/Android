@@ -6,6 +6,17 @@ import styles from './page.module.css';
 
 export const blogPosts = [
   {
+    slug: 'best-free-alternative-to-chamet-app',
+    title: 'Why Camverz is the #1 Free Alternative to Chamet App in 2026 (Zero Diamonds & 100% Privacy)',
+    description: 'Tired of Chamet\'s expensive diamond paywalls and coin traps? Discover why Camverz is the #1 free alternative to Chamet with screenshot protection, women pose verification, LGBTQ+ matching, real meetups & party hosts.',
+    category: 'Comparison',
+    date: 'September 17, 2026',
+    readTime: '19 min read',
+    image: '💎',
+    gradient: 'linear-gradient(135deg, rgba(189, 0, 255, 0.25) 0%, rgba(0, 229, 255, 0.25) 100%)',
+    border: '#BD00FF'
+  },
+  {
     slug: 'best-free-alternative-to-holla-app',
     title: 'Best 100% Free Alternative to Holla App: Camverz Random Video Call & Community in 2026',
     description: 'Searching for the best 100% free alternative to Holla App? Compare Holla vs Camverz for screenshot protection, LGBTQ+ & straight matching, women safety, real meetups, and party hosts.',
