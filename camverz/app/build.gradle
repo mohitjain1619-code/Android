@@ -16,11 +16,11 @@ def admobAppId = properties.getProperty("admob.app.id", "ca-app-pub-699298617920
 def applovinSdkKey = properties.getProperty("applovin.sdk.key", "YOUR_APPLOVIN_SDK_KEY_HERE")
 
 android {
-    namespace 'com.mohitt.camverz'
+    namespace 'com.mohit.camverz'
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.mohitt.camverz"
+        applicationId = "com.mohit.camverz"
         minSdk = 24
         targetSdk = 36
         versionCode = 49

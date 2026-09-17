@@ -20,7 +20,7 @@ function DownloadRedirectContent() {
     const handleRedirect = () => {
       if (isAndroid) {
         // Redirect to Google Play Store with referrer
-        const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz&referrer=${destinationCode}`;
+        const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohit.camverz&referrer=${destinationCode}`;
         window.location.href = playStoreUrl;
       } else {
         // Redirect iOS or Desktop users to the website main page (referral is already stored in localStorage)

@@ -12,7 +12,7 @@
         android:layout_height="match_parent" />
 
     <!-- Oval Frame Overlay -->
-    <com.mohitt.camverz.OvalFrameView
+    <com.mohit.camverz.OvalFrameView
         android:id="@+id/oval_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

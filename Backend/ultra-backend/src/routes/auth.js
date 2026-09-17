@@ -32,9 +32,14 @@ router.post("/google", async (req, res) => {
       console.log("🔒 Google Play Reviewer bypass login triggered");
     } else {
       try {
+        const allowedAudiences = [
+          process.env.GOOGLE_CLIENT_ID,
+          "839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com",
+          "973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com"
+        ].filter(Boolean);
         const ticket = await googleClient.verifyIdToken({
           idToken,
-          audience: process.env.GOOGLE_CLIENT_ID,
+          audience: allowedAudiences,
         });
         payload = ticket.getPayload();
       } catch (err) {

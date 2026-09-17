@@ -42,22 +42,22 @@
 }
 
 # Preserve model class fields for JSON deserialization
--keepclassmembers class com.mohitt.camverz.User { <fields>; }
--keepclassmembers class com.mohitt.camverz.Post { <fields>; }
--keepclassmembers class com.mohitt.camverz.Comment { <fields>; }
--keepclassmembers class com.mohitt.camverz.Message { <fields>; }
--keepclassmembers class com.mohitt.camverz.Conversation { <fields>; }
--keepclassmembers class com.mohitt.camverz.Notification { <fields>; }
--keepclassmembers class com.mohitt.camverz.VerificationSession { <fields>; }
--keepclassmembers class com.mohitt.camverz.RealMeetPost { <fields>; }
--keepclassmembers class com.mohitt.camverz.RealMeetRequest { <fields>; }
--keepclassmembers class com.mohitt.camverz.PartyPost { <fields>; }
--keepclassmembers class com.mohitt.camverz.FantasyPost { <fields>; }
--keepclassmembers class com.mohitt.camverz.RealMeetStore { <fields>; }
--keepclassmembers class com.mohitt.camverz.StoryItem { <fields>; }
--keepclassmembers class com.mohitt.camverz.UserStories { <fields>; }
--keepclassmembers class com.mohitt.camverz.CommunityNotification { <fields>; }
--keepclassmembers class com.mohitt.camverz.api.** { <fields>; }
+-keepclassmembers class com.mohit.camverz.User { <fields>; }
+-keepclassmembers class com.mohit.camverz.Post { <fields>; }
+-keepclassmembers class com.mohit.camverz.Comment { <fields>; }
+-keepclassmembers class com.mohit.camverz.Message { <fields>; }
+-keepclassmembers class com.mohit.camverz.Conversation { <fields>; }
+-keepclassmembers class com.mohit.camverz.Notification { <fields>; }
+-keepclassmembers class com.mohit.camverz.VerificationSession { <fields>; }
+-keepclassmembers class com.mohit.camverz.RealMeetPost { <fields>; }
+-keepclassmembers class com.mohit.camverz.RealMeetRequest { <fields>; }
+-keepclassmembers class com.mohit.camverz.PartyPost { <fields>; }
+-keepclassmembers class com.mohit.camverz.FantasyPost { <fields>; }
+-keepclassmembers class com.mohit.camverz.RealMeetStore { <fields>; }
+-keepclassmembers class com.mohit.camverz.StoryItem { <fields>; }
+-keepclassmembers class com.mohit.camverz.UserStories { <fields>; }
+-keepclassmembers class com.mohit.camverz.CommunityNotification { <fields>; }
+-keepclassmembers class com.mohit.camverz.api.** { <fields>; }
 
 # ==============================================================================
 # Socket.IO & Engine.IO
