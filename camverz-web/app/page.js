@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { Video, Shield, Users, Globe, Heart, Zap, ArrowRight, Star, Lock } from 'lucide-react';
+import { Video, Shield, Users, Globe, Heart, Zap, ArrowRight, Star, Lock, Sparkles, MessageSquare, UserCheck } from 'lucide-react';
 import styles from './page.module.css';
 
 function HomeContent() {
@@ -141,12 +141,12 @@ function HomeContent() {
   };
 
   const features = [
-    { icon: Video, title: 'Live Video Connection', desc: 'Get matched instantly with verified members worldwide for live, authentic 1-on-1 video conversations.' },
-    { icon: Heart, title: 'LGBTQ+ & Inclusive Spaces', desc: 'Dedicated Straight, Gay, and Lesbian preferences for safe, respectful, and open social discovery.' },
-    { icon: Users, title: 'Social Media & Stories', desc: 'Share post updates, post story moments, and interact with an active community of creators and friends.' },
-    { icon: Globe, title: 'Global Social Network', desc: 'Connect with new friends, social groups, and diverse cultures across 190+ countries worldwide.' },
-    { icon: Shield, title: 'Strict Zero-Nudity Safety', desc: '24/7 AI-powered moderation and instant hardware bans ensure a safe, clean, and respectful space.' },
-    { icon: Lock, title: 'End-to-End P2P Privacy', desc: 'Peer-to-peer WebRTC encrypted calls with zero video recording and screenshot blocking.' },
+    { icon: Sparkles, title: 'Real Meet & Party Host', desc: 'Host or discover real-world meetups, house parties, coffee hangouts, and events with real-time join requests & party approvals.' },
+    { icon: Video, title: 'Instant 1-on-1 Video Match', desc: 'Get matched instantly in live face-to-face video calls with Straight, Gay, or Lesbian orientation filtering.' },
+    { icon: Users, title: 'Stories & Community Feed', desc: 'Post daily stories, share social updates, like & comment on community posts, and engage with verified creators.' },
+    { icon: UserCheck, title: 'Verified Profiles & Anti-Catfish', desc: 'Gender-verified members and AI profile checks ensure 100% authentic real-people connections with no fake bots.' },
+    { icon: MessageSquare, title: 'Private Direct Messaging', desc: 'Send direct messages, coordinate party invites, and keep in touch with your matches through real-time chat.' },
+    { icon: Lock, title: 'Strict Zero-Nudity & P2P Privacy', desc: '24/7 AI moderation, screenshot blocking, and encrypted peer-to-peer WebRTC calls with zero server recordings.' },
   ];
 
   return (
