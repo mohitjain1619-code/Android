@@ -23,8 +23,8 @@ android {
         applicationId = "com.mohit.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 49
-        versionName = "4.0.2"
+        versionCode = 1
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -48,7 +48,7 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("camverz-release")
+            storeFile file("camverz-mohit-release.jks")
             storePassword "Mohit__8120__"
             keyAlias "key0"
             keyPassword "Mohit__8120__"

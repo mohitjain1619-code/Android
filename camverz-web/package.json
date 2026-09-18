@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^0.10.35",
+    "@paddle/paddle-js": "^1.6.5",
     "axios": "^1.7.7",
     "gsap": "^3.15.0",
     "lucide-react": "^1.21.0",
