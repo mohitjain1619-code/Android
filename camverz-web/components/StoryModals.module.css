@@ -115,10 +115,10 @@
 
 .publishBtn {
   width: 100%;
-  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  background: linear-gradient(135deg, #EC4899, #7928CA);
   border: none;
   border-radius: 8px;
-  color: #000;
+  color: #fff;
   padding: 12px;
   font-size: 15px;
   font-weight: 700;

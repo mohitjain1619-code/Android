@@ -8,20 +8,20 @@
 
 /* ── CSS Custom Properties ── */
 :root {
-  /* Brand colors: graphite foundation with coral action and aqua trust cues. */
+  /* Brand colors: graphite foundation with neon pink action and aqua trust cues. */
   --neon-cyan: #54D6D2;
-  --neon-pink: #FF6B5F;
+  --neon-pink: #EC4899;
   --neon-purple: #A78BFA;
   --neon-blue: #6EA8FE;
   --neon-green: #63D6A0;
-  --neon-orange: #FF9B71;
+  --neon-orange: #A78BFA;
   --neon-yellow: #F6D365;
 
   /* Gradients */
-  --gradient-neon: linear-gradient(135deg, #FF6B5F 0%, #FF9671 48%, #54D6D2 100%);
-  --gradient-bg: radial-gradient(circle at 12% 8%, rgba(84, 214, 210, 0.12), transparent 32%), radial-gradient(circle at 88% 12%, rgba(255, 107, 95, 0.12), transparent 30%), linear-gradient(145deg, #0b1115 0%, #101a20 52%, #0b1115 100%);
+  --gradient-neon: linear-gradient(135deg, #EC4899 0%, #A78BFA 48%, #54D6D2 100%);
+  --gradient-bg: radial-gradient(circle at 12% 8%, rgba(84, 214, 210, 0.12), transparent 32%), radial-gradient(circle at 88% 12%, rgba(236, 72, 153, 0.12), transparent 30%), linear-gradient(145deg, #0b1115 0%, #101a20 52%, #0b1115 100%);
   --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(84,214,210,0.045));
-  --gradient-glow: linear-gradient(135deg, rgba(255,107,95,0.3), rgba(84,214,210,0.3));
+  --gradient-glow: linear-gradient(135deg, rgba(236,72,153,0.3), rgba(84,214,210,0.3));
 
   /* Glass */
   --glass-bg: rgba(20, 31, 36, 0.72);
@@ -42,7 +42,7 @@
 
   /* Shadows */
   --shadow-neon-cyan: 0 12px 34px rgba(84, 214, 210, 0.18);
-  --shadow-neon-pink: 0 12px 34px rgba(255, 107, 95, 0.2);
+  --shadow-neon-pink: 0 12px 34px rgba(236, 72, 153, 0.2);
   --shadow-neon-purple: 0 12px 34px rgba(167, 139, 250, 0.16);
   --shadow-glass: 0 18px 50px rgba(0, 0, 0, 0.28);
 

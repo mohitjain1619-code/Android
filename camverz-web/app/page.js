@@ -312,7 +312,7 @@ function HomeContent() {
               font-size: 1.8rem;
               font-weight: 800;
               font-family: var(--font-display);
-              background: linear-gradient(135deg, #FF671F, #FFFFFF, #128837);
+              background: linear-gradient(135deg, #EC4899, #FFFFFF, #00DFD8);
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
             }
@@ -332,9 +332,9 @@ function HomeContent() {
             </div>
 
             <span style={{
-              background: 'rgba(255, 103, 31, 0.1)',
-              border: '1px solid rgba(255, 103, 31, 0.25)',
-              color: '#FF671F',
+              background: 'rgba(236, 72, 153, 0.1)',
+              border: '1px solid rgba(236, 72, 153, 0.25)',
+              color: '#EC4899',
               fontSize: '0.75rem',
               fontWeight: 700,
               textTransform: 'uppercase',
@@ -396,8 +396,8 @@ function HomeContent() {
                 padding: '14px',
                 fontSize: '1rem',
                 fontWeight: 600,
-                background: 'linear-gradient(135deg, #FF671F, #128837)',
-                boxShadow: '0 4px 15px rgba(255, 103, 31, 0.25)',
+                background: 'linear-gradient(135deg, #EC4899, #00DFD8)',
+                boxShadow: '0 4px 15px rgba(236, 72, 153, 0.25)',
                 border: 'none',
                 cursor: 'pointer',
                 color: '#fff',

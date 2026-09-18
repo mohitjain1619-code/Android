@@ -88,7 +88,7 @@ const legalDocs = {
     title: 'Refund & Cancellation Policy',
     lastUpdated: 'August 10, 2026',
     icon: Landmark,
-    themeColor: '#FF6D00',
+    themeColor: '#EC4899',
     content: (
       <>
         <p>This policy details the strict refund and cancellation terms for all VIP passes and packages purchased on the Camverz Web Platform.</p>

@@ -555,7 +555,7 @@
 }
 
 .categoryBtnActive {
-  background: linear-gradient(135deg, #7000FF, #FF2D55, #FF9500);
+  background: linear-gradient(135deg, #7000FF, #FF2D55, #00E5FF);
   color: #fff;
   box-shadow: 0 4px 20px rgba(255, 45, 85, 0.35);
 }

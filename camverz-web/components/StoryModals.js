@@ -7,7 +7,7 @@ import styles from './StoryModals.module.css';
 // Gradient mappings for Text Stories
 const GRADIENTS = {
   'bg_community_hot_gradient': 'linear-gradient(135deg, #E040FB, #00E5FF)',
-  'bg_neon_amber_button': 'linear-gradient(135deg, #FFD700, #FFAA00)',
+  'bg_neon_amber_button': 'linear-gradient(135deg, #EC4899, #7928CA)',
   'cyan': 'linear-gradient(135deg, #00E5FF, #00838F)',
   'dark': 'linear-gradient(135deg, #1A1A1A, #0A0A0A)'
 };
