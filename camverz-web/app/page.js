@@ -141,13 +141,12 @@ function HomeContent() {
   };
 
   const features = [
-    { icon: Video, title: 'Live Virtual Calls', desc: 'Get matched with verified members for live virtual networking worldwide.' },
-    { icon: Shield, title: 'Gender Verified', desc: 'All female users are verified to ensure authentic connections.' },
-    { icon: Users, title: 'Community', desc: 'Join a growing community of like-minded people seeking real connections.' },
-    { icon: Globe, title: 'Global Reach', desc: 'Connect with people from over 190 countries around the world.' },
-    // { icon: Heart, title: 'Dating & Friends', desc: 'Find dates, make friends, or just have fun conversations.' },
-    { icon: Heart, title: 'Language & Networking', desc: 'Practice languages, build digital networks, or have interactive live discussions.' },
-    { icon: Lock, title: 'Safe & Private', desc: 'Your calls are secure. No recordings, no screenshots.' },
+    { icon: Video, title: 'Live Video Connection', desc: 'Get matched instantly with verified members worldwide for live, authentic 1-on-1 video conversations.' },
+    { icon: Heart, title: 'LGBTQ+ & Inclusive Spaces', desc: 'Dedicated Straight, Gay, and Lesbian preferences for safe, respectful, and open social discovery.' },
+    { icon: Users, title: 'Social Media & Stories', desc: 'Share post updates, post story moments, and interact with an active community of creators and friends.' },
+    { icon: Globe, title: 'Global Social Network', desc: 'Connect with new friends, social groups, and diverse cultures across 190+ countries worldwide.' },
+    { icon: Shield, title: 'Strict Zero-Nudity Safety', desc: '24/7 AI-powered moderation and instant hardware bans ensure a safe, clean, and respectful space.' },
+    { icon: Lock, title: 'End-to-End P2P Privacy', desc: 'Peer-to-peer WebRTC encrypted calls with zero video recording and screenshot blocking.' },
   ];
 
   return (
@@ -157,16 +156,14 @@ function HomeContent() {
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
             <Zap size={14} />
-            {/* <span>Live Video Calling Platform</span> */}
-            <span>Virtual Networking & SaaS Community</span>
+            <span>Social Media & Live Connection Network</span>
           </div>
           <h1 className={styles.heroTitle}>
-            Meet Verified Peers<br />
-            Through <span className="neon-text">Virtual Networking</span>
+            Connect & Socialize<br />
+            Through <span className="neon-text">Live Video Chat</span>
           </h1>
-          {/* <p className={styles.heroDesc}>Get matched randomly and start video calling. Find dates, make friends, or just chat with strangers from around the world.</p> */}
           <p className={styles.heroDesc}>
-            Connect with verified members worldwide for live virtual networking, skill sharing, language exchange, and digital collaboration.
+            Discover new friends, join inclusive LGBTQ+ social circles, share stories, and build real-time connections worldwide through instant 1-on-1 video chat.
           </p>
           <div className={styles.heroBtns}>
             <button className="btn-neon" onClick={() => {

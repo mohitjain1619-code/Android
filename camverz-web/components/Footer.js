@@ -12,8 +12,7 @@ export default function Footer() {
               <span>⚡</span>
               <span className={styles.logoText}>Camverz</span>
             </div>
-            {/* <p className={styles.tagline}>Connect with real people through random video calls. Safe, verified, and fun.</p> */}
-            <p className={styles.tagline}>Virtual networking & SaaS community platform. Connect with verified members worldwide.</p>
+            <p className={styles.tagline}>Next-generation social media & live video connection network. Connect with verified members & inclusive communities worldwide.</p>
           </div>
 
           <div className={styles.linkGroup}>

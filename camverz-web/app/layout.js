@@ -16,12 +16,12 @@ export const metadata = {
 */
 
 export const metadata = {
-  title: 'Camverz — Virtual Networking & Global SaaS Community',
-  description: 'Connect with professionals, creators, and peers through virtual networking, live video sessions, and interactive social communities.',
-  keywords: 'virtual networking, live video community, social saas platform, language exchange, digital networking',
+  title: 'Camverz — Social Media, Connection & LGBTQ+ Live Video Network',
+  description: 'Join Camverz for instant 1-on-1 video connections, social media post sharing, real-time messaging, and inclusive LGBTQ+ social networking. Safe, 100% verified, and private.',
+  keywords: 'social media, live video chat, LGBTQ social network, video connection, real-time social discovery, meet new friends, gay chat, lesbian chat, straight chat, social networking app',
   openGraph: {
-    title: 'Camverz — Virtual Networking & Global SaaS Community',
-    description: 'Connect with professionals and creators through virtual networking and live video sessions.',
+    title: 'Camverz — Social Media, Connection & LGBTQ+ Live Video Network',
+    description: 'Connect with new friends and inclusive LGBTQ+ communities worldwide through live video chat, story sharing, and instant social media connection.',
     type: 'website',
   },
   verification: {
