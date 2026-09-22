@@ -197,26 +197,28 @@ router.post("/track-click", async (req, res) => {
 
     const affCode = code.trim().toUpperCase();
     const aff = await queryOne(
-      "SELECT * FROM affiliates WHERE code = $1 AND status = 'approved'",
+      "SELECT * FROM affiliates WHERE UPPER(code) = $1",
       [affCode]
     );
 
     if (!aff) {
-      return res.json({ tracked: false, reason: "Invalid or inactive code" });
+      return res.json({ tracked: false, reason: "Invalid creator code" });
     }
 
-    // GDPR-compliant IP hashing
-    const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-    const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
+    // Clean IP extraction handling Cloudflare & Reverse Proxies
+    const rawIp = req.headers["cf-connecting-ip"] || 
+                  (req.headers["x-forwarded-for"] ? req.headers["x-forwarded-for"].split(",")[0].trim() : null) || 
+                  req.ip || "127.0.0.1";
+    const ipHash = crypto.createHash("sha256").update(rawIp).digest("hex");
 
-    // Check if this device has already clicked this affiliate's link
+    // Check if this device clicked within the last 10 minutes (prevents duplicate spam, allows re-clicks)
     const existingClick = await queryOne(
-      "SELECT 1 FROM affiliate_clicks WHERE affiliate_id = $1 AND ip_hash = $2 LIMIT 1",
+      "SELECT 1 FROM affiliate_clicks WHERE affiliate_id = $1 AND ip_hash = $2 AND created_at > NOW() - INTERVAL '10 minutes' LIMIT 1",
       [aff.id, ipHash]
     );
 
     if (existingClick) {
-      return res.json({ tracked: false, reason: "Click already registered from this device" });
+      return res.json({ tracked: false, reason: "Click already registered recently from this device" });
     }
 
     await query(
@@ -224,6 +226,8 @@ router.post("/track-click", async (req, res) => {
        VALUES ($1, $2, $3, $4)`,
       [aff.id, ipHash, userAgent || null, referrer || null]
     );
+
+    console.log(`[Affiliate Click] Tracked click for code ${aff.code} from IP ${rawIp}`);
 
     return res.json({ tracked: true, code: aff.code });
   } catch (err) {
@@ -1091,6 +1095,10 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         }
       }
 
+      const profileVerified = (!a.instagram_url || a.instagram_verified) &&
+                              (!a.youtube_url || a.youtube_verified) &&
+                              (!a.other_url || a.other_verified);
+
       return {
         id: a.id || a.user_id,
         user_id: a.user_id,
@@ -1117,6 +1125,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         instagram_verified: !!a.instagram_verified,
         youtube_verified: !!a.youtube_verified,
         other_verified: !!a.other_verified,
+        profile_verified: profileVerified,
         instagram_bio_code: a.instagram_bio_code || null,
         youtube_bio_code: a.youtube_bio_code || null,
         other_bio_code: a.other_bio_code || null,
