@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'Real Meet & Party Host — Local Lesbians, Gay Men, Transgender, Girls & Boys City Meetups | Camverz',
-  description: 'In-depth local city meetups and real-world house party platform. Connect with local lesbians, gay men, transgender & queer members, girls, and boys in your city for coffee hangouts, activity dates, house parties, and verified venue events.',
+  description: 'In-depth local city meetups and real-world house party platform. Connect with local lesbians, gay men, transgender & queer members, girls, and boys in your city for coffee hangouts, activity meetups, house parties, and verified venue events.',
   keywords: [
     // Real Meet - Lesbians
     'meet local lesbians',
