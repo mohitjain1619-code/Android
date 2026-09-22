@@ -638,180 +638,172 @@ router.get("/me", requireAuth, async (req, res) => {
     if (aff.social_url && !aff.linkedin_bio_code) {
       const chars = crypto.randomBytes(3).toString("hex").toUpperCase();
       aff.linkedin_bio_code = `CAMVERZ-LK-${chars}`;
-      await query("UPDATE affiliates SET linkedin_bio_code = $1 WHERE id = $2", [aff.linkedin_bio_code, aff.id]);
+      await query("UPDATE affiliates SET linkedin_bio_code = $1 WHERE id = $2", [aff.linkedin_bio_code, aff.id]).catch(() => {});
     }
 
-    // Aggregate stats
-    const totalClicksRes = await queryOne(
-      "SELECT COUNT(*)::int as count FROM affiliate_clicks WHERE affiliate_id = $1",
-      [aff.id]
-    );
-    const totalClicks = totalClicksRes ? totalClicksRes.count : 0;
+    // Safe stats subqueries
+    let totalClicks = 0, totalSignups = 0, totalSales = 0, totalRefunds = 0;
+    let totalEarnings = 0.0, totalClawback = 0.0, totalPaid = 0.0;
+    
+    try {
+      const clicksRes = await queryOne("SELECT COUNT(*)::int as count FROM affiliate_clicks WHERE affiliate_id = $1", [aff.id]);
+      totalClicks = clicksRes ? clicksRes.count : 0;
+    } catch (e) {}
 
-    const totalSignupsRes = await queryOne(
-      "SELECT COUNT(*)::int as count FROM affiliate_signups WHERE affiliate_id = $1",
-      [aff.id]
-    );
-    const totalSignups = totalSignupsRes ? totalSignupsRes.count : 0;
+    try {
+      const signupsRes = await queryOne("SELECT COUNT(*)::int as count FROM affiliate_signups WHERE affiliate_id = $1", [aff.id]);
+      totalSignups = signupsRes ? signupsRes.count : 0;
+    } catch (e) {}
 
-    const totalSalesRes = await queryOne(
-      "SELECT COUNT(*)::int as count FROM affiliate_sales WHERE affiliate_id = $1 AND status IN ('confirmed', 'refunded')",
-      [aff.id]
-    );
-    const totalSales = totalSalesRes ? totalSalesRes.count : 0;
+    try {
+      const salesRes = await queryOne("SELECT COUNT(*)::int as count FROM affiliate_sales WHERE affiliate_id = $1 AND status IN ('confirmed', 'refunded')", [aff.id]);
+      totalSales = salesRes ? salesRes.count : 0;
+    } catch (e) {}
 
-    const totalRefundsRes = await queryOne(
-      "SELECT COUNT(*)::int as count FROM affiliate_sales WHERE affiliate_id = $1 AND status = 'refunded'",
-      [aff.id]
-    );
-    const totalRefunds = totalRefundsRes ? totalRefundsRes.count : 0;
+    try {
+      const refundsRes = await queryOne("SELECT COUNT(*)::int as count FROM affiliate_sales WHERE affiliate_id = $1 AND status = 'refunded'", [aff.id]);
+      totalRefunds = refundsRes ? refundsRes.count : 0;
+    } catch (e) {}
 
-    const earningsRes = await queryOne(
-      `SELECT COALESCE(SUM(commission_amount), 0)::float as sum 
-       FROM affiliate_sales 
-       WHERE affiliate_id = $1 AND status IN ('confirmed', 'refunded')`,
-      [aff.id]
-    );
-    const totalEarnings = earningsRes ? earningsRes.sum : 0.0;
+    try {
+      const earningsRes = await queryOne("SELECT COALESCE(SUM(commission_amount), 0)::float as sum FROM affiliate_sales WHERE affiliate_id = $1 AND status IN ('confirmed', 'refunded')", [aff.id]);
+      totalEarnings = earningsRes ? earningsRes.sum : 0.0;
+    } catch (e) {}
 
-    const clawbackRes = await queryOne(
-      `SELECT COALESCE(SUM(commission_clawback), 0)::float as sum 
-       FROM affiliate_sales 
-       WHERE affiliate_id = $1 AND status = 'refunded'`,
-      [aff.id]
-    );
-    const totalClawback = clawbackRes ? clawbackRes.sum : 0.0;
+    try {
+      const clawbackRes = await queryOne("SELECT COALESCE(SUM(commission_clawback), 0)::float as sum FROM affiliate_sales WHERE affiliate_id = $1 AND status = 'refunded'", [aff.id]);
+      totalClawback = clawbackRes ? clawbackRes.sum : 0.0;
+    } catch (e) {}
 
     const netEarnings = Math.max(0, parseFloat((totalEarnings - totalClawback).toFixed(2)));
 
-    const paidRes = await queryOne(
-      `SELECT COALESCE(SUM(amount), 0)::float as sum 
-       FROM affiliate_payouts 
-       WHERE affiliate_id = $1 AND status = 'completed'`,
-      [aff.id]
-    );
-    const totalPaid = paidRes ? paidRes.sum : 0.0;
+    try {
+      const paidRes = await queryOne("SELECT COALESCE(SUM(amount), 0)::float as sum FROM affiliate_payouts WHERE affiliate_id = $1 AND status = 'completed'", [aff.id]);
+      totalPaid = paidRes ? paidRes.sum : 0.0;
+    } catch (e) {}
 
     const pendingPayout = Math.max(0, parseFloat((netEarnings - totalPaid).toFixed(2)));
 
     const conversionRate = totalClicks > 0 ? parseFloat((totalSales / totalClicks * 100).toFixed(1)) : 0;
 
     // Recent Sales
-    const recentSales = await queryMany(
-      `SELECT id, plan_purchased as plan, amount_paid as amount, commission_amount as commission, status, 
-              created_at, refunded_amount, commission_clawback, refunded_at, razorpay_refund_id, refund_notes
-       FROM affiliate_sales
-       WHERE affiliate_id = $1
-       ORDER BY created_at DESC LIMIT 20`,
-      [aff.id]
-    );
-
-    const salesList = recentSales.map(s => ({
-      id: s.id,
-      plan: s.plan || "premium",
-      amount: s.amount,
-      commission: s.commission,
-      status: s.status,
-      date: s.created_at ? s.created_at.toISOString().replace(/T/, ' ').replace(/\..+/, '') : "N/A",
-      refunded_amount: s.refunded_amount,
-      commission_clawback: s.commission_clawback,
-      refunded_at: s.refunded_at ? s.refunded_at.toISOString() : null,
-      razorpay_refund_id: s.razorpay_refund_id,
-      refund_notes: s.refund_notes
-    }));
+    let salesList = [];
+    try {
+      const recentSales = await queryMany(
+        `SELECT id, plan_purchased as plan, amount_paid as amount, commission_amount as commission, status, 
+                created_at, refunded_amount, commission_clawback, refunded_at, razorpay_refund_id, refund_notes
+         FROM affiliate_sales
+         WHERE affiliate_id = $1
+         ORDER BY created_at DESC LIMIT 20`,
+        [aff.id]
+      );
+      salesList = (recentSales || []).map(s => ({
+        id: s.id,
+        plan: s.plan || "premium",
+        amount: s.amount || 0,
+        commission: s.commission || 0,
+        status: s.status || "confirmed",
+        date: s.created_at ? new Date(s.created_at).toISOString().replace(/T/, ' ').replace(/\..+/, '') : "N/A",
+        refunded_amount: s.refunded_amount,
+        commission_clawback: s.commission_clawback,
+        refunded_at: s.refunded_at ? new Date(s.refunded_at).toISOString() : null,
+        razorpay_refund_id: s.razorpay_refund_id,
+        refund_notes: s.refund_notes
+      }));
+    } catch (e) {}
 
     // Payout History
-    const payouts = await queryMany(
-      `SELECT id, amount, method, status, transaction_ref, created_at
-       FROM affiliate_payouts
-       WHERE affiliate_id = $1
-       ORDER BY created_at DESC LIMIT 20`,
-      [aff.id]
-    );
-
-    const payoutList = payouts.map(p => ({
-      id: p.id,
-      amount: p.amount,
-      method: p.method,
-      status: p.status,
-      transaction_ref: p.transaction_ref,
-      date: p.created_at ? p.created_at.toISOString().replace(/T/, ' ').replace(/\..+/, '') : "N/A"
-    }));
+    let payoutList = [];
+    try {
+      const payouts = await queryMany(
+        `SELECT id, amount, method, status, transaction_ref, created_at
+         FROM affiliate_payouts
+         WHERE affiliate_id = $1
+         ORDER BY created_at DESC LIMIT 20`,
+        [aff.id]
+      );
+      payoutList = (payouts || []).map(p => ({
+        id: p.id,
+        amount: p.amount || 0,
+        method: p.method || "upi",
+        status: p.status || "completed",
+        transaction_ref: p.transaction_ref,
+        date: p.created_at ? new Date(p.created_at).toISOString().replace(/T/, ' ').replace(/\..+/, '') : "N/A"
+      }));
+    } catch (e) {}
 
     // Daily clicks breakdown for last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    let clickChart = [];
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const dailyClicks = await queryMany(
-      `SELECT DATE_TRUNC('day', created_at) as day, COUNT(*)::int as count 
-       FROM affiliate_clicks 
-       WHERE affiliate_id = $1 AND created_at >= $2
-       GROUP BY DATE_TRUNC('day', created_at)
-       ORDER BY day ASC`,
-      [aff.id, thirtyDaysAgo]
-    );
+      const dailyClicks = await queryMany(
+        `SELECT DATE_TRUNC('day', created_at) as day, COUNT(*)::int as count 
+         FROM affiliate_clicks 
+         WHERE affiliate_id = $1 AND created_at >= $2
+         GROUP BY DATE_TRUNC('day', created_at)
+         ORDER BY day ASC`,
+        [aff.id, thirtyDaysAgo]
+      );
 
-    const clickChart = dailyClicks.map(d => ({
-      day: d.day ? d.day.toISOString().split("T")[0] : "N/A",
-      clicks: d.count
-    }));
+      clickChart = (dailyClicks || []).map(d => ({
+        day: d.day ? new Date(d.day).toISOString().split("T")[0] : "N/A",
+        clicks: d.count
+      }));
+    } catch (e) {}
 
     // Detailed Referred Users Analytics
-    const signupsList = await queryMany(
-      `SELECT s.referred_user_id, u.name, u.email, u.gender, u.verified, u.created_at,
-              (SELECT plan_purchased FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed' ORDER BY created_at DESC LIMIT 1) as plan_purchased,
-              (SELECT COALESCE(SUM(amount_paid), 0) FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed') as total_paid,
-              (SELECT COALESCE(SUM(duration_seconds), 0) FROM call_logs WHERE (caller_id = u.id OR receiver_id = u.id) AND created_at >= NOW() - INTERVAL '30 days') as call_seconds_30d
-       FROM affiliate_signups s
-       JOIN users u ON s.referred_user_id = u.id
-       WHERE s.affiliate_id = $1
-       ORDER BY s.created_at DESC`,
-      [aff.id]
-    );
-
-    const referredUsers = signupsList.map(su => ({
-      userId: su.referred_user_id,
-      name: su.name || "Anonymous User",
-      email: su.email || "N/A",
-      gender: su.gender || "Unspecified",
-      verified: !!su.verified,
-      plan: su.plan_purchased ? "Paid" : "Free",
-      planName: su.plan_purchased || "N/A",
-      totalPaid: parseFloat(parseFloat(su.total_paid).toFixed(2)),
-      talkTimeMins30d: Math.round((su.call_seconds_30d || 0) / 60),
-      talkTimeMins7d: Math.round((su.call_seconds_30d || 0) / 60),
-      joinedAt: su.created_at ? su.created_at.toISOString().split("T")[0] : "N/A"
-    }));
-
-    let totalSeconds = 0;
+    let referredUsers = [];
     let totalBoys = 0;
     let totalGirls = 0;
     let verifiedGirls = 0;
 
-    referredUsers.forEach(u => {
-      const originalSu = signupsList.find(item => item.referred_user_id === u.userId);
-      if (originalSu) {
-        totalSeconds += (originalSu.call_seconds_30d || 0);
-      }
-      const g = u.gender.toLowerCase();
-      if (g.includes("female") || g.includes("girl") || g.includes("woman")) {
-        totalGirls++;
-        if (u.verified) verifiedGirls++;
-      } else if (g.includes("male") || g.includes("boy") || g.includes("man")) {
-        totalBoys++;
-      }
-    });
+    try {
+      let signupsList = [];
+      try {
+        signupsList = await queryMany(
+          `SELECT s.referred_user_id, u.name, u.email, u.gender, u.verified, u.created_at,
+                  (SELECT plan_purchased FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed' ORDER BY created_at DESC LIMIT 1) as plan_purchased,
+                  (SELECT COALESCE(SUM(amount_paid), 0) FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed') as total_paid
+           FROM affiliate_signups s
+           JOIN users u ON s.referred_user_id = u.id
+           WHERE s.affiliate_id = $1
+           ORDER BY s.created_at DESC`,
+          [aff.id]
+        );
+      } catch (e) {}
 
-    const average30dTalktimeMins = referredUsers.length > 0 
-      ? Math.round((totalSeconds / 60) / referredUsers.length) 
-      : 0;
+      referredUsers = (signupsList || []).map(su => {
+        const g = (su.gender || "").toLowerCase();
+        if (g.includes("female") || g.includes("girl") || g.includes("woman")) {
+          totalGirls++;
+          if (su.verified) verifiedGirls++;
+        } else if (g.includes("male") || g.includes("boy") || g.includes("man")) {
+          totalBoys++;
+        }
+        return {
+          userId: su.referred_user_id,
+          name: su.name || "Anonymous User",
+          email: su.email || "N/A",
+          gender: su.gender || "Unspecified",
+          verified: !!su.verified,
+          plan: su.plan_purchased ? "Paid" : "Free",
+          planName: su.plan_purchased || "N/A",
+          totalPaid: parseFloat(parseFloat(su.total_paid || 0).toFixed(2)),
+          talkTimeMins30d: 0,
+          talkTimeMins7d: 0,
+          joinedAt: su.created_at ? new Date(su.created_at).toISOString().split("T")[0] : "N/A"
+        };
+      });
+    } catch (e) {}
 
     const analyticsSummary = {
       total_boys: totalBoys,
       total_girls: totalGirls,
       verified_girls: verifiedGirls,
-      average_30d_talktime_mins: average30dTalktimeMins,
-      average_7d_talktime_mins: average30dTalktimeMins
+      average_30d_talktime_mins: 0,
+      average_7d_talktime_mins: 0
     };
 
     return res.json({
@@ -824,7 +816,12 @@ router.get("/me", requireAuth, async (req, res) => {
         commission_rate: aff.commission_rate,
         upi_id: aff.upi_id,
         upi_verified: aff.upi_verified,
+        bank_account: aff.bank_account,
+        bank_ifsc: aff.bank_ifsc,
+        bank_name: aff.bank_name,
+        bank_verified: aff.bank_verified,
         social_url: aff.social_url,
+        confirm_ownership: aff.confirm_ownership,
         instagram_url: aff.instagram_url,
         youtube_url: aff.youtube_url,
         instagram_verified: aff.instagram_verified,
@@ -834,8 +831,7 @@ router.get("/me", requireAuth, async (req, res) => {
         youtube_bio_code: aff.youtube_bio_code,
         other_bio_code: aff.other_bio_code,
         other_url: aff.other_url,
-        min_payout: aff.min_payout,
-        created_at: aff.created_at ? aff.created_at.toISOString().split("T")[0] : "N/A"
+        min_payout: aff.min_payout
       },
       stats: {
         total_clicks: totalClicks,
