@@ -418,10 +418,16 @@ export default function AffiliatePage() {
   };
 
   const renderAdminPanel = () => {
-    // Filter adminList into All Users and Pending Applications
-    const pendingApplications = adminList.filter(c => c.status?.toLowerCase() === 'pending');
+    // Filter adminList into Ready Applications (Bio Verified), Unverified Applications, and All Users
+    const readyApplications = adminList.filter(c => c.status?.toLowerCase() === 'pending' && c.profile_verified !== false);
+    const unverifiedApplications = adminList.filter(c => c.status?.toLowerCase() === 'pending' && c.profile_verified === false);
 
-    const activeList = activeAdminTab === 'applications' ? pendingApplications : adminList;
+    let activeList = adminList;
+    if (activeAdminTab === 'applications') {
+      activeList = readyApplications;
+    } else if (activeAdminTab === 'unverified') {
+      activeList = unverifiedApplications;
+    }
 
     return (
       <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)', width: '100%' }}>
@@ -431,7 +437,7 @@ export default function AffiliatePage() {
               <span>🔐 Admin Panel (Creator Applications Control)</span>
             </h3>
             <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.85rem' }}>
-              Review creator submissions, verify bios, approve accounts, or delete trial data.
+              Review creator submissions, verify bio codes, approve accounts, or delete trial data.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -466,13 +472,13 @@ export default function AffiliatePage() {
         </div>
 
         {/* Tab Selection */}
-        <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
           <button 
             onClick={() => setActiveAdminTab('applications')}
             style={{
-              background: activeAdminTab === 'applications' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
-              color: activeAdminTab === 'applications' ? 'var(--neon-purple)' : 'var(--text-secondary)',
-              border: 'none',
+              background: activeAdminTab === 'applications' ? 'rgba(0, 230, 118, 0.15)' : 'transparent',
+              color: activeAdminTab === 'applications' ? 'var(--neon-green)' : 'var(--text-secondary)',
+              border: activeAdminTab === 'applications' ? '1px solid var(--neon-green)' : 'none',
               padding: '8px 16px',
               borderRadius: '6px',
               fontSize: '0.85rem',
@@ -481,14 +487,30 @@ export default function AffiliatePage() {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            📝 Pending Applications ({pendingApplications.length})
+            ✅ Ready for Approval ({readyApplications.length})
+          </button>
+          <button 
+            onClick={() => setActiveAdminTab('unverified')}
+            style={{
+              background: activeAdminTab === 'unverified' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+              color: activeAdminTab === 'unverified' ? '#f59e0b' : 'var(--text-secondary)',
+              border: activeAdminTab === 'unverified' ? '1px solid #f59e0b' : 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            ⏳ Awaiting User Bio Verification ({unverifiedApplications.length})
           </button>
           <button 
             onClick={() => setActiveAdminTab('users')}
             style={{
               background: activeAdminTab === 'users' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
               color: activeAdminTab === 'users' ? 'var(--neon-purple)' : 'var(--text-secondary)',
-              border: 'none',
+              border: activeAdminTab === 'users' ? '1px solid var(--neon-purple)' : 'none',
               padding: '8px 16px',
               borderRadius: '6px',
               fontSize: '0.85rem',
@@ -1003,6 +1025,11 @@ export default function AffiliatePage() {
       return matchesSearch && matchesPlan && matchesGender && matchesVerification;
     });
 
+    const hasUnverifiedProfile = 
+      (affiliate.instagram_url && !affiliate.instagram_verified) ||
+      (affiliate.youtube_url && !affiliate.youtube_verified) ||
+      (affiliate.other_url && !affiliate.other_verified);
+
     return (
       <div className="section fade-in-container" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
         {globalStyles}
@@ -1060,7 +1087,11 @@ export default function AffiliatePage() {
           <div>
             <h2 style={{ marginBottom: '6px' }}>Welcome, {affiliate.name}!</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '12px' }}>
-              Code: <strong style={{ color: 'var(--neon-green)' }}>{affiliate.code}</strong> | Status: <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>Active</span>
+              Code: <strong style={{ color: 'var(--neon-green)' }}>{affiliate.code}</strong> | Status: {hasUnverifiedProfile ? (
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>⏳ Verification Required</span>
+              ) : (
+                <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>Active</span>
+              )}
             </p>
             <button 
               className="btn-glass" 
@@ -1071,35 +1102,47 @@ export default function AffiliatePage() {
             </button>
           </div>
           
-          {/* Copy Referral Link */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', minWidth: '320px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>YOUR REFERRAL LINK (SMART REDIRECT)</span>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{appReferralLink}</span>
-              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Auto-detects device: Android redirects to Play Store, iOS & PC redirect to Web.
-              </span>
+          {/* Copy Referral Link vs Locked Banner */}
+          {hasUnverifiedProfile ? (
+            <div style={{ background: 'rgba(255, 0, 110, 0.08)', border: '1px solid rgba(255, 0, 110, 0.25)', padding: '14px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '14px', minWidth: '320px' }}>
+              <div style={{ fontSize: '1.8rem' }}>🔒</div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--neon-pink)', fontWeight: 700 }}>REFERRAL LINK LOCKED</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.4 }}>
+                  Verify your Instagram profile code below to unlock your referral link & dashboard.
+                </span>
+              </div>
             </div>
-            <button 
-              onClick={() => handleCopyApp(appReferralLink)} 
-              style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '8px', 
-                background: copiedApp ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
-                border: `1px solid ${copiedApp ? 'var(--neon-green)' : 'var(--glass-border)'}`,
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                color: copiedApp ? 'var(--neon-green)' : 'var(--neon-cyan)',
-                cursor: 'pointer',
-                transition: 'all 200ms ease',
-                flexShrink: 0
-              }}
-            >
-              {copiedApp ? <Check size={18} /> : <Copy size={18} />}
-            </button>
-          </div>
+          ) : (
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', minWidth: '320px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>YOUR REFERRAL LINK (SMART REDIRECT)</span>
+                <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontFamily: 'monospace' }}>{appReferralLink}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                  Auto-detects device: Android redirects to Play Store, iOS & PC redirect to Web.
+                </span>
+              </div>
+              <button 
+                onClick={() => handleCopyApp(appReferralLink)} 
+                style={{ 
+                  width: '40px', 
+                  height: '40px', 
+                  borderRadius: '8px', 
+                  background: copiedApp ? 'rgba(0, 230, 118, 0.15)' : 'var(--glass-bg)', 
+                  border: `1px solid ${copiedApp ? 'var(--neon-green)' : 'var(--glass-border)'}`,
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  color: copiedApp ? 'var(--neon-green)' : 'var(--neon-cyan)',
+                  cursor: 'pointer',
+                  transition: 'all 200ms ease',
+                  flexShrink: 0
+                }}
+              >
+                {copiedApp ? <Check size={18} /> : <Copy size={18} />}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Edit Links Form */}
@@ -1255,6 +1298,21 @@ export default function AffiliatePage() {
           );
         })()}
 
+        {/* Metrics Grid & Analytics (Locked if Profile Unverified) */}
+        {hasUnverifiedProfile ? (
+          <div className="glass-card" style={{ padding: '40px 24px', textAlign: 'center', marginBottom: '32px', border: '1px solid rgba(255, 0, 110, 0.25)', background: 'rgba(255, 0, 110, 0.03)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '14px' }}>🔒</div>
+            <h3 style={{ fontSize: '1.4rem', color: 'var(--neon-pink)', marginBottom: '8px' }}>
+              Creator Dashboard Stats & Referral Link Locked
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', maxWidth: '580px', margin: '0 auto', fontSize: '0.92rem', lineHeight: 1.6 }}>
+              Your referral link, click tracking analytics, and referred user signups are currently locked.
+              <br />
+              Please paste the bio code into your Instagram bio and click <strong>Verify Instagram</strong> above to unlock your referral link & dashboard!
+            </p>
+          </div>
+        ) : (
+          <>
         {/* Metrics Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', marginBottom: '32px' }}>
           <div className="glass-card" style={{ padding: '24px' }}>
@@ -1706,6 +1764,9 @@ export default function AffiliatePage() {
             )}
           </div>
         </div>
+
+          </>
+        )}
 
           </>
         )}
