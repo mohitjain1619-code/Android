@@ -109,6 +109,7 @@ export default function AffiliatePage() {
   // Admin Panel states
   const [adminList, setAdminList] = useState([]);
   const [loadingAdmin, setLoadingAdmin] = useState(false);
+  const [adminError, setAdminError] = useState('');
   const [updatingAdminId, setUpdatingAdminId] = useState('');
   const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'users' or 'applications'
   const [searchTerm, setSearchTerm] = useState('');
@@ -140,10 +141,12 @@ export default function AffiliatePage() {
     if (isAdmin) {
       try {
         setLoadingAdmin(true);
+        setAdminError('');
         const list = await adminListAffiliates();
         setAdminList(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error("Failed to load admin list:", err);
+        setAdminError(err.response?.data?.error || err.message || "Failed to fetch applications from server.");
       } finally {
         setLoadingAdmin(false);
       }
@@ -494,6 +497,12 @@ export default function AffiliatePage() {
             👥 All Users ({adminList.length})
           </button>
         </div>
+
+        {adminError && (
+          <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '12px 16px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '20px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⚠️ API Error: {adminError}</span>
+          </div>
+        )}
 
         {loadingAdmin ? (
           <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading records list...</p>
