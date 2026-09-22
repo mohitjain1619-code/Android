@@ -106,12 +106,12 @@ export default function AffiliatePage() {
   const [editErrorMsg, setEditErrorMsg] = useState('');
   const [editSuccessMsg, setEditSuccessMsg] = useState('');
 
-  // Admin Panel states
   const [adminList, setAdminList] = useState([]);
   const [loadingAdmin, setLoadingAdmin] = useState(false);
   const [adminError, setAdminError] = useState('');
   const [updatingAdminId, setUpdatingAdminId] = useState('');
-  const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'users' or 'applications'
+  const [activeAdminTab, setActiveAdminTab] = useState('users'); // 'users' or 'applications'
+  const [adminViewMode, setAdminViewMode] = useState('admin'); // 'admin' or 'creator'
   const [selectedUserProfile, setSelectedUserProfile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all'); // 'all', 'paid', 'free'
@@ -1003,7 +1003,54 @@ export default function AffiliatePage() {
     return (
       <div className="section fade-in-container" style={{ paddingTop: '90px', paddingBottom: '60px' }}>
         {globalStyles}
-        {/* Welcome Banner */}
+        
+        {/* Admin Top Mode Switcher Header */}
+        {isAdmin && (
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '14px', border: '1px solid var(--neon-purple)', width: '100%' }}>
+            <button 
+              onClick={() => setAdminViewMode('admin')}
+              style={{
+                flex: 1,
+                padding: '12px 18px',
+                borderRadius: '10px',
+                border: 'none',
+                background: adminViewMode === 'admin' ? 'var(--gradient-neon)' : 'transparent',
+                color: '#ffffff',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                boxShadow: adminViewMode === 'admin' ? '0 0 15px rgba(168, 85, 247, 0.4)' : 'none'
+              }}
+            >
+              👑 Master Admin Panel ({adminList.length} Registered Users)
+            </button>
+            <button 
+              onClick={() => setAdminViewMode('creator')}
+              style={{
+                flex: 1,
+                padding: '12px 18px',
+                borderRadius: '10px',
+                border: 'none',
+                background: adminViewMode === 'creator' ? 'var(--gradient-neon)' : 'transparent',
+                color: '#ffffff',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-in-out',
+                boxShadow: adminViewMode === 'creator' ? '0 0 15px rgba(168, 85, 247, 0.4)' : 'none'
+              }}
+            >
+              📊 Creator Business Dashboard ({affiliate.code})
+            </button>
+          </div>
+        )}
+
+        {isAdmin && adminViewMode === 'admin' ? (
+          renderAdminPanel()
+        ) : (
+          <>
+            {/* Welcome Banner */}
         <div className="glass-card" style={{ padding: '30px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
           <div>
             <h2 style={{ marginBottom: '6px' }}>Welcome, {affiliate.name}!</h2>
@@ -1655,8 +1702,11 @@ export default function AffiliatePage() {
           </div>
         </div>
 
-        {/* Admin Panel inside Approved Creator Dashboard */}
-        {isAdmin && renderAdminPanel()}
+          </>
+        )}
+
+        {/* Selected User Profile Inspector Modal */}
+        {selectedUserProfileModal}
       </div>
     );
   }
