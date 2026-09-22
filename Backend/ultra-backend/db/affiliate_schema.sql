@@ -1,5 +1,5 @@
 -- ============================================
--- Camverz Affiliate/Creator Program Schema
+-- Camverz Affiliate/Creator Program Schema.
 -- PostgreSQL 15/16
 -- ============================================
 
