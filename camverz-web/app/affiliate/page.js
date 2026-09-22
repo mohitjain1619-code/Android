@@ -1464,12 +1464,12 @@ export default function AffiliatePage() {
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>GENDER RATIO (BOYS / GIRLS)</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-cyan)' }}>
-                  {affData.analytics_summary?.total_boys || 0}
+                  {affData?.analytics_summary?.total_boys || 0}
                 </h2>
                 <span style={{ color: 'var(--text-muted)' }}>boys</span>
                 <span style={{ color: 'var(--glass-border)' }}>/</span>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-pink)' }}>
-                  {affData.analytics_summary?.total_girls || 0}
+                  {affData?.analytics_summary?.total_girls || 0}
                 </h2>
                 <span style={{ color: 'var(--text-muted)' }}>girls</span>
               </div>
@@ -1479,7 +1479,7 @@ export default function AffiliatePage() {
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>VERIFIED GIRLS PROFILE COUNT</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-green)' }}>
-                  {affData.analytics_summary?.verified_girls || 0}
+                  {affData?.analytics_summary?.verified_girls || 0}
                 </h2>
                 <span style={{ fontSize: '0.8rem', color: 'var(--neon-green)', fontWeight: 600 }}>verified 👑</span>
               </div>
@@ -1489,7 +1489,7 @@ export default function AffiliatePage() {
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>AVG TALK TIME (LAST 30 DAYS)</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-cyan)' }}>
-                  {affData.analytics_summary?.average_30d_talktime_mins || affData.analytics_summary?.average_7d_talktime_mins || 0}
+                  {affData?.analytics_summary?.average_30d_talktime_mins || affData?.analytics_summary?.average_7d_talktime_mins || 0}
                 </h2>
                 <span style={{ color: 'var(--text-muted)' }}>minutes / user</span>
               </div>
@@ -1904,37 +1904,21 @@ export default function AffiliatePage() {
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📋</div>
               <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Verify Your Profiles</h3>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
-                Your referral code <strong className="neon-text">{affData?.affiliate?.code || ''}</strong> is reserved!
-                Verify ownership of your submitted profiles below. After verification, our team will review and approve.
-              </p>
-            </div>
-
-            {errorMsg && (
-              <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '12px 16px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '28px', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
-                <AlertCircle size={18} />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', marginBottom: '32px' }}>
-
-
-              {/* Instagram Card */}
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px'              {/* Instagram Card */}
               {affData?.affiliate?.instagram_url && (
-                <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.instagram_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.instagram_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
+                <div className="glass-card" style={{ padding: '28px', background: affData?.affiliate?.instagram_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData?.affiliate?.instagram_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>📸 Instagram</h4>
-                    {affData.affiliate.instagram_verified ? (
+                    {affData?.affiliate?.instagram_verified ? (
                       <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
                     ) : (
                       <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
                     )}
                   </div>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
-                    <a href={affData.affiliate.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.instagram_url}</a>
+                    <a href={affData?.affiliate?.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData?.affiliate?.instagram_url}</a>
                   </p>
-                  {affData.affiliate.instagram_verified ? (
+                  {affData?.affiliate?.instagram_verified ? (
                     <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
                       ✅ Verified! You can now <strong>remove the code</strong> from your bio.
                     </div>
@@ -1945,10 +1929,10 @@ export default function AffiliatePage() {
                           <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Instagram Bio</strong>:
                         </p>
                         <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
-                          onClick={() => { navigator.clipboard.writeText(affData.affiliate.instagram_bio_code); alert('Code copied!'); }}
+                          onClick={() => { navigator.clipboard.writeText(affData?.affiliate?.instagram_bio_code); alert('Code copied!'); }}
                           title="Click to copy"
                         >
-                          {affData.affiliate.instagram_bio_code} 📋
+                          {affData?.affiliate?.instagram_bio_code} 📋
                         </div>
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
                           <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
@@ -1966,19 +1950,19 @@ export default function AffiliatePage() {
 
               {/* YouTube Card */}
               {affData?.affiliate?.youtube_url && (
-                <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
+                <div className="glass-card" style={{ padding: '28px', background: affData?.affiliate?.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData?.affiliate?.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🎬 YouTube</h4>
-                    {affData.affiliate.youtube_verified ? (
+                    {affData?.affiliate?.youtube_verified ? (
                       <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
                     ) : (
                       <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
                     )}
                   </div>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
-                    <a href={affData.affiliate.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.youtube_url}</a>
+                    <a href={affData?.affiliate?.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData?.affiliate?.youtube_url}</a>
                   </p>
-                  {affData.affiliate.youtube_verified ? (
+                  {affData?.affiliate?.youtube_verified ? (
                     <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
                       ✅ Verified! You can now <strong>remove the code</strong> from your channel description.
                     </div>
@@ -1988,11 +1972,11 @@ export default function AffiliatePage() {
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
                           <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>YouTube Channel Description</strong>:
                         </p>
-                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
-                          onClick={() => { navigator.clipboard.writeText(affData.affiliate.youtube_bio_code); alert('Code copied!'); }}
+                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                          onClick={() => { navigator.clipboard.writeText(affData?.affiliate?.youtube_bio_code); alert('Code copied!'); }}
                           title="Click to copy"
                         >
-                          {affData.affiliate.youtube_bio_code} 📋
+                          {affData?.affiliate?.youtube_bio_code} 📋
                         </div>
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
                           <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
@@ -2010,19 +1994,19 @@ export default function AffiliatePage() {
 
               {/* Other Platform Card */}
               {affData?.affiliate?.other_url && (
-                <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.other_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.other_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
+                <div className="glass-card" style={{ padding: '28px', background: affData?.affiliate?.other_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData?.affiliate?.other_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🌐 Other Platform</h4>
-                    {affData.affiliate.other_verified ? (
+                    {affData?.affiliate?.other_verified ? (
                       <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}><CheckCircle size={16} /> Verified</span>
                     ) : (
                       <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.8rem' }}>⏳ Pending</span>
                     )}
                   </div>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', wordBreak: 'break-all' }}>
-                    <a href={affData.affiliate.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData.affiliate.other_url}</a>
+                    <a href={affData?.affiliate?.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>{affData?.affiliate?.other_url}</a>
                   </p>
-                  {affData.affiliate.other_verified ? (
+                  {affData?.affiliate?.other_verified ? (
                     <div style={{ background: 'rgba(0,230,118,0.08)', padding: '14px 16px', borderRadius: '10px', color: 'var(--neon-green)', fontSize: '0.85rem', lineHeight: 1.5 }}>
                       ✅ Verified! You can now <strong>remove the code</strong> from your profile/bio.
                     </div>
@@ -2031,7 +2015,7 @@ export default function AffiliatePage() {
                       <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
                           {(() => {
-                            const url = (affData.affiliate.other_url || "").toLowerCase();
+                            const url = (affData?.affiliate?.other_url || "").toLowerCase();
                             if (url.includes("xhamster")) {
                               return (
                                 <>
@@ -2048,6 +2032,17 @@ export default function AffiliatePage() {
                             }
                             return (
                               <>
+                                <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Profile Bio/Description</strong>:
+                              </>
+                            );
+                          })()}
+                        </p>
+                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                          onClick={() => { navigator.clipboard.writeText(affData?.affiliate?.other_bio_code); alert('Code copied!'); }}
+                          title="Click to copy"
+                        >
+                          {affData?.affiliate?.other_bio_code} 📋
+                        </div>        <>
                                 <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Profile Bio/Description</strong>:
                               </>
                             );
