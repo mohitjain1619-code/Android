@@ -1017,54 +1017,61 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// GET /admin/list - list all applications
+// GET /admin/list - list all users and creator applications
 router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
   try {
     const list = await queryMany(
-      `SELECT a.*, u.email as user_email,
+      `SELECT u.id as user_id, u.email as user_email, u.name as user_name, u.gender, u.verified as user_verified, u.created_at as user_created_at,
+              a.id as id, a.code, a.name as affiliate_name, COALESCE(a.status, 'registered') as status,
+              a.commission_rate, a.upi_id, a.social_url, a.instagram_url, a.youtube_url, a.other_url,
+              a.instagram_verified, a.youtube_verified, a.other_verified,
+              a.instagram_bio_code, a.youtube_bio_code, a.other_bio_code, a.admin_notes,
               (SELECT COUNT(*)::int FROM affiliate_clicks WHERE affiliate_id = a.id) as clicks,
               (SELECT COUNT(*)::int FROM affiliate_signups WHERE affiliate_id = a.id) as signups,
               (SELECT COUNT(*)::int FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) as sales,
               (SELECT COALESCE(SUM(commission_amount), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) as gross_earnings,
               (SELECT COALESCE(SUM(commission_clawback), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status = 'refunded') as clawbacks,
               (SELECT COALESCE(SUM(amount), 0)::float FROM affiliate_payouts WHERE affiliate_id = a.id AND status = 'completed') as paid
-       FROM affiliates a
-       JOIN users u ON a.user_id = u.id
-       ORDER BY a.created_at DESC`
+       FROM users u
+       LEFT JOIN affiliates a ON a.user_id = u.id
+       ORDER BY u.created_at DESC`
     );
 
     const formatted = list.map(a => {
-      const net = Math.max(0, a.gross_earnings - a.clawbacks);
-      const pending = Math.max(0, net - a.paid);
+      const gross = a.gross_earnings || 0;
+      const clawbacks = a.clawbacks || 0;
+      const paid = a.paid || 0;
+      const net = Math.max(0, gross - clawbacks);
+      const pending = Math.max(0, net - paid);
 
       return {
-        id: a.id,
+        id: a.id || a.user_id,
         user_id: a.user_id,
-        email: a.user_email,
-        code: a.code,
-        name: a.name,
-        status: a.status,
-        commission_rate: a.commission_rate,
+        email: a.user_email || "N/A",
+        code: a.code || "N/A",
+        name: a.affiliate_name || a.user_name || "Anonymous User",
+        status: a.status || "registered",
+        gender: a.gender || "Unspecified",
+        verified: !!a.user_verified,
+        commission_rate: a.commission_rate || 0.25,
         upi_id: a.upi_id,
         social_url: a.social_url,
         instagram_url: a.instagram_url,
         youtube_url: a.youtube_url,
         other_url: a.other_url,
-        instagram_verified: a.instagram_verified,
-        youtube_verified: a.youtube_verified,
-        other_verified: a.other_verified,
+        instagram_verified: !!a.instagram_verified,
+        youtube_verified: !!a.youtube_verified,
+        other_verified: !!a.other_verified,
         instagram_bio_code: a.instagram_bio_code,
         youtube_bio_code: a.youtube_bio_code,
         other_bio_code: a.other_bio_code,
-        clicks: a.clicks,
-        signups: a.signups,
-        sales: a.sales,
-        total_earnings: parseFloat(a.gross_earnings.toFixed(2)),
-        total_paid: parseFloat(a.paid.toFixed(2)),
+        clicks: a.clicks || 0,
+        signups: a.signups || 0,
+        sales: a.sales || 0,
+        total_earnings: parseFloat(gross.toFixed(2)),
+        total_paid: parseFloat(paid.toFixed(2)),
         pending: parseFloat(pending.toFixed(2)),
-        created_at: a.created_at ? a.created_at.toISOString().split("T")[0] : "N/A",
-        linkedin_bio_verified: a.linkedin_bio_verified,
-        linkedin_bio_code: a.linkedin_bio_code,
+        created_at: a.user_created_at ? a.user_created_at.toISOString().split("T")[0] : "N/A",
         admin_notes: a.admin_notes
       };
     });
