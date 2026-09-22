@@ -1026,23 +1026,36 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
               a.commission_rate, a.upi_id, a.social_url, a.instagram_url, a.youtube_url, a.other_url,
               a.instagram_verified, a.youtube_verified, a.other_verified,
               a.instagram_bio_code, a.youtube_bio_code, a.other_bio_code, a.admin_notes,
-              (SELECT COUNT(*)::int FROM affiliate_clicks WHERE affiliate_id = a.id) as clicks,
-              (SELECT COUNT(*)::int FROM affiliate_signups WHERE affiliate_id = a.id) as signups,
-              (SELECT COUNT(*)::int FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) as sales,
-              (SELECT COALESCE(SUM(commission_amount), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) as gross_earnings,
-              (SELECT COALESCE(SUM(commission_clawback), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status = 'refunded') as clawbacks,
-              (SELECT COALESCE(SUM(amount), 0)::float FROM affiliate_payouts WHERE affiliate_id = a.id AND status = 'completed') as paid
+              CASE WHEN a.id IS NOT NULL THEN (SELECT COUNT(*)::int FROM affiliate_clicks WHERE affiliate_id = a.id) ELSE 0 END as clicks,
+              CASE WHEN a.id IS NOT NULL THEN (SELECT COUNT(*)::int FROM affiliate_signups WHERE affiliate_id = a.id) ELSE 0 END as signups,
+              CASE WHEN a.id IS NOT NULL THEN (SELECT COUNT(*)::int FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) ELSE 0 END as sales,
+              CASE WHEN a.id IS NOT NULL THEN (SELECT COALESCE(SUM(commission_amount), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) ELSE 0.0 END as gross_earnings,
+              CASE WHEN a.id IS NOT NULL THEN (SELECT COALESCE(SUM(commission_clawback), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status = 'refunded') ELSE 0.0 END as clawbacks,
+              CASE WHEN a.id IS NOT NULL THEN (SELECT COALESCE(SUM(amount), 0)::float FROM affiliate_payouts WHERE affiliate_id = a.id AND status = 'completed') ELSE 0.0 END as paid
        FROM users u
        LEFT JOIN affiliates a ON a.user_id = u.id
        ORDER BY u.created_at DESC`
     );
 
     const formatted = list.map(a => {
-      const gross = a.gross_earnings || 0;
-      const clawbacks = a.clawbacks || 0;
-      const paid = a.paid || 0;
+      const gross = typeof a.gross_earnings === 'number' ? a.gross_earnings : 0;
+      const clawbacks = typeof a.clawbacks === 'number' ? a.clawbacks : 0;
+      const paid = typeof a.paid === 'number' ? a.paid : 0;
       const net = Math.max(0, gross - clawbacks);
       const pending = Math.max(0, net - paid);
+
+      let formattedDate = "N/A";
+      if (a.user_created_at) {
+        try {
+          if (typeof a.user_created_at.toISOString === 'function') {
+            formattedDate = a.user_created_at.toISOString().split("T")[0];
+          } else {
+            formattedDate = String(a.user_created_at).split("T")[0];
+          }
+        } catch (e) {
+          formattedDate = String(a.user_created_at);
+        }
+      }
 
       return {
         id: a.id || a.user_id,
@@ -1054,32 +1067,32 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         gender: a.gender || "Unspecified",
         verified: !!a.user_verified,
         commission_rate: a.commission_rate || 0.25,
-        upi_id: a.upi_id,
-        social_url: a.social_url,
-        instagram_url: a.instagram_url,
-        youtube_url: a.youtube_url,
-        other_url: a.other_url,
+        upi_id: a.upi_id || null,
+        social_url: a.social_url || null,
+        instagram_url: a.instagram_url || null,
+        youtube_url: a.youtube_url || null,
+        other_url: a.other_url || null,
         instagram_verified: !!a.instagram_verified,
         youtube_verified: !!a.youtube_verified,
         other_verified: !!a.other_verified,
-        instagram_bio_code: a.instagram_bio_code,
-        youtube_bio_code: a.youtube_bio_code,
-        other_bio_code: a.other_bio_code,
+        instagram_bio_code: a.instagram_bio_code || null,
+        youtube_bio_code: a.youtube_bio_code || null,
+        other_bio_code: a.other_bio_code || null,
         clicks: a.clicks || 0,
         signups: a.signups || 0,
         sales: a.sales || 0,
         total_earnings: parseFloat(gross.toFixed(2)),
         total_paid: parseFloat(paid.toFixed(2)),
         pending: parseFloat(pending.toFixed(2)),
-        created_at: a.user_created_at ? a.user_created_at.toISOString().split("T")[0] : "N/A",
-        admin_notes: a.admin_notes
+        created_at: formattedDate,
+        admin_notes: a.admin_notes || null
       };
     });
 
     return res.json(formatted);
   } catch (err) {
     console.error("Admin list error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: err.message || "Internal server error" });
   }
 });
 
