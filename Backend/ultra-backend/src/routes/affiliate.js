@@ -1023,6 +1023,8 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     // 1. Core query: fetch users and affiliates via LEFT JOIN
     const list = await queryMany(
       `SELECT u.id as user_id, u.email as user_email, u.name as user_name, u.gender, u.verified as user_verified, u.created_at as user_created_at,
+              u.bio as user_bio, u.city as user_city, u.dob as user_dob, u.photo_url as user_photo, u.avatar as user_avatar,
+              u.plan_name as user_plan, u.custom_id as user_custom_id, u.sex_preference as user_sex_pref,
               a.id as id, a.code, a.name as affiliate_name, COALESCE(a.status, 'registered') as status,
               a.commission_rate, a.upi_id, a.social_url, a.instagram_url, a.youtube_url, a.other_url,
               a.instagram_verified, a.youtube_verified, a.other_verified,
@@ -1085,6 +1087,14 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         status: a.status || "registered",
         gender: a.gender || "Unspecified",
         verified: !!a.user_verified,
+        bio: a.user_bio || "",
+        city: a.user_city || "",
+        dob: a.user_dob || "",
+        photoUrl: a.user_photo || null,
+        avatar: a.user_avatar || "av1",
+        planName: a.user_plan || "Free Pass",
+        customId: a.user_custom_id || null,
+        sexPreference: a.user_sex_pref || "Straight",
         commission_rate: a.commission_rate || 0.25,
         upi_id: a.upi_id || null,
         social_url: a.social_url || null,

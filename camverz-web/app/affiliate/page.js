@@ -112,6 +112,7 @@ export default function AffiliatePage() {
   const [adminError, setAdminError] = useState('');
   const [updatingAdminId, setUpdatingAdminId] = useState('');
   const [activeAdminTab, setActiveAdminTab] = useState('applications'); // 'users' or 'applications'
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all'); // 'all', 'paid', 'free'
   const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female'
@@ -610,7 +611,20 @@ export default function AffiliatePage() {
                       {c.created_at || 'N/A'}
                     </td>
                     <td style={{ padding: '12px 10px', textAlign: 'center' }}>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          className="btn-glass"
+                          style={{ 
+                            padding: '6px 12px', 
+                            fontSize: '0.75rem', 
+                            borderColor: 'var(--neon-cyan)', 
+                            color: 'var(--neon-cyan)',
+                            background: 'rgba(0, 229, 255, 0.08)'
+                          }}
+                          onClick={() => setSelectedUserProfile(c)}
+                        >
+                          👁️ View Profile
+                        </button>
                         {(c.status || '').toLowerCase() === 'pending' && (
                           <button 
                             className="btn-neon" 
@@ -633,7 +647,7 @@ export default function AffiliatePage() {
                           onClick={() => handleAdminDeleteUser(c.user_id, c.email)}
                           disabled={updatingAdminId === c.user_id}
                         >
-                          🗑️ Delete Account
+                          🗑️ Delete
                         </button>
                       </div>
                     </td>
@@ -641,6 +655,265 @@ export default function AffiliatePage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* User Profile Details Modal */}
+        {selectedUserProfile && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(5, 5, 12, 0.85)',
+              backdropFilter: 'blur(12px)',
+              zIndex: 9999,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setSelectedUserProfile(null)}
+          >
+            <div 
+              className="glass-card" 
+              style={{
+                maxWidth: '680px',
+                width: '100%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '32px',
+                border: '1px solid var(--neon-cyan)',
+                position: 'relative',
+                animation: 'pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button 
+                onClick={() => setSelectedUserProfile(null)}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '20px',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid var(--glass-border)',
+                  color: '#fff',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  fontSize: '1rem'
+                }}
+              >
+                ✕
+              </button>
+
+              {/* Header Profile Identity */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '24px' }}>
+                <div style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  fontSize: '1.8rem',
+                  fontWeight: 'bold',
+                  color: '#fff',
+                  overflow: 'hidden',
+                  flexShrink: 0
+                }}>
+                  {selectedUserProfile.photoUrl ? (
+                    <img src={selectedUserProfile.photoUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (selectedUserProfile.name || 'U').charAt(0).toUpperCase()
+                  )}
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#fff' }}>{selectedUserProfile.name}</h3>
+                    {selectedUserProfile.verified ? (
+                      <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.75rem', border: '1px solid rgba(0, 230, 118, 0.25)', padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 230, 118, 0.05)' }}>
+                        Verified 👑
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
+                        Unverified Profile
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>{selectedUserProfile.email}</p>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                    <span>User ID: {selectedUserProfile.user_id}</span>
+                    <span>•</span>
+                    <span>Joined: {selectedUserProfile.created_at}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Grid Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '28px' }}>
+                
+                {/* Personal Bio & Info */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                  <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    👤 Profile Details
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>BIO / DESCRIPTION</span>
+                      <span style={{ color: '#fff', wordBreak: 'break-word' }}>{selectedUserProfile.bio || "No bio written yet."}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>GENDER</span>
+                      <span style={{ color: selectedUserProfile.gender?.toLowerCase()?.includes('female') ? 'var(--neon-pink)' : 'var(--neon-cyan)' }}>
+                        {selectedUserProfile.gender || "Unspecified"}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>LOCATION / CITY</span>
+                      <span style={{ color: '#fff' }}>{selectedUserProfile.city || "Not provided"}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>DATE OF BIRTH</span>
+                      <span style={{ color: '#fff' }}>{selectedUserProfile.dob || "Not provided"}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>SEXUAL PREFERENCE</span>
+                      <span style={{ color: '#fff' }}>{selectedUserProfile.sexPreference || "Straight"}</span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>MEMBERSHIP PLAN</span>
+                      <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>{selectedUserProfile.planName || "Free Pass"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Creator & Verification Details */}
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                  <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', color: 'var(--neon-purple)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    💰 Creator Program Details
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>REFERRAL CODE</span>
+                      <span style={{ fontFamily: 'monospace', color: 'var(--neon-cyan)', fontWeight: 700, fontSize: '0.95rem' }}>
+                        {selectedUserProfile.code && selectedUserProfile.code !== 'N/A' ? selectedUserProfile.code : 'Not Applied'}
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>STATUS</span>
+                      <span style={{ 
+                        fontWeight: 600, 
+                        color: (selectedUserProfile.status || '').toLowerCase() === 'approved' ? 'var(--neon-green)' : 
+                               (selectedUserProfile.status || '').toLowerCase() === 'pending' ? '#f59e0b' : 'var(--text-muted)' 
+                      }}>
+                        {(selectedUserProfile.status || 'REGISTERED').toUpperCase()}
+                      </span>
+                    </div>
+
+                    {selectedUserProfile.instagram_url && (
+                      <div>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>INSTAGRAM URL</span>
+                        <a href={selectedUserProfile.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                          {selectedUserProfile.instagram_url}
+                        </a>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: selectedUserProfile.instagram_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
+                          {selectedUserProfile.instagram_verified ? '✓ Verified Bio' : `⏳ Code: ${selectedUserProfile.instagram_bio_code}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedUserProfile.youtube_url && (
+                      <div>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>YOUTUBE URL</span>
+                        <a href={selectedUserProfile.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                          {selectedUserProfile.youtube_url}
+                        </a>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: selectedUserProfile.youtube_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
+                          {selectedUserProfile.youtube_verified ? '✓ Verified Bio' : `⏳ Code: ${selectedUserProfile.youtube_bio_code}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedUserProfile.other_url && (
+                      <div>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>OTHER PLATFORM URL</span>
+                        <a href={selectedUserProfile.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                          {selectedUserProfile.other_url}
+                        </a>
+                        <span style={{ display: 'block', fontSize: '0.72rem', color: selectedUserProfile.other_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
+                          {selectedUserProfile.other_verified ? '✓ Verified Bio' : `⏳ Code: ${selectedUserProfile.other_bio_code}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {selectedUserProfile.upi_id && (
+                      <div>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>PAYOUT UPI ID</span>
+                        <span style={{ fontFamily: 'monospace', color: '#fff' }}>{selectedUserProfile.upi_id}</span>
+                      </div>
+                    )}
+
+                    <div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>STATS SUMMARY</span>
+                      <span style={{ color: '#fff' }}>
+                        Clicks: {selectedUserProfile.clicks || 0} | Signups: {selectedUserProfile.signups || 0} | Sales: {selectedUserProfile.sales || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Action Footer */}
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+                {(selectedUserProfile.status || '').toLowerCase() === 'pending' && (
+                  <button 
+                    className="btn-neon" 
+                    style={{ padding: '10px 20px', fontSize: '0.85rem' }} 
+                    onClick={() => {
+                      handleAdminApprove(selectedUserProfile.id);
+                      setSelectedUserProfile(null);
+                    }}
+                  >
+                    ✓ Approve Application
+                  </button>
+                )}
+                <button
+                  className="btn-glass"
+                  style={{ 
+                    padding: '10px 20px', 
+                    fontSize: '0.85rem', 
+                    borderColor: '#ef4444', 
+                    color: '#ef4444',
+                    background: 'rgba(239, 68, 68, 0.05)'
+                  }}
+                  onClick={() => {
+                    handleAdminDeleteUser(selectedUserProfile.user_id, selectedUserProfile.email);
+                    setSelectedUserProfile(null);
+                  }}
+                >
+                  🗑️ Delete Account
+                </button>
+                <button 
+                  className="btn-glass" 
+                  onClick={() => setSelectedUserProfile(null)}
+                  style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
           </div>
         )}
       </div>
