@@ -155,11 +155,13 @@ export default function AffiliatePage() {
   };
 
   useEffect(() => {
-    loadAffiliateData();
-    if (isAdmin) {
-      loadAdminData();
+    if (user) {
+      loadAffiliateData();
+      if (isAdmin) {
+        loadAdminData();
+      }
     }
-  }, [user]);
+  }, [user?.uid, user?.email]);
 
   // Copy to clipboard handler
   const handleCopyWeb = (text) => {
@@ -965,9 +967,10 @@ export default function AffiliatePage() {
     );
   }
 
-  // Creator profile status checks
-  const isApprovedCreator = user && ((affData?.has_affiliate && affData.affiliate?.status === 'approved') || isAdmin);
-  const isPendingCreator = user && !isAdmin && affData?.has_affiliate && affData.affiliate?.status === 'pending';
+  // Creator profile status checks (case-insensitive)
+  const affStatus = (affData?.affiliate?.status || '').toLowerCase();
+  const isApprovedCreator = user && ((affData?.has_affiliate && (affStatus === 'approved' || affStatus === 'active')) || isAdmin);
+  const isPendingCreator = user && !isAdmin && affData?.has_affiliate && affStatus === 'pending';
   const isNewCreator = user && !isAdmin && (!affData || !affData.has_affiliate);
   const isGuest = !user;
 
@@ -1008,7 +1011,8 @@ export default function AffiliatePage() {
         {isAdmin && (
           <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', background: 'rgba(255,255,255,0.03)', padding: '8px', borderRadius: '14px', border: '1px solid var(--neon-purple)', width: '100%' }}>
             <button 
-              onClick={() => setAdminViewMode('admin')}
+              type="button"
+              onClick={(e) => { e.preventDefault(); setAdminViewMode('admin'); }}
               style={{
                 flex: 1,
                 padding: '12px 18px',
@@ -1026,7 +1030,8 @@ export default function AffiliatePage() {
               👑 Master Admin Panel ({adminList.length} Registered Users)
             </button>
             <button 
-              onClick={() => setAdminViewMode('creator')}
+              type="button"
+              onClick={(e) => { e.preventDefault(); setAdminViewMode('creator'); }}
               style={{
                 flex: 1,
                 padding: '12px 18px',
