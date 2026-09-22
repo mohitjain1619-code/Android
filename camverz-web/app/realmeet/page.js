@@ -166,12 +166,23 @@ function RealMeetContent() {
       // Feed
       const feedRes = await getRealMeetFeed();
       if (feedRes.ok) {
-        setRealMeetPosts(feedRes.realMeetPosts || []);
-        setPartyPosts(feedRes.partyPosts || []);
+        const isPostExpired = (timeStr) => {
+          if (!timeStr || typeof timeStr !== 'string') return false;
+          if (timeStr.includes('T')) {
+            try {
+              const t = new Date(timeStr).getTime();
+              return !isNaN(t) && t < Date.now();
+            } catch (e) {}
+          }
+          return false;
+        };
+
+        setRealMeetPosts((feedRes.realMeetPosts || []).filter(p => !isPostExpired(p.time)));
+        setPartyPosts((feedRes.partyPosts || []).filter(p => !isPostExpired(p.partyTime || p.time)));
         setFantasyPosts(feedRes.fantasyPosts || []);
 
         // Load members list & announcements for party events
-        const pPosts = feedRes.partyPosts || [];
+        const pPosts = (feedRes.partyPosts || []).filter(p => !isPostExpired(p.partyTime || p.time));
         for (let post of pPosts) {
           try {
             const memRes = await getPartyMembers(post.id);
@@ -197,8 +208,19 @@ function RealMeetContent() {
       // Saved Parties
       const savedRes = await getSavedParties();
       if (savedRes.ok) {
-        setSavedParties(savedRes.savedParties || []);
-        setSavedPartyIds((savedRes.savedParties || []).map(p => p.id));
+        const isPostExpired = (timeStr) => {
+          if (!timeStr || typeof timeStr !== 'string') return false;
+          if (timeStr.includes('T')) {
+            try {
+              const t = new Date(timeStr).getTime();
+              return !isNaN(t) && t < Date.now();
+            } catch (e) {}
+          }
+          return false;
+        };
+        const validSaved = (savedRes.savedParties || []).filter(p => !isPostExpired(p.partyTime || p.time));
+        setSavedParties(validSaved);
+        setSavedPartyIds(validSaved.map(p => p.id));
       }
 
       // Notifications

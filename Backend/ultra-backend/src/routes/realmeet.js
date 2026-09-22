@@ -62,11 +62,41 @@ function formatRequest(r) {
   };
 }
 
+async function cleanupExpiredPosts() {
+  try {
+    const now = Date.now();
+    const rows = await queryMany("SELECT id, meeting_time FROM community_posts WHERE meeting_time IS NOT NULL AND meeting_time != ''");
+    if (!rows || rows.length === 0) return;
+    
+    const expiredIds = [];
+    for (const r of rows) {
+      if (r.meeting_time && typeof r.meeting_time === 'string' && r.meeting_time.includes('T')) {
+        const timeMs = new Date(r.meeting_time).getTime();
+        if (!isNaN(timeMs) && timeMs < now) {
+          expiredIds.push(r.id);
+        }
+      }
+    }
+    
+    if (expiredIds.length > 0) {
+      for (const id of expiredIds) {
+        await query("DELETE FROM saved_parties WHERE post_id = $1", [id]).catch(() => {});
+        await query("DELETE FROM community_requests WHERE post_id = $1", [id]).catch(() => {});
+        await query("DELETE FROM community_posts WHERE id = $1", [id]).catch(() => {});
+      }
+      console.log(`[RealMeet Auto-Cleanup] Purged ${expiredIds.length} expired posts.`);
+    }
+  } catch (err) {
+    console.error("[RealMeet Auto-Cleanup Error]:", err);
+  }
+}
+
 // ============================================
 // GET /api/realmeet/feed — Fetch Community Feed
 // ============================================
 router.get("/feed", async (req, res) => {
   try {
+    await cleanupExpiredPosts();
     const rows = await queryMany(
       `SELECT cp.*, u.name as user_name, u.avatar as user_avatar, u.photo_url, u.gender, u.verified, u.is_premium as premium, u.sex_preference, u.dob
        FROM community_posts cp
@@ -220,6 +250,7 @@ router.delete("/post/:id/save", async (req, res) => {
 // ============================================
 router.get("/saved-parties", async (req, res) => {
   try {
+    await cleanupExpiredPosts();
     const rows = await queryMany(
       `SELECT cp.*, u.name as user_name, u.avatar as user_avatar, u.photo_url, u.gender, u.verified, u.is_premium as premium, u.sex_preference, u.dob
        FROM saved_parties sp
@@ -259,6 +290,7 @@ router.get("/saved-parties", async (req, res) => {
 // ============================================
 router.get("/requests", async (req, res) => {
   try {
+    await cleanupExpiredPosts();
     const rows = await queryMany(
       `SELECT cr.*, cp.purpose as post_title,
               u.name as applicant_name, u.avatar as applicant_avatar, u.photo_url as applicant_photo_url, u.gender as applicant_gender, u.verified as applicant_verified, u.dob

@@ -102,6 +102,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+select option {
+  background-color: #101921 !important;
+  color: #ffffff !important;
+  padding: 10px !important;
+}
+
 a {
   color: var(--neon-cyan);
   text-decoration: none;

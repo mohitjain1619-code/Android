@@ -613,10 +613,25 @@ router.post("/update-links", requireAuth, async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
+    let aff = await queryOne("SELECT * FROM affiliates WHERE user_id = $1", [userId]);
 
     if (!aff) {
-      return res.json({ has_affiliate: false });
+      if (req.user.email && req.user.email.toLowerCase() === "mohitjain1619@gmail.com") {
+        try {
+          aff = await queryOne(
+            `INSERT INTO affiliates (user_id, code, name, status, commission_rate)
+             VALUES ($1, 'MOHIT', 'Mohit Jain (Admin)', 'approved', 0.50)
+             ON CONFLICT (user_id) DO UPDATE SET status = 'approved'
+             RETURNING *`,
+            [userId]
+          );
+        } catch (e) {
+          console.error("Auto create admin affiliate error:", e);
+        }
+      }
+      if (!aff) {
+        return res.json({ has_affiliate: false });
+      }
     }
 
     // Legacy bio code fix
@@ -746,7 +761,7 @@ router.get("/me", requireAuth, async (req, res) => {
       `SELECT s.referred_user_id, u.name, u.email, u.gender, u.verified, u.created_at,
               (SELECT plan_purchased FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed' ORDER BY created_at DESC LIMIT 1) as plan_purchased,
               (SELECT COALESCE(SUM(amount_paid), 0) FROM affiliate_sales WHERE referred_user_id = u.id AND status = 'confirmed') as total_paid,
-              (SELECT COALESCE(SUM(duration_seconds), 0) FROM call_logs WHERE (caller_id = u.id OR receiver_id = u.id) AND created_at >= NOW() - INTERVAL '7 days') as call_seconds_7d
+              (SELECT COALESCE(SUM(duration_seconds), 0) FROM call_logs WHERE (caller_id = u.id OR receiver_id = u.id) AND created_at >= NOW() - INTERVAL '30 days') as call_seconds_30d
        FROM affiliate_signups s
        JOIN users u ON s.referred_user_id = u.id
        WHERE s.affiliate_id = $1
@@ -763,7 +778,8 @@ router.get("/me", requireAuth, async (req, res) => {
       plan: su.plan_purchased ? "Paid" : "Free",
       planName: su.plan_purchased || "N/A",
       totalPaid: parseFloat(parseFloat(su.total_paid).toFixed(2)),
-      talkTimeMins7d: Math.round(su.call_seconds_7d / 60),
+      talkTimeMins30d: Math.round((su.call_seconds_30d || 0) / 60),
+      talkTimeMins7d: Math.round((su.call_seconds_30d || 0) / 60),
       joinedAt: su.created_at ? su.created_at.toISOString().split("T")[0] : "N/A"
     }));
 
@@ -775,7 +791,7 @@ router.get("/me", requireAuth, async (req, res) => {
     referredUsers.forEach(u => {
       const originalSu = signupsList.find(item => item.referred_user_id === u.userId);
       if (originalSu) {
-        totalSeconds += originalSu.call_seconds_7d;
+        totalSeconds += (originalSu.call_seconds_30d || 0);
       }
       const g = u.gender.toLowerCase();
       if (g.includes("female") || g.includes("girl") || g.includes("woman")) {
@@ -786,7 +802,7 @@ router.get("/me", requireAuth, async (req, res) => {
       }
     });
 
-    const average7dTalktimeMins = referredUsers.length > 0 
+    const average30dTalktimeMins = referredUsers.length > 0 
       ? Math.round((totalSeconds / 60) / referredUsers.length) 
       : 0;
 
@@ -794,7 +810,8 @@ router.get("/me", requireAuth, async (req, res) => {
       total_boys: totalBoys,
       total_girls: totalGirls,
       verified_girls: verifiedGirls,
-      average_7d_talktime_mins: average7dTalktimeMins
+      average_30d_talktime_mins: average30dTalktimeMins,
+      average_7d_talktime_mins: average30dTalktimeMins
     };
 
     return res.json({

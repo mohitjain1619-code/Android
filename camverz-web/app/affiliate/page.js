@@ -966,16 +966,20 @@ export default function AffiliatePage() {
   }
 
   // Creator profile status checks
-  const isApprovedCreator = user && affData?.has_affiliate && affData.affiliate?.status === 'approved';
-  const isPendingCreator = user && affData?.has_affiliate && affData.affiliate?.status === 'pending';
-  const isNewCreator = user && (!affData || !affData.has_affiliate);
+  const isApprovedCreator = user && ((affData?.has_affiliate && affData.affiliate?.status === 'approved') || isAdmin);
+  const isPendingCreator = user && !isAdmin && affData?.has_affiliate && affData.affiliate?.status === 'pending';
+  const isNewCreator = user && !isAdmin && (!affData || !affData.has_affiliate);
   const isGuest = !user;
 
   // ═══════════════════════════════════════════════════════════
   // 1. APPROVED CREATOR DASHBOARD VIEW (Direct Business Panel)
   // ═══════════════════════════════════════════════════════════
   if (isApprovedCreator) {
-    const { affiliate, stats, recent_sales, payouts, click_chart } = affData;
+    const affiliate = affData?.affiliate || { name: user?.displayName || 'Mohit Jain', code: 'MOHIT', status: 'approved' };
+    const stats = affData?.stats || { total_clicks: 0, total_signups: 0, total_sales: 0, total_earnings: 0 };
+    const recent_sales = affData?.recent_sales || [];
+    const payouts = affData?.payouts || [];
+    const click_chart = affData?.click_chart || [];
 
     const filteredReferredUsers = (affData.referred_users || []).filter(su => {
       const matchesSearch = (su.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1430,10 +1434,10 @@ export default function AffiliatePage() {
             </div>
 
             <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>AVG TALK TIME (LAST 7 DAYS)</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>AVG TALK TIME (LAST 30 DAYS)</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
                 <h2 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: 'var(--neon-cyan)' }}>
-                  {affData.analytics_summary?.average_7d_talktime_mins || 0}
+                  {affData.analytics_summary?.average_30d_talktime_mins || affData.analytics_summary?.average_7d_talktime_mins || 0}
                 </h2>
                 <span style={{ color: 'var(--text-muted)' }}>minutes / user</span>
               </div>
@@ -1557,7 +1561,7 @@ export default function AffiliatePage() {
                     <th style={{ textAlign: 'center', padding: '12px 8px' }}>GENDER</th>
                     <th style={{ textAlign: 'center', padding: '12px 8px' }}>PROFILE VERIFICATION</th>
                     <th style={{ textAlign: 'center', padding: '12px 8px' }}>PLAN STATUS</th>
-                    <th style={{ textAlign: 'right', padding: '12px 8px' }}>7D TALK TIME</th>
+                    <th style={{ textAlign: 'right', padding: '12px 8px' }}>30D TALK TIME</th>
                     <th style={{ textAlign: 'center', padding: '12px 8px' }}>ACCOUNT STATUS</th>
                     <th style={{ textAlign: 'right', padding: '12px 8px' }}>DATE JOINED</th>
                     {user?.email === 'mohitjain1619@gmail.com' && <th style={{ textAlign: 'center', padding: '12px 8px' }}>ACTIONS</th>}
@@ -1602,8 +1606,8 @@ export default function AffiliatePage() {
                           {su.plan.toUpperCase()} {su.plan === 'Paid' && `(${su.planName})`}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600, color: su.talkTimeMins7d > 0 ? 'var(--neon-green)' : 'var(--text-muted)' }}>
-                        {su.talkTimeMins7d} mins
+                      <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 600, color: (su.talkTimeMins30d || su.talkTimeMins7d || 0) > 0 ? 'var(--neon-green)' : 'var(--text-muted)' }}>
+                        {su.talkTimeMins30d ?? su.talkTimeMins7d ?? 0} mins
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <span style={{ 
