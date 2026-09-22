@@ -1011,7 +1011,7 @@ router.post("/webhook/razorpay", async (req, res) => {
 
 // Admin Helper Middleware
 function requireAdmin(req, res, next) {
-  if (!req.user || req.user.email !== "mohitjain1619@gmail.com") {
+  if (!req.user || !req.user.email || req.user.email.toLowerCase() !== "mohitjain1619@gmail.com") {
     return res.status(403).json({ error: "Admin access required" });
   }
   next();
@@ -1236,7 +1236,7 @@ router.delete("/admin/user/:user_id", requireAuth, requireAdmin, async (req, res
     }
 
     // Do not allow deleting the admin user itself
-    if (user.email === "mohitjain1619@gmail.com") {
+    if (user.email && user.email.toLowerCase() === "mohitjain1619@gmail.com") {
       return res.status(400).json({ error: "Cannot delete the admin account." });
     }
 
@@ -1255,7 +1255,7 @@ router.delete("/admin/user/:user_id", requireAuth, requireAdmin, async (req, res
 router.post("/admin/wipe-trial-data", requireAuth, requireAdmin, async (req, res) => {
   try {
     // Delete all users except admin (cascade cleans up all referenced creator profiles/affiliates)
-    const result = await query("DELETE FROM users WHERE email != 'mohitjain1619@gmail.com'");
+    const result = await query("DELETE FROM users WHERE LOWER(email) != 'mohitjain1619@gmail.com'");
     console.log(`🔥 [Admin Wipe] Cleaned up trial accounts. Rows affected: ${result.rowCount}`);
     return res.json({ status: "success", message: `Database wiped successfully. Cleaned up ${result.rowCount} trial accounts.` });
   } catch (err) {
