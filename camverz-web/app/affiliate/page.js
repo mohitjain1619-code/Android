@@ -981,7 +981,7 @@ export default function AffiliatePage() {
     const payouts = affData?.payouts || [];
     const click_chart = affData?.click_chart || [];
 
-    const filteredReferredUsers = (affData.referred_users || []).filter(su => {
+    const filteredReferredUsers = (affData?.referred_users || []).filter(su => {
       const matchesSearch = (su.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                             (su.email || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchesPlan = planFilter === 'all' || (su.plan || '').toLowerCase() === planFilter.toLowerCase();
@@ -1449,7 +1449,7 @@ export default function AffiliatePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
               <h4 style={{ margin: 0, color: '#fff' }}>Referred Users Details</h4>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                Showing {filteredReferredUsers.length} of {(affData.referred_users || []).length} signups
+                Showing {filteredReferredUsers.length} of {(affData?.referred_users || []).length} signups
               </span>
             </div>
 
@@ -1853,7 +1853,7 @@ export default function AffiliatePage() {
               <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📋</div>
               <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Verify Your Profiles</h3>
               <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
-                Your referral code <strong className="neon-text">{affData.affiliate.code}</strong> is reserved!
+                Your referral code <strong className="neon-text">{affData?.affiliate?.code || ''}</strong> is reserved!
                 Verify ownership of your submitted profiles below. After verification, our team will review and approve.
               </p>
             </div>
@@ -1869,7 +1869,7 @@ export default function AffiliatePage() {
 
 
               {/* Instagram Card */}
-              {affData.affiliate.instagram_url && (
+              {affData?.affiliate?.instagram_url && (
                 <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.instagram_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.instagram_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>📸 Instagram</h4>
@@ -1913,7 +1913,7 @@ export default function AffiliatePage() {
               )}
 
               {/* YouTube Card */}
-              {affData.affiliate.youtube_url && (
+              {affData?.affiliate?.youtube_url && (
                 <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.youtube_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.youtube_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🎬 YouTube</h4>
@@ -1957,7 +1957,7 @@ export default function AffiliatePage() {
               )}
 
               {/* Other Platform Card */}
-              {affData.affiliate.other_url && (
+              {affData?.affiliate?.other_url && (
                 <div className="glass-card" style={{ padding: '28px', background: affData.affiliate.other_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData.affiliate.other_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#fff' }}>🌐 Other Platform</h4>
@@ -2023,9 +2023,9 @@ export default function AffiliatePage() {
 
             </div>
 
-            {((!affData.affiliate.instagram_url || affData.affiliate.instagram_verified) &&
-              (!affData.affiliate.youtube_url || affData.affiliate.youtube_verified) &&
-              (!affData.affiliate.other_url || affData.affiliate.other_verified)) && (
+            {((!affData?.affiliate?.instagram_url || affData?.affiliate?.instagram_verified) &&
+              (!affData?.affiliate?.youtube_url || affData?.affiliate?.youtube_verified) &&
+              (!affData?.affiliate?.other_url || affData?.affiliate?.other_verified)) && (
               <div style={{ background: 'rgba(0, 230, 118, 0.06)', border: '1px solid rgba(0, 230, 118, 0.2)', padding: '16px 20px', borderRadius: '12px', marginBottom: '24px', textAlign: 'center' }}>
                 <p style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.95rem', margin: 0 }}>
                   🎉 All submitted profiles verified! Your application is now under admin review.
