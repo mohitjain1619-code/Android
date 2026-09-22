@@ -1704,9 +1704,6 @@ export default function AffiliatePage() {
 
           </>
         )}
-
-        {/* Selected User Profile Inspector Modal */}
-        {selectedUserProfileModal}
       </div>
     );
   }
