@@ -1904,7 +1904,21 @@ export default function AffiliatePage() {
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📋</div>
               <h3 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Verify Your Profiles</h3>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px'              {/* Instagram Card */}
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, fontSize: '0.95rem', maxWidth: '600px', margin: '0 auto' }}>
+                Your referral code <strong className="neon-text">{affData?.affiliate?.code || ''}</strong> is reserved!
+                Verify ownership of your submitted profiles below. After verification, our team will review and approve.
+              </p>
+            </div>
+
+            {errorMsg && (
+              <div style={{ background: 'rgba(255, 0, 110, 0.1)', border: '1px solid rgba(255, 0, 110, 0.3)', padding: '12px 16px', borderRadius: '8px', color: 'var(--neon-pink)', marginBottom: '28px', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '0.9rem' }}>
+                <AlertCircle size={18} />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', marginBottom: '32px' }}>
+              {/* Instagram Card */}
               {affData?.affiliate?.instagram_url && (
                 <div className="glass-card" style={{ padding: '28px', background: affData?.affiliate?.instagram_verified ? 'rgba(0, 230, 118, 0.03)' : 'rgba(255, 255, 255, 0.01)', border: affData?.affiliate?.instagram_verified ? '1px solid rgba(0, 230, 118, 0.25)' : '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
