@@ -42,17 +42,16 @@ export default function Navbar() {
   const links = isRealMeet ? [
     { href: '/', label: '↩ Back to Video Calling', icon: Video },
     { href: '/realmeet', label: 'Real Meet Feed', icon: Sparkles },
-    { href: '#messages', label: 'RM Messages', icon: MessageSquare, isDrawer: 'messages' },
-    { href: '#notifications', label: 'RM Alerts', icon: Bell, isDrawer: 'notifications' },
   ] : [
     { href: '/', label: 'Home', icon: Video },
     { href: '/realmeet', label: 'Real Meet', icon: Sparkles },
     { href: '/posts', label: 'Posts', icon: FileText },
-    { href: '#messages', label: 'Messages', icon: MessageSquare, isDrawer: 'messages' },
-    { href: '#notifications', label: 'Notifications', icon: Bell, isDrawer: 'notifications' },
     { href: '/about', label: 'About', icon: Info },
     { href: '/contact', label: 'Contact', icon: Mail },
   ];
+
+  const unreadNotifsCount = notifications.filter(n => !n.read).length;
+  const unreadChatsCount = chats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
   const handleLinkClick = (l) => {
     if (l.isDrawer) {
@@ -215,27 +214,42 @@ export default function Navbar() {
           </Link>
 
           <div className={styles.desktopLinks}>
-            {links.map(l => {
-              if (l.isDrawer) {
-                return (
-                  <button
-                    key={l.label}
-                    onClick={() => handleLinkClick(l)}
-                    className={`${styles.navLink} ${pathname === l.href ? styles.active : ''}`}
-                  >
-                    {l.label}
-                  </button>
-                );
-              }
-              return (
-                <Link key={l.href} href={l.href} className={`${styles.navLink} ${pathname === l.href ? styles.active : ''}`}>
-                  {l.label}
-                </Link>
-              );
-            })}
+            {links.map(l => (
+              <Link key={l.href} href={l.href} className={`${styles.navLink} ${pathname === l.href ? styles.active : ''}`}>
+                {l.label}
+              </Link>
+            ))}
           </div>
 
           <div className={styles.actions}>
+            {user && (
+              <>
+                {/* Messages Icon Button */}
+                <button
+                  type="button"
+                  className={styles.iconNavBtn}
+                  onClick={() => { setShowChatDrawer(true); setShowNotificationsDrawer(false); }}
+                  title={isRealMeet ? "Real Meet Chats" : "Messages"}
+                  aria-label="Messages"
+                >
+                  <MessageSquare size={18} />
+                  {unreadChatsCount > 0 && <span className={styles.iconBadge}>{unreadChatsCount}</span>}
+                </button>
+
+                {/* Notification Bell Icon Button */}
+                <button
+                  type="button"
+                  className={styles.iconNavBtn}
+                  onClick={() => { setShowNotificationsDrawer(true); setShowChatDrawer(false); }}
+                  title={isRealMeet ? "Real Meet Alerts" : "Notifications"}
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadNotifsCount > 0 && <span className={styles.iconBadge}>{unreadNotifsCount}</span>}
+                </button>
+              </>
+            )}
+
             <Link href={isRealMeet ? "/pricing?tab=realmeet" : "/pricing?category=video-call"} className={styles.pricingPill}>
               💎 Pricing
             </Link>

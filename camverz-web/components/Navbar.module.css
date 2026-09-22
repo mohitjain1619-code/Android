@@ -249,13 +249,56 @@
   color: #FFFFFF;
 }
 
+/* Icon Buttons for Messages & Notifications */
+.iconNavBtn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.iconNavBtn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  transform: translateY(-1px);
+}
+
+.iconBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #FF006E;
+  color: #FFFFFF;
+  font-size: 0.65rem;
+  font-weight: 800;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 0 8px rgba(255, 0, 110, 0.6);
+  border: 1.5px solid #0B1115;
+}
+
 /* Sliding Drawer Styles */
 .drawerOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 299;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 9998;
 }
 
 .drawer {
@@ -265,9 +308,9 @@
   width: min(440px, 100vw);
   height: 100%;
   background: #0B1115;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
-  z-index: 300;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
