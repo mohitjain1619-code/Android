@@ -1020,27 +1020,46 @@ function requireAdmin(req, res, next) {
 // GET /admin/list - list all users and creator applications
 router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
   try {
+    // 1. Core query: fetch users and affiliates via LEFT JOIN
     const list = await queryMany(
       `SELECT u.id as user_id, u.email as user_email, u.name as user_name, u.gender, u.verified as user_verified, u.created_at as user_created_at,
               a.id as id, a.code, a.name as affiliate_name, COALESCE(a.status, 'registered') as status,
               a.commission_rate, a.upi_id, a.social_url, a.instagram_url, a.youtube_url, a.other_url,
               a.instagram_verified, a.youtube_verified, a.other_verified,
-              a.instagram_bio_code, a.youtube_bio_code, a.other_bio_code, a.admin_notes,
-              CASE WHEN a.id IS NOT NULL THEN (SELECT COUNT(*)::int FROM affiliate_clicks WHERE affiliate_id = a.id) ELSE 0 END as clicks,
-              CASE WHEN a.id IS NOT NULL THEN (SELECT COUNT(*)::int FROM affiliate_signups WHERE affiliate_id = a.id) ELSE 0 END as signups,
-              CASE WHEN a.id IS NOT NULL THEN (SELECT COUNT(*)::int FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) ELSE 0 END as sales,
-              CASE WHEN a.id IS NOT NULL THEN (SELECT COALESCE(SUM(commission_amount), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status IN ('confirmed', 'refunded')) ELSE 0.0 END as gross_earnings,
-              CASE WHEN a.id IS NOT NULL THEN (SELECT COALESCE(SUM(commission_clawback), 0)::float FROM affiliate_sales WHERE affiliate_id = a.id AND status = 'refunded') ELSE 0.0 END as clawbacks,
-              CASE WHEN a.id IS NOT NULL THEN (SELECT COALESCE(SUM(amount), 0)::float FROM affiliate_payouts WHERE affiliate_id = a.id AND status = 'completed') ELSE 0.0 END as paid
+              a.instagram_bio_code, a.youtube_bio_code, a.other_bio_code, a.admin_notes
        FROM users u
        LEFT JOIN affiliates a ON a.user_id = u.id
        ORDER BY u.created_at DESC`
     );
 
+    // 2. Safe stats aggregation (decoupled to prevent 500 error if subquery tables are missing)
+    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {};
+    try {
+      const clicks = await queryMany(`SELECT affiliate_id, COUNT(*)::int as count FROM affiliate_clicks GROUP BY affiliate_id`);
+      clicks.forEach(c => { if (c.affiliate_id) clicksMap[c.affiliate_id] = c.count; });
+    } catch (e) {}
+
+    try {
+      const signups = await queryMany(`SELECT affiliate_id, COUNT(*)::int as count FROM affiliate_signups GROUP BY affiliate_id`);
+      signups.forEach(s => { if (s.affiliate_id) signupsMap[s.affiliate_id] = s.count; });
+    } catch (e) {}
+
+    try {
+      const sales = await queryMany(`SELECT affiliate_id, COUNT(*)::int as count, COALESCE(SUM(commission_amount), 0)::float as gross, COALESCE(SUM(commission_clawback), 0)::float as clawback FROM affiliate_sales WHERE status IN ('confirmed', 'refunded') GROUP BY affiliate_id`);
+      sales.forEach(s => { if (s.affiliate_id) salesMap[s.affiliate_id] = { count: s.count, gross: s.gross, clawback: s.clawback }; });
+    } catch (e) {}
+
+    try {
+      const payouts = await queryMany(`SELECT affiliate_id, COALESCE(SUM(amount), 0)::float as paid FROM affiliate_payouts WHERE status = 'completed' GROUP BY affiliate_id`);
+      payouts.forEach(p => { if (p.affiliate_id) paidMap[p.affiliate_id] = p.paid; });
+    } catch (e) {}
+
     const formatted = list.map(a => {
-      const gross = typeof a.gross_earnings === 'number' ? a.gross_earnings : 0;
-      const clawbacks = typeof a.clawbacks === 'number' ? a.clawbacks : 0;
-      const paid = typeof a.paid === 'number' ? a.paid : 0;
+      const affId = a.id;
+      const sData = affId ? (salesMap[affId] || { count: 0, gross: 0, clawback: 0 }) : { count: 0, gross: 0, clawback: 0 };
+      const gross = typeof sData.gross === 'number' ? sData.gross : 0;
+      const clawbacks = typeof sData.clawback === 'number' ? sData.clawback : 0;
+      const paid = affId && typeof paidMap[affId] === 'number' ? paidMap[affId] : 0;
       const net = Math.max(0, gross - clawbacks);
       const pending = Math.max(0, net - paid);
 
@@ -1078,9 +1097,9 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         instagram_bio_code: a.instagram_bio_code || null,
         youtube_bio_code: a.youtube_bio_code || null,
         other_bio_code: a.other_bio_code || null,
-        clicks: a.clicks || 0,
-        signups: a.signups || 0,
-        sales: a.sales || 0,
+        clicks: affId ? (clicksMap[affId] || 0) : 0,
+        signups: affId ? (signupsMap[affId] || 0) : 0,
+        sales: sData.count || 0,
         total_earnings: parseFloat(gross.toFixed(2)),
         total_paid: parseFloat(paid.toFixed(2)),
         pending: parseFloat(pending.toFixed(2)),
@@ -1091,8 +1110,8 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
 
     return res.json(formatted);
   } catch (err) {
-    console.error("Admin list error:", err);
-    return res.status(500).json({ error: err.message || "Internal server error" });
+    console.error("Admin list fatal error:", err);
+    return res.status(500).json({ error: `Admin List Query Error: ${err.message}` });
   }
 });
 
