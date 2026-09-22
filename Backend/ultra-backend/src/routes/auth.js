@@ -15,7 +15,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // ============================================
 router.post("/google", async (req, res) => {
   try {
-    const { idToken, affiliateRef, deviceId, platform = "web", deviceEmails } = req.body;
+    const { idToken, affiliateRef, ref, deviceId, platform = "web", deviceEmails } = req.body;
     if (!idToken) {
       return res.status(400).json({ error: "Missing idToken" });
     }
@@ -155,11 +155,12 @@ router.post("/google", async (req, res) => {
       console.log(`✅ New user created: ${user.id} (${email}) | FreeTrial: ${initialFreeTrial}`);
 
       // Track affiliate signup if referred
-      if (affiliateRef) {
+      const finalRef = affiliateRef || ref || req.body.refCode;
+      if (finalRef) {
         try {
-          const refCode = affiliateRef.trim().toUpperCase();
+          const refCode = String(finalRef).trim().toUpperCase();
           const aff = await queryOne(
-            "SELECT * FROM affiliates WHERE code = $1 AND status = 'approved'",
+            "SELECT * FROM affiliates WHERE UPPER(code) = $1",
             [refCode]
           );
           if (aff) {

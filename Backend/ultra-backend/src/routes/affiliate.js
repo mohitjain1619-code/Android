@@ -211,14 +211,14 @@ router.post("/track-click", async (req, res) => {
                   req.ip || "127.0.0.1";
     const ipHash = crypto.createHash("sha256").update(rawIp).digest("hex");
 
-    // Check if this device clicked within the last 10 minutes (prevents duplicate spam, allows re-clicks)
+    // Check if this device has already clicked this affiliate's link (1 unique click per user device)
     const existingClick = await queryOne(
-      "SELECT 1 FROM affiliate_clicks WHERE affiliate_id = $1 AND ip_hash = $2 AND created_at > NOW() - INTERVAL '10 minutes' LIMIT 1",
+      "SELECT 1 FROM affiliate_clicks WHERE affiliate_id = $1 AND ip_hash = $2 LIMIT 1",
       [aff.id, ipHash]
     );
 
     if (existingClick) {
-      return res.json({ tracked: false, reason: "Click already registered recently from this device" });
+      return res.json({ tracked: false, reason: "Click already registered from this device" });
     }
 
     await query(
