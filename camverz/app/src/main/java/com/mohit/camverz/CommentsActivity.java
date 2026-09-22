@@ -43,6 +43,7 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
     private String replyingToCommentId; // To keep track of which comment is being replied to
     private android.view.View replyIndicatorLayout;
     private android.widget.TextView replyIndicatorText;
+    private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -75,6 +76,28 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         recyclerView.setAdapter(adapter);
 
         sendButton.setOnClickListener(v -> postComment());
+
+        profileUpdateListener = (userId, newName, newAvatar) -> {
+            runOnUiThread(() -> {
+                if (commentList != null && adapter != null) {
+                    boolean updated = false;
+                    for (Comment c : commentList) {
+                        if (userId != null && userId.equals(c.getUserId())) {
+                            if (newName != null && !newName.isEmpty()) c.setUserName(newName);
+                            if (newAvatar != null && !newAvatar.isEmpty()) {
+                                c.setUserAvatar(newAvatar);
+                                c.setUserPhotoUrl(newAvatar);
+                            }
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        };
+        ProfileUpdateManager.getInstance(this).registerListener(profileUpdateListener);
 
         loadComments();
     }
@@ -351,6 +374,14 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         } else {
             // Ad not available, fall back to upload directly to avoid blocking
             runOnUiThread(onFailure);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (profileUpdateListener != null) {
+            ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
         }
     }
 }

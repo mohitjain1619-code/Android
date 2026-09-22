@@ -65,4 +65,29 @@
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.85</item>
     </style>
+
+    <!-- Custom Dark Mode DatePicker Theme — Crisp white numbers on dark graphite background -->
+    <style name="CustomDatePickerTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
+        <item name="colorPrimary">@color/accent_cyan</item>
+        <item name="colorOnPrimary">@color/bg_dark</item>
+        <item name="colorAccent">@color/accent_cyan</item>
+        <item name="android:colorBackground">@color/surface_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
+        <item name="android:textColorPrimary">@color/text_white</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorPrimaryInverse">@color/bg_dark</item>
+
+        <!-- Calendar Header & Numbers -->
+        <item name="android:headerBackground">@color/surface_elevated</item>
+        <item name="android:numbersTextColor">@color/text_white</item>
+        <item name="android:numbersBackgroundColor">@color/surface_dark</item>
+
+        <!-- Buttons -->
+        <item name="buttonBarPositiveButtonStyle">@style/CustomDatePickerButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/CustomDatePickerButton</item>
+    </style>
+
+    <style name="CustomDatePickerButton" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/accent_cyan</item>
+    </style>
 </resources>

@@ -23,15 +23,20 @@ public class ConnectingActivity extends BaseActivity {
     private static final String TAG = "ConnectingActivity";
     private Socket socket;
     private Emitter.Listener matchFoundListener;
+    private Emitter.Listener matchCancelledListener;
     private Emitter.Listener limitExceededListener;
     private TokenManager tokenManager;
 
     private String category = "";
     private String userGender = "";
     private String myUid = "";
+    private String matchedPeerId = null;
 
     private boolean isWaiting = false;
     private boolean matchAccepted = false;
+
+    private Handler countdownHandler;
+    private Runnable countdownRunnable;
 
     // ironSource LevelPlay Native Ad
     private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
@@ -91,6 +96,11 @@ public class ConnectingActivity extends BaseActivity {
     private void joinQueue() {
         if (isWaiting) return;
         isWaiting = true;
+        matchedPeerId = null;
+
+        if (waitingText != null) {
+            waitingText.setText("Finding a match...");
+        }
 
         try {
             JSONObject obj = new JSONObject();
@@ -107,6 +117,22 @@ public class ConnectingActivity extends BaseActivity {
 
     private void leaveQueue() {
         isWaiting = false;
+        cancelCountdown();
+
+        // If user cancels during matched countdown, notify peer immediately
+        if (matchedPeerId != null) {
+            try {
+                JSONObject cancelObj = new JSONObject();
+                cancelObj.put("uid", myUid);
+                cancelObj.put("peerId", matchedPeerId);
+                socket.emit("cancel-match", cancelObj);
+                Log.d(TAG, "📤 cancel-match emitted for peer: " + matchedPeerId);
+            } catch (Exception e) {
+                Log.e(TAG, "cancel-match failed", e);
+            }
+            matchedPeerId = null;
+        }
+
         try {
             JSONObject obj = new JSONObject();
             obj.put("uid", myUid);
@@ -118,6 +144,14 @@ public class ConnectingActivity extends BaseActivity {
         }
     }
 
+    private void cancelCountdown() {
+        if (countdownHandler != null && countdownRunnable != null) {
+            countdownHandler.removeCallbacks(countdownRunnable);
+            countdownHandler = null;
+            countdownRunnable = null;
+        }
+    }
+
     private void setupSocketListeners() {
         removeSocketListeners();
 
@@ -126,6 +160,17 @@ public class ConnectingActivity extends BaseActivity {
             runOnUiThread(this::showLimitExceededDialog);
         };
         socket.on("limit-exceeded", limitExceededListener);
+
+        matchCancelledListener = args -> runOnUiThread(() -> {
+            Log.w(TAG, "⚠️ Peer cancelled match during countdown. Returning to queue.");
+            cancelCountdown();
+            matchedPeerId = null;
+            isWaiting = false;
+            android.widget.Toast.makeText(ConnectingActivity.this, "User disconnected. Searching again...", android.widget.Toast.LENGTH_SHORT).show();
+            setupSocketListeners();
+            joinQueue();
+        });
+        socket.on("match-cancelled", matchCancelledListener);
 
         matchFoundListener = args -> {
             Log.d(TAG, "📥 match-found socket event received. isWaiting=" + isWaiting);
@@ -142,7 +187,7 @@ public class ConnectingActivity extends BaseActivity {
 
                 runOnUiThread(() -> {
                     isWaiting = false;
-                    removeMatchFoundListener();
+                    matchedPeerId = peerId;
                     startMatchTransitionCountdown(peerId, peerName, peerAvatar);
                 });
 
@@ -154,9 +199,10 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void startMatchTransitionCountdown(String peerId, String peerName, String peerAvatar) {
+        cancelCountdown();
         final int[] secondsRemaining = {5};
-        final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
-        final Runnable runnable = new Runnable() {
+        countdownHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        countdownRunnable = new Runnable() {
             @Override
             public void run() {
                 if (isFinishing() || isDestroyed()) return;
@@ -166,13 +212,15 @@ public class ConnectingActivity extends BaseActivity {
                         waitingText.setText("Matched! Connecting in " + secondsRemaining[0] + "s...");
                     }
                     secondsRemaining[0]--;
-                    handler.postDelayed(this, 1000);
+                    if (countdownHandler != null) {
+                        countdownHandler.postDelayed(this, 1000);
+                    }
                 } else {
                     transitionToCall(peerId, peerName, peerAvatar);
                 }
             }
         };
-        handler.post(runnable);
+        countdownHandler.post(countdownRunnable);
     }
 
     private void transitionToCall(String peerId, String peerName, String peerAvatar) {
@@ -347,6 +395,10 @@ public class ConnectingActivity extends BaseActivity {
         if (matchFoundListener != null) {
             socket.off("match-found", matchFoundListener);
             matchFoundListener = null;
+        }
+        if (matchCancelledListener != null) {
+            socket.off("match-cancelled", matchCancelledListener);
+            matchCancelledListener = null;
         }
         if (limitExceededListener != null) {
             socket.off("limit-exceeded", limitExceededListener);

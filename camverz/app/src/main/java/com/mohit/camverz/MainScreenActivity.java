@@ -71,6 +71,7 @@ public class MainScreenActivity extends BaseActivity {
     private RecyclerView storiesRecyclerView;
     private StoriesAdapter storiesAdapter;
     private List<UserStories> userStoriesList = new java.util.ArrayList<>();
+    private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +82,14 @@ public class MainScreenActivity extends BaseActivity {
         applyWindowInsets(findViewById(R.id.top_nav_bar), findViewById(R.id.bottom_nav_bar));
 
         tokenManager = TokenManager.getInstance(this);
-        if (!tokenManager.isLoggedIn()) {
-            Log.w(TAG, "Session inactive on MainScreen launch. Redirecting to LoginActivity.");
-            Intent intent = new Intent(this, LoginActivity.class);
+        if (!tokenManager.isLoggedIn() || !tokenManager.isOnboardingComplete()) {
+            Log.w(TAG, "Session inactive or onboarding incomplete. Redirecting to appropriate screen.");
+            Intent intent;
+            if (!tokenManager.isLoggedIn()) {
+                intent = new Intent(this, LoginActivity.class);
+            } else {
+                intent = new Intent(this, GenderSelectionActivity.class);
+            }
             startActivity(intent);
             finish();
             return;
@@ -104,6 +110,22 @@ public class MainScreenActivity extends BaseActivity {
         
         // Initialize global incoming call handler (works from any screen)
         IncomingCallHandler.getInstance().init(getApplication(), socket);
+
+        profileUpdateListener = (userId, newName, newAvatar) -> {
+            runOnUiThread(() -> {
+                if (userId != null && userId.equals(tokenManager.getUserId())) {
+                    if (tvUserName != null && newName != null && !newName.isEmpty()) {
+                        String name = newName;
+                        if (tokenManager.hasActivePlan()) {
+                            name = "👑 " + name;
+                        }
+                        tvUserName.setText(name);
+                    }
+                }
+                fetchActiveStories();
+            });
+        };
+        ProfileUpdateManager.getInstance(this).registerListener(profileUpdateListener);
 
         // Sync user ad-free plan details
         api.getMe().enqueue(new retrofit2.Callback<JsonObject>() {
@@ -717,11 +739,10 @@ public class MainScreenActivity extends BaseActivity {
         long secondsLeft = CallLimitManager.getFreeSecondsLeft(this);
         if (secondsLeft <= 0) {
             int tier = CallLimitManager.getRewardedTier(this);
-            if (tier == 1 || tier == 2) {
+            if (tier == 1 || tier == 2 || tier == 3) {
                 showWatchAdsDialog(onPassed);
             } else {
                 CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
-                CallLimitManager.setRewardedTier(this, 3);
                 showExceededBlockDialog();
             }
             return;
@@ -731,9 +752,12 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void showExceededBlockDialog() {
+        String remainingTime = CallLimitManager.getFormattedRemainingBlockTime(this);
+        String message = "Your call limit is finished. Please come back after " + remainingTime + " to continue calling!";
+
         new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Limit Exceeded")
-            .setMessage("For today you have exceeded all your limit, come back after 10 hours.")
+            .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("OK", (dialog, which) -> {
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com"));
@@ -745,12 +769,17 @@ public class MainScreenActivity extends BaseActivity {
     private void showWatchAdsDialog(Runnable onPassed) {
         int watched = CallLimitManager.getRewardedAdsWatched(this);
         int currentTier = CallLimitManager.getRewardedTier(this);
-        String message = currentTier == 1 
-            ? "Daily free call limit reached.\n\nWatch 3 short video ads to continue calling!\n\nAds Watched: " + watched + "/3"
-            : "Second call limit reached.\n\nWatch 3 more video ads to continue calling!\n\nAds Watched: " + watched + "/3";
+        String message;
+        if (currentTier == 1) {
+            message = "Daily free call limit reached.\n\nWatch 3 short video ads to get +5 minutes call time!\n\nAds Watched: " + watched + "/3";
+        } else if (currentTier == 2) {
+            message = "Second call limit reached.\n\nWatch 3 more video ads to get +5 minutes call time!\n\nAds Watched: " + watched + "/3";
+        } else {
+            message = "Third call limit reached.\n\nWatch 3 final video ads to get +5 minutes call time!\n\nAds Watched: " + watched + "/3";
+        }
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Daily Limit Hit")
+            .setTitle("Call Limit Reached")
             .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("Watch Ad", (dialog, which) -> {
@@ -758,11 +787,11 @@ public class MainScreenActivity extends BaseActivity {
                     CallLimitManager.incrementRewardedAdsWatched(this);
                     int newWatched = CallLimitManager.getRewardedAdsWatched(this);
                     if (newWatched >= 3) {
-                        int nextTier = currentTier + 1; // Tier 1 goes to 2, Tier 2 goes to 3
+                        int nextTier = currentTier + 1; // Tier 1 -> 2, Tier 2 -> 3, Tier 3 -> 4
                         CallLimitManager.setRewardedTier(this, nextTier);
                         CallLimitManager.addFreeSeconds(this, 300);
                         CallLimitManager.resetRewardedAdsWatched(this);
-                        Toast.makeText(this, "Success! Resuming calling...", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Success! +5 minutes call time added.", Toast.LENGTH_LONG).show();
                         onPassed.run();
                     } else {
                         showWatchAdsDialog(onPassed);
@@ -885,6 +914,9 @@ public class MainScreenActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (profileUpdateListener != null) {
+            ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
+        }
         if (adView != null) {
             adView.destroy();
             adView = null;

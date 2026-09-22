@@ -46,6 +46,7 @@ public class InboxActivity extends BaseActivity {
     
     private ApiService api;
     private TokenManager tokenManager;
+    private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +102,40 @@ public class InboxActivity extends BaseActivity {
             Intent intent = new Intent(InboxActivity.this, NotificationActivity.class);
             startActivity(intent);
         });
+
+        profileUpdateListener = (userId, newName, newAvatar) -> {
+            runOnUiThread(() -> {
+                if (fullConversationList != null) {
+                    for (Conversation conv : fullConversationList) {
+                        if (userId != null && userId.equals(conv.getUserId())) {
+                            if (newName != null && !newName.isEmpty()) conv.setName(newName);
+                            if (newAvatar != null && !newAvatar.isEmpty()) {
+                                conv.setProfileImageUrl(newAvatar);
+                                conv.setPhotoUrl(newAvatar);
+                            }
+                        }
+                    }
+                }
+                if (conversationList != null && inboxAdapter != null) {
+                    boolean updated = false;
+                    for (Conversation conv : conversationList) {
+                        if (userId != null && userId.equals(conv.getUserId())) {
+                            if (newName != null && !newName.isEmpty()) conv.setName(newName);
+                            if (newAvatar != null && !newAvatar.isEmpty()) {
+                                conv.setProfileImageUrl(newAvatar);
+                                conv.setPhotoUrl(newAvatar);
+                            }
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        inboxAdapter.notifyDataSetChanged();
+                    }
+                }
+                updateActiveUsersRow();
+            });
+        };
+        ProfileUpdateManager.getInstance(this).registerListener(profileUpdateListener);
 
         setupSearchFilter();
     }
@@ -173,10 +208,23 @@ public class InboxActivity extends BaseActivity {
                                     JsonObject otherUserObj = chatObj.getAsJsonObject("otherUser");
                                     conversation.setUserId(otherUserObj.has("id") ? otherUserObj.get("id").getAsString() : "");
                                     conversation.setName(otherUserObj.has("name") ? otherUserObj.get("name").getAsString() : "Unknown");
-                                    conversation.setProfileImageUrl(otherUserObj.has("avatar") && !otherUserObj.get("avatar").isJsonNull() ? otherUserObj.get("avatar").getAsString() : "");
-                                    if (otherUserObj.has("photoUrl") && !otherUserObj.get("photoUrl").isJsonNull()) {
-                                        conversation.setPhotoUrl(otherUserObj.get("photoUrl").getAsString());
+                                    String avatarVal = "";
+                                    if (otherUserObj.has("avatar") && !otherUserObj.get("avatar").isJsonNull()) {
+                                        avatarVal = otherUserObj.get("avatar").getAsString();
+                                    } else if (otherUserObj.has("avatarUrl") && !otherUserObj.get("avatarUrl").isJsonNull()) {
+                                        avatarVal = otherUserObj.get("avatarUrl").getAsString();
+                                    } else if (otherUserObj.has("userAvatar") && !otherUserObj.get("userAvatar").isJsonNull()) {
+                                        avatarVal = otherUserObj.get("userAvatar").getAsString();
+                                    } else if (otherUserObj.has("profileImage") && !otherUserObj.get("profileImage").isJsonNull()) {
+                                        avatarVal = otherUserObj.get("profileImage").getAsString();
                                     }
+                                    conversation.setProfileImageUrl(avatarVal);
+
+                                    String photoUrlVal = "";
+                                    if (otherUserObj.has("photoUrl") && !otherUserObj.get("photoUrl").isJsonNull()) {
+                                        photoUrlVal = otherUserObj.get("photoUrl").getAsString();
+                                    }
+                                    conversation.setPhotoUrl(photoUrlVal);
                                 } else {
                                     conversation.setUserId("");
                                     conversation.setName("Unknown");
@@ -246,9 +294,17 @@ public class InboxActivity extends BaseActivity {
                             for (JsonElement element : friendsArray) {
                                 JsonObject friendObj = element.getAsJsonObject();
                                 String friendId = friendObj.has("id") ? friendObj.get("id").getAsString() : "";
-                                String friendName = friendObj.has("name") ? friendObj.get("name").getAsString() : "";
-                                String friendAvatar = friendObj.has("avatar") ? friendObj.get("avatar").getAsString() : "";
-                                String friendPhotoUrl = friendObj.has("photoUrl") && !friendObj.get("photoUrl").isJsonNull() ? friendObj.get("photoUrl").getAsString() : "";
+                                final String friendName = friendObj.has("name") ? friendObj.get("name").getAsString() : "";
+                                String tempAvatar = "";
+                                if (friendObj.has("avatar") && !friendObj.get("avatar").isJsonNull()) {
+                                    tempAvatar = friendObj.get("avatar").getAsString();
+                                } else if (friendObj.has("avatarUrl") && !friendObj.get("avatarUrl").isJsonNull()) {
+                                    tempAvatar = friendObj.get("avatarUrl").getAsString();
+                                } else if (friendObj.has("userAvatar") && !friendObj.get("userAvatar").isJsonNull()) {
+                                    tempAvatar = friendObj.get("userAvatar").getAsString();
+                                }
+                                final String friendAvatar = tempAvatar;
+                                final String friendPhotoUrl = friendObj.has("photoUrl") && !friendObj.get("photoUrl").isJsonNull() ? friendObj.get("photoUrl").getAsString() : "";
 
                                 View itemView = LayoutInflater.from(InboxActivity.this).inflate(R.layout.item_active_user_avatar, activeUsersContainer, false);
                                 ImageView avatarView = itemView.findViewById(R.id.active_user_avatar);
@@ -333,6 +389,14 @@ public class InboxActivity extends BaseActivity {
             notificationBadge.setText(String.valueOf(count));
         } else {
             notificationBadge.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (profileUpdateListener != null) {
+            ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
         }
     }
 }

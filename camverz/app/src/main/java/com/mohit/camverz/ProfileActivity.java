@@ -932,6 +932,7 @@ public class ProfileActivity extends BaseActivity {
                                 value,
                                 "male".equalsIgnoreCase(currentGender)
                             );
+                            ProfileUpdateManager.broadcastProfileUpdate(ProfileActivity.this, tokenManager.getUserId(), tokenManager.getUserName(), value);
                         } else if ("name".equals(field)) {
                             // Save updated name in TokenManager
                             String currentGender = visitedUser != null ? visitedUser.getGender() : tokenManager.getUserGender();
@@ -944,6 +945,7 @@ public class ProfileActivity extends BaseActivity {
                                 currentAvatar,
                                 "male".equalsIgnoreCase(currentGender)
                             );
+                            ProfileUpdateManager.broadcastProfileUpdate(ProfileActivity.this, tokenManager.getUserId(), value, currentAvatar);
                         }
                         setUpdatingState(false);
                         return;
@@ -1105,8 +1107,10 @@ public class ProfileActivity extends BaseActivity {
                         }
 
                         // Set follower/following stats logic provided by backend
-                        visitedUser.setFollowersCount(userObj.has("followersCount") ? userObj.get("followersCount").getAsInt() : 0);
-                        visitedUser.setFollowingCount(userObj.has("followingCount") ? userObj.get("followingCount").getAsInt() : 0);
+                        int followers = parseStatsCount(data, userObj, "followersCount", "followers_count", "followers", "friendsCount", "friends", "friends_count");
+                        int following = parseStatsCount(data, userObj, "followingCount", "following_count", "following", "friendsCount", "friends", "friends_count");
+                        visitedUser.setFollowersCount(followers);
+                        visitedUser.setFollowingCount(following);
                         visitedUser.setFollowedByMe(userObj.has("isFollowedByMe") && userObj.get("isFollowedByMe").getAsBoolean());
                         
                         friendshipStatus = userObj.has("friendshipStatus") ? userObj.get("friendshipStatus").getAsString() : "none";
@@ -1128,6 +1132,25 @@ public class ProfileActivity extends BaseActivity {
         });
         
         loadUserPosts();
+    }
+
+    private int parseStatsCount(JsonObject data, JsonObject userObj, String... keys) {
+        for (JsonObject obj : new JsonObject[]{userObj, data}) {
+            if (obj == null) continue;
+            for (String key : keys) {
+                if (obj.has(key) && !obj.get(key).isJsonNull()) {
+                    com.google.gson.JsonElement el = obj.get(key);
+                    if (el.isJsonPrimitive()) {
+                        try {
+                            return el.getAsInt();
+                        } catch (Exception ignored) {}
+                    } else if (el.isJsonArray()) {
+                        return el.getAsJsonArray().size();
+                    }
+                }
+            }
+        }
+        return 0;
     }
 
     private void showAvatarDialog() {

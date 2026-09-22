@@ -9,9 +9,9 @@ public class CallLimitManager {
     private static final String KEY_REWARDED_ADS_WATCHED = "rewarded_ads_watched";
     private static final String KEY_REWARDED_TIER = "rewarded_tier";
     private static final String KEY_LIMIT_BLOCKED_TIME = "limit_blocked_time";
+    private static final String KEY_BLOCK_LEVEL = "block_level";
 
     private static final long INITIAL_FREE_SECONDS = 300; // 5 minutes
-    private static final long BLOCK_DURATION_MS = 10L * 60L * 60L * 1000L; // 10 hours
 
     public static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -54,6 +54,14 @@ public class CallLimitManager {
         getPrefs(context).edit().putInt(KEY_REWARDED_TIER, tier).apply();
     }
 
+    public static int getBlockLevel(Context context) {
+        return getPrefs(context).getInt(KEY_BLOCK_LEVEL, 1);
+    }
+
+    public static void setBlockLevel(Context context, int level) {
+        getPrefs(context).edit().putInt(KEY_BLOCK_LEVEL, level).apply();
+    }
+
     public static long getLimitBlockedTime(Context context) {
         return getPrefs(context).getLong(KEY_LIMIT_BLOCKED_TIME, 0);
     }
@@ -62,14 +70,31 @@ public class CallLimitManager {
         getPrefs(context).edit().putLong(KEY_LIMIT_BLOCKED_TIME, timestamp).apply();
     }
 
+    public static long getBlockDurationMs(Context context) {
+        int level = getBlockLevel(context);
+        switch (level) {
+            case 1:
+                return 30L * 60L * 1000L; // 30 minutes
+            case 2:
+            case 3:
+                return 3L * 60L * 60L * 1000L; // 3 hours
+            case 4:
+            default:
+                return 10L * 60L * 60L * 1000L; // 10 hours
+        }
+    }
+
     public static boolean isBlocked(Context context) {
         long blockedTime = getLimitBlockedTime(context);
         if (blockedTime == 0) return false;
 
         long elapsed = System.currentTimeMillis() - blockedTime;
-        if (elapsed >= BLOCK_DURATION_MS) {
-            // 10 hours passed, auto reset limits!
-            resetLimits(context);
+        long duration = getBlockDurationMs(context);
+        if (elapsed >= duration) {
+            // Cooldown duration passed, advance block level for next cycle and auto reset limits!
+            int currentLevel = getBlockLevel(context);
+            int nextLevel = (currentLevel >= 4) ? 1 : currentLevel + 1;
+            resetLimitsForNextSession(context, nextLevel);
             return false;
         }
         return true;
@@ -79,15 +104,37 @@ public class CallLimitManager {
         long blockedTime = getLimitBlockedTime(context);
         if (blockedTime == 0) return 0;
         long elapsed = System.currentTimeMillis() - blockedTime;
-        return Math.max(0, BLOCK_DURATION_MS - elapsed);
+        long duration = getBlockDurationMs(context);
+        return Math.max(0, duration - elapsed);
     }
 
-    public static void resetLimits(Context context) {
+    public static String getFormattedRemainingBlockTime(Context context) {
+        long ms = getRemainingBlockTimeMs(context);
+        long totalSec = ms / 1000;
+        long hours = totalSec / 3600;
+        long minutes = (totalSec % 3600) / 60;
+        long seconds = totalSec % 60;
+
+        if (hours > 0) {
+            return String.format(java.util.Locale.US, "%d hour(s) %d minute(s)", hours, minutes);
+        } else if (minutes > 0) {
+            return String.format(java.util.Locale.US, "%d minute(s)", minutes);
+        } else {
+            return String.format(java.util.Locale.US, "%d second(s)", seconds);
+        }
+    }
+
+    public static void resetLimitsForNextSession(Context context, int nextBlockLevel) {
         getPrefs(context).edit()
                 .putLong(KEY_FREE_SECONDS_LEFT, INITIAL_FREE_SECONDS)
                 .putInt(KEY_REWARDED_ADS_WATCHED, 0)
                 .putInt(KEY_REWARDED_TIER, 1)
+                .putInt(KEY_BLOCK_LEVEL, nextBlockLevel)
                 .putLong(KEY_LIMIT_BLOCKED_TIME, 0)
                 .apply();
+    }
+
+    public static void resetLimits(Context context) {
+        resetLimitsForNextSession(context, 1);
     }
 }

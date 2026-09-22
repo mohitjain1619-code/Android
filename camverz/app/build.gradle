@@ -100,81 +100,71 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.material
 
-    // Google Sign-In (still used — authenticates via our backend, not Firebase)
-    implementation 'com.google.android.gms:play-services-auth:21.2.0'
+    // Google Sign-In & Location
+    implementation libs.play.services.auth
+    implementation libs.play.services.location
+    implementation libs.play.app.update
 
-    // Google Play In-App Update API
-    implementation 'com.google.android.play:app-update:2.1.0'
+    // Retrofit & OkHttp (Networking)
+    implementation libs.retrofit
+    implementation libs.retrofit.converter.gson
+    implementation libs.okhttp.logging.interceptor
+    implementation libs.okhttp
 
-    // Retrofit (API client — replaces Firebase Firestore/Auth)
-    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    // Encrypted SharedPreferences (secure JWT storage) & LocalBroadcastManager
+    implementation libs.security.crypto
+    implementation libs.localbroadcastmanager
 
-    // Encrypted SharedPreferences (secure JWT storage)
-    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
-    
-    // Location
-    implementation 'com.google.android.gms:play-services-location:21.2.0'
+    // Socket.IO Client for real-time signaling
+    implementation (libs.socket.io.client) {
+        exclude group: 'org.json', module: 'json'
+    }
 
-    // Socket.IO
-    implementation 'io.socket:socket.io-client:2.1.2'
+    // JSON & WebRTC SDK
+    implementation libs.json
+    implementation libs.webrtc.sdk
 
-    // JSON
-    implementation 'org.json:json:20250517'
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    // UI Components
+    implementation libs.circleimageview
+    implementation libs.lottie
+    implementation libs.shimmer
+    implementation libs.cardview
+    implementation libs.constraintlayout
+    implementation libs.swiperefreshlayout
+    implementation libs.paging.runtime
 
-    // WebRTC
-    implementation 'io.github.webrtc-sdk:android:137.7151.05'
+    // Glide & Coil (Image Loading)
+    implementation libs.glide
+    annotationProcessor libs.glide.compiler
+    implementation libs.coil
 
-    // UI
-    implementation 'com.github.bumptech.glide:glide:4.12.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
-    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation 'de.hdodenhof:circleimageview:3.1.0'
-    implementation 'com.airbnb.android:lottie:6.6.7'
-    implementation 'com.facebook.shimmer:shimmer:0.5.0'
-    implementation 'androidx.paging:paging-runtime:3.3.6'
-    implementation 'io.coil-kt:coil:2.7.0'
-
-    // CameraX (16 KB page size aligned)
-    implementation 'androidx.camera:camera-core:1.4.1'
-    implementation 'androidx.camera:camera-camera2:1.4.1'
-    implementation 'androidx.camera:camera-lifecycle:1.4.1'
-    implementation 'androidx.camera:camera-view:1.4.1'
+    // CameraX (16 KB page size aligned, upgraded to 1.6.2)
+    implementation libs.camera.core
+    implementation libs.camera.camera2
+    implementation libs.camera.lifecycle
+    implementation libs.camera.view
 
     // Guava for ListenableFuture
-    implementation 'com.google.guava:guava:33.0.0-android'
+    implementation libs.guava
 
-    // For face detection - using ML Kit (16 KB page size aligned)
-    implementation 'com.google.mlkit:face-detection:16.1.7'
+    // For face detection - using Google Play Services ML Kit (16 KB page size compliant & unbundled)
+    implementation libs.play.services.mlkit.face.detection
 
-    // AppLovin MAX SDK & Mediation Adapters (Commented out)
-    // implementation 'com.applovin:applovin-sdk:13.0.1'
-    // implementation 'com.applovin.mediation:google-adapter:+'
-    // implementation 'com.applovin.mediation:facebook-adapter:+'
-    // implementation 'com.applovin.mediation:inmobi-adapter:+'
-    // implementation 'com.applovin.mediation:bytedance-adapter:+'
-
-    // Google Mobile Ads (AdMob) SDK (Still needed as a dependency for the AdMob LevelPlay adapter)
-    implementation 'com.google.android.gms:play-services-ads:23.2.0'
-    implementation 'com.facebook.android:audience-network-sdk:6.22.0'
-    implementation 'com.unity3d.ads:unity-ads:4.12.2'
-
-    // ironSource (LevelPlay) SDK - Main Mediation SDK
-    implementation 'com.ironsource.sdk:mediationsdk:8.1.0'
+    // Google Mobile Ads (AdMob) & LevelPlay SDK
+    implementation libs.play.services.ads
+    implementation libs.facebook.audience.network
+    implementation libs.unity.ads
+    implementation libs.ironsource.sdk
 
     // LevelPlay adapters for bidding networks
-    implementation 'com.ironsource.adapters:admobadapter:4.3.49'
-    implementation 'com.ironsource.adapters:facebookadapter:4.3.47'
-    implementation 'com.ironsource.adapters:unityadsadapter:4.3.38'
-    implementation 'androidx.media3:media3-exoplayer:1.4.1'
-    implementation 'androidx.browser:browser:1.8.0'
+    implementation libs.ironsource.adapter.admob
+    implementation libs.ironsource.adapter.facebook
+    implementation libs.ironsource.adapter.unity
+    implementation libs.media3.exoplayer
+    implementation libs.androidx.browser
 
     // Google Play Install Referrer (for direct Play Store affiliate tracking)
-    implementation 'com.android.installreferrer:installreferrer:2.2'
+    implementation libs.install.referrer
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

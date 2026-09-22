@@ -52,8 +52,17 @@ public class AvatarHelper {
         return new BitmapDrawable(context.getResources(), bitmap);
     }
 
+    private static boolean isValidContext(Context context) {
+        if (context == null) return false;
+        if (context instanceof android.app.Activity) {
+            android.app.Activity activity = (android.app.Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) return false;
+        }
+        return true;
+    }
+
     public static void loadAvatar(Context context, String photoUrl, String avatar, String userName, ImageView imageView) {
-        if (context == null || imageView == null) return;
+        if (!isValidContext(context) || imageView == null) return;
 
         BitmapDrawable initials = getInitialAvatar(context, userName);
         imageView.setImageDrawable(initials);
@@ -71,7 +80,7 @@ public class AvatarHelper {
             }
         }
 
-        // 2. Try avatar field (could be HTTP URL or drawable name like av1, av2, etc.)
+        // 2. Try avatar field (could be HTTP URL or drawable name like av1, 1, avatar1, ic_avatar_1, etc.)
         if (avatar != null && !avatar.isEmpty() && !"null".equalsIgnoreCase(avatar)) {
             if (avatar.startsWith("http") || avatar.contains("/")) {
                 Glide.with(context)
@@ -86,10 +95,30 @@ public class AvatarHelper {
             // Strip extension if present (e.g. av1.png -> av1)
             String cleanAvatar = avatar.replaceAll("(?i)\\.(png|jpg|jpeg|webp)$", "").trim();
             int avatarResId = context.getResources().getIdentifier(cleanAvatar, "drawable", context.getPackageName());
-            
-            // Fallback for lowercasing avatar resource names
-            if (avatarResId == 0 && cleanAvatar.toLowerCase().startsWith("av")) {
+
+            if (avatarResId == 0) {
                 avatarResId = context.getResources().getIdentifier(cleanAvatar.toLowerCase(), "drawable", context.getPackageName());
+            }
+
+            // Fallback 1: Pure number like "1", "2" -> "av1", "av2"
+            if (avatarResId == 0 && cleanAvatar.matches("\\d+")) {
+                avatarResId = context.getResources().getIdentifier("av" + cleanAvatar, "drawable", context.getPackageName());
+            }
+
+            // Fallback 2: Extract numbers from strings like "avatar_1", "ic_avatar_1", "avatar1" -> "av1"
+            if (avatarResId == 0) {
+                String digitsOnly = cleanAvatar.replaceAll("[^0-9]", "");
+                if (!digitsOnly.isEmpty()) {
+                    avatarResId = context.getResources().getIdentifier("av" + digitsOnly, "drawable", context.getPackageName());
+                }
+            }
+
+            // Fallback 3: Try ic_avatar_ prefix
+            if (avatarResId == 0) {
+                String digitsOnly = cleanAvatar.replaceAll("[^0-9]", "");
+                if (!digitsOnly.isEmpty()) {
+                    avatarResId = context.getResources().getIdentifier("ic_avatar_" + digitsOnly, "drawable", context.getPackageName());
+                }
             }
 
             if (avatarResId != 0) {
@@ -99,6 +128,7 @@ public class AvatarHelper {
                         .error(initials)
                         .circleCrop()
                         .into(imageView);
+                return;
             }
         }
     }

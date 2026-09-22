@@ -591,6 +591,11 @@ public class CallActivity extends AppCompatActivity {
 
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+        rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
+        rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
+        rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+        rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED;
+        rtcConfig.iceTransportsType = PeerConnection.IceTransportsType.ALL;
         isRemoteDescriptionSet = false;
         pendingIceCandidates.clear();
         
@@ -747,6 +752,11 @@ public class CallActivity extends AppCompatActivity {
 
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+        rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
+        rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
+        rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+        rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED;
+        rtcConfig.iceTransportsType = PeerConnection.IceTransportsType.ALL;
         isRemoteDescriptionSet = false;
         pendingIceCandidates.clear();
         

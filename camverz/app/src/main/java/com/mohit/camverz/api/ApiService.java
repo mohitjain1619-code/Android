@@ -61,8 +61,11 @@ public interface ApiService {
     Call<JsonObject> getCommunityNotifications();
 
     // ============================================
-    // AUTH
+    // AUTH & SYSTEM
     // ============================================
+    @GET("health")
+    Call<JsonObject> getHealth();
+
     @POST("auth/google")
     Call<JsonObject> authWithGoogle(@Body Map<String, Object> body);
 

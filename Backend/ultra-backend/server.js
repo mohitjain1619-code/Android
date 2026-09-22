@@ -308,13 +308,50 @@ io.on("connection", (socket) => {
     }
   });
 
-  // LEAVE QUEUE
-  socket.on("leave-queue", async ({ uid }) => {
+  // CANCEL MATCH (If user cancels during the 5-second countdown in ConnectingActivity)
+  socket.on("cancel-match", async ({ uid, peerId }) => {
+    console.log("🚫 Match cancelled by", uid, "for peer", peerId);
     socket.isSearching = false;
     socket.peerUid = null;
     socket.currentRoom = null;
     await redisModule.removeFromQueue(uid);
-    console.log("🚪 Removed:", uid);
+
+    if (peerId) {
+      const peerSocketId = await redisModule.getUserSocket(peerId);
+      if (peerSocketId) {
+        const peerSocket = io.sockets.sockets.get(peerSocketId);
+        if (peerSocket) {
+          peerSocket.peerUid = null;
+          peerSocket.currentRoom = null;
+          peerSocket.isSearching = false;
+        }
+        io.to(peerSocketId).emit("match-cancelled");
+        console.log("📢 Emitted match-cancelled to peer socket:", peerSocketId);
+      }
+    }
+  });
+
+  // LEAVE QUEUE
+  socket.on("leave-queue", async ({ uid }) => {
+    const peerUid = socket.peerUid;
+    socket.isSearching = false;
+    socket.peerUid = null;
+    socket.currentRoom = null;
+    await redisModule.removeFromQueue(uid);
+    console.log("🚪 Removed from queue:", uid);
+
+    if (peerUid) {
+      const peerSocketId = await redisModule.getUserSocket(peerUid);
+      if (peerSocketId) {
+        io.to(peerSocketId).emit("match-cancelled");
+        const peerSocket = io.sockets.sockets.get(peerSocketId);
+        if (peerSocket) {
+          peerSocket.peerUid = null;
+          peerSocket.currentRoom = null;
+          peerSocket.isSearching = false;
+        }
+      }
+    }
   });
 
   // ============================================
@@ -332,7 +369,13 @@ io.on("connection", (socket) => {
       state = { users: [], ready: false };
     }
 
+    // Guard: strictly enforce max 2 users per room to prevent accidental 3-way collisions
     if (!state.users.includes(uid)) {
+      if (state.users.length >= 2) {
+        console.warn(`⚠️ Room ${room} is already full (max 2 users). Rejecting 3rd user ${uid}`);
+        socket.emit("call-failed", { reason: "Room is already full" });
+        return;
+      }
       state.users.push(uid);
     }
 
@@ -584,6 +627,7 @@ io.on("connection", (socket) => {
         const peerSocketId = await redisModule.getUserSocket(socket.peerUid);
         if (peerSocketId) {
           io.to(peerSocketId).emit("peer-disconnected", { uid: disconnectedUid });
+          io.to(peerSocketId).emit("match-cancelled");
           // Reset peer status on the active peer's socket
           const peerSocket = io.sockets.sockets.get(peerSocketId);
           if (peerSocket) {

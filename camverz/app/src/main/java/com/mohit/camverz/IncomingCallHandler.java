@@ -11,6 +11,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import android.widget.TextView;
+import android.widget.Button;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -244,6 +246,30 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         try {
             currentIncomingDialog = builder.create();
             currentIncomingDialog.show();
+
+            // Enforce dark high-contrast text colors so dialog is 100% visible regardless of app theme
+            int titleId = currentActivity.getResources().getIdentifier("alertTitle", "id", "android");
+            if (titleId > 0) {
+                TextView titleView = currentIncomingDialog.findViewById(titleId);
+                if (titleView != null) {
+                    titleView.setTextColor(android.graphics.Color.parseColor("#1F2937"));
+                    titleView.setTypeface(null, android.graphics.Typeface.BOLD);
+                }
+            }
+            TextView messageView = currentIncomingDialog.findViewById(android.R.id.message);
+            if (messageView != null) {
+                messageView.setTextColor(android.graphics.Color.parseColor("#374151"));
+            }
+            Button posBtn = currentIncomingDialog.getButton(AlertDialog.BUTTON_POSITIVE);
+            if (posBtn != null) {
+                posBtn.setTextColor(android.graphics.Color.parseColor("#059669"));
+                posBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+            }
+            Button negBtn = currentIncomingDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+            if (negBtn != null) {
+                negBtn.setTextColor(android.graphics.Color.parseColor("#DC2626"));
+                negBtn.setTypeface(null, android.graphics.Typeface.BOLD);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error showing incoming call dialog", e);
             rejectPendingCall();

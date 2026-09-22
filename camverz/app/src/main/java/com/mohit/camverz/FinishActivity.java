@@ -128,6 +128,9 @@ public class FinishActivity extends BaseActivity {
                         Log.d(TAG, "✅ Profile saved to backend");
                         Toast.makeText(FinishActivity.this, "Profile complete!", Toast.LENGTH_SHORT).show();
                         
+                        // Mark onboarding complete in local storage
+                        tokenManager.setOnboardingComplete(true);
+
                         // Update cached user data
                         tokenManager.saveUser(
                                 tokenManager.getUserId(),

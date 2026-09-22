@@ -48,6 +48,7 @@ public class FeedActivity extends BaseActivity {
     private View emptyView;
     private TextView tvEmptyMessage;
     private View btnRetryFetch;
+    private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +126,26 @@ public class FeedActivity extends BaseActivity {
 
         updateFilterButtons();
         fetchPosts();
+
+        profileUpdateListener = (userId, newName, newAvatar) -> {
+            runOnUiThread(() -> {
+                if (postList != null && adapter != null) {
+                    boolean updated = false;
+                    for (Post post : postList) {
+                        if (userId != null && userId.equals(post.getUserId())) {
+                            if (newName != null && !newName.isEmpty()) post.setUsername(newName);
+                            if (newAvatar != null && !newAvatar.isEmpty()) post.setUserAvatar(newAvatar);
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        };
+        ProfileUpdateManager.getInstance(this).registerListener(profileUpdateListener);
+
         FrameLayout adContainer = findViewById(R.id.banner_ad_container);
         if (adContainer != null) {
             adContainer.setVisibility(android.view.View.GONE);
@@ -250,6 +271,9 @@ public class FeedActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (profileUpdateListener != null) {
+            ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
+        }
         if (adView != null) {
             adView.destroy();
             adView = null;

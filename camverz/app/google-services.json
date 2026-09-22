@@ -1,65 +1,57 @@
 {
   "project_info": {
-    "project_number": "973141718708",
-    "project_id": "camverz",
-    "storage_bucket": "camverz.firebasestorage.app"
+    "project_number": "839315244344",
+    "project_id": "camverz-app",
+    "storage_bucket": "camverz-app.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:973141718708:android:f2f7e8e87fc8a6973489e1",
+        "mobilesdk_app_id": "1:839315244344:android:c4807e2fed663338442dcd",
         "android_client_info": {
-          "package_name": "com.mohitt.camverz"
+          "package_name": "com.mohit.camverz"
         }
       },
       "oauth_client": [
         {
-          "client_id": "973141718708-5gmm6mu077r7h6t8cgkrpau3l4geel8n.apps.googleusercontent.com",
+          "client_id": "839315244344-230s538cc7firlc63lohruj0m5hqsv2a.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.mohitt.camverz",
+            "package_name": "com.mohit.camverz",
             "certificate_hash": "4dabeb8d62644f247db0b56869b83918a20c502c"
           }
         },
         {
-          "client_id": "973141718708-g1mckm5tcu3o0qcmk8hbb5m73u77s22m.apps.googleusercontent.com",
+          "client_id": "839315244344-7crogdifaieuqoaholpqm2sle4c535lv.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.mohitt.camverz",
+            "package_name": "com.mohit.camverz",
             "certificate_hash": "42fc0efda68aa2928b0e1cb30f819eede5e3514a"
           }
         },
         {
-          "client_id": "973141718708-sd9g33ren4b2m7g11ejjs6q8jegcdsi5.apps.googleusercontent.com",
+          "client_id": "839315244344-f3744l3ljj299a1jre8quscnlhpgqj7u.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.mohitt.camverz",
-            "certificate_hash": "637652c34effd7fd0c24cadbae08086a3bcda9e6"
-          }
-        },
-        {
-          "client_id": "973141718708-trdrpnenl2qir39ua3hdl09jbbejea0d.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.mohitt.camverz",
+            "package_name": "com.mohit.camverz",
             "certificate_hash": "a47e71dacbb0b0c1674129179b383656042e0210"
           }
         },
         {
-          "client_id": "973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com",
+          "client_id": "839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCupf2MeIX6VyFYgnfBpdigJxlEaLRS8pU"
+          "current_key": "AIzaSyDRB6mQWccsSqxHiAdos3TrsqHi5FSiepk"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com",
+              "client_id": "839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

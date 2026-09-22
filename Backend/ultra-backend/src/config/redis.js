@@ -103,6 +103,7 @@ const ROOM_KEY = "camverz:rooms";
 
 async function setRoomState(room, state) {
   await redis.hset(ROOM_KEY, room, JSON.stringify(state));
+  await redis.expire(ROOM_KEY, 86400);
 }
 
 async function getRoomState(room) {

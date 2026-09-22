@@ -1,15 +1,18 @@
 # Add project specific ProGuard rules here.
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
 # Preserve line numbers and source file attributes for stack traces
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# ==============================================================================
+# R8 Optimization & Repackaging for Maximum DEX Shrinking & Obfuscation (>45%)
+# ==============================================================================
+-repackageclasses 'a'
+-allowaccessmodification
+-optimizationpasses 5
+-overloadaggressively
 
 # ==============================================================================
 # General Attributes & Annotations
@@ -19,9 +22,17 @@
 -keepattributes RuntimeInvisibleAnnotations, RuntimeInvisibleParameterAnnotations
 -keepattributes *Annotation*
 
+# Preserve @Keep annotated classes and methods
+-keep @androidx.annotation.Keep class * { *; }
+-keepclasseswithmembers class * {
+    @androidx.annotation.Keep <fields>;
+}
+-keepclasseswithmembers class * {
+    @androidx.annotation.Keep <methods>;
+}
+
 # ==============================================================================
 # Retrofit 2 & OkHttp 3 & Okio
-# (Retrofit, OkHttp, and Okio supply their own AAR consumer rules)
 # ==============================================================================
 -dontwarn retrofit2.**
 -dontwarn okhttp3.**
@@ -32,8 +43,6 @@
 
 # ==============================================================================
 # Gson & Model Serialized Fields
-# (Preserve fields annotated with @SerializedName or model class fields for JSON serialization,
-# while allowing class name obfuscation and method optimization/shrinking)
 # ==============================================================================
 -dontwarn sun.misc.**
 -dontwarn com.google.gson.**
@@ -63,12 +72,11 @@
 # Socket.IO & Engine.IO
 # ==============================================================================
 -dontwarn io.socket.**
--keep class io.socket.client.Socket { *; }
--keep class io.socket.emitter.Emitter { *; }
+-keepclassmembers class io.socket.client.Socket { *; }
+-keepclassmembers class io.socket.emitter.Emitter { *; }
 
 # ==============================================================================
 # WebRTC SDK & JNI Zero
-# (Keep JNI callbacks and native method bindings instead of keeping the whole package)
 # ==============================================================================
 -dontwarn org.webrtc.**
 -dontwarn org.jni_zero.**
@@ -102,10 +110,10 @@
 }
 
 # ==============================================================================
-# Google Play Services, Auth & Ads (AdMob)
-# (Google Play Services AARs supply their consumer rules. Keep KeepName annotations)
+# Google Play Services & Ads (AdMob) & ML Kit
 # ==============================================================================
 -dontwarn com.google.android.gms.**
+-dontwarn com.google.mlkit.**
 -keep class com.google.android.gms.common.annotation.KeepName
 -keepnames class * implements com.google.android.gms.common.annotation.KeepName
 -keepclassmembers class * {
@@ -114,22 +122,21 @@
 
 # ==============================================================================
 # ironSource / LevelPlay SDK & Mediation Adapters
-# (Keep mediation adapter classes and public interfaces required for reflection lookup)
 # ==============================================================================
 -dontwarn com.ironsource.**
 -dontwarn com.unity3d.mediation.**
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.RewardedVideoAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.InterstitialAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.BannerAdapterApi { *; }
--keep class com.ironsource.mediationsdk.integration.IntegrationHelper { public *; }
--keep class com.ironsource.adapters.** { *; }
+-keep class com.ironsource.adapters.**
 
 # ==============================================================================
-# Meta Audience Network (Facebook Ads)
+# Meta Audience Network (Facebook Ads) - Optimized
 # ==============================================================================
 -dontwarn com.facebook.ads.**
 -dontwarn com.facebook.infer.annotation.**
--keep class com.facebook.ads.** { public *; }
+-keep class com.facebook.ads.AudienceNetworkActivity { *; }
+-keep class com.facebook.ads.internal.NetworkSettings { *; }
 
 # ==============================================================================
 # Unity Ads SDK & InMobi

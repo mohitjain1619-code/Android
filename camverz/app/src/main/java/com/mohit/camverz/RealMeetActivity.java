@@ -1162,8 +1162,8 @@ public class RealMeetActivity extends BaseActivity {
                             bio = userObj.get("bio").getAsString();
                         }
                         final String finalBio = bio;
-                        int followers = data.has("followersCount") ? data.get("followersCount").getAsInt() : 0;
-                        int following = data.has("followingCount") ? data.get("followingCount").getAsInt() : 0;
+                        int followers = parseStatsCount(data, userObj, "followersCount", "followers_count", "followers", "friendsCount", "friends", "friends_count");
+                        int following = parseStatsCount(data, userObj, "followingCount", "following_count", "following", "friendsCount", "friends", "friends_count");
                         runOnUiThread(() -> {
                             if (tvFollowersCount != null)
                                 tvFollowersCount.setText(String.valueOf(followers));
@@ -1728,5 +1728,24 @@ public class RealMeetActivity extends BaseActivity {
             prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply(); // Clear pending flag since no ad could render
             preloadInterstitialAd();
         }
+    }
+
+    private int parseStatsCount(JsonObject data, JsonObject userObj, String... keys) {
+        for (JsonObject obj : new JsonObject[]{userObj, data}) {
+            if (obj == null) continue;
+            for (String key : keys) {
+                if (obj.has(key) && !obj.get(key).isJsonNull()) {
+                    com.google.gson.JsonElement el = obj.get(key);
+                    if (el.isJsonPrimitive()) {
+                        try {
+                            return el.getAsInt();
+                        } catch (Exception ignored) {}
+                    } else if (el.isJsonArray()) {
+                        return el.getAsJsonArray().size();
+                    }
+                }
+            }
+        }
+        return 0;
     }
 }

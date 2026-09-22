@@ -34,6 +34,7 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
     
     private ApiService api;
     private TokenManager tokenManager;
+    private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +80,28 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
         notificationList = new ArrayList<>();
         notificationAdapter = new NotificationAdapter(this, notificationList, this);
         notificationsRecyclerView.setAdapter(notificationAdapter);
+
+        profileUpdateListener = (userId, newName, newAvatar) -> {
+            runOnUiThread(() -> {
+                if (notificationList != null && notificationAdapter != null) {
+                    boolean updated = false;
+                    for (Notification n : notificationList) {
+                        if (userId != null && userId.equals(n.getTriggeringUserId())) {
+                            if (newName != null && !newName.isEmpty()) n.setTriggeringUserName(newName);
+                            if (newAvatar != null && !newAvatar.isEmpty()) {
+                                n.setTriggeringUserAvatar(newAvatar);
+                                n.setTriggeringUserPhotoUrl(newAvatar);
+                            }
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        notificationAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        };
+        ProfileUpdateManager.getInstance(this).registerListener(profileUpdateListener);
     }
 
     @Override
@@ -203,5 +226,13 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
         // Not implemented in backend yet, so just remove from list
         notificationList.remove(notification);
         notificationAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (profileUpdateListener != null) {
+            ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
+        }
     }
 }

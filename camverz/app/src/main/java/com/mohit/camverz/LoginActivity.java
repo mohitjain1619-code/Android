@@ -60,9 +60,15 @@ public class LoginActivity extends AppCompatActivity {
 
         // Check if already signed in (has JWT token)
         if (tokenManager.isLoggedIn()) {
-            Log.d(TAG, "User already signed in with JWT, going to MainScreen");
-            goToMainScreen();
-            return;
+            if (tokenManager.isOnboardingComplete()) {
+                Log.d(TAG, "User already signed in & profile complete, going to MainScreen");
+                goToMainScreen();
+                return;
+            } else {
+                Log.d(TAG, "User signed in but onboarding incomplete, routing to GenderSelection");
+                goToGenderSelection();
+                return;
+            }
         }
 
         appUpdateHelper.checkForUpdates();
@@ -164,6 +170,25 @@ public class LoginActivity extends AppCompatActivity {
 
         // Debug helper to print the actual runtime SHA-1 fingerprint
         printAppSignature();
+
+        // Warm up backend server in advance so login executes instantly when user taps Google Sign-In
+        triggerServerWarmUp();
+    }
+
+    private void triggerServerWarmUp() {
+        if (api != null) {
+            api.getHealth().enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    Log.d(TAG, "⚡ Server warm-up ping completed: " + response.code());
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    Log.w(TAG, "⚡ Server warm-up ping sent (waking up dormant backend...)");
+                }
+            });
+        }
     }
 
     private void printAppSignature() {
@@ -203,7 +228,15 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    private boolean isSigningIn = false;
+
     private void signInWithGoogle() {
+        if (isSigningIn) {
+            Log.d(TAG, "Sign in already in progress, ignoring extra click.");
+            return;
+        }
+        isSigningIn = true;
+        showLoadingState();
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
@@ -232,9 +265,16 @@ public class LoginActivity extends AppCompatActivity {
                     hideLoadingState();
                 }
             } catch (ApiException e) {
-                Log.w(TAG, "❌ Google sign in failed", e);
+                Log.w(TAG, "❌ Google sign in status code: " + e.getStatusCode(), e);
                 hideLoadingState();
-                Toast.makeText(LoginActivity.this, "Sign in failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                if (e.getStatusCode() == 12501) {
+                    // SIGN_IN_CANCELLED: User dismissed the account selection dialog — dismiss spinner silently
+                    Log.d(TAG, "User dismissed Google Sign In picker dialog.");
+                } else if (e.getStatusCode() == 7) {
+                    Toast.makeText(LoginActivity.this, "Network error. Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Sign in cancelled or unavailable.", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -248,42 +288,40 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void authenticateWithBackend(final String idToken, final int retriesLeft) {
-        new Thread(() -> {
-            final Map<String, Object> body = new HashMap<>();
-            body.put("idToken", idToken);
+        final Map<String, Object> body = new HashMap<>();
+        body.put("idToken", idToken);
 
-            // Retrieve and send secondary device emails to backend for anti-abuse verification
-            try {
-                java.util.List<String> emails = getDeviceGoogleEmails();
-                if (!emails.isEmpty()) {
-                    body.put("deviceEmails", emails);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error adding device emails to request", e);
+        // Retrieve and send secondary device emails to backend for anti-abuse verification
+        try {
+            java.util.List<String> emails = getDeviceGoogleEmails();
+            if (!emails.isEmpty()) {
+                body.put("deviceEmails", emails);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding device emails to request", e);
+        }
 
-            // Include unique device ID (ANDROID_ID) & platform
-            try {
-                String androidId = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
-                if (androidId != null && !androidId.trim().isEmpty()) {
-                    body.put("deviceId", androidId);
-                    body.put("platform", "android");
-                    Log.d(TAG, "Sending deviceId: " + androidId);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error getting ANDROID_ID", e);
+        // Include unique device ID (ANDROID_ID) & platform
+        try {
+            String androidId = android.provider.Settings.Secure.getString(getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+            if (androidId != null && !androidId.trim().isEmpty()) {
+                body.put("deviceId", androidId);
+                body.put("platform", "android");
+                Log.d(TAG, "Sending deviceId: " + androidId);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting ANDROID_ID", e);
+        }
 
-            // Fetch saved referrer code
-            String affiliateRef = getSharedPreferences("camverz_prefs", MODE_PRIVATE)
-                    .getString("affiliate_ref", null);
-            if (affiliateRef != null && !affiliateRef.trim().isEmpty()) {
-                body.put("affiliateRef", affiliateRef);
-                Log.d(TAG, "Sending affiliateRef to backend: " + affiliateRef);
-            }
+        // Fetch saved referrer code
+        String affiliateRef = getSharedPreferences("camverz_prefs", MODE_PRIVATE)
+                .getString("affiliate_ref", null);
+        if (affiliateRef != null && !affiliateRef.trim().isEmpty()) {
+            body.put("affiliateRef", affiliateRef);
+            Log.d(TAG, "Sending affiliateRef to backend: " + affiliateRef);
+        }
 
-            runOnUiThread(() -> {
-                api.authWithGoogle(body).enqueue(new Callback<JsonObject>() {
+        api.authWithGoogle(body).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -335,10 +373,17 @@ public class LoginActivity extends AppCompatActivity {
 
                         // Navigate based on profile completeness
                         String gender = user.has("gender") ? user.get("gender").getAsString() : "";
-                        if (isNewUser || gender == null || gender.trim().isEmpty()) {
-                            goToGenderSelection();
-                        } else {
+                        String userName = user.has("name") ? user.get("name").getAsString() : "";
+                        boolean isProfileComplete = !isNewUser
+                                && (gender != null && !gender.trim().isEmpty())
+                                && (userName != null && !userName.trim().isEmpty());
+
+                        if (isProfileComplete) {
+                            tokenManager.setOnboardingComplete(true);
                             goToMainScreen();
+                        } else {
+                            tokenManager.setOnboardingComplete(false);
+                            goToGenderSelection();
                         }
                     } else {
                         Log.w(TAG, "❌ Backend auth response not ok");
@@ -387,9 +432,8 @@ public class LoginActivity extends AppCompatActivity {
                 );
             }
         });
-            });
-        }).start();
     }
+
     private java.util.List<String> getDeviceGoogleEmails() {
         java.util.List<String> emails = new java.util.ArrayList<>();
         try {
@@ -421,6 +465,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void hideLoadingState() {
+        isSigningIn = false;
         runOnUiThread(() -> {
             if (loadingOverlay != null) loadingOverlay.setVisibility(android.view.View.GONE);
             if (getStartedButton != null) getStartedButton.setEnabled(true);

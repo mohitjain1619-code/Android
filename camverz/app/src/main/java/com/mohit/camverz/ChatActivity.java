@@ -61,6 +61,7 @@ public class ChatActivity extends BaseActivity {
     
     private boolean isBlocked = false;
     private boolean isBlockedByOther = false;
+    private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +93,24 @@ public class ChatActivity extends BaseActivity {
 
         toolbarUsername.setText(receiverName);
         AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
+
+        profileUpdateListener = (userId, newName, newAvatar) -> {
+            runOnUiThread(() -> {
+                if (userId != null && userId.equals(receiverId)) {
+                    if (newName != null && !newName.isEmpty()) {
+                        receiverName = newName;
+                        if (toolbarUsername != null) toolbarUsername.setText(receiverName);
+                    }
+                    if (newAvatar != null && !newAvatar.isEmpty()) {
+                        receiverAvatar = newAvatar;
+                        if (toolbarAvatar != null) {
+                            AvatarHelper.loadAvatar(this, receiverAvatar, receiverAvatar, receiverName, toolbarAvatar);
+                        }
+                    }
+                }
+            });
+        };
+        ProfileUpdateManager.getInstance(this).registerListener(profileUpdateListener);
 
         View.OnClickListener profileListener = v -> navigateToProfileDirectly();
         toolbarAvatar.setOnClickListener(profileListener);
@@ -409,6 +428,9 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (profileUpdateListener != null) {
+            ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
+        }
         socket.off("new_message");
     }
 

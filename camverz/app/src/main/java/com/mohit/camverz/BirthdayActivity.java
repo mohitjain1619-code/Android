@@ -70,6 +70,7 @@ public class BirthdayActivity extends BaseActivity {
 
         DatePickerDialog dialog = new DatePickerDialog(
                 this,
+                R.style.CustomDatePickerTheme,
                 (view, year, month, day) -> {
                     if (isUserAdult(year, month, day)) {
                         dob = day + "/" + (month + 1) + "/" + year;

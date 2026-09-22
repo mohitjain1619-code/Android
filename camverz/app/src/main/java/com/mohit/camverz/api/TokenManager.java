@@ -156,6 +156,19 @@ public class TokenManager {
         return isPlanAdFree() && getPlanName().toLowerCase().contains("community");
     }
 
+    public void setOnboardingComplete(boolean complete) {
+        prefs.edit().putBoolean("is_onboarding_complete", complete).apply();
+    }
+
+    public boolean isOnboardingComplete() {
+        if (prefs.getBoolean("is_onboarding_complete", false)) {
+            return true;
+        }
+        String gender = getUserGender();
+        String name = getUserName();
+        return gender != null && !gender.trim().isEmpty() && name != null && !name.trim().isEmpty();
+    }
+
     // ============================================
     // CLEAR ALL
     // ============================================

@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.0"
+agp = "9.4.1"
 kotlin = "2.2.10"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -9,16 +9,101 @@ appcompat = "1.7.1"
 material = "1.13.0"
 googleServices = "4.4.3"
 
+# Upgraded Libraries
+camerax = "1.6.2"
+playServicesAuth = "21.3.0"
+playServicesAds = "23.6.0"
+playServicesLocation = "21.3.0"
+playServicesMlkitFace = "17.1.0"
+appUpdate = "2.1.0"
+retrofit = "2.11.0"
+okhttp = "4.12.0"
+securityCrypto = "1.1.0-alpha06"
+socketIo = "2.1.1"
+json = "20250517"
+webrtc = "137.7151.05"
+circleImageView = "3.1.0"
+lottie = "6.6.7"
+shimmer = "0.5.0"
+cardView = "1.0.0"
+constraintLayout = "2.2.1"
+swipeRefreshLayout = "1.1.0"
+paging = "3.3.6"
+glide = "4.16.0"
+coil = "2.7.0"
+guava = "33.4.0-android"
+audienceNetwork = "6.22.0"
+unityAds = "4.13.0"
+ironsource = "8.7.0"
+ironsourceAdmobAdapter = "4.3.49"
+ironsourceFacebookAdapter = "4.3.47"
+ironsourceUnityAdapter = "4.3.38"
+localbroadcastmanager = "1.1.0"
+media3 = "1.5.1"
+browser = "1.8.0"
+installReferrer = "2.2"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+localbroadcastmanager = { group = "androidx.localbroadcastmanager", name = "localbroadcastmanager", version.ref = "localbroadcastmanager" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
+# CameraX
+camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+
+# Google Play Services
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+play-services-mlkit-face-detection = { group = "com.google.android.gms", name = "play-services-mlkit-face-detection", version.ref = "playServicesMlkitFace" }
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "appUpdate" }
+
+# Retrofit & OkHttp
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+
+# Security & Utilities
+security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "securityCrypto" }
+socket-io-client = { group = "io.socket", name = "socket.io-client", version.ref = "socketIo" }
+json = { group = "org.json", name = "json", version.ref = "json" }
+webrtc-sdk = { group = "io.github.webrtc-sdk", name = "android", version.ref = "webrtc" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+
+# UI Components
+circleimageview = { group = "de.hdodenhof", name = "circleimageview", version.ref = "circleImageView" }
+lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
+shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
+cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardView" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintLayout" }
+swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swipeRefreshLayout" }
+paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
+coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
+
+# Ads & Mediation
+facebook-audience-network = { group = "com.facebook.android", name = "audience-network-sdk", version.ref = "audienceNetwork" }
+unity-ads = { group = "com.unity3d.ads", name = "unity-ads", version.ref = "unityAds" }
+ironsource-sdk = { group = "com.ironsource.sdk", name = "mediationsdk", version.ref = "ironsource" }
+ironsource-adapter-admob = { group = "com.ironsource.adapters", name = "admobadapter", version.ref = "ironsourceAdmobAdapter" }
+ironsource-adapter-facebook = { group = "com.ironsource.adapters", name = "facebookadapter", version.ref = "ironsourceFacebookAdapter" }
+ironsource-adapter-unity = { group = "com.ironsource.adapters", name = "unityadsadapter", version.ref = "ironsourceUnityAdapter" }
+media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
+install-referrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "installReferrer" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+
 
