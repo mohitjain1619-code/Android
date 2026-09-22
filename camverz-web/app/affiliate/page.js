@@ -1986,7 +1986,7 @@ export default function AffiliatePage() {
                         <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: 1.5 }}>
                           <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>YouTube Channel Description</strong>:
                         </p>
-                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
+                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
                           onClick={() => { navigator.clipboard.writeText(affData?.affiliate?.youtube_bio_code); alert('Code copied!'); }}
                           title="Click to copy"
                         >
@@ -2056,17 +2056,6 @@ export default function AffiliatePage() {
                           title="Click to copy"
                         >
                           {affData?.affiliate?.other_bio_code} 📋
-                        </div>        <>
-                                <strong style={{ color: '#fff' }}>Step 1:</strong> Copy this code and add it to your <strong>Profile Bio/Description</strong>:
-                              </>
-                            );
-                          })()}
-                        </p>
-                        <div style={{ background: 'rgba(255,0,110,0.08)', border: '1px solid rgba(255,0,110,0.2)', padding: '10px 14px', borderRadius: '8px', fontFamily: 'monospace', fontSize: '1rem', color: 'var(--neon-pink)', fontWeight: 700, textAlign: 'center', letterSpacing: '1px', cursor: 'pointer' }}
-                          onClick={() => { navigator.clipboard.writeText(affData.affiliate.other_bio_code); alert('Code copied!'); }}
-                          title="Click to copy"
-                        >
-                          {affData.affiliate.other_bio_code} 📋
                         </div>
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: '10px 0 0 0' }}>
                           <strong style={{ color: '#fff' }}>Step 2:</strong> Click Verify. After success, you can remove the code.
