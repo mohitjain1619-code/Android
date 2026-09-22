@@ -51,6 +51,26 @@ function VerifiedBadge() {
   );
 }
 
+function formatDateTimeString(rawStr) {
+  if (!rawStr) return 'Not specified';
+  if (typeof rawStr === 'string' && rawStr.includes('T')) {
+    try {
+      const d = new Date(rawStr);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      }
+    } catch (e) {}
+  }
+  return rawStr;
+}
+
 function RealMeetContent() {
   const { user, userData, loading: authLoading, setShowLogin, setShowAppRedirect } = useAuth();
   const searchParams = useSearchParams();
@@ -621,7 +641,7 @@ function RealMeetContent() {
                         <span className={styles.fieldHeading}>SCHEDULED TIME</span>
                         <div className={styles.infoRow}>
                           <Clock size={14} />
-                          <span>{post.time}</span>
+                          <span>{formatDateTimeString(post.time)}</span>
                         </div>
 
                         <span className={styles.fieldHeading}>ABOUT MEET</span>
@@ -689,7 +709,7 @@ function RealMeetContent() {
                         <span className={styles.fieldHeading}>SCHEDULED TIME</span>
                         <div className={styles.infoRow} style={{ marginBottom: '10px' }}>
                           <Clock size={14} />
-                          <span>{post.partyTime}</span>
+                          <span>{formatDateTimeString(post.partyTime)}</span>
                         </div>
 
                         <div className={styles.infoRow}>
@@ -899,9 +919,8 @@ function RealMeetContent() {
                         <div className={styles.formGroup}>
                           <label>Date &amp; Time</label>
                           <input 
-                            type="text" 
+                            type="datetime-local" 
                             className={styles.textInput} 
-                            placeholder="e.g. Today at 6:30 PM" 
                             value={meetTime}
                             onChange={e => setMeetTime(e.target.value)}
                           />
@@ -945,9 +964,8 @@ function RealMeetContent() {
                         <div className={styles.formGroup}>
                           <label>Date &amp; Scheduled Time</label>
                           <input 
-                            type="text" 
+                            type="datetime-local" 
                             className={styles.textInput} 
-                            placeholder="e.g. Saturday Night 8 PM onwards" 
                             value={partyTime}
                             onChange={e => setPartyTime(e.target.value)}
                           />
@@ -1118,7 +1136,7 @@ function RealMeetContent() {
                         </div>
                         <div className={styles.requestPurpose} style={{ marginTop: '8px', fontSize: '0.8rem', color: '#FFFFFF' }}>
                           🎉 <b>Title:</b> {savedPost.purpose} <br />
-                          ⏰ <b>Time:</b> {savedPost.partyTime}
+                          ⏰ <b>Time:</b> {formatDateTimeString(savedPost.partyTime)}
                         </div>
                       </div>
                     ))
