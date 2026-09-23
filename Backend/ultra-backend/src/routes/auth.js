@@ -53,25 +53,36 @@ router.post("/google", async (req, res) => {
     const name = payload.name || "";
     const photoUrl = payload.picture || "";
 
-    // 1. Strict Device Account Binding (Block if device is already registered to a different account)
+    // 1. Strict Device Account Binding (Block if device/IP is already registered to a different account)
     if (deviceId) {
       try {
+        const clientIp = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+
         const existingDeviceOwner = await queryOne(
           `SELECT u.id, u.email FROM user_devices ud
            JOIN users u ON ud.user_id = u.id
-           WHERE ud.device_id = $1 AND LOWER(u.email) != LOWER($2)
+           WHERE (
+             ud.device_id = $1 
+             OR (
+               $2 != '' 
+               AND $2 != '127.0.0.1' 
+               AND $2 != '::1' 
+               AND (ud.ip_address = $2 OR TRIM(split_part(ud.ip_address, ',', 1)) = $2)
+             )
+           )
+           AND LOWER(u.email) != LOWER($3)
            ORDER BY ud.first_seen_at ASC
            LIMIT 1`,
-          [deviceId, email]
+          [deviceId, clientIp, email]
         );
 
         if (existingDeviceOwner) {
           console.warn(
-            `⚠️ Anti-Abuse Blocked: Device ${deviceId} is already linked to ${existingDeviceOwner.email}. Attempted login: ${email}`
+            `⚠️ Anti-Abuse Blocked: Device ${deviceId} / IP ${clientIp} is already linked to ${existingDeviceOwner.email}. Attempted login: ${email}`
           );
           return res.status(403).json({
             error: "device_bound",
-            message: `This device is already linked to another account (${existingDeviceOwner.email}). Please log in using that account.`
+            message: `This device/network is already linked to another account (${existingDeviceOwner.email}). Please log in using that account.`
           });
         }
       } catch (devErr) {
