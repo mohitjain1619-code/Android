@@ -61,7 +61,22 @@ function CallPageInner() {
       router.push('/');
       return;
     }
-  }, [user, userData, loading, router, setShowLogin, setShowOnboarding]);
+
+    const userGender = (userData.gender || '').trim().toLowerCase();
+    const reqCategory = (category || 'straight').trim().toLowerCase();
+
+    if (reqCategory === 'lesbian' && userGender === 'male') {
+      alert("⚠️ Restricted Category\n\nLesbian category is for Female members only. Male members can connect via Straight or Gay video chat.");
+      router.push('/');
+      return;
+    }
+
+    if (reqCategory === 'gay' && userGender === 'female') {
+      alert("⚠️ Restricted Category\n\nGay category is for Male members only. Female members can connect via Straight or Lesbian video chat.");
+      router.push('/');
+      return;
+    }
+  }, [user, userData, loading, router, category, setShowLogin, setShowOnboarding]);
  
   // Security layout: block right-click, screenshot keyboard keys, and developer tool inspector
   useEffect(() => {
@@ -168,8 +183,21 @@ function CallPageInner() {
   const startConnecting = async () => {
     if (!checkCallLimitAndProceed()) return;
 
-    if (!userData || !userData.gender) {
-      setShowOnboarding(true);
+    if (isProfileIncomplete(userData)) {
+      if (typeof setShowOnboarding === 'function') setShowOnboarding(true);
+      return;
+    }
+
+    const userGender = (userData.gender || '').trim().toLowerCase();
+    const reqCategory = (category || 'straight').trim().toLowerCase();
+
+    if (reqCategory === 'lesbian' && userGender === 'male') {
+      alert("⚠️ Restricted Category\n\nLesbian category is for Female members only. Male members can connect via Straight or Gay video chat.");
+      return;
+    }
+
+    if (reqCategory === 'gay' && userGender === 'female') {
+      alert("⚠️ Restricted Category\n\nGay category is for Male members only. Female members can connect via Straight or Lesbian video chat.");
       return;
     }
     

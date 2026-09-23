@@ -90,6 +90,20 @@ function HomeContent() {
       setShowOnboarding(true);
       return;
     }
+
+    const userGender = (userData.gender || '').trim().toLowerCase();
+    const reqCategory = (category || 'straight').trim().toLowerCase();
+
+    if (reqCategory === 'lesbian' && userGender === 'male') {
+      alert("⚠️ Restricted Category\n\nLesbian category is for Female members only. Male members can connect via Straight or Gay video chat.");
+      return;
+    }
+
+    if (reqCategory === 'gay' && userGender === 'female') {
+      alert("⚠️ Restricted Category\n\nGay category is for Male members only. Female members can connect via Straight or Lesbian video chat.");
+      return;
+    }
+
     router.push(`/call?category=${category}`);
   };
 
