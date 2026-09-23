@@ -61,19 +61,11 @@ router.post("/google", async (req, res) => {
         const existingDeviceOwner = await queryOne(
           `SELECT u.id, u.email FROM user_devices ud
            JOIN users u ON ud.user_id = u.id
-           WHERE (
-             ud.device_id = $1 
-             OR (
-               $2 != '' 
-               AND $2 != '127.0.0.1' 
-               AND $2 != '::1' 
-               AND (ud.ip_address = $2 OR TRIM(split_part(ud.ip_address, ',', 1)) = $2)
-             )
-           )
-           AND LOWER(u.email) != LOWER($3)
+           WHERE ud.device_id = $1 
+           AND LOWER(u.email) != LOWER($2)
            ORDER BY ud.first_seen_at ASC
            LIMIT 1`,
-          [deviceId, clientIp, email]
+          [deviceId, email]
         );
 
         if (existingDeviceOwner) {
@@ -82,7 +74,7 @@ router.post("/google", async (req, res) => {
           );
           return res.status(403).json({
             error: "device_bound",
-            message: `This device/network is already linked to another account (${existingDeviceOwner.email}). Please log in using that account.`
+            message: `This device is already linked to another account (${existingDeviceOwner.email}). Please log in using that account.`
           });
         }
       } catch (devErr) {
