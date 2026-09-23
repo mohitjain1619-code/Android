@@ -21,20 +21,10 @@ router.get("/me", async (req, res) => {
       user = await queryOne("SELECT * FROM users WHERE email = $1", [req.user.email]);
     }
     if (!user) {
-      return res.json({
-        ok: true,
-        user: {
-          id: req.user.userId,
-          name: req.user.email ? req.user.email.split("@")[0] : "User",
-          email: req.user.email || "",
-          avatar: "av1",
-          photoUrl: null,
-          gender: "",
-          sexPreference: "Straight",
-          verified: false
-        },
-        followersCount: 0,
-        followingCount: 0
+      return res.status(401).json({
+        ok: false,
+        error: "account_deleted",
+        message: "Your account has been deleted by an administrator. Please sign up fresh."
       });
     }
 

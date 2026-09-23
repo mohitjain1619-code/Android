@@ -1311,7 +1311,8 @@ router.delete("/admin/user/:user_id", requireAuth, requireAdmin, async (req, res
       return res.status(400).json({ error: "Cannot delete the admin account." });
     }
 
-    // Delete user (cascade handles the rest)
+    // Delete user device mappings & user account
+    await query("DELETE FROM user_devices WHERE user_id = $1", [user_id]);
     await query("DELETE FROM users WHERE id = $1", [user_id]);
     console.log(`🗑️ [Admin Cleanup] Deleted user account: ${user_id} (${user.email})`);
 

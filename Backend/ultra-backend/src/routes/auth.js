@@ -59,9 +59,10 @@ router.post("/google", async (req, res) => {
         const existingDeviceOwner = await queryOne(
           `SELECT u.id, u.email FROM user_devices ud
            JOIN users u ON ud.user_id = u.id
-           WHERE ud.device_id = $1 AND u.google_id != $2
+           WHERE ud.device_id = $1 AND LOWER(u.email) != LOWER($2)
+           ORDER BY ud.first_seen_at ASC
            LIMIT 1`,
-          [deviceId, googleId]
+          [deviceId, email]
         );
 
         if (existingDeviceOwner) {
