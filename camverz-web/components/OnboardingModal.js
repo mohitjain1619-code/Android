@@ -181,7 +181,9 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content" style={{ position: 'relative' }}>
-        <button className={styles.close} onClick={onClose}><X size={20} /></button>
+        {onClose && userData?.gender && userData.gender.trim() !== '' && userData.gender.toLowerCase() !== 'unspecified' && (
+          <button className={styles.close} onClick={onClose}><X size={20} /></button>
+        )}
 
         {/* Progress */}
         <div className={styles.progress}>

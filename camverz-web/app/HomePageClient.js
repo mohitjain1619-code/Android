@@ -75,12 +75,18 @@ function HomeContent() {
     };
   }, []);
 
+  const isProfileIncomplete = (uData) => {
+    if (!uData) return true;
+    const g = (uData.gender || '').trim().toLowerCase();
+    return !g || g === 'unspecified' || g === '';
+  };
+
   const handleStartCall = (category = 'straight') => {
     if (!user) {
       setShowLogin(true);
       return;
     }
-    if (!userData || !userData.gender) {
+    if (isProfileIncomplete(userData)) {
       setShowOnboarding(true);
       return;
     }

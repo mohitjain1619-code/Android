@@ -43,6 +43,12 @@ function CallPageInner() {
   const draggingRef = useRef(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
 
+  const isProfileIncomplete = (uData) => {
+    if (!uData) return true;
+    const g = (uData.gender || '').trim().toLowerCase();
+    return !g || g === 'unspecified' || g === '';
+  };
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -50,7 +56,7 @@ function CallPageInner() {
       router.push('/');
       return;
     }
-    if (!userData || !userData.gender) {
+    if (isProfileIncomplete(userData)) {
       if (typeof setShowOnboarding === 'function') setShowOnboarding(true);
       router.push('/');
       return;
