@@ -53,6 +53,10 @@ public class LoginActivity extends AppCompatActivity {
         tokenManager = TokenManager.getInstance(this);
         api = ApiClient.getInstance(this).getApi();
 
+        if (getIntent().getBooleanExtra("account_deleted", false)) {
+            Toast.makeText(this, "⚠️ Account deleted or session reset. Please sign in again.", Toast.LENGTH_LONG).show();
+        }
+
         appUpdateHelper = new AppUpdateHelper(this);
 
         // Check Play Install Referrer for referrals

@@ -58,12 +58,22 @@ public class ApiClient {
             return chain.proceed(requestBuilder.build());
         };
 
-        // 401 handler — clear token on auth failure
+        // 401 handler — clear token & redirect on auth failure or account deletion
         Interceptor unauthorizedInterceptor = chain -> {
             Response response = chain.proceed(chain.request());
             if (response.code() == 401) {
-                Log.w(TAG, "401 Unauthorized — token may be expired");
-                tokenManager.clearToken();
+                Log.w(TAG, "401 Unauthorized — account deleted or session expired");
+                boolean hadToken = tokenManager.hasToken();
+                tokenManager.clearAll();
+                if (hadToken) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                        android.widget.Toast.makeText(context, "⚠️ Account deleted or session reset. Please sign in again.", android.widget.Toast.LENGTH_LONG).show();
+                        android.content.Intent intent = new android.content.Intent(context, com.mohit.camverz.LoginActivity.class);
+                        intent.putExtra("account_deleted", true);
+                        intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        context.startActivity(intent);
+                    });
+                }
             }
             return response;
         };

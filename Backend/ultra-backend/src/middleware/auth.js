@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { queryOne } = require("../config/database");
 
 const JWT_SECRET = process.env.JWT_SECRET || "camverz-jwt-super-secret-change-in-production-2024";
 
@@ -21,7 +22,7 @@ function verifyToken(token) {
 }
 
 // Middleware: require authentication
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -31,6 +32,16 @@ function requireAuth(req, res, next) {
     }
 
     const decoded = verifyToken(token);
+    if (!decoded || !decoded.userId) {
+      return res.status(401).json({ error: "Invalid token" });
+    }
+
+    // Verify user actually exists in database (rejects deleted account tokens)
+    const userExists = await queryOne("SELECT id FROM users WHERE id = $1", [decoded.userId]);
+    if (!userExists) {
+      return res.status(401).json({ error: "account_deleted", message: "Account no longer exists. Please sign in again." });
+    }
+
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
@@ -49,23 +60,28 @@ function requireAuth(req, res, next) {
 }
 
 // Optional auth: sets req.user if token present, but doesn't fail
-function optionalAuth(req, res, next) {
+async function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
     if (token) {
       const decoded = verifyToken(token);
-      req.user = {
-        userId: decoded.userId,
-        email: decoded.email,
-        googleId: decoded.googleId,
-      };
+      if (decoded && decoded.userId) {
+        const userExists = await queryOne("SELECT id FROM users WHERE id = $1", [decoded.userId]);
+        if (userExists) {
+          req.user = {
+            userId: decoded.userId,
+            email: decoded.email,
+            googleId: decoded.googleId,
+          };
+        }
+      }
     }
-  } catch {
-    // Ignore errors for optional auth
+    next();
+  } catch (err) {
+    next();
   }
-  next();
 }
 
 module.exports = { generateToken, verifyToken, requireAuth, optionalAuth };
