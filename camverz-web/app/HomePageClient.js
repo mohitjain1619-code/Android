@@ -75,7 +75,15 @@ function HomeContent() {
     };
   }, []);
 
-  const handleCategoryClick = (category) => {
+  const handleStartCall = (category = 'straight') => {
+    if (!user) {
+      setShowLogin(true);
+      return;
+    }
+    if (!userData || !userData.gender) {
+      setShowOnboarding(true);
+      return;
+    }
     router.push(`/call?category=${category}`);
   };
 
@@ -105,7 +113,7 @@ function HomeContent() {
             Discover new friends, join inclusive LGBTQ+ social circles, share stories, and build real-time connections worldwide through instant 1-on-1 video chat.
           </p>
           <div className={styles.heroBtns}>
-            <button className="btn-neon" onClick={() => router.push('/call')}>
+            <button className="btn-neon" onClick={() => handleStartCall('straight')}>
               <Video size={18} /> Start Calling <ArrowRight size={16} />
             </button>
             <a href="#features" className="btn-glass">Learn More</a>
@@ -138,7 +146,7 @@ function HomeContent() {
               <button
                 key={cat.key}
                 className={styles.prefCard}
-                onClick={() => handleCategoryClick(cat.key)}
+                onClick={() => handleStartCall(cat.key)}
                 style={{ '--card-color': cat.color }}
               >
                 <span className={styles.prefEmoji}>{cat.emoji}</span>
@@ -175,7 +183,7 @@ function HomeContent() {
         <div className="section" style={{ textAlign: 'center' }}>
           <h2>Ready to Connect Worldwide?</h2>
           <p>Join thousands of people meeting authentically every single day.</p>
-          <button className="btn-neon" onClick={() => router.push('/call')}>
+          <button className="btn-neon" onClick={() => handleStartCall('straight')}>
             <Video size={18} /> Get Started Now <ArrowRight size={16} />
           </button>
         </div>

@@ -45,16 +45,17 @@ function CallPageInner() {
 
   useEffect(() => {
     if (loading) return;
-    const email = user?.email || userData?.email;
-    const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
-    
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const isIphone = /iphone|ipad|ipod/i.test(ua);
-    
-    if (!isTester && !isIphone) {
-      router.push('/?launch=true');
+    if (!user) {
+      setShowLogin(true);
+      router.push('/');
+      return;
     }
-  }, [user, userData, loading, router]);
+    if (!userData || !userData.gender) {
+      setShowOnboarding(true);
+      router.push('/');
+      return;
+    }
+  }, [user, userData, loading, router, setShowLogin, setShowOnboarding]);
  
   // Security layout: block right-click, screenshot keyboard keys, and developer tool inspector
   useEffect(() => {
