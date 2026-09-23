@@ -122,8 +122,10 @@ public class CreatePostActivity extends BaseActivity {
             loadAndShowRewardedAd(() -> {
                 executePostUpload(text, category);
             }, () -> {
-                // If ad fails to load, still proceed with the upload so user doesn't lose their data
-                executePostUpload(text, category);
+                // Ad cancelled or failed -> DO NOT upload post!
+                isPosting = false;
+                postButton.setEnabled(true);
+                Toast.makeText(CreatePostActivity.this, "Ad skipped or incomplete. Post was not published.", Toast.LENGTH_SHORT).show();
             });
         }
     }

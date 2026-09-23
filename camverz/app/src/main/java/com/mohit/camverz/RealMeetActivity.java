@@ -1391,32 +1391,33 @@ public class RealMeetActivity extends BaseActivity {
                     tokenManager.getSexPreference() != null ? tokenManager.getSexPreference() : "Straight",
                     System.currentTimeMillis());
 
-            store.addRealMeetPost(newPost);
+            showRewardedAdBeforePost(() -> {
+                store.addRealMeetPost(newPost);
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("type", "REAL_MEET");
-            body.put("post", newPost);
-            Toast.makeText(this, "Publishing post...", Toast.LENGTH_SHORT).show();
-            api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        fetchFeedFromServer();
-                        Toast.makeText(RealMeetActivity.this, "✨ Real Meet post published!", Toast.LENGTH_LONG).show();
-                        showPostCreationRewardAd();
-                    });
-                }
+                Map<String, Object> body = new HashMap<>();
+                body.put("type", "REAL_MEET");
+                body.put("post", newPost);
+                Toast.makeText(this, "Publishing post...", Toast.LENGTH_SHORT).show();
+                api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            fetchFeedFromServer();
+                            Toast.makeText(RealMeetActivity.this, "✨ Real Meet post published!", Toast.LENGTH_LONG).show();
+                        });
+                    }
 
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        Toast.makeText(RealMeetActivity.this, "Failed to publish post. Try again.", Toast.LENGTH_SHORT)
-                                .show();
-                        fetchFeedFromServer();
-                    });
-                }
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            Toast.makeText(RealMeetActivity.this, "Failed to publish post. Try again.", Toast.LENGTH_SHORT)
+                                    .show();
+                            fetchFeedFromServer();
+                        });
+                    }
+                });
             });
         });
 
@@ -1504,32 +1505,33 @@ public class RealMeetActivity extends BaseActivity {
                     tokenManager.isVerified(),
                     System.currentTimeMillis());
 
-            store.addPartyPost(partyPost);
+            showRewardedAdBeforePost(() -> {
+                store.addPartyPost(partyPost);
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("type", "PARTY");
-            body.put("post", partyPost);
-            Toast.makeText(this, "Publishing party event...", Toast.LENGTH_SHORT).show();
-            api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        fetchFeedFromServer();
-                        Toast.makeText(RealMeetActivity.this, "🎉 Party event published!", Toast.LENGTH_LONG).show();
-                        showPostCreationRewardAd();
-                    });
-                }
+                Map<String, Object> body = new HashMap<>();
+                body.put("type", "PARTY");
+                body.put("post", partyPost);
+                Toast.makeText(this, "Publishing party event...", Toast.LENGTH_SHORT).show();
+                api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            fetchFeedFromServer();
+                            Toast.makeText(RealMeetActivity.this, "🎉 Party event published!", Toast.LENGTH_LONG).show();
+                        });
+                    }
 
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        Toast.makeText(RealMeetActivity.this, "Failed to publish party event.", Toast.LENGTH_SHORT)
-                                .show();
-                        fetchFeedFromServer();
-                    });
-                }
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            Toast.makeText(RealMeetActivity.this, "Failed to publish party event.", Toast.LENGTH_SHORT)
+                                    .show();
+                            fetchFeedFromServer();
+                        });
+                    }
+                });
             });
         });
 
@@ -1594,31 +1596,32 @@ public class RealMeetActivity extends BaseActivity {
                     tokenManager.isVerified(),
                     System.currentTimeMillis());
 
-            store.addFantasyPost(fantasyPost);
+            showRewardedAdBeforePost(() -> {
+                store.addFantasyPost(fantasyPost);
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("type", "FANTASY");
-            body.put("post", fantasyPost);
-            Toast.makeText(this, "Sharing fantasy...", Toast.LENGTH_SHORT).show();
-            api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
-                @Override
-                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        fetchFeedFromServer();
-                        Toast.makeText(RealMeetActivity.this, "💭 Fantasy shared!", Toast.LENGTH_LONG).show();
-                        showPostCreationRewardAd();
-                    });
-                }
+                Map<String, Object> body = new HashMap<>();
+                body.put("type", "FANTASY");
+                body.put("post", fantasyPost);
+                Toast.makeText(this, "Sharing fantasy...", Toast.LENGTH_SHORT).show();
+                api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            fetchFeedFromServer();
+                            Toast.makeText(RealMeetActivity.this, "💭 Fantasy shared!", Toast.LENGTH_LONG).show();
+                        });
+                    }
 
-                @Override
-                public void onFailure(Call<JsonObject> call, Throwable t) {
-                    runOnUiThread(() -> {
-                        dialog.dismiss();
-                        Toast.makeText(RealMeetActivity.this, "Failed to share fantasy.", Toast.LENGTH_SHORT).show();
-                        fetchFeedFromServer();
-                    });
-                }
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {
+                        runOnUiThread(() -> {
+                            dialog.dismiss();
+                            Toast.makeText(RealMeetActivity.this, "Failed to share fantasy.", Toast.LENGTH_SHORT).show();
+                            fetchFeedFromServer();
+                        });
+                    }
+                });
             });
         });
 
@@ -1626,6 +1629,53 @@ public class RealMeetActivity extends BaseActivity {
     }
 
     // ==================== AD METHODS ====================
+
+    /**
+     * Show a rewarded ad BEFORE uploading any community post (RealMeet, Party, Fantasy).
+     * ONLY if reward is earned will onAdCompleted be executed.
+     */
+    private void showRewardedAdBeforePost(Runnable onAdCompleted) {
+        if (tokenManager.isCommunityAdFree()) {
+            onAdCompleted.run();
+            return;
+        }
+
+        if (!com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            Toast.makeText(this, "Ad not available right now. Please try again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Watch ad to publish your post...", Toast.LENGTH_SHORT).show();
+        final boolean[] rewardEarned = {false};
+
+        com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+            @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override public void onAdUnavailable() {}
+            @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = true;
+            }
+            @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = false;
+                runOnUiThread(() -> Toast.makeText(RealMeetActivity.this, "Ad failed to play. Post was not published.", Toast.LENGTH_SHORT).show());
+            }
+            @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override 
+            public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                rewardEarned[0] = true;
+            }
+            @Override
+            public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = false;
+                if (rewardEarned[0]) {
+                    runOnUiThread(onAdCompleted);
+                } else {
+                    runOnUiThread(() -> Toast.makeText(RealMeetActivity.this, "Ad skipped or incomplete. Post was not published.", Toast.LENGTH_SHORT).show());
+                }
+            }
+        });
+
+        com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
+    }
 
     /**
      * Show a rewarded interstitial ad after any post creation.
