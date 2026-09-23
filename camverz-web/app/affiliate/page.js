@@ -691,9 +691,9 @@ export default function AffiliatePage() {
               left: 0,
               width: '100vw',
               height: '100vh',
-              background: 'rgba(5, 5, 12, 0.85)',
-              backdropFilter: 'blur(12px)',
-              zIndex: 9999,
+              background: 'rgba(5, 7, 16, 0.92)',
+              backdropFilter: 'blur(16px)',
+              zIndex: 99999,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -702,14 +702,16 @@ export default function AffiliatePage() {
             onClick={() => setSelectedUserProfile(null)}
           >
             <div 
-              className="glass-card" 
               style={{
-                maxWidth: '680px',
+                maxWidth: '760px',
                 width: '100%',
-                maxHeight: '90vh',
+                maxHeight: '88vh',
                 overflowY: 'auto',
+                background: '#0d111a',
+                borderRadius: '24px',
                 padding: '32px',
-                border: '1px solid var(--neon-cyan)',
+                border: '1px solid rgba(0, 229, 255, 0.35)',
+                boxShadow: '0 30px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 229, 255, 0.15)',
                 position: 'relative',
                 animation: 'pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
@@ -720,38 +722,34 @@ export default function AffiliatePage() {
                 onClick={() => setSelectedUserProfile(null)}
                 style={{
                   position: 'absolute',
-                  top: '20px',
-                  right: '20px',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid var(--glass-border)',
+                  top: '24px',
+                  right: '24px',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.15)',
                   color: '#fff',
-                  width: '32px',
-                  height: '32px',
+                  width: '36px',
+                  height: '36px',
                   borderRadius: '50%',
                   cursor: 'pointer',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  fontSize: '1rem'
+                  fontSize: '1.1rem',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 ✕
               </button>
 
               {/* Header Profile Identity */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '28px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '24px' }}>
                 <div style={{
-                  width: '72px',
-                  height: '72px',
+                  width: '80px',
+                  height: '80px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  fontSize: '1.8rem',
-                  fontWeight: 'bold',
-                  color: '#fff',
-                  overflow: 'hidden',
+                  padding: '3px',
+                  boxShadow: '0 0 20px rgba(0, 229, 255, 0.3)',
                   flexShrink: 0
                 }}>
                   <img 
@@ -761,26 +759,26 @@ export default function AffiliatePage() {
                         : (selectedUserProfile.photoUrl || selectedUserProfile.photo_url || '/avatars/av1.png')
                     } 
                     alt="Avatar" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
                   />
                 </div>
 
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.4rem', color: '#fff' }}>{selectedUserProfile.name}</h3>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.5rem', color: '#fff', fontWeight: 700 }}>{selectedUserProfile.name}</h3>
                     {selectedUserProfile.verified ? (
-                      <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.75rem', border: '1px solid rgba(0, 230, 118, 0.25)', padding: '2px 8px', borderRadius: '4px', background: 'rgba(0, 230, 118, 0.05)' }}>
+                      <span style={{ color: 'var(--neon-green)', fontWeight: 600, fontSize: '0.78rem', border: '1px solid rgba(0, 230, 118, 0.3)', padding: '3px 10px', borderRadius: '20px', background: 'rgba(0, 230, 118, 0.1)' }}>
                         Verified 👑
                       </span>
                     ) : (
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', background: 'rgba(255,255,255,0.06)', padding: '3px 10px', borderRadius: '20px' }}>
                         Unverified Profile
                       </span>
                     )}
                   </div>
-                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.88rem' }}>{selectedUserProfile.email}</p>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-                    <span>User ID: {selectedUserProfile.user_id}</span>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.92rem' }}>{selectedUserProfile.email}</p>
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '8px', fontSize: '0.78rem', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+                    <span>User ID: <code style={{ color: 'var(--neon-cyan)', fontFamily: 'monospace' }}>{selectedUserProfile.user_id}</code></span>
                     <span>•</span>
                     <span>Joined: {selectedUserProfile.created_at}</span>
                   </div>
@@ -788,59 +786,59 @@ export default function AffiliatePage() {
               </div>
 
               {/* Grid Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginBottom: '28px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px', marginBottom: '28px' }}>
                 
                 {/* Personal Bio & Info */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                  <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
                     👤 Profile Details
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>BIO / DESCRIPTION</span>
-                      <span style={{ color: '#fff', wordBreak: 'break-word' }}>{selectedUserProfile.bio || "No bio written yet."}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>
+                    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '3px' }}>BIO / DESCRIPTION</span>
+                      <span style={{ color: '#fff', wordBreak: 'break-word', lineHeight: '1.4' }}>{selectedUserProfile.bio || "No bio written yet."}</span>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>GENDER</span>
-                      <span style={{ color: selectedUserProfile.gender?.toLowerCase()?.includes('female') ? 'var(--neon-pink)' : 'var(--neon-cyan)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>GENDER</span>
+                      <span style={{ color: selectedUserProfile.gender?.toLowerCase()?.includes('female') ? 'var(--neon-pink)' : 'var(--neon-cyan)', fontWeight: 600 }}>
                         {selectedUserProfile.gender || "Unspecified"}
                       </span>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>LOCATION / CITY</span>
-                      <span style={{ color: '#fff' }}>{selectedUserProfile.city || "Not provided"}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>LOCATION / CITY</span>
+                      <span style={{ color: '#fff', fontWeight: 500 }}>{selectedUserProfile.city || "Not provided"}</span>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>DATE OF BIRTH</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>DATE OF BIRTH</span>
                       <span style={{ color: '#fff' }}>{selectedUserProfile.dob || "Not provided"}</span>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>SEXUAL PREFERENCE</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>SEXUAL PREFERENCE</span>
                       <span style={{ color: '#fff' }}>{selectedUserProfile.sexPreference || "Straight"}</span>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>MEMBERSHIP PLAN</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>MEMBERSHIP PLAN</span>
                       <span style={{ color: 'var(--neon-green)', fontWeight: 600 }}>{selectedUserProfile.planName || "Free Pass"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Creator & Verification Details */}
-                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                  <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', color: 'var(--neon-purple)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ background: 'rgba(255,255,255,0.03)', padding: '22px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: 'var(--neon-purple)', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
                     💰 Creator Program Details
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>REFERRAL CODE</span>
-                      <span style={{ fontFamily: 'monospace', color: 'var(--neon-cyan)', fontWeight: 700, fontSize: '0.95rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.88rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>REFERRAL CODE</span>
+                      <span style={{ fontFamily: 'monospace', color: 'var(--neon-cyan)', fontWeight: 700, fontSize: '1rem' }}>
                         {selectedUserProfile.code && selectedUserProfile.code !== 'N/A' ? selectedUserProfile.code : 'Not Applied'}
                       </span>
                     </div>
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>STATUS</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>STATUS</span>
                       <span style={{ 
-                        fontWeight: 600, 
+                        fontWeight: 700, 
                         color: (selectedUserProfile.status || '').toLowerCase() === 'approved' ? 'var(--neon-green)' : 
                                (selectedUserProfile.status || '').toLowerCase() === 'pending' ? '#f59e0b' : 'var(--text-muted)' 
                       }}>
@@ -849,53 +847,49 @@ export default function AffiliatePage() {
                     </div>
 
                     {selectedUserProfile.instagram_url && (
-                      <div>
+                      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>INSTAGRAM URL</span>
                         <a href={selectedUserProfile.instagram_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', wordBreak: 'break-all' }}>
                           {selectedUserProfile.instagram_url}
                         </a>
-                        <span style={{ display: 'block', fontSize: '0.72rem', color: selectedUserProfile.instagram_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: selectedUserProfile.instagram_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
                           {selectedUserProfile.instagram_verified ? '✓ Verified Bio' : `⏳ Code: ${selectedUserProfile.instagram_bio_code}`}
                         </span>
                       </div>
                     )}
 
                     {selectedUserProfile.youtube_url && (
-                      <div>
+                      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>YOUTUBE URL</span>
                         <a href={selectedUserProfile.youtube_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', wordBreak: 'break-all' }}>
                           {selectedUserProfile.youtube_url}
                         </a>
-                        <span style={{ display: 'block', fontSize: '0.72rem', color: selectedUserProfile.youtube_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
+                        <span style={{ display: 'block', fontSize: '0.75rem', color: selectedUserProfile.youtube_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
                           {selectedUserProfile.youtube_verified ? '✓ Verified Bio' : `⏳ Code: ${selectedUserProfile.youtube_bio_code}`}
                         </span>
                       </div>
                     )}
 
-                    {selectedUserProfile.other_url && (
-                      <div>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>OTHER PLATFORM URL</span>
-                        <a href={selectedUserProfile.other_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', wordBreak: 'break-all' }}>
-                          {selectedUserProfile.other_url}
-                        </a>
-                        <span style={{ display: 'block', fontSize: '0.72rem', color: selectedUserProfile.other_verified ? 'var(--neon-green)' : '#f59e0b', marginTop: '2px' }}>
-                          {selectedUserProfile.other_verified ? '✓ Verified Bio' : `⏳ Code: ${selectedUserProfile.other_bio_code}`}
+                    {selectedUserProfile.upi_id && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>PAYOUT UPI ID</span>
+                        <span style={{ fontFamily: 'monospace', color: '#fff', fontWeight: 600 }}>{selectedUserProfile.upi_id}</span>
+                      </div>
+                    )}
+
+                    <div style={{ paddingTop: '4px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '4px' }}>STATS SUMMARY</span>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ background: 'rgba(0, 229, 255, 0.1)', color: 'var(--neon-cyan)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                          Clicks: {selectedUserProfile.clicks || 0}
+                        </span>
+                        <span style={{ background: 'rgba(0, 230, 118, 0.1)', color: 'var(--neon-green)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                          Signups: {selectedUserProfile.signups || 0}
+                        </span>
+                        <span style={{ background: 'rgba(187, 134, 252, 0.1)', color: 'var(--neon-purple)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600 }}>
+                          Sales: {selectedUserProfile.sales || 0}
                         </span>
                       </div>
-                    )}
-
-                    {selectedUserProfile.upi_id && (
-                      <div>
-                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>PAYOUT UPI ID</span>
-                        <span style={{ fontFamily: 'monospace', color: '#fff' }}>{selectedUserProfile.upi_id}</span>
-                      </div>
-                    )}
-
-                    <div>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block' }}>STATS SUMMARY</span>
-                      <span style={{ color: '#fff' }}>
-                        Clicks: {selectedUserProfile.clicks || 0} | Signups: {selectedUserProfile.signups || 0} | Sales: {selectedUserProfile.sales || 0}
-                      </span>
                     </div>
                   </div>
                 </div>
@@ -903,11 +897,11 @@ export default function AffiliatePage() {
               </div>
 
               {/* Action Footer */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '20px' }}>
                 {(selectedUserProfile.status || '').toLowerCase() === 'pending' && (
                   <button 
                     className="btn-neon" 
-                    style={{ padding: '10px 20px', fontSize: '0.85rem' }} 
+                    style={{ padding: '10px 22px', fontSize: '0.88rem', fontWeight: 600 }} 
                     onClick={() => {
                       handleAdminApprove(selectedUserProfile.id);
                       setSelectedUserProfile(null);
@@ -920,10 +914,10 @@ export default function AffiliatePage() {
                   className="btn-glass"
                   style={{ 
                     padding: '10px 20px', 
-                    fontSize: '0.85rem', 
+                    fontSize: '0.88rem', 
                     borderColor: '#ef4444', 
                     color: '#ef4444',
-                    background: 'rgba(239, 68, 68, 0.05)'
+                    background: 'rgba(239, 68, 68, 0.08)'
                   }}
                   onClick={() => {
                     handleAdminDeleteUser(selectedUserProfile.user_id, selectedUserProfile.email);
@@ -935,7 +929,7 @@ export default function AffiliatePage() {
                 <button 
                   className="btn-glass" 
                   onClick={() => setSelectedUserProfile(null)}
-                  style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+                  style={{ padding: '10px 24px', fontSize: '0.88rem' }}
                 >
                   Close
                 </button>
