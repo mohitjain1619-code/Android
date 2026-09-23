@@ -19,7 +19,7 @@ const TESTER_EMAILS = [
 ];
 
 function CallPageInner() {
-  const { user, userData, loading, setShowOnboarding, setShowVerification } = useAuth();
+  const { user, userData, loading, setShowLogin, setShowOnboarding, setShowVerification } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const category = searchParams.get('category') || 'straight';
@@ -46,12 +46,12 @@ function CallPageInner() {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      setShowLogin(true);
+      if (typeof setShowLogin === 'function') setShowLogin(true);
       router.push('/');
       return;
     }
     if (!userData || !userData.gender) {
-      setShowOnboarding(true);
+      if (typeof setShowOnboarding === 'function') setShowOnboarding(true);
       router.push('/');
       return;
     }
