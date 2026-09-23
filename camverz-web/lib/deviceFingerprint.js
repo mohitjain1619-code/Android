@@ -16,8 +16,11 @@ function simpleHash(str) {
 function getBrowserFingerprint() {
   if (typeof window === 'undefined') return 'server';
 
-  const userAgent = navigator.userAgent || '';
-  const language = navigator.language || '';
+  const ua = navigator.userAgent || '';
+  const os = /windows/i.test(ua) ? 'win' : /macintosh|mac os/i.test(ua) ? 'mac' : /android/i.test(ua) ? 'android' : /iphone|ipad/i.test(ua) ? 'ios' : 'linux';
+  const platform = navigator.platform || '';
+  const cores = navigator.hardwareConcurrency || '';
+  const mem = navigator.deviceMemory || '';
   const screenRes = `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}`;
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
 
@@ -42,7 +45,7 @@ function getBrowserFingerprint() {
     canvasHash = 'no_canvas';
   }
 
-  const rawString = `${userAgent}|${language}|${screenRes}|${timezone}|${canvasHash}`;
+  const rawString = `${os}|${platform}|${cores}|${mem}|${screenRes}|${timezone}|${canvasHash}`;
   return `fp_${simpleHash(rawString)}`;
 }
 
