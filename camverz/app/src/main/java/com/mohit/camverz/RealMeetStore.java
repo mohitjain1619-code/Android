@@ -148,6 +148,29 @@ public class RealMeetStore {
         savePartyPosts(posts);
     }
 
+    public synchronized PartyPost getUserPartyPostToday(String userId) {
+        if (userId == null || userId.isEmpty()) return null;
+        List<PartyPost> posts = getPartyPosts();
+        long now = System.currentTimeMillis();
+
+        Calendar todayCal = Calendar.getInstance();
+        todayCal.setTimeInMillis(now);
+        int todayYear = todayCal.get(Calendar.YEAR);
+        int todayDay = todayCal.get(Calendar.DAY_OF_YEAR);
+
+        for (PartyPost post : posts) {
+            String postUser = post.getHostUserId() != null ? post.getHostUserId() : post.getUserId();
+            if (postUser != null && userId.equalsIgnoreCase(postUser)) {
+                Calendar postCal = Calendar.getInstance();
+                postCal.setTimeInMillis(post.getCreatedAt());
+                if (postCal.get(Calendar.YEAR) == todayYear && postCal.get(Calendar.DAY_OF_YEAR) == todayDay) {
+                    return post;
+                }
+            }
+        }
+        return null;
+    }
+
     public synchronized void deletePartyPost(String postId) {
         if (postId == null) return;
         List<PartyPost> posts = getPartyPosts();

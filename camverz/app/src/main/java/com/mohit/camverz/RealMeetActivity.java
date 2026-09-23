@@ -1257,7 +1257,7 @@ public class RealMeetActivity extends BaseActivity {
         if (currentTab == Tab.REAL_MEET) {
             checkAndOpenRealMeetDialog();
         } else if (currentTab == Tab.PARTY) {
-            openPartyDialog();
+            checkAndOpenPartyDialog();
         } else if (currentTab == Tab.FANTASY) {
             openFantasyDialog();
         } else {
@@ -1278,6 +1278,22 @@ public class RealMeetActivity extends BaseActivity {
                     .show();
         } else {
             openRealMeetDialog(null);
+        }
+    }
+
+    private void checkAndOpenPartyDialog() {
+        PartyPost existingParty = store.getUserPartyPostToday(currentUserId);
+        if (existingParty != null) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Active Party Event Exists Today")
+                    .setMessage("You already have an active Party event posted today:\n\"" + existingParty.getPurpose()
+                            + "\" at " + existingParty.getVenue()
+                            + ".\n\nYou can only post 1 Party event per day. Would you like to replace your previous event?")
+                    .setPositiveButton("Replace Event", (dialog, which) -> openPartyDialog(existingParty))
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            openPartyDialog(null);
         }
     }
 
@@ -1424,7 +1440,7 @@ public class RealMeetActivity extends BaseActivity {
         dialog.show();
     }
 
-    private void openPartyDialog() {
+    private void openPartyDialog(PartyPost oldPartyToReplace) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_party, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
 
@@ -1487,6 +1503,16 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             int capacity = Integer.parseInt(capStr);
+
+            if (oldPartyToReplace != null) {
+                store.deletePartyPost(oldPartyToReplace.getId());
+                api.deleteRealMeetServerPost(oldPartyToReplace.getId()).enqueue(new Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                    @Override
+                    public void onFailure(Call<JsonObject> call, Throwable t) {}
+                });
+            }
 
             PartyPost partyPost = new PartyPost(
                     UUID.randomUUID().toString(),
