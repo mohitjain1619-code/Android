@@ -754,11 +754,15 @@ export default function AffiliatePage() {
                   overflow: 'hidden',
                   flexShrink: 0
                 }}>
-                  {selectedUserProfile.photoUrl ? (
-                    <img src={selectedUserProfile.photoUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    (selectedUserProfile.name || 'U').charAt(0).toUpperCase()
-                  )}
+                  <img 
+                    src={
+                      selectedUserProfile.avatar 
+                        ? `/avatars/${selectedUserProfile.avatar}.png` 
+                        : (selectedUserProfile.photoUrl || selectedUserProfile.photo_url || '/avatars/av1.png')
+                    } 
+                    alt="Avatar" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
                 </div>
 
                 <div>
