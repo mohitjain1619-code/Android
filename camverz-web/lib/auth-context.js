@@ -79,6 +79,10 @@ export function AuthProvider({ children }) {
       if (response.ok) {
         setUser({ uid: response.user.id, ...response.user });
         setUserData(response.user);
+        const g = (response.user.gender || '').trim().toLowerCase();
+        if ((!g || g === 'unspecified' || g === '') && typeof window !== 'undefined' && window.location.pathname !== '/affiliate') {
+          setShowOnboarding(true);
+        }
       }
     } catch (err) {
       console.error('Failed to load user:', err);
@@ -154,7 +158,8 @@ export function AuthProvider({ children }) {
                 alert("Notice: Multiple accounts detected on this device. Free trial benefits apply to 1 account per device.");
               }
               
-              if ((result.isNewUser || !result.user.gender) && window.location.pathname !== '/affiliate') {
+              const userGender = (result.user.gender || '').trim().toLowerCase();
+              if ((result.isNewUser || !userGender || userGender === 'unspecified') && window.location.pathname !== '/affiliate') {
                 setShowOnboarding(true);
               }
               setAuthStage('idle');

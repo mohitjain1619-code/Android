@@ -181,7 +181,7 @@ export default function OnboardingModal({ onClose, initialStep = 0 }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content" style={{ position: 'relative' }}>
-        {onClose && userData?.gender && userData.gender.trim() !== '' && userData.gender.toLowerCase() !== 'unspecified' && (
+        {onClose && (
           <button className={styles.close} onClick={onClose}><X size={20} /></button>
         )}
 

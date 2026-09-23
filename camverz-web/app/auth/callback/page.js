@@ -25,14 +25,16 @@ export default function AuthCallback() {
               { type: 'google-auth', idToken },
               window.location.origin
             );
+            
+            // Auto-close popup window after a short delay
+            setTimeout(() => {
+              window.close();
+              setTimeout(() => setShowFallback(true), 500);
+            }, 300);
+          } else {
+            // Full-tab redirect fallback for mobile browsers — return to home page
+            window.location.href = '/';
           }
-          
-          // Auto-close popup window after a short delay to allow parent window to read it
-          setTimeout(() => {
-            window.close();
-            // If window.close() didn't work (some browsers block it), show fallback
-            setTimeout(() => setShowFallback(true), 500);
-          }, 300);
         }
       }
     } catch (err) {
