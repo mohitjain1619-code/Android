@@ -29,7 +29,7 @@ router.get("/me", async (req, res) => {
           email: req.user.email || "",
           avatar: "av1",
           photoUrl: null,
-          gender: "male",
+          gender: "",
           sexPreference: "Straight",
           verified: false
         },
@@ -76,7 +76,7 @@ router.get("/:id", async (req, res) => {
           email: "",
           avatar: "av1",
           photoUrl: null,
-          gender: "male",
+          gender: "",
           sexPreference: "Straight",
           verified: false,
           followersCount: 0,

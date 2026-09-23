@@ -110,7 +110,7 @@ router.post("/", async (req, res) => {
       avatar: "av1",
       photo_url: null,
       verified: false,
-      gender: "male",
+      gender: "",
       sex_preference: "Straight"
     };
 
