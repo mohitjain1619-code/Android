@@ -162,9 +162,10 @@ export function AuthProvider({ children }) {
             }
           } catch (err) {
             setAuthStage('idle');
-            const errMsg = err.response?.data?.message || err.response?.data?.error || err.message || "Authentication failed";
-            alert(errMsg);
-            reject(err);
+            const rawMsg = err.response?.data?.details || err.response?.data?.message || err.response?.data?.error || err.message || "Authentication failed";
+            const cleanMsg = rawMsg === 'Internal error' ? 'Server is warming up. Please tap Sign In again in a few seconds.' : rawMsg;
+            console.error("Auth Error:", cleanMsg, err);
+            reject(new Error(cleanMsg));
           }
         };
 

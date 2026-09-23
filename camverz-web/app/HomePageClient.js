@@ -10,58 +10,8 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [showLaunchModal, setShowLaunchModal] = useState(false);
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const featuresRef = useRef(null);
   const statsRef = useRef(null);
-
-  const TESTER_EMAILS = [
-    'jainmohit.cr007@gmail.com',
-    'mohitj8120@gmail.com',
-    'monishkarai206@gmail.com',
-    'mohitjain1619@gmail.com',
-    'info.meetblis@gmail.com',
-    'wetviapp@gmail.com',
-    'mohitissuingthis@gmail.com'
-  ];
-
-  useEffect(() => {
-    if (loading) return;
-    if (searchParams.get('launch') === 'true') {
-      const email = user?.email || userData?.email;
-      const isTester = email && TESTER_EMAILS.map(e => e.toLowerCase().trim()).includes(email.toLowerCase().trim());
-      if (!isTester) {
-        setShowLaunchModal(true);
-      }
-      router.replace('/');
-    }
-  }, [searchParams, router, user, userData, loading]);
-
-  useEffect(() => {
-    // Launch Date: August 15, 2026 00:00:00 IST
-    const launchDate = new Date("August 15, 2026 00:00:00 GMT+0530").getTime();
-    
-    const updateCountdown = () => {
-      const now = new Date().getTime();
-      const difference = launchDate - now;
-
-      if (difference <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-      setTimeLeft({ days, hours, minutes, seconds });
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (searchParams.get('login') === 'true' && !user) setShowLogin(true);
@@ -98,8 +48,7 @@ function HomeContent() {
             });
           });
 
-          // Animate preference cards immediately on load (without ScrollTrigger)
-          // Since the page is scaled down on mobile, these are visible on load and ScrollTrigger can miss them
+          // Animate preference cards immediately on load
           gsapInstance.utils.toArray(`.${styles.prefCard}`).forEach((card, i) => {
             gsapInstance.from(card, {
               scale: 0.9, opacity: 0, duration: 0.5, delay: i * 0.1, ease: 'back.out(1.4)',
@@ -231,79 +180,6 @@ function HomeContent() {
           </button>
         </div>
       </section>
-
-      {/* Launch Countdown Modal */}
-      {showLaunchModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 99999,
-            backgroundColor: 'rgba(5, 5, 15, 0.85)',
-            backdropFilter: 'blur(12px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}
-        >
-          <div 
-            style={{
-              background: 'linear-gradient(135deg, rgba(20, 20, 35, 0.95), rgba(10, 10, 20, 0.98))',
-              border: '1px solid rgba(0, 229, 255, 0.3)',
-              boxShadow: '0 0 50px rgba(0, 229, 255, 0.2)',
-              borderRadius: '24px',
-              padding: '40px 30px',
-              maxWidth: '480px',
-              width: '100%',
-              textAlign: 'center',
-              color: '#fff'
-            }}
-          >
-            <div style={{ fontSize: '3.5rem', marginBottom: '15px' }}>🚀</div>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '10px', background: 'linear-gradient(90deg, #00E5FF, #BD00FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Camverz is Launching Soon!
-            </h2>
-            <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.95rem', marginBottom: '25px', lineHeight: '1.5' }}>
-              We are fine-tuning the platform for the ultimate video call experience. Camverz officially goes live on <strong>Independence Day, 15th August 2026</strong>!
-            </p>
-
-            {/* Countdown Box */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginBottom: '30px' }}>
-              {[
-                { label: 'Days', val: timeLeft.days },
-                { label: 'Hours', val: timeLeft.hours },
-                { label: 'Mins', val: timeLeft.minutes },
-                { label: 'Secs', val: timeLeft.seconds }
-              ].map((item, idx) => (
-                <div key={idx} style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', padding: '10px 14px', minWidth: '65px' }}>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#00E5FF' }}>{String(item.val).padStart(2, '0')}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', marginTop: '2px' }}>{item.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <button 
-              onClick={() => setShowLaunchModal(false)}
-              className="btn-neon"
-              style={{
-                width: '100%',
-                padding: '14px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                background: 'linear-gradient(90deg, #00E5FF, #BD00FF)',
-                border: 'none',
-                color: '#fff',
-                borderRadius: '8px'
-              }}
-            >
-              Jai Hind! I'll Wait 🇮🇳
-            </button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

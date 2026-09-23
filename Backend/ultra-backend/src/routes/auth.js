@@ -231,7 +231,10 @@ router.post("/google", async (req, res) => {
     });
   } catch (err) {
     console.error("Auth error:", err);
-    return res.status(500).json({ error: "Internal error", details: err.message });
+    return res.status(500).json({ 
+      error: "Authentication service temporary issue. Please try again.", 
+      details: err.message 
+    });
   }
 });
 
