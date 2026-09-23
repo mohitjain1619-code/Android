@@ -210,10 +210,11 @@ public class FeedActivity extends BaseActivity {
                                 // Enforce post privacy based on current user's gender
                                 String postCat = post.getCategory();
                                 String myGender = tokenManager.getUserGender();
-                                if ("male".equalsIgnoreCase(myGender) && "female".equalsIgnoreCase(postCat)) {
+                                String myUid = tokenManager.getUserId();
+                                if ("male".equalsIgnoreCase(myGender) && "female".equalsIgnoreCase(postCat) && (myUid == null || !myUid.equals(post.getUserId()))) {
                                     continue;
                                 }
-                                if ("female".equalsIgnoreCase(myGender) && "male".equalsIgnoreCase(postCat)) {
+                                if ("female".equalsIgnoreCase(myGender) && "male".equalsIgnoreCase(postCat) && (myUid == null || !myUid.equalsIgnoreCase(post.getUserId()))) {
                                     continue;
                                 }
 
