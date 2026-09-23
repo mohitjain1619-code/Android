@@ -20,7 +20,7 @@ function formatPost(r) {
     hostPhotoUrl: r.photo_url,
     age: r.age,
     hostAge: r.age,
-    city: r.user_city || r.city || r.location || "Nearby",
+    city: r.city,
     purpose: r.purpose,
     location: r.location,
     venue: r.location, // For Party parity
@@ -72,8 +72,7 @@ async function cleanupExpiredPosts() {
     for (const r of rows) {
       if (r.meeting_time && typeof r.meeting_time === 'string' && r.meeting_time.includes('T')) {
         const timeMs = new Date(r.meeting_time).getTime();
-        // Add 24 hour buffer after scheduled meeting time before auto-deleting
-        if (!isNaN(timeMs) && (timeMs + 24 * 60 * 60 * 1000) < now) {
+        if (!isNaN(timeMs) && timeMs < now) {
           expiredIds.push(r.id);
         }
       }
@@ -99,7 +98,7 @@ router.get("/feed", async (req, res) => {
   try {
     await cleanupExpiredPosts();
     const rows = await queryMany(
-      `SELECT cp.*, u.name as user_name, u.avatar as user_avatar, u.photo_url, u.gender, u.verified, u.is_premium as premium, u.sex_preference, u.dob, u.city as user_city
+      `SELECT cp.*, u.name as user_name, u.avatar as user_avatar, u.photo_url, u.gender, u.verified, u.is_premium as premium, u.sex_preference, u.dob
        FROM community_posts cp
        JOIN users u ON u.id = cp.user_id
        ORDER BY cp.created_at DESC`
@@ -172,7 +171,7 @@ router.post("/post", async (req, res) => {
     );
 
     // Fetch poster details to broadcast
-    const u = await queryOne("SELECT name as user_name, avatar as user_avatar, photo_url, gender, verified, is_premium as premium, sex_preference, city as user_city FROM users WHERE id = $1", [req.user.userId]);
+    const u = await queryOne("SELECT name as user_name, avatar as user_avatar, photo_url, gender, verified, is_premium as premium, sex_preference FROM users WHERE id = $1", [req.user.userId]);
 
     const formatted = formatPost({ ...inserted, ...u });
 
