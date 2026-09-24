@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { Video, Shield, Users, Globe, Heart, Zap, ArrowRight, Star, Lock, Sparkles, MessageSquare, UserCheck } from 'lucide-react';
+import { Video, Shield, Users, Globe, Heart, Zap, ArrowRight, Star, Lock, Sparkles, MessageSquare, UserCheck, Smartphone, QrCode, AlertCircle, Download } from 'lucide-react';
 import styles from './page.module.css';
 
 function HomeContent() {
@@ -175,6 +175,88 @@ function HomeContent() {
                 <div className={styles.prefArrow}><ArrowRight size={20} /></div>
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile App Download Section */}
+      <section className={styles.appDownloadSection} id="mobile-app">
+        <div className="section">
+          <div className={styles.appBannerCard}>
+            <div className={styles.appBannerGlow} />
+            
+            <div className={styles.appBannerContent}>
+              <div className={styles.appBadge}>
+                <Smartphone size={15} />
+                <span>Camverz Android App</span>
+              </div>
+              
+              <h2 className={styles.appTitle}>
+                Find People <span className="neon-text">Faster & Better</span> On Mobile App
+              </h2>
+              
+              <p className={styles.appSubtitle}>
+                In our Mobile App, you find people much faster! Get instant push alerts, zero-lag video calls, real-world party check-ins, and camera optimizations designed for real-time socializing on the go.
+              </p>
+
+              <div className={styles.appFeaturesList}>
+                <div className={styles.appFeatureItem}>
+                  <Zap size={16} className={styles.appIconCyan} />
+                  <span><strong>Instant Match Alerts:</strong> Never miss a video call or RealMeet party request</span>
+                </div>
+                <div className={styles.appFeatureItem}>
+                  <Sparkles size={16} className={styles.appIconMagenta} />
+                  <span><strong>Smooth HD Video Calls:</strong> Optimized mobile WebRTC engine for low latency</span>
+                </div>
+                <div className={styles.appFeatureItem}>
+                  <Smartphone size={16} className={styles.appIconGreen} />
+                  <span><strong>RealMeet Party Host:</strong> Discover nearby events or host house parties on the go</span>
+                </div>
+              </div>
+
+              {/* Highlight Note for Subscriptions */}
+              <div className={styles.subscriptionAlertBox}>
+                <AlertCircle size={22} className={styles.alertIcon} />
+                <div>
+                  <strong>📌 IMPORTANT NOTE FOR SUBSCRIPTIONS:</strong>
+                  <p>For any kind of subscription, VIP plan upgrade, or coin top-ups, <strong>you have to do it from the website only</strong>.</p>
+                </div>
+              </div>
+
+              <div className={styles.appButtonsRow}>
+                <a 
+                  href="https://play.google.com/store/apps/details?id=com.mohit.camverz" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className={styles.playStoreBtn}
+                >
+                  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor">
+                    <path d="M325.8 253.9L80.9 10.1C75.2 4.1 67.2 0 58.1 0 40 0 25.3 14.7 25.3 32.8c0 3.3.5 6.5 1.5 9.5l299 211.6zM25.3 479.2C25.3 497.3 40 512 58.1 512c9.1 0 17.1-4.1 22.8-10.1l244.9-243.8L26.8 469.7c-1 3-1.5 6.2-1.5 9.5zM468.9 220.8L360.7 160l-45.7 45.7 45.7 45.7 108.2-60.8c8.9-5.1 14.1-14.7 14.1-24.9s-5.2-19.8-14.1-24.9zM25.3 54.1v403.8l202.9-201.9L25.3 54.1z"/>
+                  </svg>
+                  <div className={styles.btnText}>
+                    <span className={styles.smallText}>GET IT ON</span>
+                    <span className={styles.bigText}>Google Play</span>
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div className={styles.appQrWrapper}>
+              <div className={styles.qrCard}>
+                <div className={styles.qrHeader}>
+                  <QrCode size={18} />
+                  <span>Scan to Install App</span>
+                </div>
+                <div className={styles.qrFrame}>
+                  <img 
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://play.google.com/store/apps/details?id=com.mohit.camverz&color=000000&bgcolor=ffffff" 
+                    alt="Scan QR Code to Download Camverz Android App" 
+                    className={styles.qrImage}
+                  />
+                </div>
+                <p className={styles.qrDesc}>Scan with your phone camera to download Android App instantly</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
