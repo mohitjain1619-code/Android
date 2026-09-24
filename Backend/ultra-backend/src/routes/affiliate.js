@@ -1085,13 +1085,10 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
       let formattedDate = "N/A";
       if (a.user_created_at) {
         try {
-          if (typeof a.user_created_at.toISOString === 'function') {
-            formattedDate = a.user_created_at.toISOString().split("T")[0];
-          } else {
-            formattedDate = String(a.user_created_at).split("T")[0];
-          }
+          const d = new Date(a.user_created_at);
+          formattedDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
         } catch (e) {
-          formattedDate = String(a.user_created_at);
+          formattedDate = String(a.user_created_at).split("T")[0];
         }
       }
 
