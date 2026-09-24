@@ -1086,7 +1086,15 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
       if (a.user_created_at) {
         try {
           const d = new Date(a.user_created_at);
-          formattedDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
+          formattedDate = d.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
         } catch (e) {
           formattedDate = String(a.user_created_at).split("T")[0];
         }
