@@ -1,6 +1,6 @@
 const express = require("express");
 const { OAuth2Client } = require("google-auth-library");
-const { queryOne } = require("../config/database");
+const { query, queryOne } = require("../config/database");
 const { generateToken } = require("../middleware/auth");
 const redisModule = require("../config/redis");
 
