@@ -194,7 +194,7 @@ router.post("/google", async (req, res) => {
       ok: true,
       token,
       isNewUser,
-      deviceAccountWarning,
+      deviceAccountWarning: false,
       hasFreeTrial: user.has_free_trial !== false,
       user: {
         id: user.id,
