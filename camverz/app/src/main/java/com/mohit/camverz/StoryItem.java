@@ -12,6 +12,24 @@ public class StoryItem implements Serializable {
     private String bgGradient;
     private long createdAt;
     private long expiresAt;
+    private int viewsCount;
+    private boolean hasViewed;
+
+    public int getViewsCount() {
+        return viewsCount;
+    }
+
+    public void setViewsCount(int viewsCount) {
+        this.viewsCount = viewsCount;
+    }
+
+    public boolean isHasViewed() {
+        return hasViewed;
+    }
+
+    public void setHasViewed(boolean hasViewed) {
+        this.hasViewed = hasViewed;
+    }
 
     public String getId() {
         return id;

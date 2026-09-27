@@ -135,17 +135,63 @@
         </RelativeLayout>
     </LinearLayout>
 
-    <!-- Admin actions (Delete Story option) -->
-    <ImageView
-        android:id="@+id/btnDeleteStory"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:layout_alignParentEnd="true"
+    <!-- Bottom Footer Layout (Story Viewers Count & Direct Message Button) -->
+    <LinearLayout
+        android:id="@+id/storyBottomLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_margin="24dp"
-        android:src="@android:drawable/ic_menu_delete"
-        android:tint="#FF2D55"
-        android:visibility="gone"
-        android:clickable="true"
-        android:focusable="true"/>
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="#77000000">
+
+        <!-- Views Counter (Visible for Story Author/Admin) -->
+        <TextView
+            android:id="@+id/btnStoryViews"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_following_button"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:text="👁️ 0 views"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Direct Message Button (Visible when viewing someone else's story) -->
+        <TextView
+            android:id="@+id/btnSendMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_btn_primary_gradient"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:text="💬 Message Author"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Admin Delete Button -->
+        <ImageView
+            android:id="@+id/btnDeleteStory"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="12dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:tint="#FF2D55"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true"/>
+    </LinearLayout>
 </RelativeLayout>

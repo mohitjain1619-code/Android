@@ -1,6 +1,7 @@
 package com.mohit.camverz;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.net.Uri;
@@ -16,8 +17,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
 import com.mohit.camverz.api.ApiService;
@@ -44,6 +50,8 @@ public class StoryViewerActivity extends BaseActivity {
     private TextView tvViewerName;
     private TextView btnStoryClose;
     private ImageView btnDeleteStory;
+    private TextView btnStoryViews;
+    private TextView btnSendMessage;
 
     private UserStories userStories;
     private List<StoryItem> storiesList;
@@ -118,9 +126,22 @@ public class StoryViewerActivity extends BaseActivity {
         tvViewerName = findViewById(R.id.tvViewerName);
         btnStoryClose = findViewById(R.id.btnStoryClose);
         btnDeleteStory = findViewById(R.id.btnDeleteStory);
+        btnStoryViews = findViewById(R.id.btnStoryViews);
+        btnSendMessage = findViewById(R.id.btnSendMessage);
 
         tvViewerName.setText(userStories.getUserName());
         AvatarHelper.loadAvatar(this, null, userStories.getUserAvatar(), userStories.getUserName(), ivViewerAvatar);
+
+        View.OnClickListener openProfileListener = v -> {
+            if (userStories != null && userStories.getUserId() != null) {
+                isPaused = true;
+                Intent intent = new Intent(StoryViewerActivity.this, ProfileActivity.class);
+                intent.putExtra("userId", userStories.getUserId());
+                startActivity(intent);
+            }
+        };
+        ivViewerAvatar.setOnClickListener(openProfileListener);
+        tvViewerName.setOnClickListener(openProfileListener);
 
         btnStoryClose.setOnClickListener(v -> finish());
 
@@ -187,6 +208,36 @@ public class StoryViewerActivity extends BaseActivity {
         tvStoryTextOnly.setVisibility(View.GONE);
         tvStoryOverlayText.setVisibility(View.GONE);
 
+        String currentUserId = tokenManager.getUserId();
+        String authorUserId = userStories.getUserId();
+        boolean isStoryOwner = (currentUserId != null && currentUserId.equalsIgnoreCase(authorUserId))
+                || ("mohitjain1619@gmail.com".equalsIgnoreCase(tokenManager.getUserEmail()));
+
+        if (isStoryOwner) {
+            btnSendMessage.setVisibility(View.GONE);
+            btnStoryViews.setVisibility(View.VISIBLE);
+            btnStoryViews.setText("👁️ " + story.getViewsCount() + " views");
+            btnStoryViews.setOnClickListener(v -> showStoryViewersBottomSheet(story.getId()));
+        } else {
+            btnStoryViews.setVisibility(View.GONE);
+            btnSendMessage.setVisibility(View.VISIBLE);
+            btnSendMessage.setOnClickListener(v -> {
+                isPaused = true;
+                Intent intent = new Intent(StoryViewerActivity.this, ChatActivity.class);
+                intent.putExtra("userId", userStories.getUserId());
+                intent.putExtra("userName", userStories.getUserName());
+                intent.putExtra("userAvatar", userStories.getUserAvatar());
+                intent.putExtra("userPhotoUrl", userStories.getUserPhotoUrl());
+                startActivity(intent);
+            });
+        }
+
+        // Record story view on backend
+        api.recordStoryView(story.getId()).enqueue(new Callback<JsonObject>() {
+            @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+            @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+        });
+
         String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
 
         if ("TEXT".equalsIgnoreCase(story.getType())) {
@@ -240,6 +291,59 @@ public class StoryViewerActivity extends BaseActivity {
 
             startProgressCountdown();
         }
+    }
+
+    private void showStoryViewersBottomSheet(String storyId) {
+        isPaused = true;
+        if (vvStoryVideo.isPlaying()) vvStoryVideo.pause();
+
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_story_viewers, null);
+        dialog.setContentView(dialogView);
+
+        TextView tvViewerTitle = dialogView.findViewById(R.id.tvViewerTitle);
+        RecyclerView rvStoryViewers = dialogView.findViewById(R.id.rvStoryViewers);
+        ProgressBar pbLoading = dialogView.findViewById(R.id.pbLoading);
+
+        rvStoryViewers.setLayoutManager(new LinearLayoutManager(this));
+
+        dialog.setOnDismissListener(d -> {
+            isPaused = false;
+            if (isVideoPrepared && !vvStoryVideo.isPlaying()) {
+                vvStoryVideo.start();
+            }
+        });
+
+        api.getStoryViewers(storyId).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                pbLoading.setVisibility(View.GONE);
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("viewers")) {
+                        JsonArray viewers = data.getAsJsonArray("viewers");
+                        int count = data.has("viewCount") ? data.get("viewCount").getAsInt() : viewers.size();
+                        tvViewerTitle.setText("Story Views (" + count + ")");
+
+                        StoryViewersAdapter adapter = new StoryViewersAdapter(StoryViewerActivity.this, viewers, viewerUserId -> {
+                            dialog.dismiss();
+                            Intent intent = new Intent(StoryViewerActivity.this, ProfileActivity.class);
+                            intent.putExtra("userId", viewerUserId);
+                            startActivity(intent);
+                        });
+                        rvStoryViewers.setAdapter(adapter);
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                pbLoading.setVisibility(View.GONE);
+                Toast.makeText(StoryViewerActivity.this, "Failed to load viewers", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
     }
 
     private void applyTextStoryTheme(String theme, String textColor) {

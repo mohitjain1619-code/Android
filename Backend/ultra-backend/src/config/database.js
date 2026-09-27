@@ -253,6 +253,18 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_stories_expires_at ON stories(expires_at);
     `);
 
+    // 16. Create Story Views Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS story_views (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        story_id UUID NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+        viewer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(story_id, viewer_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_story_views_story_id ON story_views(story_id);
+    `);
+
     console.log("✅ Database migrations and speed indexing applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations or indexes:", err.message);

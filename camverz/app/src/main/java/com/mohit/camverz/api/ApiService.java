@@ -245,6 +245,12 @@ public interface ApiService {
     @DELETE("stories/{id}")
     Call<JsonObject> deleteStory(@Path("id") String storyId);
 
+    @POST("stories/{id}/view")
+    Call<JsonObject> recordStoryView(@Path("id") String storyId);
+
+    @GET("stories/{id}/viewers")
+    Call<JsonObject> getStoryViewers(@Path("id") String storyId);
+
     // ============================================
     // ADS TRACKING
     // ============================================
