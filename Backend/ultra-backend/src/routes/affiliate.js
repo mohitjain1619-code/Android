@@ -1072,6 +1072,26 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
           };
         }
       });
+
+      // Also merge historical completed ads from old rewarded_ad_logs table
+      const oldLogs = await queryMany(`
+        SELECT user_id, COUNT(*)::int as count
+        FROM rewarded_ad_logs
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id
+      `);
+      oldLogs.forEach(old => {
+        if (old.user_id) {
+          if (!adStatsMap[old.user_id]) {
+            adStatsMap[old.user_id] = { requests: old.count, delivered: old.count, failed: 0 };
+          } else {
+            adStatsMap[old.user_id].delivered += old.count;
+            if (adStatsMap[old.user_id].requests < adStatsMap[old.user_id].delivered) {
+              adStatsMap[old.user_id].requests = adStatsMap[old.user_id].delivered;
+            }
+          }
+        }
+      });
     } catch (e) {}
 
     try {
@@ -1431,7 +1451,7 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
       dateFilter = `WHERE (created_at AT TIME ZONE 'Asia/Kolkata')::date = $${params.length}`;
     }
 
-    // 1. System Overall Summary
+    // 1. System Overall Summary (combining ad_analytics_logs with historical rewarded_ad_logs)
     const overallQuery = `
       SELECT 
         COUNT(*)::int as total_events,
@@ -1446,16 +1466,28 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
     `;
     const overallRes = await queryOne(overallQuery, params);
     
-    const requests = overallRes?.total_requests || 0;
-    const delivered = overallRes?.total_delivered || 0;
+    // Count historical rewarded ad completions
+    const oldQuery = `SELECT COUNT(*)::int as old_count FROM rewarded_ad_logs ${dateFilter}`;
+    const oldRes = await queryOne(oldQuery, params);
+    const oldCount = oldRes?.old_count || 0;
+
+    let delivered = (overallRes?.total_delivered || 0) + oldCount;
+    let requests = (overallRes?.total_requests || 0);
+    if (requests < delivered) requests = delivered;
     const failed = overallRes?.total_failed || 0;
     const fillRate = requests > 0 ? parseFloat(((delivered / requests) * 100).toFixed(1)) : (delivered > 0 ? 100 : 0);
 
-    // 2. Recent Ad Logs (with User Info)
+    // 2. Recent Ad Logs (combining new ad_analytics_logs with historical rewarded_ad_logs)
     let logsQuery = `
-      SELECT l.*, u.name as user_name, u.email as user_email, u.country as user_country
+      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, l.created_at, u.name as user_name, u.email as user_email, COALESCE(u.country, 'India') as user_country
       FROM ad_analytics_logs l
       LEFT JOIN users u ON l.user_id = u.id
+
+      UNION ALL
+
+      SELECT r.id, r.user_id, 'COMPLETED' as event_type, 'rewarded' as ad_type, 'admob' as ad_network, 'DELIVERED' as status, '' as error_code, '' as error_message, 'android' as platform, r.created_at, u.name as user_name, u.email as user_email, COALESCE(u.country, 'India') as user_country
+      FROM rewarded_ad_logs r
+      LEFT JOIN users u ON r.user_id = u.id
     `;
 
     const logParams = [];
@@ -1463,21 +1495,22 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
 
     if (date) {
       logParams.push(date);
-      logConditions.push(`(l.created_at AT TIME ZONE 'Asia/Kolkata')::date = $${logParams.length}`);
+      logConditions.push(`(created_at AT TIME ZONE 'Asia/Kolkata')::date = $${logParams.length}`);
     }
 
     if (user_id) {
       logParams.push(user_id);
-      logConditions.push(`l.user_id = $${logParams.length}`);
+      logConditions.push(`user_id = $${logParams.length}`);
     }
 
+    let finalQuery = `SELECT * FROM (${logsQuery}) combined`;
     if (logConditions.length > 0) {
-      logsQuery += " WHERE " + logConditions.join(" AND ");
+      finalQuery += " WHERE " + logConditions.join(" AND ");
     }
 
-    logsQuery += " ORDER BY l.created_at DESC LIMIT 200";
+    finalQuery += " ORDER BY created_at DESC LIMIT 200";
 
-    const rawLogs = await queryMany(logsQuery, logParams);
+    const rawLogs = await queryMany(finalQuery, logParams);
 
     const formattedLogs = rawLogs.map(log => {
       let formattedTime = "N/A";
