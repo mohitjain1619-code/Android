@@ -172,8 +172,10 @@ public class CreatePostActivity extends BaseActivity {
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
+        AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
         if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
             final boolean[] rewardEarned = {false};
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
 
             com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
                 @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
@@ -185,6 +187,7 @@ public class CreatePostActivity extends BaseActivity {
                 @Override 
                 public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
+                    AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
                     runOnUiThread(onFailure);
                 }
                 
@@ -208,6 +211,7 @@ public class CreatePostActivity extends BaseActivity {
 
             com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
         } else {
+            AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource Rewarded Video not available / No placement configured");
             // Ad not available, fall back to upload directly to avoid blocking
             runOnUiThread(onFailure);
         }
