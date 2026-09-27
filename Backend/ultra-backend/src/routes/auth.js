@@ -53,7 +53,7 @@ router.post("/google", async (req, res) => {
     const name = payload.name || "";
     const photoUrl = payload.picture || "";
 
-    // 1. Strict Device Account Binding (Block if device/IP is already registered to a different account)
+    // 1. Device Account Binding Check (Non-blocking, tracking only)
     if (deviceId) {
       try {
         const clientIp = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
@@ -68,14 +68,10 @@ router.post("/google", async (req, res) => {
           [deviceId, email]
         );
 
-        if (existingDeviceOwner && existingDeviceOwner.email.toLowerCase() !== "mohitjain1619@gmail.com") {
-          console.warn(
-            `⚠️ Anti-Abuse Blocked: Device ${deviceId} / IP ${clientIp} is already linked to ${existingDeviceOwner.email}. Attempted login: ${email}`
+        if (existingDeviceOwner) {
+          console.log(
+            `ℹ️ Device ${deviceId} / IP ${clientIp} was previously used by ${existingDeviceOwner.email}. Allowing login for: ${email}`
           );
-          return res.status(403).json({
-            error: "device_bound",
-            message: `This device is already linked to another account (${existingDeviceOwner.email}). Please log in using that account.`
-          });
         }
       } catch (devErr) {
         console.error("[DeviceTracking] Error checking existing device:", devErr.message);
