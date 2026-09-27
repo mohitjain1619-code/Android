@@ -75,7 +75,9 @@ router.post("/google", async (req, res) => {
     const name = payload.name || "";
     const photoUrl = payload.picture || "";
 
-    // 1. Device Account Binding Check (Non-blocking, tracking only)
+    // 1. Device Account Binding Check:
+    // Strictly 1 physical device (deviceId) can only log into 1 account.
+    // If deviceId is already linked to a different account, BLOCK login attempt on the same device!
     if (deviceId) {
       try {
         const clientIp = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
@@ -92,36 +94,16 @@ router.post("/google", async (req, res) => {
 
         if (existingDeviceOwner) {
           console.log(
-            `ℹ️ Device ${deviceId} / IP ${clientIp} was previously used by ${existingDeviceOwner.email}. Allowing login for: ${email}`
+            `⛔ [DeviceBlock] Device ${deviceId} (IP: ${clientIp}) is already linked to ${existingDeviceOwner.email}. Blocking login attempt for: ${email}`
           );
+          return res.status(403).json({
+            ok: false,
+            error: "device_bound",
+            message: `This device is already linked to another account (${existingDeviceOwner.email}). Multiple account logins on the same device are not allowed.`
+          });
         }
       } catch (devErr) {
         console.error("[DeviceTracking] Error checking existing device:", devErr.message);
-      }
-    }
-
-    // 2. Secondary Device Google Accounts Check (Android only - warning flag only, non-blocking)
-    if (Array.isArray(deviceEmails) && deviceEmails.length > 0) {
-      try {
-        const cleanEmails = deviceEmails
-          .map(e => (e || "").trim().toLowerCase())
-          .filter(e => e.length > 0 && e !== email.toLowerCase());
-
-        if (cleanEmails.length > 0) {
-          const placeholders = cleanEmails.map((_, idx) => `$${idx + 1}`).join(", ");
-          const matchedUser = await queryOne(
-            `SELECT email FROM users WHERE LOWER(email) IN (${placeholders}) LIMIT 1`,
-            cleanEmails
-          );
-
-          if (matchedUser) {
-            console.log(
-              `ℹ️ Secondary account detected on device: ${matchedUser.email} is registered. Allowing login for: ${email}`
-            );
-          }
-        }
-      } catch (emailCheckErr) {
-        console.error("[DeviceTracking] Error checking device emails:", emailCheckErr.message);
       }
     }
 
@@ -132,23 +114,6 @@ router.post("/google", async (req, res) => {
     );
 
     let isNewUser = false;
-    let deviceAccountWarning = false;
-
-    // Check device reuse warning status for tracking
-    if (deviceId) {
-      try {
-        const existingDeviceOwner = await queryOne(
-          `SELECT u.id, u.email FROM user_devices ud
-           JOIN users u ON ud.user_id = u.id
-           WHERE ud.device_id = $1 AND u.google_id != $2
-           LIMIT 1`,
-          [deviceId, googleId]
-        );
-        if (existingDeviceOwner) {
-          deviceAccountWarning = true;
-        }
-      } catch (e) {}
-    }
 
     if (user) {
       if (!user.google_id || user.photo_url !== photoUrl || (detectedCountry && user.country !== detectedCountry)) {
@@ -160,18 +125,17 @@ router.post("/google", async (req, res) => {
       }
       console.log(`✅ Existing user logged in: ${user.id} (${email}) | Country: ${user.country || 'Global'}`);
     } else {
-      // Create new user (If device was reused, deny free trial)
+      // Create new user
       isNewUser = true;
-      const initialFreeTrial = !deviceAccountWarning;
 
       user = await queryOne(
         `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial, country)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         VALUES ($1, $2, $3, $4, $5, true, $6)
          ON CONFLICT (email) DO UPDATE SET google_id = EXCLUDED.google_id, country = COALESCE(users.country, EXCLUDED.country)
          RETURNING *`,
-        [googleId, email, name, photoUrl, googleId.substring(0, 8), initialFreeTrial, detectedCountry || null]
+        [googleId, email, name, photoUrl, googleId.substring(0, 8), detectedCountry || null]
       );
-      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'} | FreeTrial: ${initialFreeTrial}`);
+      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'}`);
     }
 
       // Track affiliate signup if referred

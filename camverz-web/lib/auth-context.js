@@ -154,12 +154,8 @@ export function AuthProvider({ children }) {
               setUser({ uid: result.user.id, ...result.user });
               setUserData(result.user);
               
-              if (result.deviceAccountWarning) {
-                alert("Notice: Multiple accounts detected on this device. Free trial benefits apply to 1 account per device.");
-              }
-              
               const userGender = (result.user.gender || '').trim().toLowerCase();
-              if ((result.isNewUser || !userGender || userGender === 'unspecified') && window.location.pathname !== '/affiliate') {
+              if (result.isNewUser && (!userGender || userGender === 'unspecified') && window.location.pathname !== '/affiliate') {
                 setShowOnboarding(true);
               }
               setAuthStage('idle');

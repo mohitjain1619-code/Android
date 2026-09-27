@@ -379,11 +379,7 @@ public class LoginActivity extends AppCompatActivity {
                         Log.d(TAG, "✅ Backend authentication successful. New user: " + isNewUser + " | DeviceReused: " + deviceAccountWarning);
 
                         runOnUiThread(() -> {
-                            if (deviceAccountWarning) {
-                                Toast.makeText(LoginActivity.this, "Notice: Multiple accounts detected on this device. Free trial is restricted to 1 per device.", Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(LoginActivity.this, "Sign in successful!", Toast.LENGTH_SHORT).show();
-                            }
+                            Toast.makeText(LoginActivity.this, "Sign in successful!", Toast.LENGTH_SHORT).show();
                         });
 
                         // Navigate based on profile completeness
