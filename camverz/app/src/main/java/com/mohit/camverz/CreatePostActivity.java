@@ -218,6 +218,7 @@ public class CreatePostActivity extends BaseActivity {
                 }
             });
 
+            BaseActivity.isAdShowing = true;
             com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
         } else {
             AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource Rewarded Video not available / No placement configured");
