@@ -67,7 +67,9 @@ public class CreatePostActivity extends BaseActivity {
                                 Toast.makeText(CreatePostActivity.this, "Unlocked Female Audience!", Toast.LENGTH_SHORT).show();
                             }, () -> {
                                 categoryGroup.check(R.id.category_all);
-                                Toast.makeText(CreatePostActivity.this, "Failed to load ad. Resetting selection.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CreatePostActivity.this, "Ad skipped. Resetting selection.", Toast.LENGTH_SHORT).show();
+                            }, () -> {
+                                Toast.makeText(CreatePostActivity.this, "Unlocked Female Audience!", Toast.LENGTH_SHORT).show();
                             });
                         })
                         .setNegativeButton("Cancel", (dialog, which) -> {
@@ -120,12 +122,17 @@ public class CreatePostActivity extends BaseActivity {
         } else {
             Toast.makeText(this, "Preparing ad to upload post...", Toast.LENGTH_SHORT).show();
             loadAndShowRewardedAd(() -> {
+                // Success: Ad watched -> upload post
                 executePostUpload(text, category);
             }, () -> {
-                // Ad cancelled or failed -> DO NOT upload post!
+                // User cancelled / skipped ad -> block post
                 isPosting = false;
                 postButton.setEnabled(true);
                 Toast.makeText(CreatePostActivity.this, "Ad skipped or incomplete. Post was not published.", Toast.LENGTH_SHORT).show();
+            }, () -> {
+                // No Fill / Ad Load Error -> ALLOW post creation directly without blocking
+                Toast.makeText(CreatePostActivity.this, "Ad unavailable. Publishing post...", Toast.LENGTH_SHORT).show();
+                executePostUpload(text, category);
             });
         }
     }
@@ -171,7 +178,7 @@ public class CreatePostActivity extends BaseActivity {
         });
     }
 
-    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
+    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onUserCancelled, Runnable onNoFill) {
         AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
         if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
             final boolean[] rewardEarned = {false};
@@ -188,7 +195,8 @@ public class CreatePostActivity extends BaseActivity {
                 public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
                     AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
-                    runOnUiThread(onFailure);
+                    // Ad failed to show -> Fall back to upload directly (don't restrict user)
+                    runOnUiThread(onNoFill);
                 }
                 
                 @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
@@ -204,7 +212,8 @@ public class CreatePostActivity extends BaseActivity {
                     if (rewardEarned[0]) {
                         runOnUiThread(onSuccess);
                     } else {
-                        runOnUiThread(onFailure);
+                        // User closed early / cancelled -> block post creation
+                        runOnUiThread(onUserCancelled);
                     }
                 }
             });
@@ -212,8 +221,8 @@ public class CreatePostActivity extends BaseActivity {
             com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
         } else {
             AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource Rewarded Video not available / No placement configured");
-            // Ad not available, fall back to upload directly to avoid blocking
-            runOnUiThread(onFailure);
+            // Ad not available / NO FILL -> proceed directly so user is not blocked
+            runOnUiThread(onNoFill);
         }
     }
 }
