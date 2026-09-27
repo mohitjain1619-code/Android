@@ -126,7 +126,7 @@ async function runMigrations() {
     // 7. Add country to users if not exists
     await pool.query(`
       ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'India';
+      ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'Global';
     `);
 
     // 8. Create ad_analytics_logs table if not exists

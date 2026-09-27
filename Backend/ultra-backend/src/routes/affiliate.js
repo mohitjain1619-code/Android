@@ -1040,7 +1040,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     // 1. Core query: fetch users and affiliates via LEFT JOIN
     const list = await queryMany(
       `SELECT u.id as user_id, u.email as user_email, u.name as user_name, u.gender, u.verified as user_verified, u.created_at as user_created_at,
-              u.bio as user_bio, u.city as user_city, COALESCE(u.country, 'India') as user_country, u.dob as user_dob, u.photo_url as user_photo, u.avatar as user_avatar,
+              u.bio as user_bio, u.city as user_city, COALESCE(NULLIF(u.country, ''), 'Global') as user_country, u.dob as user_dob, u.photo_url as user_photo, u.avatar as user_avatar,
               u.plan_name as user_plan, u.custom_id as user_custom_id, u.sex_preference as user_sex_pref,
               a.id as id, a.code, a.name as affiliate_name, COALESCE(a.status, 'registered') as status,
               a.commission_rate, a.upi_id, a.social_url, a.instagram_url, a.youtube_url, a.other_url,
@@ -1219,7 +1219,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         verified: !!a.user_verified,
         bio: a.user_bio || "",
         city: a.user_city || "",
-        country: a.user_country || "India",
+        country: a.user_country || "Global",
         dob: a.user_dob || "",
         photoUrl: a.user_photo || null,
         avatar: a.user_avatar || "av1",
@@ -1486,13 +1486,13 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
 
     // 2. Recent Ad Logs (combining new ad_analytics_logs with historical rewarded_ad_logs)
     let logsQuery = `
-      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, l.created_at, u.name as user_name, u.email as user_email, COALESCE(u.country, 'India') as user_country
+      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, l.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'Global') as user_country
       FROM ad_analytics_logs l
       LEFT JOIN users u ON l.user_id = u.id
 
       UNION ALL
 
-      SELECT r.id, r.user_id, 'COMPLETED' as event_type, 'rewarded' as ad_type, 'admob' as ad_network, 'DELIVERED' as status, '' as error_code, '' as error_message, 'android' as platform, r.created_at, u.name as user_name, u.email as user_email, COALESCE(u.country, 'India') as user_country
+      SELECT r.id, r.user_id, 'COMPLETED' as event_type, 'rewarded' as ad_type, 'admob' as ad_network, 'DELIVERED' as status, '' as error_code, '' as error_message, 'android' as platform, r.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'Global') as user_country
       FROM rewarded_ad_logs r
       LEFT JOIN users u ON r.user_id = u.id
     `;
@@ -1544,7 +1544,7 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
         user_id: log.user_id,
         user_name: log.user_name || "Anonymous User",
         user_email: log.user_email || "N/A",
-        user_country: log.user_country || "India",
+        user_country: log.user_country || "Global",
         event_type: log.event_type,
         ad_type: log.ad_type,
         ad_network: log.ad_network,

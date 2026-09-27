@@ -128,7 +128,7 @@ export default function AffiliatePage() {
   const [adAnalyticsFilterUser, setAdAnalyticsFilterUser] = useState('');
 
   const getCountryFlag = (country) => {
-    if (!country) return '🇮🇳 India';
+    if (!country || country === 'Unknown' || country === 'Global') return '🌐 Global';
     const c = String(country).toLowerCase().trim();
     if (c.includes('india') || c === 'in') return '🇮🇳 India';
     if (c.includes('united states') || c.includes('usa') || c === 'us') return '🇺🇸 USA';

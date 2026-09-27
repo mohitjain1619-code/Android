@@ -9,6 +9,21 @@ const router = express.Router();
 // Google OAuth client for verifying ID tokens from Android/Web
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const COUNTRY_NAME_MAP = {
+  IN: "India", US: "United States", CA: "Canada", GB: "United Kingdom", AU: "Australia",
+  DE: "Germany", FR: "France", AE: "UAE", NP: "Nepal", BD: "Bangladesh", PK: "Pakistan",
+  SG: "Singapore", MY: "Malaysia", ID: "Indonesia", BR: "Brazil", MX: "Mexico", ES: "Spain",
+  IT: "Italy", NL: "Netherlands", RU: "Russia", JP: "Japan", KR: "South Korea", CN: "China"
+};
+
+function getCountryFromReq(req) {
+  const cfCountry = (req.headers["cf-ipcountry"] || req.headers["x-country"] || req.headers["x-geoip-country"] || "").trim().toUpperCase();
+  if (cfCountry && cfCountry !== "XX" && cfCountry !== "T1") {
+    return COUNTRY_NAME_MAP[cfCountry] || cfCountry;
+  }
+  return null;
+}
+
 // ============================================
 // POST /auth/google
 // Verify Google ID token → find/create user → return JWT
@@ -19,6 +34,9 @@ router.post("/google", async (req, res) => {
     if (!idToken) {
       return res.status(400).json({ error: "Missing idToken" });
     }
+
+    // Detect country from request headers (Cloudflare IP Geo)
+    const detectedCountry = getCountryFromReq(req);
 
     // Verify the Google ID token
     let payload;
@@ -129,26 +147,28 @@ router.post("/google", async (req, res) => {
     }
 
     if (user) {
-      if (!user.google_id || user.photo_url !== photoUrl) {
+      if (!user.google_id || user.photo_url !== photoUrl || (detectedCountry && user.country !== detectedCountry)) {
         await query(
-          "UPDATE users SET google_id = $1, photo_url = COALESCE(NULLIF($2, ''), photo_url) WHERE id = $3",
-          [googleId, photoUrl, user.id]
+          "UPDATE users SET google_id = $1, photo_url = COALESCE(NULLIF($2, ''), photo_url), country = COALESCE($3, country) WHERE id = $4",
+          [googleId, photoUrl, detectedCountry || null, user.id]
         );
+        if (detectedCountry) user.country = detectedCountry;
       }
-      console.log(`✅ Existing user logged in: ${user.id} (${email})`);
+      console.log(`✅ Existing user logged in: ${user.id} (${email}) | Country: ${user.country || 'Global'}`);
     } else {
       // Create new user (If device was reused, deny free trial)
       isNewUser = true;
       const initialFreeTrial = !deviceAccountWarning;
 
       user = await queryOne(
-        `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (email) DO UPDATE SET google_id = EXCLUDED.google_id
+        `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial, country)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (email) DO UPDATE SET google_id = EXCLUDED.google_id, country = COALESCE(users.country, EXCLUDED.country)
          RETURNING *`,
-        [googleId, email, name, photoUrl, googleId.substring(0, 8), initialFreeTrial]
+        [googleId, email, name, photoUrl, googleId.substring(0, 8), initialFreeTrial, detectedCountry || null]
       );
-      console.log(`✅ New user created: ${user.id} (${email}) | FreeTrial: ${initialFreeTrial}`);
+      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'} | FreeTrial: ${initialFreeTrial}`);
+    }tialFreeTrial}`);
 
       // Track affiliate signup if referred
       const finalRef = affiliateRef || ref || req.body.refCode;
