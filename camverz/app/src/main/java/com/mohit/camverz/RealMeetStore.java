@@ -159,7 +159,7 @@ public class RealMeetStore {
         int todayDay = todayCal.get(Calendar.DAY_OF_YEAR);
 
         for (PartyPost post : posts) {
-            String postUser = post.getHostUserId() != null ? post.getHostUserId() : post.getUserId();
+            String postUser = post.getHostUserId();
             if (postUser != null && userId.equalsIgnoreCase(postUser)) {
                 Calendar postCal = Calendar.getInstance();
                 postCal.setTimeInMillis(post.getCreatedAt());

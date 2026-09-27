@@ -12,6 +12,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import androidx.activity.OnBackPressedCallback;
+
 public class BaseActivity extends AppCompatActivity {
 
     private static final boolean ENABLE_SCREENSHOT_PROTECTION = false;
@@ -31,7 +33,18 @@ public class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isAdShowing) {
+                    Log.d(TAG, "Back press blocked because an ad is currently playing.");
+                    return;
+                }
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+                setEnabled(true);
+            }
+        });
 
         try {
             // Enable edge-to-edge window insets
@@ -152,15 +165,6 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public static boolean isAdShowing = false;
-
-    @Override
-    public void onBackPressed() {
-        if (isAdShowing) {
-            Log.d(TAG, "Back press blocked because an ad is currently playing.");
-            return;
-        }
-        super.onBackPressed();
-    }
 
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);

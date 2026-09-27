@@ -16,6 +16,7 @@ import io.socket.emitter.Emitter;
 
 import android.view.LayoutInflater;
 import android.widget.ImageView;
+import androidx.activity.OnBackPressedCallback;
 
 
 public class ConnectingActivity extends BaseActivity {
@@ -50,6 +51,14 @@ public class ConnectingActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connecting);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                leaveQueue();
+                finish();
+            }
+        });
+
         tokenManager = TokenManager.getInstance(this);
         socket = SocketManager.getInstance();
 
@@ -77,12 +86,6 @@ public class ConnectingActivity extends BaseActivity {
             finish();
         });
 
-    }
-
-    @Override
-    public void onBackPressed() {
-        leaveQueue();
-        finish();
     }
 
     private void loadUserDataAndJoinQueue() {
