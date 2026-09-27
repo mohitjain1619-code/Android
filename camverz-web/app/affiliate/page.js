@@ -159,6 +159,211 @@ export default function AffiliatePage() {
     }
   };
 
+  const renderAdAnalyticsModal = () => {
+    if (!showAdAnalyticsModal) return null;
+    return (
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 99999,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px'
+        }}
+        onClick={() => setShowAdAnalyticsModal(false)}
+      >
+        <div 
+          style={{
+            background: '#0a0d16',
+            borderRadius: '20px',
+            maxWidth: '1100px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '28px',
+            border: '1px solid rgba(255, 171, 0, 0.4)',
+            boxShadow: '0 30px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(255, 171, 0, 0.2)',
+            position: 'relative',
+            animation: 'pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <button 
+            onClick={() => setShowAdAnalyticsModal(false)}
+            style={{
+              position: 'absolute',
+              top: '24px',
+              right: '24px',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: '#fff',
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              fontSize: '1.1rem'
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Modal Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div style={{ background: 'rgba(255, 171, 0, 0.15)', padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(255, 171, 0, 0.3)' }}>
+              <span style={{ fontSize: '1.5rem' }}>📊</span>
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#fff', fontWeight: 800 }}>Ad Analytics & Delivery Tracking</h2>
+              <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                Track ad requests, watch impressions, fill rates & failed ad delivery reasons in real time.
+              </p>
+            </div>
+
+            {adAnalyticsFilterUser && (
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 229, 255, 0.12)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(0, 229, 255, 0.3)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--neon-cyan)', fontWeight: 600 }}>Filtering User: {adAnalyticsFilterUser}</span>
+                <button 
+                  onClick={() => { setAdAnalyticsFilterUser(''); loadAdAnalytics(selectedDateFilter, ''); }}
+                  style={{ background: 'transparent', border: 'none', color: '#ff007f', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem' }}
+                >
+                  ✕ Clear
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Metric Overview Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>📥 Total Ad Requests</span>
+              <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: '#fff' }}>
+                {loadingAdAnalytics ? '...' : (adAnalyticsData?.summary?.total_requests || 0)}
+              </p>
+            </div>
+
+            <div style={{ background: 'rgba(0, 230, 118, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
+              <span style={{ fontSize: '0.78rem', color: '#00e676' }}>✅ Delivered / Watched</span>
+              <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: '#00e676' }}>
+                {loadingAdAnalytics ? '...' : (adAnalyticsData?.summary?.total_delivered || 0)}
+              </p>
+            </div>
+
+            <div style={{ background: 'rgba(0, 229, 255, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(0, 229, 255, 0.2)' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--neon-cyan)' }}>📈 System Fill Rate</span>
+              <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: 'var(--neon-cyan)' }}>
+                {loadingAdAnalytics ? '...' : `${adAnalyticsData?.summary?.fill_rate_percent || 0}%`}
+              </p>
+            </div>
+
+            <div style={{ background: 'rgba(255, 0, 110, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 0, 110, 0.2)' }}>
+              <span style={{ fontSize: '0.78rem', color: 'var(--neon-pink)' }}>❌ Undelivered / Failed</span>
+              <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: 'var(--neon-pink)' }}>
+                {loadingAdAnalytics ? '...' : (adAnalyticsData?.summary?.total_failed || 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Ad Type Badges */}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ad Formats:</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>
+              🎥 Rewarded: {adAnalyticsData?.summary?.rewarded_count || 0}
+            </span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>
+              🖼️ Interstitial: {adAnalyticsData?.summary?.interstitial_count || 0}
+            </span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>
+              📌 Banner: {adAnalyticsData?.summary?.banner_count || 0}
+            </span>
+          </div>
+
+          {/* Logs Table */}
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#fff', fontWeight: 700 }}>Real-Time Ad Delivery Event Logs</h4>
+          
+          {loadingAdAnalytics ? (
+            <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem', padding: '20px 0' }}>Loading ad delivery logs...</p>
+          ) : (!adAnalyticsData?.logs || adAnalyticsData.logs.length === 0) ? (
+            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                No ad events recorded yet. Once users trigger ads in Android App / Web, live events will appear here automatically!
+              </p>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', minWidth: '850px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>IST TIME</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>USER & COUNTRY</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>AD FORMAT</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px' }}>STATUS</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>ERROR / FAILURE REASON</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px' }}>PLATFORM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {adAnalyticsData.logs.map((log) => (
+                    <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                        {log.created_at}
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontWeight: 600, color: '#fff' }}>{log.user_name}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{log.user_email}</span>
+                            <span style={{ fontSize: '0.67rem', fontWeight: 700, color: '#fff' }}>{getCountryFlag(log.user_country)}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 12px', textTransform: 'capitalize', fontWeight: 600, color: 'var(--neon-cyan)' }}>
+                        {log.ad_type} ({log.ad_network})
+                      </td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                        {log.status === 'DELIVERED' || log.event_type === 'COMPLETED' || log.event_type === 'IMPRESSION' ? (
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(0, 230, 118, 0.15)', border: '1px solid rgba(0, 230, 118, 0.4)', color: '#00e676' }}>
+                            ✅ DELIVERED
+                          </span>
+                        ) : log.status === 'FAILED' || log.event_type === 'FAILED' ? (
+                          <span style={{ fontSize: '0.68rem', fontWeight 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(255, 0, 110, 0.15)', border: '1px solid rgba(255, 0, 110, 0.4)', color: '#ff007f' }}>
+                            ❌ FAILED
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(0, 229, 255, 0.15)', border: '1px solid rgba(0, 229, 255, 0.4)', color: '#00e5ff' }}>
+                            📥 REQUESTED
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: log.error_message ? '#ff5252' : 'var(--text-muted)', fontWeight: log.error_message ? 600 : 400 }}>
+                        {log.error_message || '—'}
+                      </td>
+                      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '0.72rem', color: log.platform === 'android' ? '#00e5ff' : '#c084fc', fontWeight: 600 }}>
+                          {log.platform === 'android' ? '📱 Mobile App' : '🌐 Website'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Fetch Affiliate Data
   const loadAffiliateData = async () => {
     if (!user) {
@@ -179,18 +384,20 @@ export default function AffiliatePage() {
   // Admin helper
   const isAdmin = user?.email?.toLowerCase() === 'mohitjain1619@gmail.com';
 
-  const loadAdminData = async () => {
+  const loadAdminData = async (isBackground = false) => {
     if (isAdmin) {
       try {
-        setLoadingAdmin(true);
+        if (!isBackground) setLoadingAdmin(true);
         setAdminError('');
         const list = await adminListAffiliates();
         setAdminList(Array.isArray(list) ? list : []);
       } catch (err) {
         console.error("Failed to load admin list:", err);
-        setAdminError(err.response?.data?.error || err.message || "Failed to fetch applications from server.");
+        if (!isBackground) {
+          setAdminError(err.response?.data?.error || err.message || "Failed to fetch applications from server.");
+        }
       } finally {
-        setLoadingAdmin(false);
+        if (!isBackground) setLoadingAdmin(false);
       }
     }
   };
@@ -200,9 +407,9 @@ export default function AffiliatePage() {
       loadAffiliateData();
       if (isAdmin) {
         loadAdminData();
-        // Set up 15-second realtime refresh interval for admin data
+        // Silent 15-second realtime background update for admin data (without screen flickering/re-render load indicators)
         const interval = setInterval(() => {
-          loadAdminData();
+          loadAdminData(true);
         }, 15000);
         return () => clearInterval(interval);
       }
@@ -1210,6 +1417,7 @@ export default function AffiliatePage() {
             </div>
           </div>
         )}
+        {renderAdAnalyticsModal()}
       </div>
     );
   };
@@ -2458,207 +2666,7 @@ export default function AffiliatePage() {
       </div>
 
       {/* Ad Analytics & Delivery Logs Modal */}
-      {showAdAnalyticsModal && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(10px)',
-            zIndex: 99999,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '20px'
-          }}
-          onClick={() => setShowAdAnalyticsModal(false)}
-        >
-          <div 
-            style={{
-              background: '#0a0d16',
-              borderRadius: '20px',
-              maxWidth: '1100px',
-              width: '100%',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '28px',
-              border: '1px solid rgba(255, 171, 0, 0.4)',
-              boxShadow: '0 30px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(255, 171, 0, 0.2)',
-              position: 'relative',
-              animation: 'pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button 
-              onClick={() => setShowAdAnalyticsModal(false)}
-              style={{
-                position: 'absolute',
-                top: '24px',
-                right: '24px',
-                background: 'rgba(255,255,255,0.08)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                color: '#fff',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontSize: '1.1rem'
-              }}
-            >
-              ✕
-            </button>
-
-            {/* Modal Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '24px', flexWrap: 'wrap' }}>
-              <div style={{ background: 'rgba(255, 171, 0, 0.15)', padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(255, 171, 0, 0.3)' }}>
-                <span style={{ fontSize: '1.5rem' }}>📊</span>
-              </div>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.4rem', color: '#fff', fontWeight: 800 }}>Ad Analytics & Delivery Tracking</h2>
-                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  Track ad requests, watch impressions, fill rates & failed ad delivery reasons in real time.
-                </p>
-              </div>
-
-              {adAnalyticsFilterUser && (
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 229, 255, 0.12)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(0, 229, 255, 0.3)' }}>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--neon-cyan)', fontWeight: 600 }}>Filtering User: {adAnalyticsFilterUser}</span>
-                  <button 
-                    onClick={() => { setAdAnalyticsFilterUser(''); loadAdAnalytics(selectedDateFilter, ''); }}
-                    style={{ background: 'transparent', border: 'none', color: '#ff007f', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem' }}
-                  >
-                    ✕ Clear
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Metric Overview Cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '24px' }}>
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>📥 Total Ad Requests</span>
-                <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: '#fff' }}>
-                  {loadingAdAnalytics ? '...' : (adAnalyticsData?.summary?.total_requests || 0)}
-                </p>
-              </div>
-
-              <div style={{ background: 'rgba(0, 230, 118, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(0, 230, 118, 0.2)' }}>
-                <span style={{ fontSize: '0.78rem', color: '#00e676' }}>✅ Delivered / Watched</span>
-                <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: '#00e676' }}>
-                  {loadingAdAnalytics ? '...' : (adAnalyticsData?.summary?.total_delivered || 0)}
-                </p>
-              </div>
-
-              <div style={{ background: 'rgba(0, 229, 255, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(0, 229, 255, 0.2)' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--neon-cyan)' }}>📈 System Fill Rate</span>
-                <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: 'var(--neon-cyan)' }}>
-                  {loadingAdAnalytics ? '...' : `${adAnalyticsData?.summary?.fill_rate_percent || 0}%`}
-                </p>
-              </div>
-
-              <div style={{ background: 'rgba(255, 0, 110, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 0, 110, 0.2)' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--neon-pink)' }}>❌ Undelivered / Failed</span>
-                <p style={{ margin: '6px 0 0 0', fontSize: '1.6rem', fontWeight: 800, color: 'var(--neon-pink)' }}>
-                  {loadingAdAnalytics ? '...' : (adAnalyticsData?.summary?.total_failed || 0)}
-                </p>
-              </div>
-            </div>
-
-            {/* Ad Type Badges */}
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ad Formats:</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>
-                🎥 Rewarded: {adAnalyticsData?.summary?.rewarded_count || 0}
-              </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>
-                🖼️ Interstitial: {adAnalyticsData?.summary?.interstitial_count || 0}
-              </span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}>
-                📌 Banner: {adAnalyticsData?.summary?.banner_count || 0}
-              </span>
-            </div>
-
-            {/* Logs Table */}
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#fff', fontWeight: 700 }}>Real-Time Ad Delivery Event Logs</h4>
-            
-            {loadingAdAnalytics ? (
-              <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem', padding: '20px 0' }}>Loading ad delivery logs...</p>
-            ) : (!adAnalyticsData?.logs || adAnalyticsData.logs.length === 0) ? (
-              <div style={{ background: 'rgba(255,255,255,0.02)', padding: '24px', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                  No ad events recorded yet. Once users trigger ads in Android App / Web, live events will appear here automatically!
-                </p>
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem', minWidth: '850px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                      <th style={{ textAlign: 'left', padding: '10px 12px' }}>IST TIME</th>
-                      <th style={{ textAlign: 'left', padding: '10px 12px' }}>USER & COUNTRY</th>
-                      <th style={{ textAlign: 'left', padding: '10px 12px' }}>AD FORMAT</th>
-                      <th style={{ textAlign: 'center', padding: '10px 12px' }}>STATUS</th>
-                      <th style={{ textAlign: 'left', padding: '10px 12px' }}>ERROR / FAILURE REASON</th>
-                      <th style={{ textAlign: 'center', padding: '10px 12px' }}>PLATFORM</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {adAnalyticsData.logs.map((log) => (
-                      <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                        <td style={{ padding: '10px 12px', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                          {log.created_at}
-                        </td>
-                        <td style={{ padding: '10px 12px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontWeight: 600, color: '#fff' }}>{log.user_name}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{log.user_email}</span>
-                              <span style={{ fontSize: '0.67rem', fontWeight: 700, color: '#fff' }}>{getCountryFlag(log.user_country)}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '10px 12px', textTransform: 'capitalize', fontWeight: 600, color: 'var(--neon-cyan)' }}>
-                          {log.ad_type} ({log.ad_network})
-                        </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          {log.status === 'DELIVERED' || log.event_type === 'COMPLETED' || log.event_type === 'IMPRESSION' ? (
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(0, 230, 118, 0.15)', border: '1px solid rgba(0, 230, 118, 0.4)', color: '#00e676' }}>
-                              ✅ DELIVERED
-                            </span>
-                          ) : log.status === 'FAILED' || log.event_type === 'FAILED' ? (
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(255, 0, 110, 0.15)', border: '1px solid rgba(255, 0, 110, 0.4)', color: '#ff007f' }}>
-                              ❌ FAILED
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(0, 229, 255, 0.15)', border: '1px solid rgba(0, 229, 255, 0.4)', color: '#00e5ff' }}>
-                              📥 REQUESTED
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '10px 12px', color: log.error_message ? '#ff5252' : 'var(--text-muted)', fontWeight: log.error_message ? 600 : 400 }}>
-                          {log.error_message || '—'}
-                        </td>
-                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                          <span style={{ fontSize: '0.72rem', color: log.platform === 'android' ? '#00e5ff' : '#c084fc', fontWeight: 600 }}>
-                            {log.platform === 'android' ? '📱 Mobile App' : '🌐 Website'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {renderAdAnalyticsModal()}
 
       {/* Admin Panel inside Guest / Pending Creator view */}
       {isAdmin && (
