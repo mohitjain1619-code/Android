@@ -82,7 +82,7 @@ router.post("/google", async (req, res) => {
       }
     }
 
-    // 2. Secondary Device Google Accounts Check (Android only)
+    // 2. Secondary Device Google Accounts Check (Android only - warning flag only, non-blocking)
     if (Array.isArray(deviceEmails) && deviceEmails.length > 0) {
       try {
         const cleanEmails = deviceEmails
@@ -97,13 +97,9 @@ router.post("/google", async (req, res) => {
           );
 
           if (matchedUser) {
-            console.warn(
-              `⚠️ Anti-Abuse Blocked: Device has registered email ${matchedUser.email} in accounts list. Blocked login for: ${email}`
+            console.log(
+              `ℹ️ Secondary account detected on device: ${matchedUser.email} is registered. Allowing login for: ${email}`
             );
-            return res.status(403).json({
-              error: "device_emails_bound",
-              message: `This device already has a registered account under ${matchedUser.email}. Please sign in with that email.`
-            });
           }
         }
       } catch (emailCheckErr) {
