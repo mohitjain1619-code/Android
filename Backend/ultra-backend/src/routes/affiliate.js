@@ -1040,7 +1040,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     // 1. Core query: fetch users and affiliates via LEFT JOIN
     const list = await queryMany(
       `SELECT u.id as user_id, u.email as user_email, u.name as user_name, u.gender, u.verified as user_verified, u.created_at as user_created_at,
-              u.bio as user_bio, u.city as user_city, u.dob as user_dob, u.photo_url as user_photo, u.avatar as user_avatar,
+              u.bio as user_bio, u.city as user_city, COALESCE(u.country, 'India') as user_country, u.dob as user_dob, u.photo_url as user_photo, u.avatar as user_avatar,
               u.plan_name as user_plan, u.custom_id as user_custom_id, u.sex_preference as user_sex_pref,
               a.id as id, a.code, a.name as affiliate_name, COALESCE(a.status, 'registered') as status,
               a.commission_rate, a.upi_id, a.social_url, a.instagram_url, a.youtube_url, a.other_url,
@@ -1052,7 +1052,28 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     );
 
     // 2. Safe stats aggregation (decoupled to prevent 500 error if subquery tables are missing)
-    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {}, platformMap = {};
+    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {}, platformMap = {}, adStatsMap = {};
+    try {
+      const adLogs = await queryMany(`
+        SELECT user_id,
+               COUNT(*) FILTER (WHERE event_type = 'REQUEST')::int as requests,
+               COUNT(*) FILTER (WHERE event_type IN ('IMPRESSION', 'COMPLETED') OR status = 'DELIVERED')::int as delivered,
+               COUNT(*) FILTER (WHERE event_type = 'FAILED' OR status = 'FAILED')::int as failed
+        FROM ad_analytics_logs
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id
+      `);
+      adLogs.forEach(ad => {
+        if (ad.user_id) {
+          adStatsMap[ad.user_id] = {
+            requests: ad.requests || 0,
+            delivered: ad.delivered || 0,
+            failed: ad.failed || 0
+          };
+        }
+      });
+    } catch (e) {}
+
     try {
       const clicks = await queryMany(`SELECT affiliate_id, COUNT(*)::int as count FROM affiliate_clicks GROUP BY affiliate_id`);
       clicks.forEach(c => { if (c.affiliate_id) clicksMap[c.affiliate_id] = c.count; });
@@ -1178,6 +1199,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         verified: !!a.user_verified,
         bio: a.user_bio || "",
         city: a.user_city || "",
+        country: a.user_country || "India",
         dob: a.user_dob || "",
         photoUrl: a.user_photo || null,
         avatar: a.user_avatar || "av1",
@@ -1185,6 +1207,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         customId: a.user_custom_id || null,
         sexPreference: a.user_sex_pref || "Straight",
         platform: userPlatform,
+        adStats: adStatsMap[a.user_id] || { requests: 0, delivered: 0, failed: 0 },
         last_active_at: formattedLastActive,
         last_active_date: rawLastActiveDate,
         active_dates: userActiveDates,
@@ -1395,16 +1418,120 @@ router.delete("/admin/user/:user_id", requireAuth, requireAdmin, async (req, res
   }
 });
 
-// POST /admin/wipe-trial-data - wipe all database data keeping only admin user/affiliate
-router.post("/admin/wipe-trial-data", requireAuth, requireAdmin, async (req, res) => {
+// GET /admin/ad-analytics - get full ad metrics, fill rate, and logs
+router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) => {
   try {
-    // Delete all users except admin (cascade cleans up all referenced creator profiles/affiliates)
-    const result = await query("DELETE FROM users WHERE LOWER(email) != 'mohitjain1619@gmail.com'");
-    console.log(`🔥 [Admin Wipe] Cleaned up trial accounts. Rows affected: ${result.rowCount}`);
-    return res.json({ status: "success", message: `Database wiped successfully. Cleaned up ${result.rowCount} trial accounts.` });
+    const { date, user_id } = req.query;
+
+    let dateFilter = "";
+    const params = [];
+
+    if (date) {
+      params.push(date);
+      dateFilter = `WHERE (created_at AT TIME ZONE 'Asia/Kolkata')::date = $${params.length}`;
+    }
+
+    // 1. System Overall Summary
+    const overallQuery = `
+      SELECT 
+        COUNT(*)::int as total_events,
+        COUNT(*) FILTER (WHERE event_type = 'REQUEST')::int as total_requests,
+        COUNT(*) FILTER (WHERE event_type IN ('IMPRESSION', 'COMPLETED') OR status = 'DELIVERED')::int as total_delivered,
+        COUNT(*) FILTER (WHERE event_type = 'FAILED' OR status = 'FAILED')::int as total_failed,
+        COUNT(*) FILTER (WHERE ad_type = 'rewarded')::int as rewarded_count,
+        COUNT(*) FILTER (WHERE ad_type = 'interstitial')::int as interstitial_count,
+        COUNT(*) FILTER (WHERE ad_type = 'banner')::int as banner_count
+      FROM ad_analytics_logs
+      ${dateFilter}
+    `;
+    const overallRes = await queryOne(overallQuery, params);
+    
+    const requests = overallRes?.total_requests || 0;
+    const delivered = overallRes?.total_delivered || 0;
+    const failed = overallRes?.total_failed || 0;
+    const fillRate = requests > 0 ? parseFloat(((delivered / requests) * 100).toFixed(1)) : (delivered > 0 ? 100 : 0);
+
+    // 2. Recent Ad Logs (with User Info)
+    let logsQuery = `
+      SELECT l.*, u.name as user_name, u.email as user_email, u.country as user_country
+      FROM ad_analytics_logs l
+      LEFT JOIN users u ON l.user_id = u.id
+    `;
+
+    const logParams = [];
+    const logConditions = [];
+
+    if (date) {
+      logParams.push(date);
+      logConditions.push(`(l.created_at AT TIME ZONE 'Asia/Kolkata')::date = $${logParams.length}`);
+    }
+
+    if (user_id) {
+      logParams.push(user_id);
+      logConditions.push(`l.user_id = $${logParams.length}`);
+    }
+
+    if (logConditions.length > 0) {
+      logsQuery += " WHERE " + logConditions.join(" AND ");
+    }
+
+    logsQuery += " ORDER BY l.created_at DESC LIMIT 200";
+
+    const rawLogs = await queryMany(logsQuery, logParams);
+
+    const formattedLogs = rawLogs.map(log => {
+      let formattedTime = "N/A";
+      if (log.created_at) {
+        try {
+          const d = new Date(log.created_at);
+          formattedTime = d.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          });
+        } catch (e) {
+          formattedTime = String(log.created_at);
+        }
+      }
+
+      return {
+        id: log.id,
+        user_id: log.user_id,
+        user_name: log.user_name || "Anonymous User",
+        user_email: log.user_email || "N/A",
+        user_country: log.user_country || "India",
+        event_type: log.event_type,
+        ad_type: log.ad_type,
+        ad_network: log.ad_network,
+        status: log.status,
+        error_code: log.error_code || "",
+        error_message: log.error_message || (log.status === 'FAILED' ? 'NO_FILL / Failed to render' : ''),
+        platform: log.platform || 'android',
+        created_at: formattedTime
+      };
+    });
+
+    return res.json({
+      summary: {
+        total_requests: requests,
+        total_delivered: delivered,
+        total_failed: failed,
+        fill_rate_percent: fillRate,
+        rewarded_count: overallRes?.rewarded_count || 0,
+        interstitial_count: overallRes?.interstitial_count || 0,
+        banner_count: overallRes?.banner_count || 0
+      },
+      logs: formattedLogs
+    });
+
   } catch (err) {
-    console.error("Admin wipe error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("❌ Admin ad analytics error:", err.message);
+    return res.status(500).json({ error: "Failed to fetch ad analytics" });
   }
 });
 

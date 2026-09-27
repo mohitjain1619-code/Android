@@ -244,4 +244,10 @@ public interface ApiService {
 
     @DELETE("stories/{id}")
     Call<JsonObject> deleteStory(@Path("id") String storyId);
+
+    // ============================================
+    // ADS TRACKING
+    // ============================================
+    @POST("ads/track")
+    Call<JsonObject> trackAdEvent(@Body Map<String, Object> body);
 }

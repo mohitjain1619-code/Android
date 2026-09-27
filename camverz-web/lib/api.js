@@ -368,6 +368,11 @@ export async function adminWipeTrialData() {
   return data;
 }
 
+export async function adminGetAdAnalytics(params = {}) {
+  const { data } = await api.get('/affiliate/admin/ad-analytics', { params });
+  return data;
+}
+
 // ============================================
 // REAL MEET COMMUNITY API
 // ============================================

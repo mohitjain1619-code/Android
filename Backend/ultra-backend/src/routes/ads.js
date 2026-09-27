@@ -109,12 +109,61 @@ router.get("/verify-reward", async (req, res) => {
       [userId, adUnit]
     );
 
+    // Also record in ad_analytics_logs
+    await query(
+      `INSERT INTO ad_analytics_logs (user_id, event_type, ad_type, ad_network, status, platform)
+       VALUES ($1, 'COMPLETED', 'rewarded', 'admob', 'DELIVERED', 'android')`,
+      [userId]
+    ).catch(e => console.error("Error logging rewarded completion to ad_analytics_logs:", e));
+
     console.log(`🎉 [AdMob Reward Credited] User: ${userId}, AdUnit: ${adUnit}`);
     return res.status(200).send("OK");
 
   } catch (err) {
     console.error("❌ AdMob SSV error:", err.message);
     return res.status(500).send("Internal verification error");
+  }
+});
+
+// Track Ad Lifecycle Event (REQUEST, IMPRESSION, COMPLETED, FAILED)
+router.post("/track", async (req, res) => {
+  try {
+    const { userId, eventType, adType, adNetwork, status, errorCode, errorMessage, platform } = req.body;
+    
+    if (!eventType) {
+      return res.status(400).json({ error: "eventType is required" });
+    }
+
+    let userUUID = userId;
+    if (!userUUID && req.user && req.user.id) {
+      userUUID = req.user.id;
+    }
+
+    const finalStatus = status || (eventType === 'FAILED' ? 'FAILED' : 'DELIVERED');
+    const finalAdType = adType || 'rewarded';
+    const finalNetwork = adNetwork || 'admob';
+    const finalPlatform = platform || 'android';
+
+    await query(
+      `INSERT INTO ad_analytics_logs 
+       (user_id, event_type, ad_type, ad_network, status, error_code, error_message, platform)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        userUUID || null,
+        String(eventType).toUpperCase(),
+        String(finalAdType).toLowerCase(),
+        String(finalNetwork).toLowerCase(),
+        String(finalStatus).toUpperCase(),
+        errorCode ? String(errorCode) : '',
+        errorMessage ? String(errorMessage) : '',
+        String(finalPlatform).toLowerCase()
+      ]
+    );
+
+    return res.status(200).json({ success: true, message: "Ad event logged" });
+  } catch (err) {
+    console.error("❌ Error logging ad event:", err.message);
+    return res.status(500).json({ error: "Failed to log ad event" });
   }
 });
 

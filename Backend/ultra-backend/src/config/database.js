@@ -123,20 +123,28 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS is_premium BOOLEAN NOT NULL DEFAULT false;
     `);
 
-    // 5. Add parent_id to comments for replies support
+    // 7. Add country to users if not exists
     await pool.query(`
-      ALTER TABLE comments 
-      ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES comments(id) ON DELETE CASCADE;
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'India';
     `);
 
-    // 6. Create comment_likes table
+    // 8. Create ad_analytics_logs table if not exists
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS comment_likes (
-        comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
+      CREATE TABLE IF NOT EXISTS ad_analytics_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        PRIMARY KEY (comment_id, user_id)
+        event_type TEXT NOT NULL,
+        ad_type TEXT NOT NULL DEFAULT 'rewarded',
+        ad_network TEXT DEFAULT 'admob',
+        status TEXT NOT NULL DEFAULT 'DELIVERED',
+        error_code TEXT DEFAULT '',
+        error_message TEXT DEFAULT '',
+        platform TEXT DEFAULT 'android',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      CREATE INDEX IF NOT EXISTS idx_ad_analytics_user_id ON ad_analytics_logs(user_id);
+      CREATE INDEX IF NOT EXISTS idx_ad_analytics_created_at ON ad_analytics_logs(created_at);
     `);
 
     // 7. Add subscription fields to users

@@ -809,18 +809,22 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
+        AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
         if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
             Log.d(TAG, "Showing ironSource rewarded video...");
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
             currentAdSuccessCallback = onSuccess;
             currentAdFailureCallback = onFailure;
             com.ironsource.mediationsdk.IronSource.showRewardedVideo();
         } else if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
             Log.d(TAG, "Rewarded Video not ready. Falling back to Interstitial...");
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
             currentAdSuccessCallback = onSuccess;
             currentAdFailureCallback = onFailure;
             com.ironsource.mediationsdk.IronSource.showInterstitial();
         } else {
             Log.w(TAG, "ironSource Rewarded video and Interstitial not ready.");
+            AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource rewarded & interstitial not ready / No Fill");
             com.ironsource.mediationsdk.IronSource.loadInterstitial();
             runOnUiThread(onFailure);
         }
