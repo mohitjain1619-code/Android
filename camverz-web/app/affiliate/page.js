@@ -552,9 +552,24 @@ export default function AffiliatePage() {
                 {activeList.map((c) => (
                   <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                     <td style={{ padding: '12px 10px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <span style={{ fontWeight: 600, color: '#fff' }}>{c.name}</span>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{c.email}</span>
+                        <div style={{ marginTop: '2px' }}>
+                          {c.platform === 'both' ? (
+                            <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(0, 230, 118, 0.15)', border: '1px solid rgba(0, 230, 118, 0.4)', color: '#00e676', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              📱🌐 Both (App & Web)
+                            </span>
+                          ) : c.platform === 'app' ? (
+                            <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(0, 229, 255, 0.12)', border: '1px solid rgba(0, 229, 255, 0.35)', color: '#00e5ff', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              📱 Mobile App
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.35)', color: '#c084fc', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              🌐 Website
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: '12px 10px', fontFamily: 'monospace', color: 'var(--neon-cyan)', fontWeight: 700 }}>
@@ -773,6 +788,20 @@ export default function AffiliatePage() {
                     ) : (
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem', background: 'rgba(255,255,255,0.06)', padding: '3px 10px', borderRadius: '20px' }}>
                         Unverified Profile
+                      </span>
+                    )}
+
+                    {selectedUserProfile.platform === 'both' ? (
+                      <span style={{ color: '#00e676', fontWeight: 700, fontSize: '0.78rem', border: '1px solid rgba(0, 230, 118, 0.4)', padding: '3px 10px', borderRadius: '20px', background: 'rgba(0, 230, 118, 0.15)' }}>
+                        📱🌐 Used Both (App & Web)
+                      </span>
+                    ) : selectedUserProfile.platform === 'app' ? (
+                      <span style={{ color: '#00e5ff', fontWeight: 700, fontSize: '0.78rem', border: '1px solid rgba(0, 229, 255, 0.4)', padding: '3px 10px', borderRadius: '20px', background: 'rgba(0, 229, 255, 0.12)' }}>
+                        📱 Mobile App User
+                      </span>
+                    ) : (
+                      <span style={{ color: '#c084fc', fontWeight: 700, fontSize: '0.78rem', border: '1px solid rgba(168, 85, 247, 0.4)', padding: '3px 10px', borderRadius: '20px', background: 'rgba(168, 85, 247, 0.12)' }}>
+                        🌐 Website User
                       </span>
                     )}
                   </div>

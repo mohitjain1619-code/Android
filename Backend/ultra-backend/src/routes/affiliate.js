@@ -1052,7 +1052,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     );
 
     // 2. Safe stats aggregation (decoupled to prevent 500 error if subquery tables are missing)
-    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {};
+    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {}, platformMap = {};
     try {
       const clicks = await queryMany(`SELECT affiliate_id, COUNT(*)::int as count FROM affiliate_clicks GROUP BY affiliate_id`);
       clicks.forEach(c => { if (c.affiliate_id) clicksMap[c.affiliate_id] = c.count; });
@@ -1073,6 +1073,26 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
       payouts.forEach(p => { if (p.affiliate_id) paidMap[p.affiliate_id] = p.paid; });
     } catch (e) {}
 
+    try {
+      const devices = await queryMany(`SELECT user_id, ARRAY_AGG(DISTINCT LOWER(platform)) as platforms FROM user_devices GROUP BY user_id`);
+      devices.forEach(d => {
+        if (d.user_id && d.platforms) {
+          const set = new Set(d.platforms.map(p => (p || '').toLowerCase().trim()));
+          const hasApp = set.has('android') || set.has('mobile') || set.has('app');
+          const hasWeb = set.has('web');
+          if (hasApp && hasWeb) {
+            platformMap[d.user_id] = 'both';
+          } else if (hasApp) {
+            platformMap[d.user_id] = 'app';
+          } else if (hasWeb) {
+            platformMap[d.user_id] = 'web';
+          } else {
+            platformMap[d.user_id] = 'web';
+          }
+        }
+      });
+    } catch (e) {}
+
     const formatted = list.map(a => {
       const affId = a.id;
       const sData = affId ? (salesMap[affId] || { count: 0, gross: 0, clawback: 0 }) : { count: 0, gross: 0, clawback: 0 };
@@ -1081,6 +1101,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
       const paid = affId && typeof paidMap[affId] === 'number' ? paidMap[affId] : 0;
       const net = Math.max(0, gross - clawbacks);
       const pending = Math.max(0, net - paid);
+      const userPlatform = platformMap[a.user_id] || 'web';
 
       let formattedDate = "N/A";
       if (a.user_created_at) {
@@ -1121,6 +1142,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         planName: a.user_plan || "Free Pass",
         customId: a.user_custom_id || null,
         sexPreference: a.user_sex_pref || "Straight",
+        platform: userPlatform,
         commission_rate: a.commission_rate || 0.25,
         upi_id: a.upi_id || null,
         social_url: a.social_url || null,

@@ -188,17 +188,20 @@ router.post("/google", async (req, res) => {
     }
 
     // Record / Update device tracking mapping
-    if (deviceId && user) {
+    if (user) {
       try {
-        const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+        const clientIp = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
         const userAgent = req.headers["user-agent"] || "";
+        const isMobileAgent = userAgent.toLowerCase().includes("okhttp") || userAgent.toLowerCase().includes("android");
+        const activePlatform = (platform && platform.toLowerCase() !== "web") ? platform.toLowerCase() : (isMobileAgent ? "android" : "web");
+        const activeDeviceId = deviceId || `${activePlatform}-${user.id}`;
 
         await queryOne(
           `INSERT INTO user_devices (device_id, user_id, platform, ip_address, user_agent, last_seen_at)
            VALUES ($1, $2, $3, $4, $5, NOW())
            ON CONFLICT (device_id, user_id)
-           DO UPDATE SET last_seen_at = NOW(), ip_address = EXCLUDED.ip_address, user_agent = EXCLUDED.user_agent`,
-          [deviceId, user.id, platform, clientIp, userAgent]
+           DO UPDATE SET last_seen_at = NOW(), ip_address = EXCLUDED.ip_address, user_agent = EXCLUDED.user_agent, platform = EXCLUDED.platform`,
+          [activeDeviceId, user.id, activePlatform, clientIp, userAgent]
         );
       } catch (devSaveErr) {
         console.error("[DeviceTracking] Error saving device mapping:", devSaveErr.message);
