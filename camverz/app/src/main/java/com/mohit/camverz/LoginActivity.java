@@ -317,6 +317,17 @@ public class LoginActivity extends AppCompatActivity {
             Log.e(TAG, "Error getting ANDROID_ID", e);
         }
 
+        // Include device locale country code as fallback for GeoIP
+        try {
+            java.util.Locale currentLocale = getResources().getConfiguration().getLocales().get(0);
+            if (currentLocale != null && currentLocale.getCountry() != null && !currentLocale.getCountry().trim().isEmpty()) {
+                body.put("countryCode", currentLocale.getCountry().trim());
+                Log.d(TAG, "Sending countryCode: " + currentLocale.getCountry());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting device locale country", e);
+        }
+
         // Fetch saved referrer code
         String affiliateRef = getSharedPreferences("camverz_prefs", MODE_PRIVATE)
                 .getString("affiliate_ref", null);

@@ -21,6 +21,10 @@ function getCountryFromReq(req) {
   if (cfCountry && cfCountry !== "XX" && cfCountry !== "T1") {
     return COUNTRY_NAME_MAP[cfCountry] || cfCountry;
   }
+  const bodyCountry = (req.body && (req.body.countryCode || req.body.country) || "").trim().toUpperCase();
+  if (bodyCountry && bodyCountry.length >= 2) {
+    return COUNTRY_NAME_MAP[bodyCountry] || bodyCountry;
+  }
   return null;
 }
 

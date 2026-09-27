@@ -123,10 +123,13 @@ async function runMigrations() {
       ADD COLUMN IF NOT EXISTS is_premium BOOLEAN NOT NULL DEFAULT false;
     `);
 
-    // 7. Add country to users if not exists
+    // 7. Add country to users if not exists & clear legacy default 'India' values
     await pool.query(`
       ALTER TABLE users 
-      ADD COLUMN IF NOT EXISTS country TEXT DEFAULT 'Global';
+      ADD COLUMN IF NOT EXISTS country TEXT DEFAULT NULL;
+    `);
+    await pool.query(`
+      UPDATE users SET country = NULL WHERE country = 'India';
     `);
 
     // 8. Create ad_analytics_logs table if not exists
