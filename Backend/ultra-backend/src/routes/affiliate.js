@@ -1443,13 +1443,20 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
   try {
     const { date, user_id } = req.query;
 
-    let dateFilter = "";
-    const params = [];
+    const summaryConditions = [];
+    const summaryParams = [];
 
     if (date) {
-      params.push(date);
-      dateFilter = `WHERE (created_at AT TIME ZONE 'Asia/Kolkata')::date = $${params.length}`;
+      summaryParams.push(date);
+      summaryConditions.push(`(created_at AT TIME ZONE 'Asia/Kolkata')::date = $${summaryParams.length}`);
     }
+
+    if (user_id) {
+      summaryParams.push(user_id);
+      summaryConditions.push(`user_id = $${summaryParams.length}`);
+    }
+
+    const summaryWhere = summaryConditions.length > 0 ? "WHERE " + summaryConditions.join(" AND ") : "";
 
     // 1. System Overall Summary (combining ad_analytics_logs with historical rewarded_ad_logs)
     const overallQuery = `
@@ -1462,13 +1469,13 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
         COUNT(*) FILTER (WHERE ad_type = 'interstitial')::int as interstitial_count,
         COUNT(*) FILTER (WHERE ad_type = 'banner')::int as banner_count
       FROM ad_analytics_logs
-      ${dateFilter}
+      ${summaryWhere}
     `;
-    const overallRes = await queryOne(overallQuery, params);
+    const overallRes = await queryOne(overallQuery, summaryParams);
     
     // Count historical rewarded ad completions
-    const oldQuery = `SELECT COUNT(*)::int as old_count FROM rewarded_ad_logs ${dateFilter}`;
-    const oldRes = await queryOne(oldQuery, params);
+    const oldQuery = `SELECT COUNT(*)::int as old_count FROM rewarded_ad_logs ${summaryWhere}`;
+    const oldRes = await queryOne(oldQuery, summaryParams);
     const oldCount = oldRes?.old_count || 0;
 
     let delivered = (overallRes?.total_delivered || 0) + oldCount;

@@ -128,13 +128,13 @@ router.get("/verify-reward", async (req, res) => {
 // Track Ad Lifecycle Event (REQUEST, IMPRESSION, COMPLETED, FAILED)
 router.post("/track", async (req, res) => {
   try {
-    const { userId, eventType, adType, adNetwork, status, errorCode, errorMessage, platform } = req.body;
+    const { userId, user_id, eventType, adType, adNetwork, status, errorCode, errorMessage, platform } = req.body;
     
     if (!eventType) {
       return res.status(400).json({ error: "eventType is required" });
     }
 
-    let userUUID = userId;
+    let userUUID = userId || user_id;
     if (!userUUID && req.user && req.user.id) {
       userUUID = req.user.id;
     }

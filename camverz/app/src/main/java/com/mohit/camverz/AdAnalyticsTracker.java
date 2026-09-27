@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
+import com.mohit.camverz.api.TokenManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,9 @@ public class AdAnalyticsTracker {
     public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage) {
         if (context == null) return;
         try {
+            String userId = TokenManager.getInstance(context).getUserId();
             Map<String, Object> body = new HashMap<>();
+            body.put("userId", userId != null ? userId : "");
             body.put("eventType", eventType != null ? eventType : "REQUEST");
             body.put("adType", adType != null ? adType : "rewarded");
             body.put("adNetwork", adNetwork != null ? adNetwork : "admob");
