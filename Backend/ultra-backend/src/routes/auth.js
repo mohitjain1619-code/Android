@@ -168,7 +168,7 @@ router.post("/google", async (req, res) => {
         [googleId, email, name, photoUrl, googleId.substring(0, 8), initialFreeTrial, detectedCountry || null]
       );
       console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'} | FreeTrial: ${initialFreeTrial}`);
-    }tialFreeTrial}`);
+    }
 
       // Track affiliate signup if referred
       const finalRef = affiliateRef || ref || req.body.refCode;
@@ -197,7 +197,6 @@ router.post("/google", async (req, res) => {
           console.error("[Affiliate] Signup attribution failed:", affErr);
         }
       }
-    }
 
     // Record / Update device tracking mapping
     if (user) {
