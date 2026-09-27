@@ -117,6 +117,8 @@ export default function AffiliatePage() {
   const [planFilter, setPlanFilter] = useState('all'); // 'all', 'paid', 'free'
   const [genderFilter, setGenderFilter] = useState('all'); // 'all', 'male', 'female'
   const [verificationFilter, setVerificationFilter] = useState('all'); // 'all', 'verified', 'unverified'
+  const [selectedDateFilter, setSelectedDateFilter] = useState(''); // '', 'today', 'yesterday', 'custom'
+  const [customDateInput, setCustomDateInput] = useState('');
 
   // Fetch Affiliate Data
   const loadAffiliateData = async () => {
@@ -159,6 +161,11 @@ export default function AffiliatePage() {
       loadAffiliateData();
       if (isAdmin) {
         loadAdminData();
+        // Set up 15-second realtime refresh interval for admin data
+        const interval = setInterval(() => {
+          loadAdminData();
+        }, 15000);
+        return () => clearInterval(interval);
       }
     }
   }, [user?.uid, user?.email]);
@@ -418,6 +425,20 @@ export default function AffiliatePage() {
   };
 
   const renderAdminPanel = () => {
+    // Calculate Today and Yesterday date strings in IST (Asia/Kolkata)
+    const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const yearIST = nowIST.getFullYear();
+    const monthIST = String(nowIST.getMonth() + 1).padStart(2, '0');
+    const dayIST = String(nowIST.getDate()).padStart(2, '0');
+    const todayStrIST = `${yearIST}-${monthIST}-${dayIST}`;
+
+    const yesterdayObj = new Date(nowIST);
+    yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+    const yYear = yesterdayObj.getFullYear();
+    const yMonth = String(yesterdayObj.getMonth() + 1).padStart(2, '0');
+    const yDay = String(yesterdayObj.getDate()).padStart(2, '0');
+    const yesterdayStrIST = `${yYear}-${yMonth}-${yDay}`;
+
     // Filter adminList into Ready Applications (Bio Verified), Unverified Applications, and All Users
     const readyApplications = adminList.filter(c => c.status?.toLowerCase() === 'pending' && c.profile_verified !== false);
     const unverifiedApplications = adminList.filter(c => c.status?.toLowerCase() === 'pending' && c.profile_verified === false);
@@ -429,15 +450,29 @@ export default function AffiliatePage() {
       activeList = unverifiedApplications;
     }
 
+    // Filter activeList by Date (Calendar Selection)
+    let targetDate = selectedDateFilter;
+    if (selectedDateFilter === 'today') targetDate = todayStrIST;
+    if (selectedDateFilter === 'yesterday') targetDate = yesterdayStrIST;
+    if (selectedDateFilter === 'custom') targetDate = customDateInput;
+
+    if (targetDate) {
+      activeList = activeList.filter(c => {
+        if (Array.isArray(c.active_dates) && c.active_dates.includes(targetDate)) return true;
+        if (c.last_active_date === targetDate) return true;
+        return false;
+      });
+    }
+
     return (
       <div className="glass-card" style={{ padding: '30px', marginTop: '40px', border: '1px solid var(--neon-purple)', width: '100%' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
           <div>
             <h3 style={{ fontSize: '1.4rem', margin: '0 0 8px 0', color: 'var(--neon-purple)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <span>🔐 Admin Panel (Creator Applications Control)</span>
+              <span>🔐 Admin Panel (Realtime User & Creator Analytics)</span>
             </h3>
             <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.85rem' }}>
-              Review creator submissions, verify bio codes, approve accounts, or delete trial data.
+              Realtime user activity, date-wise active logs, device platforms (App/Web), and creator approvals.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -472,7 +507,23 @@ export default function AffiliatePage() {
         </div>
 
         {/* Tab Selection */}
-        <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <button 
+            onClick={() => setActiveAdminTab('users')}
+            style={{
+              background: activeAdminTab === 'users' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+              color: activeAdminTab === 'users' ? 'var(--neon-purple)' : 'var(--text-secondary)',
+              border: activeAdminTab === 'users' ? '1px solid var(--neon-purple)' : 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            👥 All Users ({adminList.length})
+          </button>
           <button 
             onClick={() => setActiveAdminTab('applications')}
             style={{
@@ -503,24 +554,85 @@ export default function AffiliatePage() {
               transition: 'all 0.2s ease-in-out'
             }}
           >
-            ⏳ Awaiting User Bio Verification ({unverifiedApplications.length})
+            ⏳ Awaiting Bio Verification ({unverifiedApplications.length})
           </button>
-          <button 
-            onClick={() => setActiveAdminTab('users')}
+        </div>
+
+        {/* Date Filter & Calendar Selector Bar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', background: 'rgba(255,255,255,0.03)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--glass-border)', marginBottom: '20px' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--neon-cyan)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            📅 Filter By Active Date:
+          </span>
+
+          <button
+            onClick={() => { setSelectedDateFilter(''); setCustomDateInput(''); }}
             style={{
-              background: activeAdminTab === 'users' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
-              color: activeAdminTab === 'users' ? 'var(--neon-purple)' : 'var(--text-secondary)',
-              border: activeAdminTab === 'users' ? '1px solid var(--neon-purple)' : 'none',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              fontSize: '0.85rem',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s ease-in-out'
+              background: selectedDateFilter === '' ? 'rgba(0, 229, 255, 0.2)' : 'rgba(255,255,255,0.05)',
+              border: selectedDateFilter === '' ? '1px solid var(--neon-cyan)' : '1px solid rgba(255,255,255,0.1)',
+              color: selectedDateFilter === '' ? 'var(--neon-cyan)' : 'var(--text-secondary)'
             }}
           >
-            👥 All Users ({adminList.length})
+            🌐 All Dates
           </button>
+
+          <button
+            onClick={() => { setSelectedDateFilter('today'); setCustomDateInput(''); }}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: selectedDateFilter === 'today' ? 'rgba(0, 230, 118, 0.2)' : 'rgba(255,255,255,0.05)',
+              border: selectedDateFilter === 'today' ? '1px solid var(--neon-green)' : '1px solid rgba(255,255,255,0.1)',
+              color: selectedDateFilter === 'today' ? 'var(--neon-green)' : 'var(--text-secondary)'
+            }}
+          >
+            🟢 Today ({todayStrIST})
+          </button>
+
+          <button
+            onClick={() => { setSelectedDateFilter('yesterday'); setCustomDateInput(''); }}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              background: selectedDateFilter === 'yesterday' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255,255,255,0.05)',
+              border: selectedDateFilter === 'yesterday' ? '1px solid #f59e0b' : '1px solid rgba(255,255,255,0.1)',
+              color: selectedDateFilter === 'yesterday' ? '#f59e0b' : 'var(--text-secondary)'
+            }}
+          >
+            🟡 Yesterday ({yesterdayStrIST})
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Calendar Picker:</span>
+            <input
+              type="date"
+              value={customDateInput}
+              onChange={(e) => {
+                setCustomDateInput(e.target.value);
+                setSelectedDateFilter('custom');
+              }}
+              style={{
+                background: '#0a0d16',
+                border: '1px solid var(--neon-purple)',
+                color: '#ffffff',
+                padding: '5px 10px',
+                borderRadius: '6px',
+                fontSize: '0.78rem',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
+          </div>
         </div>
 
         {adminError && (
@@ -532,19 +644,20 @@ export default function AffiliatePage() {
         {loadingAdmin ? (
           <p style={{ color: 'var(--neon-cyan)', fontSize: '0.9rem' }}>Loading records list...</p>
         ) : activeList.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            No {activeAdminTab === 'applications' ? 'pending applications' : 'user records'} found in the database.
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', padding: '16px 0' }}>
+            No users found {targetDate ? `active on date ${targetDate}` : 'in the database'}.
           </p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '850px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', minWidth: '950px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-                  <th style={{ textAlign: 'left', padding: '10px' }}>APPLICANT</th>
+                  <th style={{ textAlign: 'left', padding: '10px' }}>USER / APPLICANT</th>
+                  <th style={{ textAlign: 'left', padding: '10px' }}>LAST ACTIVE TIME (IST) & PLATFORM</th>
                   <th style={{ textAlign: 'left', padding: '10px' }}>REF CODE</th>
                   <th style={{ textAlign: 'left', padding: '10px' }}>SUBMITTED PROFILES & BIO CODES</th>
                   <th style={{ textAlign: 'center', padding: '10px' }}>STATUS</th>
-                  <th style={{ textAlign: 'right', padding: '10px' }}>APPLIED DATE</th>
+                  <th style={{ textAlign: 'right', padding: '10px' }}>JOINED DATE</th>
                   <th style={{ textAlign: 'center', padding: '10px' }}>ACTIONS</th>
                 </tr>
               </thead>
@@ -552,10 +665,26 @@ export default function AffiliatePage() {
                 {activeList.map((c) => (
                   <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                     <td style={{ padding: '12px 10px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                         <span style={{ fontWeight: 600, color: '#fff' }}>{c.name}</span>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{c.email}</span>
-                        <div style={{ marginTop: '2px' }}>
+                      </div>
+                    </td>
+                    <td style={{ padding: '12px 10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {c.last_active_date === todayStrIST ? (
+                            <span style={{ fontSize: '0.7rem', color: '#00e676', fontWeight: 700 }}>🟢 Today</span>
+                          ) : c.last_active_date === yesterdayStrIST ? (
+                            <span style={{ fontSize: '0.7rem', color: '#f59e0b', fontWeight: 700 }}>🟡 Yesterday</span>
+                          ) : (
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>⚪ Inactive</span>
+                          )}
+                          <span style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 500 }}>
+                            {c.last_active_at || 'N/A'}
+                          </span>
+                        </div>
+                        <div>
                           {c.platform === 'both' ? (
                             <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(0, 230, 118, 0.15)', border: '1px solid rgba(0, 230, 118, 0.4)', color: '#00e676', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                               📱🌐 Both (App & Web)
@@ -844,6 +973,10 @@ export default function AffiliatePage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>SEXUAL PREFERENCE</span>
                       <span style={{ color: '#fff' }}>{selectedUserProfile.sexPreference || "Straight"}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>LAST ACTIVE TIME (IST)</span>
+                      <span style={{ color: 'var(--neon-cyan)', fontWeight: 600 }}>{selectedUserProfile.last_active_at || "N/A"}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>MEMBERSHIP PLAN</span>

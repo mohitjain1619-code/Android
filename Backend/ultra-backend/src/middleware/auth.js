@@ -47,6 +47,26 @@ async function requireAuth(req, res, next) {
       email: decoded.email,
       googleId: decoded.googleId,
     };
+
+    // Asynchronously touch last_seen_at in user_devices for realtime active tracking (non-blocking)
+    (async () => {
+      try {
+        const userAgent = req.headers["user-agent"] || "";
+        const isMobileAgent = userAgent.toLowerCase().includes("okhttp") || userAgent.toLowerCase().includes("android");
+        const platform = isMobileAgent ? "android" : "web";
+        const deviceId = `${platform}-${decoded.userId}`;
+        const clientIp = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+
+        await queryOne(
+          `INSERT INTO user_devices (device_id, user_id, platform, ip_address, user_agent, last_seen_at)
+           VALUES ($1, $2, $3, $4, $5, NOW())
+           ON CONFLICT (device_id, user_id)
+           DO UPDATE SET last_seen_at = NOW()`,
+          [deviceId, decoded.userId, platform, clientIp, userAgent]
+        );
+      } catch (e) {}
+    })();
+
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {

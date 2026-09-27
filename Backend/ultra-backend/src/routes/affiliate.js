@@ -1073,21 +1073,35 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
       payouts.forEach(p => { if (p.affiliate_id) paidMap[p.affiliate_id] = p.paid; });
     } catch (e) {}
 
+    let lastSeenMap = {}, activeDatesMap = {};
     try {
-      const devices = await queryMany(`SELECT user_id, ARRAY_AGG(DISTINCT LOWER(platform)) as platforms FROM user_devices GROUP BY user_id`);
+      const devices = await queryMany(`
+        SELECT user_id, 
+               MAX(last_seen_at) as max_last_seen,
+               ARRAY_AGG(DISTINCT LOWER(platform)) as platforms,
+               ARRAY_AGG(DISTINCT (last_seen_at AT TIME ZONE 'Asia/Kolkata')::date::text) as active_dates
+        FROM user_devices 
+        GROUP BY user_id
+      `);
+
       devices.forEach(d => {
-        if (d.user_id && d.platforms) {
-          const set = new Set(d.platforms.map(p => (p || '').toLowerCase().trim()));
-          const hasApp = set.has('android') || set.has('mobile') || set.has('app');
-          const hasWeb = set.has('web');
-          if (hasApp && hasWeb) {
-            platformMap[d.user_id] = 'both';
-          } else if (hasApp) {
-            platformMap[d.user_id] = 'app';
-          } else if (hasWeb) {
-            platformMap[d.user_id] = 'web';
-          } else {
-            platformMap[d.user_id] = 'web';
+        if (d.user_id) {
+          if (d.max_last_seen) lastSeenMap[d.user_id] = d.max_last_seen;
+          if (d.active_dates) activeDatesMap[d.user_id] = d.active_dates;
+
+          if (d.platforms) {
+            const set = new Set(d.platforms.map(p => (p || '').toLowerCase().trim()));
+            const hasApp = set.has('android') || set.has('mobile') || set.has('app');
+            const hasWeb = set.has('web');
+            if (hasApp && hasWeb) {
+              platformMap[d.user_id] = 'both';
+            } else if (hasApp) {
+              platformMap[d.user_id] = 'app';
+            } else if (hasWeb) {
+              platformMap[d.user_id] = 'web';
+            } else {
+              platformMap[d.user_id] = 'web';
+            }
           }
         }
       });
@@ -1121,6 +1135,34 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         }
       }
 
+      // Format Last Active Time in IST
+      const rawLastSeen = lastSeenMap[a.user_id] || a.user_created_at;
+      let formattedLastActive = "N/A";
+      let rawLastActiveDate = ""; // e.g. "2026-09-27"
+      if (rawLastSeen) {
+        try {
+          const d = new Date(rawLastSeen);
+          formattedLastActive = d.toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+          // YYYY-MM-DD in IST
+          const year = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric' });
+          const month = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata', month: '2-digit' });
+          const day = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata', day: '2-digit' });
+          rawLastActiveDate = `${year}-${month}-${day}`;
+        } catch (e) {
+          formattedLastActive = String(rawLastSeen).split("T")[0];
+        }
+      }
+
+      const userActiveDates = activeDatesMap[a.user_id] || (rawLastActiveDate ? [rawLastActiveDate] : []);
+
       const profileVerified = (!a.instagram_url || a.instagram_verified) &&
                               (!a.youtube_url || a.youtube_verified) &&
                               (!a.other_url || a.other_verified);
@@ -1143,6 +1185,9 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         customId: a.user_custom_id || null,
         sexPreference: a.user_sex_pref || "Straight",
         platform: userPlatform,
+        last_active_at: formattedLastActive,
+        last_active_date: rawLastActiveDate,
+        active_dates: userActiveDates,
         commission_rate: a.commission_rate || 0.25,
         upi_id: a.upi_id || null,
         social_url: a.social_url || null,
