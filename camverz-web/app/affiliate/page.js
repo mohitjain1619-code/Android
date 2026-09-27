@@ -170,12 +170,13 @@ export default function AffiliatePage() {
           right: 0,
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.85)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: 'blur(12px)',
           zIndex: 99999,
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          padding: '20px'
+          alignItems: 'flex-start',
+          padding: '40px 16px',
+          overflowY: 'auto'
         }}
         onClick={() => setShowAdAnalyticsModal(false)}
       >
@@ -185,7 +186,7 @@ export default function AffiliatePage() {
             borderRadius: '20px',
             maxWidth: '1100px',
             width: '100%',
-            maxHeight: '90vh',
+            maxHeight: 'calc(100vh - 80px)',
             overflowY: 'auto',
             padding: '28px',
             border: '1px solid rgba(255, 171, 0, 0.4)',
@@ -1123,15 +1124,16 @@ export default function AffiliatePage() {
               position: 'fixed',
               top: 0,
               left: 0,
-              width: '100vw',
-              height: '100vh',
+              right: 0,
+              bottom: 0,
               background: 'rgba(5, 7, 16, 0.92)',
               backdropFilter: 'blur(16px)',
               zIndex: 99999,
               display: 'flex',
               justifyContent: 'center',
-              alignItems: 'center',
-              padding: '20px'
+              alignItems: 'flex-start',
+              padding: '40px 16px',
+              overflowY: 'auto'
             }}
             onClick={() => setSelectedUserProfile(null)}
           >
@@ -1139,7 +1141,7 @@ export default function AffiliatePage() {
               style={{
                 maxWidth: '760px',
                 width: '100%',
-                maxHeight: '88vh',
+                maxHeight: 'calc(100vh - 80px)',
                 overflowY: 'auto',
                 background: '#0d111a',
                 borderRadius: '24px',
