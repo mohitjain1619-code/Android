@@ -128,7 +128,7 @@ export default function AffiliatePage() {
   const [adAnalyticsFilterUser, setAdAnalyticsFilterUser] = useState('');
 
   const getCountryFlag = (country) => {
-    if (!country || country === 'Unknown' || country === 'Global') return '🌐 Global';
+    if (!country || country === 'Unknown') return '🇮🇳 India';
     const c = String(country).toLowerCase().trim();
     if (c.includes('india') || c === 'in') return '🇮🇳 India';
     if (c.includes('united states') || c.includes('usa') || c === 'us') return '🇺🇸 USA';
@@ -141,6 +141,7 @@ export default function AffiliatePage() {
     if (c.includes('nepal') || c === 'np') return '🇳🇵 Nepal';
     if (c.includes('bangladesh') || c === 'bd') return '🇧🇩 Bangladesh';
     if (c.includes('pakistan') || c === 'pk') return '🇵🇰 Pakistan';
+    if (c === 'global') return '🌐 Global';
     return `🌍 ${country}`;
   };
 
