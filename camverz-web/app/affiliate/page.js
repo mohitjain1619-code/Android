@@ -336,7 +336,7 @@ export default function AffiliatePage() {
                             ✅ DELIVERED
                           </span>
                         ) : log.status === 'FAILED' || log.event_type === 'FAILED' ? (
-                          <span style={{ fontSize: '0.68rem', fontWeight 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(255, 0, 110, 0.15)', border: '1px solid rgba(255, 0, 110, 0.4)', color: '#ff007f' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: 'rgba(255, 0, 110, 0.15)', border: '1px solid rgba(255, 0, 110, 0.4)', color: '#ff007f' }}>
                             ❌ FAILED
                           </span>
                         ) : (
