@@ -1389,43 +1389,46 @@ export default function AffiliatePage() {
 
                     {/* Post & Activity Breakdown */}
                     <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '8px', letterSpacing: '0.5px', fontWeight: 600 }}>
-                        📝 USER POST & ACTIVITY BREAKDOWN
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', letterSpacing: '0.5px', fontWeight: 600 }}>
+                          📝 USER POST & ACTIVITY BREAKDOWN
+                        </span>
+                        {selectedUserProfile.postStats && selectedUserProfile.postStats.hasPosted && (
+                          <span style={{ background: 'rgba(0, 229, 255, 0.15)', color: '#00e5ff', border: '1px solid rgba(0, 229, 255, 0.4)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 700 }}>
+                            Total: {selectedUserProfile.postStats.total} Posts
+                          </span>
+                        )}
+                      </div>
                       {selectedUserProfile.postStats && selectedUserProfile.postStats.hasPosted ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
-                          <div style={{ background: 'rgba(0, 229, 255, 0.08)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(0, 229, 255, 0.25)' }}>
-                            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.7)', display: 'block' }}>TOTAL POSTS</span>
-                            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: '#00e5ff' }}>{selectedUserProfile.postStats.total}</span>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                          <div style={{ background: (selectedUserProfile.postStats.feedPosts || 0) > 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.feedPosts || 0) > 0 ? '1px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.feedPosts || 0) > 0 ? '#fff' : '#777', display: 'block' }}>FEED</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: (selectedUserProfile.postStats.feedPosts || 0) > 0 ? '#fff' : '#666' }}>{selectedUserProfile.postStats.feedPosts || 0}</span>
                           </div>
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>FEED POSTS</span>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#fff' }}>{selectedUserProfile.postStats.feedPosts || 0}</span>
+                          <div style={{ background: (selectedUserProfile.postStats.realMeetPosts || 0) > 0 ? 'rgba(255, 152, 0, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.realMeetPosts || 0) > 0 ? '1px solid rgba(255, 152, 0, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.realMeetPosts || 0) > 0 ? '#ffb74d' : '#777', display: 'block' }}>REAL MEET</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: (selectedUserProfile.postStats.realMeetPosts || 0) > 0 ? '#ff9800' : '#666' }}>{selectedUserProfile.postStats.realMeetPosts || 0}</span>
                           </div>
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>REAL MEET</span>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#ff9800' }}>{selectedUserProfile.postStats.realMeetPosts || 0}</span>
+                          <div style={{ background: (selectedUserProfile.postStats.partyPosts || 0) > 0 ? 'rgba(233, 30, 99, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.partyPosts || 0) > 0 ? '1px solid rgba(233, 30, 99, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.partyPosts || 0) > 0 ? '#f48fb1' : '#777', display: 'block' }}>PARTY</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: (selectedUserProfile.postStats.partyPosts || 0) > 0 ? '#e91e63' : '#666' }}>{selectedUserProfile.postStats.partyPosts || 0}</span>
                           </div>
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>PARTY POSTS</span>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#e91e63' }}>{selectedUserProfile.postStats.partyPosts || 0}</span>
+                          <div style={{ background: (selectedUserProfile.postStats.fantasyPosts || 0) > 0 ? 'rgba(156, 39, 176, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.fantasyPosts || 0) > 0 ? '1px solid rgba(156, 39, 176, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.fantasyPosts || 0) > 0 ? '#ce93d8' : '#777', display: 'block' }}>FANTASY</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: (selectedUserProfile.postStats.fantasyPosts || 0) > 0 ? '#ab47bc' : '#666' }}>{selectedUserProfile.postStats.fantasyPosts || 0}</span>
                           </div>
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>FANTASY</span>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#9c27b0' }}>{selectedUserProfile.postStats.fantasyPosts || 0}</span>
+                          <div style={{ background: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? 'rgba(76, 175, 80, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '1px solid rgba(76, 175, 80, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '#81c784' : '#777', display: 'block' }}>CALLS</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight 700, color: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '#4caf50' : '#666' }}>{selectedUserProfile.postStats.videoCalls || 0}</span>
                           </div>
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>VIDEO CALLS</span>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#4caf50' }}>{selectedUserProfile.postStats.videoCalls || 0}</span>
-                          </div>
-                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>STORIES</span>
-                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#00bcd4' }}>{selectedUserProfile.postStats.stories || 0}</span>
+                          <div style={{ background: (selectedUserProfile.postStats.stories || 0) > 0 ? 'rgba(0, 188, 212, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.stories || 0) > 0 ? '1px solid rgba(0, 188, 212, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
+                            <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.stories || 0) > 0 ? '#4dd0e1' : '#777', display: 'block' }}>STORIES</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: (selectedUserProfile.postStats.stories || 0) > 0 ? '#00bcd4' : '#666' }}>{selectedUserProfile.postStats.stories || 0}</span>
                           </div>
                           {(selectedUserProfile.postStats.otherPosts || 0) > 0 && (
-                            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                              <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>OTHER POSTS</span>
-                              <span style={{ fontSize: '1rem', fontWeight: 600, color: '#ffc107' }}>{selectedUserProfile.postStats.otherPosts}</span>
+                            <div style={{ background: 'rgba(255, 193, 7, 0.12)', borderRadius: '6px', padding: '6px 8px', border: '1px solid rgba(255, 193, 7, 0.4)' }}>
+                              <span style={{ fontSize: '0.64rem', color: '#ffe082', display: 'block' }}>OTHER</span>
+                              <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffc107' }}>{selectedUserProfile.postStats.otherPosts}</span>
                             </div>
                           )}
                         </div>
