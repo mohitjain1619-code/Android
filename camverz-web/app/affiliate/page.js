@@ -1419,7 +1419,7 @@ export default function AffiliatePage() {
                           </div>
                           <div style={{ background: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? 'rgba(76, 175, 80, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '1px solid rgba(76, 175, 80, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
                             <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '#81c784' : '#777', display: 'block' }}>CALLS</span>
-                            <span style={{ fontSize: '0.95rem', fontWeight 700, color: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '#4caf50' : '#666' }}>{selectedUserProfile.postStats.videoCalls || 0}</span>
+                            <span style={{ fontSize: '0.95rem', fontWeight: 700, color: (selectedUserProfile.postStats.videoCalls || 0) > 0 ? '#4caf50' : '#666' }}>{selectedUserProfile.postStats.videoCalls || 0}</span>
                           </div>
                           <div style={{ background: (selectedUserProfile.postStats.stories || 0) > 0 ? 'rgba(0, 188, 212, 0.12)' : 'rgba(255,255,255,0.03)', borderRadius: '6px', padding: '6px 8px', border: (selectedUserProfile.postStats.stories || 0) > 0 ? '1px solid rgba(0, 188, 212, 0.4)' : '1px solid rgba(255,255,255,0.06)' }}>
                             <span style={{ fontSize: '0.64rem', color: (selectedUserProfile.postStats.stories || 0) > 0 ? '#4dd0e1' : '#777', display: 'block' }}>STORIES</span>
