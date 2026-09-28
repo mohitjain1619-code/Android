@@ -1422,6 +1422,12 @@ export default function AffiliatePage() {
                             <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>STORIES</span>
                             <span style={{ fontSize: '1rem', fontWeight: 600, color: '#00bcd4' }}>{selectedUserProfile.postStats.stories || 0}</span>
                           </div>
+                          {(selectedUserProfile.postStats.otherPosts || 0) > 0 && (
+                            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>OTHER POSTS</span>
+                              <span style={{ fontSize: '1rem', fontWeight: 600, color: '#ffc107' }}>{selectedUserProfile.postStats.otherPosts}</span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div style={{ background: 'rgba(255, 82, 82, 0.08)', border: '1px dashed rgba(255, 82, 82, 0.3)', padding: '10px 14px', borderRadius: '8px', color: '#ff5252', fontSize: '0.82rem', fontWeight: 500 }}>
