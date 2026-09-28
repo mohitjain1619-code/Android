@@ -335,51 +335,104 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         startActivity(intent);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        com.ironsource.mediationsdk.IronSource.onResume(this);
+        // Pre-cache Rewarded Video ad as soon as Comments screen opens
+        if (!com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            com.ironsource.mediationsdk.IronSource.loadRewardedVideo();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        com.ironsource.mediationsdk.IronSource.onPause(this);
+    }
+
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
         AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
-        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
-            final boolean[] rewardEarned = {false};
-            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
 
-            com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
-                @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdUnavailable() {}
-                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    BaseActivity.isAdShowing = true;
-                }
-                
-                @Override 
-                public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    BaseActivity.isAdShowing = false;
-                    AdAnalyticsTracker.trackEvent(CommentsActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
-                    runOnUiThread(onFailure);
-                }
-                
-                @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                
-                @Override 
-                public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    rewardEarned[0] = true;
-                }
-                
+        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+            showAvailableRewardedAd(onSuccess, onFailure);
+        } else {
+            // Trigger ad load and wait briefly (up to 3s) for ad buffering
+            com.ironsource.mediationsdk.IronSource.loadRewardedVideo();
+
+            android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+            progress.setMessage("Loading ad...");
+            progress.setCancelable(false);
+            try { progress.show(); } catch (Exception e) {}
+
+            final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+            final Runnable[] checkRunnable = new Runnable[1];
+            final long startTime = System.currentTimeMillis();
+
+            checkRunnable[0] = new Runnable() {
                 @Override
-                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    BaseActivity.isAdShowing = false;
-                    if (rewardEarned[0]) {
-                        runOnUiThread(onSuccess);
+                public void run() {
+                    if (isFinishing() || isDestroyed()) return;
+
+                    if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
+                        if (progress.isShowing()) {
+                            try { progress.dismiss(); } catch (Exception e) {}
+                        }
+                        showAvailableRewardedAd(onSuccess, onFailure);
+                    } else if (System.currentTimeMillis() - startTime < 3000) {
+                        handler.postDelayed(checkRunnable[0], 400);
                     } else {
+                        if (progress.isShowing()) {
+                            try { progress.dismiss(); } catch (Exception e) {}
+                        }
+                        AdAnalyticsTracker.trackEvent(CommentsActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "Ad unavailable after 3s buffering timeout");
+                        // Fall back to upload directly so user is not blocked
                         runOnUiThread(onFailure);
                     }
                 }
-            });
-
-            BaseActivity.isAdShowing = true;
-            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
-        } else {
-            AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource Rewarded Video not available / No placement configured");
-            // Ad not available, fall back to upload directly to avoid blocking
-            runOnUiThread(onFailure);
+            };
+            handler.postDelayed(checkRunnable[0], 400);
         }
+    }
+
+    private void showAvailableRewardedAd(Runnable onSuccess, Runnable onFailure) {
+        final boolean[] rewardEarned = {false};
+        AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
+
+        com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
+            @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            @Override public void onAdUnavailable() {}
+            @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = true;
+            }
+
+            @Override 
+            public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = false;
+                AdAnalyticsTracker.trackEvent(CommentsActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
+                runOnUiThread(onFailure);
+            }
+
+            @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+            @Override 
+            public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                rewardEarned[0] = true;
+            }
+
+            @Override
+            public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                BaseActivity.isAdShowing = false;
+                if (rewardEarned[0]) {
+                    runOnUiThread(onSuccess);
+                } else {
+                    runOnUiThread(onFailure);
+                }
+            }
+        });
+
+        BaseActivity.isAdShowing = true;
+        com.ironsource.mediationsdk.IronSource.showRewardedVideo();
     }
 
     @Override
