@@ -45,25 +45,6 @@ public class BaseActivity extends AppCompatActivity {
                 setEnabled(true);
             }
         });
-    }
-
-    @Override
-    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
-        if (isAdShowing && event.getKeyCode() == android.view.KeyEvent.KEYCODE_BACK) {
-            Log.d(TAG, "🚫 Back key dispatch consumed and blocked during Ad playback.");
-            return true;
-        }
-        return super.dispatchKeyEvent(event);
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
-        if (isAdShowing && keyCode == android.view.KeyEvent.KEYCODE_BACK) {
-            Log.d(TAG, "🚫 Back key down blocked during Ad playback.");
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
 
         try {
             // Enable edge-to-edge window insets
@@ -96,7 +77,25 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
-    } // end onCreate
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent event) {
+        if (isAdShowing && event.getKeyCode() == android.view.KeyEvent.KEYCODE_BACK) {
+            Log.d(TAG, "🚫 Back key dispatch consumed and blocked during Ad playback.");
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, android.view.KeyEvent event) {
+        if (isAdShowing && keyCode == android.view.KeyEvent.KEYCODE_BACK) {
+            Log.d(TAG, "🚫 Back key down blocked during Ad playback.");
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
 
     public void applyWindowInsets(final View topView, final View bottomView) {
         View contentRoot = findViewById(android.R.id.content);
