@@ -976,6 +976,19 @@ export default function AffiliatePage() {
                             {getCountryFlag(c.country)}
                           </span>
 
+                          {c.postStats && c.postStats.hasPosted ? (
+                            <span 
+                              style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.18)', border: '1px solid rgba(59, 130, 246, 0.45)', color: '#60a5fa', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                              title={`Posts Breakdown: ${c.postStats.feedPosts || 0} Feed | ${c.postStats.realMeetPosts || 0} Real Meet | ${c.postStats.partyPosts || 0} Party | ${c.postStats.videoCalls || 0} Calls`}
+                            >
+                              📝 {c.postStats.total} Posts ({c.postStats.feedPosts > 0 ? `${c.postStats.feedPosts} Feed` : ''}{c.postStats.realMeetPosts > 0 ? ` ${c.postStats.realMeetPosts} Meet` : ''}{c.postStats.partyPosts > 0 ? ` ${c.postStats.partyPosts} Party` : ''})
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.67rem', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.12)', color: 'rgba(255, 255, 255, 0.4)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              🚫 No Posts
+                            </span>
+                          )}
+
                           {c.adStats && (c.adStats.requests > 0 || c.adStats.delivered > 0 || c.adStats.failed > 0) ? (
                             <span 
                               onClick={(e) => { 
@@ -1372,6 +1385,49 @@ export default function AffiliatePage() {
                           Sales: {selectedUserProfile.sales || 0}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Post & Activity Breakdown */}
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginBottom: '8px', letterSpacing: '0.5px', fontWeight: 600 }}>
+                        📝 USER POST & ACTIVITY BREAKDOWN
+                      </span>
+                      {selectedUserProfile.postStats && selectedUserProfile.postStats.hasPosted ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
+                          <div style={{ background: 'rgba(0, 229, 255, 0.08)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(0, 229, 255, 0.25)' }}>
+                            <span style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.7)', display: 'block' }}>TOTAL POSTS</span>
+                            <span style={{ fontSize: '1.15rem', fontWeight: 700, color: '#00e5ff' }}>{selectedUserProfile.postStats.total}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>FEED POSTS</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#fff' }}>{selectedUserProfile.postStats.feedPosts || 0}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>REAL MEET</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#ff9800' }}>{selectedUserProfile.postStats.realMeetPosts || 0}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>PARTY POSTS</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#e91e63' }}>{selectedUserProfile.postStats.partyPosts || 0}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>FANTASY</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#9c27b0' }}>{selectedUserProfile.postStats.fantasyPosts || 0}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>VIDEO CALLS</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#4caf50' }}>{selectedUserProfile.postStats.videoCalls || 0}</span>
+                          </div>
+                          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <span style={{ fontSize: '0.68rem', color: '#aaa', display: 'block' }}>STORIES</span>
+                            <span style={{ fontSize: '1rem', fontWeight: 600, color: '#00bcd4' }}>{selectedUserProfile.postStats.stories || 0}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ background: 'rgba(255, 82, 82, 0.08)', border: '1px dashed rgba(255, 82, 82, 0.3)', padding: '10px 14px', borderRadius: '8px', color: '#ff5252', fontSize: '0.82rem', fontWeight: 500 }}>
+                          🚫 No posts or activity logged by this user yet.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

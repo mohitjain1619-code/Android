@@ -1115,6 +1115,80 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     } catch (e) {}
 
     let lastSeenMap = {}, activeDatesMap = {};
+    let postStatsMap = {};
+    try {
+      // 1. Feed Posts count per user
+      const feedPosts = await queryMany(`
+        SELECT user_id, COUNT(*)::int as count
+        FROM posts
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id
+      `).catch(() => []);
+
+      feedPosts.forEach(p => {
+        if (p.user_id) {
+          if (!postStatsMap[p.user_id]) postStatsMap[p.user_id] = { total: 0, feedPosts: 0, realMeetPosts: 0, partyPosts: 0, fantasyPosts: 0, videoCalls: 0, stories: 0, hasPosted: false };
+          postStatsMap[p.user_id].feedPosts += (p.count || 0);
+          postStatsMap[p.user_id].total += (p.count || 0);
+          postStatsMap[p.user_id].hasPosted = true;
+        }
+      });
+
+      // 2. Community / Real Meet / Party Posts count per user
+      const commPosts = await queryMany(`
+        SELECT user_id, 
+               COUNT(*) FILTER (WHERE type = 'REAL_MEET')::int as real_meet_count,
+               COUNT(*) FILTER (WHERE type = 'PARTY')::int as party_count,
+               COUNT(*) FILTER (WHERE type = 'FANTASY')::int as fantasy_count,
+               COUNT(*)::int as total_comm
+        FROM community_posts
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id
+      `).catch(() => []);
+
+      commPosts.forEach(cp => {
+        if (cp.user_id) {
+          if (!postStatsMap[cp.user_id]) postStatsMap[cp.user_id] = { total: 0, feedPosts: 0, realMeetPosts: 0, partyPosts: 0, fantasyPosts: 0, videoCalls: 0, stories: 0, hasPosted: false };
+          postStatsMap[cp.user_id].realMeetPosts += (cp.real_meet_count || 0);
+          postStatsMap[cp.user_id].partyPosts += (cp.party_count || 0);
+          postStatsMap[cp.user_id].fantasyPosts += (cp.fantasy_count || 0);
+          postStatsMap[cp.user_id].total += (cp.total_comm || 0);
+          if ((cp.total_comm || 0) > 0) postStatsMap[cp.user_id].hasPosted = true;
+        }
+      });
+
+      // 3. Video / Audio Calls count per user
+      const callLogs = await queryMany(`
+        SELECT caller_id as user_id, COUNT(*)::int as count
+        FROM call_logs
+        WHERE caller_id IS NOT NULL
+        GROUP BY caller_id
+      `).catch(() => []);
+
+      callLogs.forEach(cl => {
+        if (cl.user_id) {
+          if (!postStatsMap[cl.user_id]) postStatsMap[cl.user_id] = { total: 0, feedPosts: 0, realMeetPosts: 0, partyPosts: 0, fantasyPosts: 0, videoCalls: 0, stories: 0, hasPosted: false };
+          postStatsMap[cl.user_id].videoCalls += (cl.count || 0);
+        }
+      });
+
+      // 4. Stories count per user
+      const stories = await queryMany(`
+        SELECT user_id, COUNT(*)::int as count
+        FROM stories
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id
+      `).catch(() => []);
+
+      stories.forEach(st => {
+        if (st.user_id) {
+          if (!postStatsMap[st.user_id]) postStatsMap[st.user_id] = { total: 0, feedPosts: 0, realMeetPosts: 0, partyPosts: 0, fantasyPosts: 0, videoCalls: 0, stories: 0, hasPosted: false };
+          postStatsMap[st.user_id].stories += (st.count || 0);
+          postStatsMap[st.user_id].total += (st.count || 0);
+          if ((st.count || 0) > 0) postStatsMap[st.user_id].hasPosted = true;
+        }
+      });
+    } catch (e) {}
     try {
       const devices = await queryMany(`
         SELECT user_id, 
@@ -1228,6 +1302,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         sexPreference: a.user_sex_pref || "Straight",
         platform: userPlatform,
         adStats: adStatsMap[a.user_id] || { requests: 0, delivered: 0, failed: 0 },
+        postStats: postStatsMap[a.user_id] || { total: 0, feedPosts: 0, realMeetPosts: 0, partyPosts: 0, fantasyPosts: 0, videoCalls: 0, stories: 0, hasPosted: false },
         last_active_at: formattedLastActive,
         last_active_date: rawLastActiveDate,
         active_dates: userActiveDates,
