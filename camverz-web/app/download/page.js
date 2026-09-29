@@ -39,11 +39,11 @@ function DownloadRedirectContent() {
         bottom: 0,
         width: '100vw',
         height: '100vh',
-        background: '#040711',
-        backgroundImage: 'radial-gradient(circle at center, #0b1736 0%, #030611 100%)',
+        background: '#02040a',
+        backgroundImage: 'radial-gradient(circle at 50% 40%, #0d1e4a 0%, #02040a 100%)',
         color: '#fff',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        padding: '24px',
+        padding: '20px',
         boxSizing: 'border-box',
         display: 'flex',
         alignItems: 'center',
@@ -56,64 +56,82 @@ function DownloadRedirectContent() {
         overflow: 'hidden'
       }}
     >
-      {/* Central Popup Card */}
+      {/* Interstitial Ad Container */}
       <div 
         onClick={goToPlayStore}
         style={{
-          width: '100%',
-          maxWidth: '380px',
-          background: 'rgba(15, 23, 42, 0.95)',
-          border: '2px solid rgba(0, 229, 255, 0.7)',
-          borderRadius: '28px',
-          padding: '36px 24px',
+          width: '92%',
+          maxWidth: '430px',
+          background: 'rgba(11, 18, 35, 0.98)',
+          border: '2px solid rgba(0, 229, 255, 0.75)',
+          borderRadius: '32px',
+          padding: '40px 28px',
           textAlign: 'center',
-          boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(0, 229, 255, 0.4)',
+          boxShadow: '0 30px 100px rgba(0, 0, 0, 0.98), 0 0 65px rgba(0, 229, 255, 0.45)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          animation: 'popupFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          animation: 'popupFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+          boxSizing: 'border-box'
         }}
       >
-        {/* App Icon */}
+        {/* Top Premium Badge */}
         <div style={{
-          width: '80px',
-          height: '80px',
-          borderRadius: '22px',
-          background: 'linear-gradient(135deg, #00E5FF, #7C4DFF)',
+          background: 'rgba(0, 229, 255, 0.12)',
+          border: '1px solid rgba(0, 229, 255, 0.4)',
+          borderRadius: '50px',
+          padding: '6px 16px',
+          color: '#00E5FF',
+          fontSize: '0.78rem',
+          fontWeight: 800,
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
+          marginBottom: '24px'
+        }}>
+          ⚡ Official Mobile App Required
+        </div>
+
+        {/* Big Icon */}
+        <div style={{
+          width: '90px',
+          height: '90px',
+          borderRadius: '26px',
+          background: 'linear-gradient(135deg, #00E5FF 0%, #7C4DFF 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 12px 35px rgba(0, 229, 255, 0.5)',
-          marginBottom: '24px'
+          boxShadow: '0 16px 40px rgba(0, 229, 255, 0.5)',
+          marginBottom: '26px'
         }}>
-          <span style={{ fontSize: '2.6rem' }}>👑</span>
+          <span style={{ fontSize: '3rem' }}>👑</span>
         </div>
 
-        {/* Modal Title */}
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 12px 0', color: '#fff', letterSpacing: '-0.3px', lineHeight: 1.3 }}>
-          For Real & Uninterrupted Fun! 🔥
+        {/* Headline */}
+        <h2 style={{ fontSize: '1.6rem', fontWeight: 900, margin: '0 0 14px 0', color: '#ffffff', letterSpacing: '-0.4px', lineHeight: 1.25 }}>
+          FOR REAL & UNINTERRUPTED FUN! 🔥
         </h2>
 
-        {/* Modal Body Message */}
-        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 28px 0' }}>
-          Please install our official Android Mobile App for smooth 1-on-1 video matching & best experience.
+        {/* Body Message */}
+        <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6, margin: '0 0 32px 0', fontWeight: 500 }}>
+          Please download our official Android App from Google Play Store to enjoy 1-on-1 video calls & premium features.
         </p>
 
-        {/* Single OK Button */}
+        {/* OK Button */}
         <button
           onClick={goToPlayStore}
           style={{
             width: '100%',
-            background: 'linear-gradient(135deg, #00E5FF, #00B0FF)',
+            background: 'linear-gradient(135deg, #00E5FF 0%, #00B0FF 100%)',
             color: '#000',
             border: 'none',
-            padding: '16px',
+            padding: '18px',
             borderRadius: '50px',
-            fontSize: '1.1rem',
-            fontWeight: 800,
-            boxShadow: '0 8px 30px rgba(0, 229, 255, 0.6)',
+            fontSize: '1.25rem',
+            fontWeight: 900,
+            boxShadow: '0 10px 35px rgba(0, 229, 255, 0.6)',
             cursor: 'pointer',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.6px',
+            animation: 'btnPulse 1.8s infinite alternate'
           }}
         >
           OK
@@ -126,8 +144,12 @@ function DownloadRedirectContent() {
           overflow: hidden !important;
         }
         @keyframes popupFadeIn {
-          from { opacity: 0; transform: scale(0.88); }
+          from { opacity: 0; transform: scale(0.85); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes btnPulse {
+          from { transform: scale(1); boxShadow: 0 10px 35px rgba(0, 229, 255, 0.5); }
+          to { transform: scale(1.02); boxShadow: 0 14px 45px rgba(0, 229, 255, 0.85); }
         }
       `}} />
     </div>
@@ -137,7 +159,7 @@ function DownloadRedirectContent() {
 export default function DownloadRedirectPage() {
   return (
     <Suspense fallback={
-      <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#030611', color: '#fff' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#02040a', color: '#fff' }}>
         <p>Loading...</p>
       </div>
     }>
@@ -145,4 +167,5 @@ export default function DownloadRedirectPage() {
     </Suspense>
   );
 }
+
 

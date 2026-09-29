@@ -16,7 +16,7 @@ import { captureFromURL } from '../lib/affiliateTracker';
 export default function ClientLayoutWrapper({ children }) {
   const { user, userData, showLogin, setShowLogin, showVerification, setShowVerification, showOnboarding, setShowOnboarding, showAppRedirect } = useAuth();
   const pathname = usePathname();
-  const isCallPage = pathname?.startsWith('/call');
+  const isNoHeaderFooterPage = pathname?.startsWith('/call') || pathname?.startsWith('/download');
 
   // Capture affiliate referral code if present in URL query
   useEffect(() => {
@@ -45,10 +45,10 @@ export default function ClientLayoutWrapper({ children }) {
 
   return (
     <>
-      <div className="bg-gradient-page" />
-      <ParticleBackground />
+      {!isNoHeaderFooterPage && <div className="bg-gradient-page" />}
+      {!isNoHeaderFooterPage && <ParticleBackground />}
       
-      {!isCallPage && <Navbar />}
+      {!isNoHeaderFooterPage && <Navbar />}
       
       <main style={{ minHeight: '100vh', position: 'relative', zIndex: 1 }}>
         <motion.div
@@ -61,7 +61,7 @@ export default function ClientLayoutWrapper({ children }) {
         </motion.div>
       </main>
       
-      {!isCallPage && <Footer />}
+      {!isNoHeaderFooterPage && <Footer />}
 
       {/* Global Modals */}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
