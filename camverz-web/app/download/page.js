@@ -1,148 +1,107 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { captureReferral } from '../../lib/affiliateTracker';
 import { trackAffiliateClick } from '../../lib/api';
 
 function DownloadRedirectContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const ref = searchParams.get('ref');
   const [playStoreUrl, setPlayStoreUrl] = useState('');
-  const [isAndroid, setIsAndroid] = useState(true);
-  const [hasVisitedPlayStore, setHasVisitedPlayStore] = useState(false);
 
   useEffect(() => {
-    // Check if user has already visited Play Store in this session
-    try {
-      const visited = sessionStorage.getItem('visited_playstore') === 'true';
-      setHasVisitedPlayStore(visited);
-    } catch (e) {}
-
     const destinationCode = ref ? ref.trim().toUpperCase() : '';
-
-    // Detect User Agent
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    const androidUser = /android/i.test(ua);
-    setIsAndroid(androidUser);
-
     const storeUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz${destinationCode ? `&referrer=${destinationCode}` : ''}`;
     setPlayStoreUrl(storeUrl);
 
     if (destinationCode) {
-      // 1. Capture referral code locally
       captureReferral(destinationCode);
-      
-      // 2. Track click asynchronously in background
       trackAffiliateClick(destinationCode, document.referrer, navigator.userAgent).catch(err => {
         console.error("Click tracking error:", err);
       });
     }
   }, [ref]);
 
-  const triggerPlayStoreRedirect = () => {
-    // Mark that user is visiting Play Store now
-    try {
-      sessionStorage.setItem('visited_playstore', 'true');
-    } catch (e) {}
-    setHasVisitedPlayStore(true);
-
-    if (isAndroid && playStoreUrl) {
-      window.location.href = playStoreUrl;
-    } else {
-      router.push('/call');
-    }
-  };
-
-  const handleContinueToWeb = (e) => {
-    e.stopPropagation();
-    router.push('/call');
+  const goToPlayStore = () => {
+    const url = playStoreUrl || 'https://play.google.com/store/apps/details?id=com.mohitt.camverz';
+    window.location.href = url;
   };
 
   return (
     <div 
-      onClick={() => {
-        if (!hasVisitedPlayStore) {
-          triggerPlayStoreRedirect();
-        }
-      }}
+      onClick={goToPlayStore}
       style={{
-        minHeight: '100vh',
-        width: '100vw',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(2, 2, 8, 0.96)',
-        backdropFilter: 'blur(30px)',
-        WebkitBackdropFilter: 'blur(30px)',
-        color: '#fff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '20px',
-        boxSizing: 'border-box',
         position: 'fixed',
         top: 0,
         left: 0,
-        zIndex: 99999,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        background: '#040711',
+        backgroundImage: 'radial-gradient(circle at center, #0b1736 0%, #030611 100%)',
+        color: '#fff',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        padding: '24px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2147483647,
         userSelect: 'none',
-        cursor: 'pointer'
+        WebkitUserSelect: 'none',
+        touchAction: 'none',
+        cursor: 'pointer',
+        overflow: 'hidden'
       }}
     >
       {/* Central Popup Card */}
       <div 
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!hasVisitedPlayStore) {
-            triggerPlayStoreRedirect();
-          }
-        }}
+        onClick={goToPlayStore}
         style={{
           width: '100%',
           maxWidth: '380px',
-          background: '#0b1120',
-          border: '1.5px solid rgba(0, 229, 255, 0.6)',
+          background: 'rgba(15, 23, 42, 0.95)',
+          border: '2px solid rgba(0, 229, 255, 0.7)',
           borderRadius: '28px',
-          padding: '36px 26px',
+          padding: '36px 24px',
           textAlign: 'center',
-          boxShadow: '0 30px 90px rgba(0, 0, 0, 0.95), 0 0 60px rgba(0, 229, 255, 0.35)',
+          boxShadow: '0 25px 80px rgba(0, 0, 0, 0.95), 0 0 50px rgba(0, 229, 255, 0.4)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          animation: 'popupFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          position: 'relative'
+          animation: 'popupFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* App Icon */}
         <div style={{
-          width: '76px',
-          height: '76px',
-          borderRadius: '20px',
+          width: '80px',
+          height: '80px',
+          borderRadius: '22px',
           background: 'linear-gradient(135deg, #00E5FF, #7C4DFF)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 12px 30px rgba(0, 229, 255, 0.45)',
-          marginBottom: '22px'
+          boxShadow: '0 12px 35px rgba(0, 229, 255, 0.5)',
+          marginBottom: '24px'
         }}>
-          <span style={{ fontSize: '2.4rem' }}>📱</span>
+          <span style={{ fontSize: '2.6rem' }}>👑</span>
         </div>
 
         {/* Modal Title */}
-        <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 12px 0', color: '#fff', letterSpacing: '-0.3px' }}>
-          Better Experience on Mobile App 👑
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 12px 0', color: '#fff', letterSpacing: '-0.3px', lineHeight: 1.3 }}>
+          For Real & Uninterrupted Fun! 🔥
         </h2>
 
         {/* Modal Body Message */}
-        <p style={{ color: '#94a3b8', fontSize: '0.94rem', lineHeight: 1.55, margin: '0 0 28px 0' }}>
-          For faster 1-on-1 video matching, HD video calls, and seamless social features, please use our official Android app.
+        <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 28px 0' }}>
+          Please install our official Android Mobile App for smooth 1-on-1 video matching & best experience.
         </p>
 
-        {/* Primary Play Store Button */}
+        {/* Single OK Button */}
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            triggerPlayStoreRedirect();
-          }}
+          onClick={goToPlayStore}
           style={{
             width: '100%',
             background: 'linear-gradient(135deg, #00E5FF, #00B0FF)',
@@ -150,49 +109,25 @@ function DownloadRedirectContent() {
             border: 'none',
             padding: '16px',
             borderRadius: '50px',
-            fontSize: '1.08rem',
+            fontSize: '1.1rem',
             fontWeight: 800,
-            boxShadow: '0 8px 30px rgba(0, 229, 255, 0.5)',
+            boxShadow: '0 8px 30px rgba(0, 229, 255, 0.6)',
             cursor: 'pointer',
-            letterSpacing: '0.5px',
-            animation: 'btnGlow 2s infinite alternate',
-            marginBottom: hasVisitedPlayStore ? '12px' : '0'
+            letterSpacing: '0.5px'
           }}
         >
           OK
         </button>
-
-        {/* Continue to Web Button (ONLY SHOWN AFTER USER RETURNS FROM PLAY STORE) */}
-        {hasVisitedPlayStore && (
-          <button
-            onClick={handleContinueToWeb}
-            style={{
-              width: '100%',
-              background: 'rgba(255,255,255,0.06)',
-              color: '#cbd5e1',
-              border: '1px solid rgba(255,255,255,0.15)',
-              padding: '12px',
-              borderRadius: '50px',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              marginTop: '4px'
-            }}
-          >
-            🌐 Continue to Web Version
-          </button>
-        )}
       </div>
 
       <style dangerouslySetInnerHTML={{
         __html: `
+        html, body {
+          overflow: hidden !important;
+        }
         @keyframes popupFadeIn {
           from { opacity: 0; transform: scale(0.88); }
           to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes btnGlow {
-          from { boxShadow: 0 8px 25px rgba(0, 229, 255, 0.4); }
-          to { boxShadow: 0 12px 40px rgba(0, 229, 255, 0.8); }
         }
       `}} />
     </div>
@@ -202,7 +137,7 @@ function DownloadRedirectContent() {
 export default function DownloadRedirectPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#060612', color: '#fff' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 2147483647, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#030611', color: '#fff' }}>
         <p>Loading...</p>
       </div>
     }>
@@ -210,3 +145,4 @@ export default function DownloadRedirectPage() {
     </Suspense>
   );
 }
+
