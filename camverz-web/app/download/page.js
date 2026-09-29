@@ -52,6 +52,7 @@ function DownloadRedirectContent() {
 
   return (
     <div 
+      id="download-lock-overlay"
       onClick={goToPlayStore}
       style={{
         position: 'fixed',
@@ -165,6 +166,12 @@ function DownloadRedirectContent() {
         __html: `
         html, body {
           overflow: hidden !important;
+        }
+        nav, header, footer, a, button, [role="button"] {
+          pointer-events: none !important;
+        }
+        #download-lock-overlay, #download-lock-overlay * {
+          pointer-events: auto !important;
         }
         @keyframes popupFadeIn {
           from { opacity: 0; transform: scale(0.85); }
