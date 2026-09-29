@@ -145,7 +145,7 @@ function DownloadRedirectContent() {
             animation: 'btnGlow 2s infinite alternate'
           }}
         >
-          OK (OPEN PLAY STORE)
+          OK
         </button>
       </div>
 
