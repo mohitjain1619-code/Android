@@ -16,7 +16,7 @@ import { captureFromURL } from '../lib/affiliateTracker';
 export default function ClientLayoutWrapper({ children }) {
   const { user, userData, showLogin, setShowLogin, showVerification, setShowVerification, showOnboarding, setShowOnboarding, showAppRedirect } = useAuth();
   const pathname = usePathname();
-  const isNoHeaderFooterPage = pathname?.startsWith('/call') || pathname?.startsWith('/download');
+  const isNoHeaderFooterPage = pathname?.startsWith('/call');
 
   // Capture affiliate referral code if present in URL query
   useEffect(() => {
