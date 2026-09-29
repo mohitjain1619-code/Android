@@ -20,7 +20,7 @@ function DownloadRedirectContent() {
     const handleRedirect = () => {
       if (isAndroid) {
         // Redirect to Google Play Store with referrer
-        const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohit.camverz&referrer=${destinationCode}`;
+        const playStoreUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz${destinationCode ? `&referrer=${destinationCode}` : ''}`;
         window.location.href = playStoreUrl;
       } else {
         // Redirect iOS or Desktop users to the website main page (referral is already stored in localStorage)
@@ -32,19 +32,14 @@ function DownloadRedirectContent() {
       // 1. Capture referral code locally
       captureReferral(destinationCode);
       
-      // 2. Track click and wait for response before routing to ensure browser sends request
-      trackAffiliateClick(destinationCode, document.referrer, navigator.userAgent)
-        .then(() => {
-          console.log("Click tracked successfully");
-          handleRedirect();
-        })
-        .catch(err => {
-          console.error("Click tracking failed:", err);
-          handleRedirect(); // Redirect anyway on error
-        });
-    } else {
-      handleRedirect();
+      // 2. Track click asynchronously in background so user redirects INSTANTLY without waiting
+      trackAffiliateClick(destinationCode, document.referrer, navigator.userAgent).catch(err => {
+        console.error("Click tracking error:", err);
+      });
     }
+
+    // 3. Immediate instant redirect
+    handleRedirect();
   }, [ref, router]);
 
   return (

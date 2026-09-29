@@ -225,7 +225,7 @@ function HomeContent() {
 
               <div className={styles.appButtonsRow}>
                 <a 
-                  href="https://play.google.com/store/apps/details?id=com.mohit.camverz" 
+                  href="https://play.google.com/store/apps/details?id=com.mohitt.camverz" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className={styles.playStoreBtn}
@@ -249,7 +249,7 @@ function HomeContent() {
                 </div>
                 <div className={styles.qrFrame}>
                   <img 
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://play.google.com/store/apps/details?id=com.mohit.camverz&color=000000&bgcolor=ffffff" 
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://play.google.com/store/apps/details?id=com.mohitt.camverz&color=000000&bgcolor=ffffff" 
                     alt="Scan QR Code to Download Camverz Android App" 
                     className={styles.qrImage}
                   />

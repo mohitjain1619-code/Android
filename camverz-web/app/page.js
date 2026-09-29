@@ -73,7 +73,7 @@ const appSchema = {
     priceCurrency: 'USD',
   },
   description: 'Instant random video matching, real-time social post sharing, inclusive LGBTQ+ communities, and anti-screenshot privacy protection.',
-  downloadUrl: 'https://play.google.com/store/apps/details?id=com.mohit.camverz',
+  downloadUrl: 'https://play.google.com/store/apps/details?id=com.mohitt.camverz',
 };
 
 export default function Page() {
