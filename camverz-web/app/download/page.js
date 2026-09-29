@@ -30,24 +30,9 @@ function DownloadRedirectContent() {
       : 'utm_source=camverz_web&utm_medium=referral';
     const referrerParam = `&referrer=${encodeURIComponent(referrerString)}`;
 
+    // Direct HTTPS Play Store URL forces Android OS to open the FULL App Page (with screenshots/details) instead of bottom sheet
     const webStoreUrl = `https://play.google.com/store/apps/details?id=${pkg}${referrerParam}`;
-    const marketUrl = `market://details?id=${pkg}${referrerParam}`;
-
-    const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-    const isAndroid = /android/i.test(ua);
-
-    if (isAndroid) {
-      try {
-        window.location.href = marketUrl;
-        setTimeout(() => {
-          window.location.href = webStoreUrl;
-        }, 800);
-      } catch (e) {
-        window.location.href = webStoreUrl;
-      }
-    } else {
-      window.location.href = webStoreUrl;
-    }
+    window.location.href = webStoreUrl;
   };
 
   return (
