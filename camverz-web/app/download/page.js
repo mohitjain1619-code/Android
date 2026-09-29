@@ -33,14 +33,8 @@ function DownloadRedirectContent() {
       });
     }
 
-    // Handle user tap anywhere on page
-    const handleGlobalClick = (e) => {
-      // If user clicked web button specifically, route to web app
-      if (e.target && e.target.closest && e.target.closest('#web-btn')) {
-        router.push('/call');
-        return;
-      }
-
+    // Handle user tap anywhere on screen
+    const handleGlobalClick = () => {
       if (androidUser && storeUrl) {
         window.location.href = storeUrl;
       } else {
@@ -67,93 +61,98 @@ function DownloadRedirectContent() {
       onClick={triggerDownload}
       style={{
         minHeight: '100vh',
+        width: '100vw',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'radial-gradient(circle at center, #0f172a 0%, #060612 100%)',
+        background: 'rgba(6, 6, 18, 0.92)',
+        backdropFilter: 'blur(12px)',
         color: '#fff',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        padding: '24px',
-        textAlign: 'center',
-        cursor: 'pointer',
-        userSelect: 'none'
+        padding: '20px',
+        boxSizing: 'border-box',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 99999,
+        userSelect: 'none',
+        cursor: 'pointer'
       }}
     >
-      {/* App Badge Header */}
-      <div style={{
-        width: '84px',
-        height: '84px',
-        borderRadius: '20px',
-        background: 'linear-gradient(135deg, #00E5FF, #7C4DFF)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 12px 35px rgba(0, 229, 255, 0.35)',
-        marginBottom: '20px'
-      }}>
-        <span style={{ fontSize: '2.5rem' }}>📹</span>
-      </div>
-
-      <h1 style={{ fontSize: '1.8rem', fontWeight: 800, margin: '0 0 8px 0', background: 'linear-gradient(135deg, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-        Camverz App
-      </h1>
-
-      <p style={{ color: '#94a3b8', fontSize: '0.95rem', maxWidth: '360px', margin: '0 0 28px 0', lineHeight: 1.5 }}>
-        Instant Live Video Matching, Real Meet & Social Communities
-      </p>
-
-      {/* Main Download CTA Button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          triggerDownload();
-        }}
+      {/* Central Uncloseable Popup Card */}
+      <div 
+        onClick={triggerDownload}
         style={{
-          background: 'linear-gradient(135deg, #00E5FF, #00B0FF)',
-          color: '#000',
-          border: 'none',
-          padding: '16px 32px',
-          borderRadius: '50px',
-          fontSize: '1.05rem',
-          fontWeight: 700,
-          boxShadow: '0 8px 25px rgba(0, 229, 255, 0.4)',
-          cursor: 'pointer',
+          width: '100%',
+          maxWidth: '380px',
+          background: '#0f172a',
+          border: '1px solid rgba(0, 229, 255, 0.4)',
+          borderRadius: '24px',
+          padding: '32px 24px',
+          textAlign: 'center',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 229, 255, 0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          animation: 'popupFadeIn 0.3s ease-out'
+        }}
+      >
+        {/* App Icon */}
+        <div style={{
+          width: '72px',
+          height: '72px',
+          borderRadius: '18px',
+          background: 'linear-gradient(135deg, #00E5FF, #7C4DFF)',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          marginBottom: '16px',
-          transition: 'transform 0.2s ease'
-        }}
-      >
-        <span style={{ fontSize: '1.3rem' }}>▶</span>
-        <span>Download Official Android App</span>
-      </button>
+          justifyContent: 'center',
+          boxShadow: '0 10px 25px rgba(0, 229, 255, 0.35)',
+          marginBottom: '20px'
+        }}>
+          <span style={{ fontSize: '2.2rem' }}>📱</span>
+        </div>
 
-      <p style={{ fontSize: '0.78rem', color: '#64748b', margin: '0 0 24px 0' }}>
-        👇 Tap anywhere on screen to open Google Play Store
-      </p>
+        {/* Modal Title */}
+        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 10px 0', color: '#fff' }}>
+          Better Experience on Mobile App 👑
+        </h2>
 
-      {/* Web Option */}
-      <button
-        id="web-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          router.push('/call');
-        }}
-        style={{
-          background: 'rgba(255,255,255,0.06)',
-          color: '#cbd5e1',
-          border: '1px solid rgba(255,255,255,0.12)',
-          padding: '10px 20px',
-          borderRadius: '30px',
-          fontSize: '0.85rem',
-          fontWeight: 600,
-          cursor: 'pointer'
-        }}
-      >
-        🌐 Open Web App Instantly
-      </button>
+        {/* Modal Body Message */}
+        <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 26px 0' }}>
+          For faster 1-on-1 video matching, HD video calls, and seamless social features, please use our official Android app.
+        </p>
+
+        {/* Single OK / Download Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            triggerDownload();
+          }}
+          style={{
+            width: '100%',
+            background: 'linear-gradient(135deg, #00E5FF, #00B0FF)',
+            color: '#000',
+            border: 'none',
+            padding: '16px',
+            borderRadius: '50px',
+            fontSize: '1.05rem',
+            fontWeight: 800,
+            boxShadow: '0 8px 25px rgba(0, 229, 255, 0.4)',
+            cursor: 'pointer',
+            letterSpacing: '0.5px'
+          }}
+        >
+          OK (OPEN PLAY STORE)
+        </button>
+      </div>
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        @keyframes popupFadeIn {
+          from { opacity: 0; transform: scale(0.9); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}} />
     </div>
   );
 }
