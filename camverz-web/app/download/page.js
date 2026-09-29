@@ -8,12 +8,9 @@ import { trackAffiliateClick } from '../../lib/api';
 function DownloadRedirectContent() {
   const searchParams = useSearchParams();
   const ref = searchParams.get('ref');
-  const [playStoreUrl, setPlayStoreUrl] = useState('');
 
   useEffect(() => {
     const destinationCode = ref ? ref.trim().toUpperCase() : '';
-    const storeUrl = `https://play.google.com/store/apps/details?id=com.mohitt.camverz${destinationCode ? `&referrer=${destinationCode}` : ''}`;
-    setPlayStoreUrl(storeUrl);
 
     if (destinationCode) {
       captureReferral(destinationCode);
@@ -24,8 +21,33 @@ function DownloadRedirectContent() {
   }, [ref]);
 
   const goToPlayStore = () => {
-    const url = playStoreUrl || 'https://play.google.com/store/apps/details?id=com.mohitt.camverz';
-    window.location.href = url;
+    const destinationCode = ref ? ref.trim().toUpperCase() : '';
+    const referrerParam = destinationCode ? `&referrer=${encodeURIComponent(destinationCode)}` : '';
+    const pkg = 'com.mohitt.camverz';
+
+    const webStoreUrl = `https://play.google.com/store/apps/details?id=${pkg}${referrerParam}`;
+    const marketUrl = `market://details?id=${pkg}${referrerParam}`;
+    const intentUrl = `intent://details?id=${pkg}${referrerParam}#Intent;scheme=market;package=com.android.vending;end;`;
+
+    const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+    const isAndroid = /android/i.test(ua);
+
+    if (isAndroid) {
+      // Force Android OS to launch native Play Store app on main listing page directly
+      try {
+        window.location.href = marketUrl;
+        setTimeout(() => {
+          window.location.href = intentUrl;
+        }, 250);
+        setTimeout(() => {
+          window.location.href = webStoreUrl;
+        }, 1000);
+      } catch (e) {
+        window.location.href = webStoreUrl;
+      }
+    } else {
+      window.location.href = webStoreUrl;
+    }
   };
 
   return (
@@ -167,5 +189,6 @@ export default function DownloadRedirectPage() {
     </Suspense>
   );
 }
+
 
 
