@@ -65,8 +65,9 @@ function DownloadRedirectContent() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(6, 6, 18, 0.92)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(2, 2, 8, 0.96)',
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
         color: '#fff',
         fontFamily: 'system-ui, -apple-system, sans-serif',
         padding: '20px',
@@ -85,40 +86,41 @@ function DownloadRedirectContent() {
         style={{
           width: '100%',
           maxWidth: '380px',
-          background: '#0f172a',
-          border: '1px solid rgba(0, 229, 255, 0.4)',
-          borderRadius: '24px',
-          padding: '32px 24px',
+          background: '#0b1120',
+          border: '1.5px solid rgba(0, 229, 255, 0.6)',
+          borderRadius: '28px',
+          padding: '36px 26px',
           textAlign: 'center',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 229, 255, 0.2)',
+          boxShadow: '0 30px 90px rgba(0, 0, 0, 0.95), 0 0 60px rgba(0, 229, 255, 0.35)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          animation: 'popupFadeIn 0.3s ease-out'
+          animation: 'popupFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          position: 'relative'
         }}
       >
         {/* App Icon */}
         <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '18px',
+          width: '76px',
+          height: '76px',
+          borderRadius: '20px',
           background: 'linear-gradient(135deg, #00E5FF, #7C4DFF)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 10px 25px rgba(0, 229, 255, 0.35)',
-          marginBottom: '20px'
+          boxShadow: '0 12px 30px rgba(0, 229, 255, 0.45)',
+          marginBottom: '22px'
         }}>
-          <span style={{ fontSize: '2.2rem' }}>📱</span>
+          <span style={{ fontSize: '2.4rem' }}>📱</span>
         </div>
 
         {/* Modal Title */}
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 10px 0', color: '#fff' }}>
+        <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 12px 0', color: '#fff', letterSpacing: '-0.3px' }}>
           Better Experience on Mobile App 👑
         </h2>
 
         {/* Modal Body Message */}
-        <p style={{ color: '#94a3b8', fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 26px 0' }}>
+        <p style={{ color: '#94a3b8', fontSize: '0.94rem', lineHeight: 1.55, margin: '0 0 28px 0' }}>
           For faster 1-on-1 video matching, HD video calls, and seamless social features, please use our official Android app.
         </p>
 
@@ -135,11 +137,12 @@ function DownloadRedirectContent() {
             border: 'none',
             padding: '16px',
             borderRadius: '50px',
-            fontSize: '1.05rem',
+            fontSize: '1.08rem',
             fontWeight: 800,
-            boxShadow: '0 8px 25px rgba(0, 229, 255, 0.4)',
+            boxShadow: '0 8px 30px rgba(0, 229, 255, 0.5)',
             cursor: 'pointer',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.5px',
+            animation: 'btnGlow 2s infinite alternate'
           }}
         >
           OK (OPEN PLAY STORE)
@@ -149,8 +152,12 @@ function DownloadRedirectContent() {
       <style dangerouslySetInnerHTML={{
         __html: `
         @keyframes popupFadeIn {
-          from { opacity: 0; transform: scale(0.9); }
+          from { opacity: 0; transform: scale(0.88); }
           to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes btnGlow {
+          from { boxShadow: 0 8px 25px rgba(0, 229, 255, 0.4); }
+          to { boxShadow: 0 12px 40px rgba(0, 229, 255, 0.8); }
         }
       `}} />
     </div>
