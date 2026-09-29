@@ -22,26 +22,26 @@ function DownloadRedirectContent() {
 
   const goToPlayStore = () => {
     const destinationCode = ref ? ref.trim().toUpperCase() : '';
-    const referrerParam = destinationCode ? `&referrer=${encodeURIComponent(destinationCode)}` : '';
     const pkg = 'com.mohitt.camverz';
+
+    // Standard Google Play Install Referrer format: utm_source=CODE&utm_medium=affiliate
+    const referrerString = destinationCode 
+      ? `utm_source=${encodeURIComponent(destinationCode)}&utm_medium=affiliate`
+      : 'utm_source=camverz_web&utm_medium=referral';
+    const referrerParam = `&referrer=${encodeURIComponent(referrerString)}`;
 
     const webStoreUrl = `https://play.google.com/store/apps/details?id=${pkg}${referrerParam}`;
     const marketUrl = `market://details?id=${pkg}${referrerParam}`;
-    const intentUrl = `intent://details?id=${pkg}${referrerParam}#Intent;scheme=market;package=com.android.vending;end;`;
 
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
     const isAndroid = /android/i.test(ua);
 
     if (isAndroid) {
-      // Force Android OS to launch native Play Store app on main listing page directly
       try {
         window.location.href = marketUrl;
         setTimeout(() => {
-          window.location.href = intentUrl;
-        }, 250);
-        setTimeout(() => {
           window.location.href = webStoreUrl;
-        }, 1000);
+        }, 800);
       } catch (e) {
         window.location.href = webStoreUrl;
       }
