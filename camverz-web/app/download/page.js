@@ -11,8 +11,15 @@ function DownloadRedirectContent() {
   const ref = searchParams.get('ref');
   const [playStoreUrl, setPlayStoreUrl] = useState('');
   const [isAndroid, setIsAndroid] = useState(true);
+  const [hasVisitedPlayStore, setHasVisitedPlayStore] = useState(false);
 
   useEffect(() => {
+    // Check if user has already visited Play Store in this session
+    try {
+      const visited = sessionStorage.getItem('visited_playstore') === 'true';
+      setHasVisitedPlayStore(visited);
+    } catch (e) {}
+
     const destinationCode = ref ? ref.trim().toUpperCase() : '';
 
     // Detect User Agent
@@ -32,33 +39,34 @@ function DownloadRedirectContent() {
         console.error("Click tracking error:", err);
       });
     }
+  }, [ref]);
 
-    // Handle user tap anywhere on screen
-    const handleGlobalClick = () => {
-      if (androidUser && storeUrl) {
-        window.location.href = storeUrl;
-      } else {
-        router.push('/');
-      }
-    };
+  const triggerPlayStoreRedirect = () => {
+    // Mark that user is visiting Play Store now
+    try {
+      sessionStorage.setItem('visited_playstore', 'true');
+    } catch (e) {}
+    setHasVisitedPlayStore(true);
 
-    window.addEventListener('click', handleGlobalClick);
-    return () => {
-      window.removeEventListener('click', handleGlobalClick);
-    };
-  }, [ref, router]);
-
-  const triggerDownload = () => {
     if (isAndroid && playStoreUrl) {
       window.location.href = playStoreUrl;
     } else {
-      router.push('/');
+      router.push('/call');
     }
+  };
+
+  const handleContinueToWeb = (e) => {
+    e.stopPropagation();
+    router.push('/call');
   };
 
   return (
     <div 
-      onClick={triggerDownload}
+      onClick={() => {
+        if (!hasVisitedPlayStore) {
+          triggerPlayStoreRedirect();
+        }
+      }}
       style={{
         minHeight: '100vh',
         width: '100vw',
@@ -80,9 +88,14 @@ function DownloadRedirectContent() {
         cursor: 'pointer'
       }}
     >
-      {/* Central Uncloseable Popup Card */}
+      {/* Central Popup Card */}
       <div 
-        onClick={triggerDownload}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!hasVisitedPlayStore) {
+            triggerPlayStoreRedirect();
+          }
+        }}
         style={{
           width: '100%',
           maxWidth: '380px',
@@ -124,11 +137,11 @@ function DownloadRedirectContent() {
           For faster 1-on-1 video matching, HD video calls, and seamless social features, please use our official Android app.
         </p>
 
-        {/* Single OK / Download Button */}
+        {/* Primary Play Store Button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
-            triggerDownload();
+            triggerPlayStoreRedirect();
           }}
           style={{
             width: '100%',
@@ -142,11 +155,33 @@ function DownloadRedirectContent() {
             boxShadow: '0 8px 30px rgba(0, 229, 255, 0.5)',
             cursor: 'pointer',
             letterSpacing: '0.5px',
-            animation: 'btnGlow 2s infinite alternate'
+            animation: 'btnGlow 2s infinite alternate',
+            marginBottom: hasVisitedPlayStore ? '12px' : '0'
           }}
         >
           OK
         </button>
+
+        {/* Continue to Web Button (ONLY SHOWN AFTER USER RETURNS FROM PLAY STORE) */}
+        {hasVisitedPlayStore && (
+          <button
+            onClick={handleContinueToWeb}
+            style={{
+              width: '100%',
+              background: 'rgba(255,255,255,0.06)',
+              color: '#cbd5e1',
+              border: '1px solid rgba(255,255,255,0.15)',
+              padding: '12px',
+              borderRadius: '50px',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              marginTop: '4px'
+            }}
+          >
+            🌐 Continue to Web Version
+          </button>
+        )}
       </div>
 
       <style dangerouslySetInnerHTML={{
