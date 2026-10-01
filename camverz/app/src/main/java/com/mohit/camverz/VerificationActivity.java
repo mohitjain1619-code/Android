@@ -420,9 +420,18 @@ public class VerificationActivity extends BaseActivity {
         android.graphics.BitmapFactory.decodeFile(pathName, options);
 
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
         options.inJustDecodeBounds = false;
-        return android.graphics.BitmapFactory.decodeFile(pathName, options);
+        options.inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888;
+
+        Bitmap decoded = android.graphics.BitmapFactory.decodeFile(pathName, options);
+        if (decoded != null && (decoded.getWidth() > reqWidth || decoded.getHeight() > reqHeight)) {
+            Bitmap scaled = Bitmap.createScaledBitmap(decoded, reqWidth, reqHeight, true);
+            if (scaled != decoded) {
+                decoded.recycle();
+                decoded = scaled;
+            }
+        }
+        return decoded;
     }
 
     private int calculateInSampleSize(android.graphics.BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -431,12 +440,9 @@ public class VerificationActivity extends BaseActivity {
         int inSampleSize = 1;
 
         if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
+            final int heightRatio = Math.round((float) height / (float) reqHeight);
+            final int widthRatio = Math.round((float) width / (float) reqWidth);
+            inSampleSize = Math.max(1, Math.min(heightRatio, widthRatio));
         }
 
         return inSampleSize;

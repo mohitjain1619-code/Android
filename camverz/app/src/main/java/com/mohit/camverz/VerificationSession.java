@@ -43,7 +43,7 @@ public class VerificationSession {
         try {
             File file = new File(sessionDir, name + ".jpg");
             FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out);
             out.flush();
             out.close();
 
