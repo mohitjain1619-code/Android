@@ -13,12 +13,8 @@
         <!-- Application Window Background — Clean Light -->
         <item name="android:windowBackground">@color/bg_primary</item>
 
-        <!-- Status Bar — transparent for edge-to-edge -->
-        <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- Status Bar light icon control -->
         <item name="android:windowLightStatusBar">false</item>
-
-        <!-- Navigation Bar — transparent for edge-to-edge -->
-        <item name="android:navigationBarColor">@android:color/transparent</item>
 
         <!-- Text Colors -->
         <item name="android:textColorPrimary">@color/text_primary</item>

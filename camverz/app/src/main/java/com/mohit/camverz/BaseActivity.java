@@ -50,8 +50,12 @@ public class BaseActivity extends AppCompatActivity {
             // Enable edge-to-edge window insets
             androidx.activity.EdgeToEdge.enable(this);
             
-            // Ensure status bar icons are white on dark ambient backgrounds
-            WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView()).setAppearanceLightStatusBars(false);
+            // Ensure status bar icons are white on dark ambient backgrounds using AndroidX WindowInsetsControllerCompat
+            androidx.core.view.WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (insetsController != null) {
+                insetsController.setAppearanceLightStatusBars(false);
+                insetsController.setAppearanceLightNavigationBars(false);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Failed to enable edge-to-edge / status bar styling", e);
         }
