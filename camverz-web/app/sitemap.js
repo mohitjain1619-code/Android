@@ -34,6 +34,18 @@ export default async function sitemap() {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/blog/top-10-safe-live-video-chat-apps-2026`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/blog/how-to-make-authentic-friends-and-social-connections-online`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/blog/best-free-alternative-to-chamet-app`,
       lastModified: currentDate,
       changeFrequency: 'weekly',

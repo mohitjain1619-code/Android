@@ -6,6 +6,28 @@ import styles from './page.module.css';
 
 export const blogPosts = [
   {
+    slug: 'top-10-safe-live-video-chat-apps-2026',
+    title: 'Top 10 Safe Live Video Chat & Social Discovery Apps in 2026 (Privacy-First Guide)',
+    description: 'Explore the top 10 safe social discovery & video matching apps in 2026. Compare privacy features, anti-screenshot protection, verified profiles, and inclusive community support.',
+    category: 'Safety',
+    date: 'October 1, 2026',
+    readTime: '15 min read',
+    image: '🛡️',
+    gradient: 'linear-gradient(135deg, rgba(0, 229, 255, 0.25) 0%, rgba(189, 0, 255, 0.25) 100%)',
+    border: '#00E5FF'
+  },
+  {
+    slug: 'how-to-make-authentic-friends-and-social-connections-online',
+    title: 'How to Build Authentic Friendships & Safe Social Connections Online in 2026',
+    description: 'Master the art of creating genuine friendships, connecting with inclusive social circles, organizing local city hangouts (Real Meet), and staying safe while socializing on live video platforms.',
+    category: 'Community',
+    date: 'October 1, 2026',
+    readTime: '14 min read',
+    image: '👑',
+    gradient: 'linear-gradient(135deg, rgba(255, 0, 110, 0.25) 0%, rgba(0, 229, 255, 0.25) 100%)',
+    border: '#FF006E'
+  },
+  {
     slug: 'best-free-alternative-to-chamet-app',
     title: 'Why Camverz is the #1 Free Alternative to Chamet App in 2026 (Zero Diamonds & 100% Privacy)',
     description: 'Tired of Chamet\'s expensive diamond paywalls and coin traps? Discover why Camverz is the #1 free alternative to Chamet with screenshot protection, women pose verification, LGBTQ+ matching, real meetups & party hosts.',

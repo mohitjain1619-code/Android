@@ -37,6 +37,20 @@ export default function Footer() {
           </div>
 
           <div className={styles.linkGroup}>
+            <h4>Mobile App</h4>
+            <a 
+              href="https://play.google.com/store/apps/details?id=com.mohitt.camverz" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#00E5FF', fontWeight: 600 }}
+            >
+              📱 Get Camverz on Google Play
+            </a>
+            <Link href="/download">Android App Download</Link>
+            <Link href="/realmeet">Real Meet Hangouts</Link>
+          </div>
+
+          <div className={styles.linkGroup}>
             <h4>Support</h4>
             <Link href="/contact">Help Center</Link>
             <a href="mailto:support@camverz.com">support@camverz.com</a>
