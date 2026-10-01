@@ -98,13 +98,13 @@
         <!-- Story Creator Activity -->
         <activity
             android:name=".StoryCreatorActivity"
-            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:exported="false" />
 
         <!-- Story Viewer Activity -->
         <activity
             android:name=".StoryViewerActivity"
-            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.Camverz.Fullscreen"
             android:exported="false" />
 
@@ -117,7 +117,7 @@
         <activity
             android:name=".CallActivity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" />
 
         <!-- Community Chat Activity -->
         <activity
@@ -200,13 +200,21 @@
         <activity
             android:name=".RealMeetActivity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" />
 
         <!-- Legal & Policies Activity -->
         <activity
             android:name=".LegalActivity"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" />
+
+        <!-- IronSource SDK Controller Activity Override (Supports Android 16 Large Screens & LevelPlay Ads) -->
+        <activity
+            android:name="com.ironsource.sdk.controller.ControllerActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+            android:hardwareAccelerated="true"
+            tools:replace="android:screenOrientation"
+            tools:node="merge" />
 
 
         <!-- AdMob Application ID (Test ID / Production loaded dynamically) -->
