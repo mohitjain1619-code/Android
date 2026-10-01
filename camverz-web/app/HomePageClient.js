@@ -108,11 +108,11 @@ function HomeContent() {
   };
 
   const features = [
-    { icon: Sparkles, title: 'Real Meet & Party Host', desc: 'Host or discover real-world meetups, house parties, coffee hangouts, and events with real-time join requests & party approvals.' },
-    { icon: Video, title: 'Instant 1-on-1 Video Match', desc: 'Get matched instantly in live face-to-face video calls with Straight, Gay, or Lesbian orientation filtering.' },
+    { icon: Sparkles, title: 'Real Meet & Party Host', desc: 'Host or discover local city hangouts, community meetups, coffee chats, and events with real-time join requests & party approvals.' },
+    { icon: Video, title: 'Instant 1-on-1 Video Match', desc: 'Get matched instantly in live video connections with customized community orientation preferences.' },
     { icon: Users, title: 'Stories & Community Feed', desc: 'Post daily stories, share social updates, like & comment on community posts, and engage with verified creators.' },
     { icon: UserCheck, title: 'Verified Profiles & Anti-Catfish', desc: 'Gender-verified members and AI profile checks ensure 100% authentic real-people connections with no fake bots.' },
-    { icon: MessageSquare, title: 'Private Direct Messaging', desc: 'Send direct messages, coordinate party invites, and keep in touch with your matches through real-time chat.' },
+    { icon: MessageSquare, title: 'Private Direct Messaging', desc: 'Send direct messages, coordinate meetups, and keep in touch with your matches through real-time chat.' },
     { icon: Lock, title: 'Strict Zero-Nudity & P2P Privacy', desc: '24/7 AI moderation, screenshot blocking, and encrypted peer-to-peer WebRTC calls with zero server recordings.' },
   ];
 
@@ -127,10 +127,10 @@ function HomeContent() {
           </div>
           <h1 className={styles.heroTitle}>
             Connect & Socialize<br />
-            Through <span className="neon-text">Live Video Chat</span>
+            Through <span className="neon-text">Live Video Connections</span>
           </h1>
           <p className={styles.heroDesc}>
-            Discover new friends, join inclusive LGBTQ+ social circles, share stories, and build real-time connections worldwide through instant 1-on-1 video chat.
+            Discover new friends, join inclusive community circles, share stories, and build real-time connections worldwide through instant 1-on-1 video matching.
           </p>
           <div className={styles.heroBtns}>
             <button className="btn-neon" onClick={() => handleStartCall('straight')}>
@@ -155,13 +155,13 @@ function HomeContent() {
         <div className="section">
           <div className="section-title">
             <h2>Choose Your Preference</h2>
-            <p>Select a category to get matched with the right people</p>
+            <p>Select a community category to get matched with the right people</p>
           </div>
           <div className={styles.prefGrid}>
             {[
-              { key: 'straight', emoji: '💑', label: 'Straight', desc: 'Male & Female matching', color: '#FF006E' },
-              { key: 'gay', emoji: '👨‍❤️‍👨', label: 'Gay', desc: 'Male only matching', color: '#2979FF' },
-              { key: 'lesbian', emoji: '👩‍❤️‍👩', label: 'Lesbian', desc: 'Female only matching', color: '#BD00FF' },
+              { key: 'straight', emoji: '💑', label: 'Straight', desc: 'Inclusive Male & Female matching', color: '#FF006E' },
+              { key: 'gay', emoji: '👨‍❤️‍👨', label: 'Gay', desc: 'Male community matching', color: '#2979FF' },
+              { key: 'lesbian', emoji: '👩‍❤️‍👩', label: 'Lesbian', desc: 'Female community matching', color: '#BD00FF' },
             ].map(cat => (
               <button
                 key={cat.key}

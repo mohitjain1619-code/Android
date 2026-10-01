@@ -1,15 +1,15 @@
 import HomePageClient from './HomePageClient';
 
 export const metadata = {
-  title: 'Camverz — Social Media, Real-Time Connection & Inclusive LGBTQ+ Live Video Network',
-  description: 'Join Camverz for instant 1-on-1 video connections, social media post sharing, real-time messaging, and inclusive LGBTQ+ social networking. Safe, 100% verified, and anti-screenshot protected.',
-  keywords: 'social media, live video chat, LGBTQ social network, video connection, real-time social discovery, meet new friends, gay chat, lesbian chat, straight chat, social networking app, real meet, party host',
+  title: 'Camverz — Social Media, Real-Time Connection & Inclusive Live Video Network',
+  description: 'Join Camverz for instant 1-on-1 video connections, social media post sharing, real-time messaging, and inclusive community networking. Safe, 100% verified, and anti-screenshot protected.',
+  keywords: 'social media, live video connection, inclusive social network, video discovery, real-time social networking, meet new friends, diverse community, real meet, party host',
   alternates: {
     canonical: 'https://camverz.com',
   },
   openGraph: {
-    title: 'Camverz — Social Media, Real-Time Connection & Inclusive LGBTQ+ Live Video Network',
-    description: 'Connect with new friends and inclusive LGBTQ+ communities worldwide through live video chat, story sharing, real-life meetups, and instant social media connection.',
+    title: 'Camverz — Social Media, Real-Time Connection & Inclusive Live Video Network',
+    description: 'Connect with new friends and inclusive LGBTQ+ communities worldwide through live video connections, story sharing, real-life meetups, and instant social media networking.',
     url: 'https://camverz.com',
     siteName: 'Camverz',
     locale: 'en_US',
@@ -18,7 +18,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Camverz — Social Media & Live Video Network',
-    description: 'Connect worldwide through live video chat, real-life meetups, and inclusive LGBTQ+ social networking.',
+    description: 'Connect worldwide through live video matching, real-life meetups, and inclusive community networking.',
   },
 };
 
@@ -31,7 +31,7 @@ const homeFaqSchema = {
       name: 'What is Camverz?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Camverz is a real-time social connection and live video chat platform where users can connect 1-on-1, share social media posts, join inclusive LGBTQ+ communities, organize real-life offline meetups (Real Meet), and host real-world house parties (Party Host).',
+        text: 'Camverz is a real-time social connection and live video discovery platform where users can connect 1-on-1, share social media posts, join inclusive communities, organize local city hangouts (Real Meet), and host community events (Party Host).',
       },
     },
     {
@@ -47,7 +47,7 @@ const homeFaqSchema = {
       name: 'Is Camverz inclusive of LGBTQ+ communities?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Absolutely. Camverz provides dedicated Gay, Lesbian, Bisexual, Transgender, Queer, Non-Binary, and Straight tags, orientation match filters, and zero-tolerance anti-discrimination moderation.',
+        text: 'Absolutely. Camverz provides dedicated community orientation tags, inclusive match preferences, and zero-tolerance anti-discrimination moderation.',
       },
     },
     {
@@ -55,7 +55,7 @@ const homeFaqSchema = {
       name: 'How do Real Meet and Party Host work?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Real Meet allows you to post and find real-world 1-on-1 offline hangouts in your city. Party Host lets hosts publish real-life offline house parties and venue events with guest lists and announcements.',
+        text: 'Real Meet allows you to discover and post local city hangouts. Party Host lets hosts publish real-life offline gatherings and venue events with guest lists and announcements.',
       },
     },
   ],
