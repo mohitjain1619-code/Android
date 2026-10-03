@@ -166,13 +166,19 @@
             </HorizontalScrollView>
         </LinearLayout>
 
-        <!-- Messages List -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/inboxRecyclerView"
+        <!-- Messages List with Pull To Refresh -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:padding="16dp" />
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/inboxRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="16dp" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
     <TextView

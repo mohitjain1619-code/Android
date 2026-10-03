@@ -38,10 +38,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         holder.userName.setText("User " + position);
         holder.lastMessage.setText("Last message goes here...");
 
-        // TODO: Load actual user avatar
-        Glide.with(context)
-                .load(R.drawable.ic_launcher_background)
-                .into(holder.userAvatar);
+        AvatarHelper.loadAvatar(context, null, null, "User " + position, holder.userAvatar);
     }
 
     @Override

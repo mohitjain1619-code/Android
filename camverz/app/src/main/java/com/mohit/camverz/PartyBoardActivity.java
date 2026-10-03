@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -48,6 +50,11 @@ public class PartyBoardActivity extends BaseActivity {
 
     private ApiService api;
     private TokenManager tokenManager;
+    private Socket socket;
+    private Emitter.Listener announcementListener;
+
+    private final List<JsonObject> annList = new ArrayList<>();
+    private AnnouncementsAdapter announcementsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +87,8 @@ public class PartyBoardActivity extends BaseActivity {
         btnBack.setOnClickListener(v -> finish());
 
         rvAnnouncements.setLayoutManager(new LinearLayoutManager(this));
+        announcementsAdapter = new AnnouncementsAdapter(this, annList);
+        rvAnnouncements.setAdapter(announcementsAdapter);
 
         if (isHost) {
             layoutMembersSection.setVisibility(View.VISIBLE);
@@ -92,6 +101,53 @@ public class PartyBoardActivity extends BaseActivity {
         }
 
         fetchAnnouncements();
+        setupRealtimeSocket();
+    }
+
+    private void setupRealtimeSocket() {
+        if (postId == null) return;
+        socket = SocketManager.getInstance();
+
+        announcementListener = args -> {
+            if (args != null && args.length > 0) {
+                try {
+                    Object data = args[0];
+                    final JsonObject newAnnouncement = new JsonObject();
+                    if (data instanceof org.json.JSONObject) {
+                        org.json.JSONObject json = (org.json.JSONObject) data;
+                        newAnnouncement.addProperty("text", json.optString("text"));
+                        newAnnouncement.addProperty("createdAt", json.optLong("createdAt"));
+                    }
+                    runOnUiThread(() -> {
+                        if (newAnnouncement.has("text") && !newAnnouncement.get("text").getAsString().isEmpty()) {
+                            // Deduplicate check
+                            String newText = newAnnouncement.get("text").getAsString();
+                            boolean exists = false;
+                            if (!annList.isEmpty()) {
+                                JsonObject last = annList.get(annList.size() - 1);
+                                if (last.has("text") && newText.equals(last.get("text").getAsString())) {
+                                    exists = true;
+                                }
+                            }
+                            if (!exists) {
+                                annList.add(newAnnouncement);
+                                announcementsAdapter.notifyItemInserted(annList.size() - 1);
+                                rvAnnouncements.smoothScrollToPosition(annList.size() - 1);
+                            }
+                        } else {
+                            fetchAnnouncements();
+                        }
+                    });
+                } catch (Exception e) {
+                    runOnUiThread(this::fetchAnnouncements);
+                }
+            }
+        };
+
+        socket.on("party-announcement-" + postId, announcementListener);
+        if (tokenManager.getUserId() != null) {
+            socket.on("party-announcement-received-" + tokenManager.getUserId(), announcementListener);
+        }
     }
 
     private void fetchPartyMembers() {
@@ -130,11 +186,14 @@ public class PartyBoardActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("announcements")) {
                         JsonArray annArr = data.getAsJsonArray("announcements");
-                        List<JsonObject> annList = new ArrayList<>();
+                        annList.clear();
                         for (JsonElement el : annArr) {
                             annList.add(el.getAsJsonObject());
                         }
-                        rvAnnouncements.setAdapter(new AnnouncementsAdapter(PartyBoardActivity.this, annList));
+                        announcementsAdapter.notifyDataSetChanged();
+                        if (!annList.isEmpty()) {
+                            rvAnnouncements.smoothScrollToPosition(annList.size() - 1);
+                        }
                     }
                 }
             }
@@ -170,6 +229,17 @@ public class PartyBoardActivity extends BaseActivity {
                 Toast.makeText(PartyBoardActivity.this, "Network error", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (socket != null && announcementListener != null) {
+            socket.off("party-announcement-" + postId, announcementListener);
+            if (tokenManager.getUserId() != null) {
+                socket.off("party-announcement-received-" + tokenManager.getUserId(), announcementListener);
+            }
+        }
     }
 
     private static class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHolder> {

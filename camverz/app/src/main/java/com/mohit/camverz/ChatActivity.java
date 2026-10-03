@@ -91,8 +91,39 @@ public class ChatActivity extends BaseActivity {
         ImageView videoCallBtn = findViewById(R.id.video_call_button);
         ImageView voiceCallBtn = findViewById(R.id.voice_call_button);
 
-        toolbarUsername.setText(receiverName);
+        toolbarUsername.setText(receiverName != null && !receiverName.isEmpty() ? receiverName : "Chat");
         AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
+
+        if (receiverId != null && !receiverId.isEmpty()) {
+            api.getUser(receiverId).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        JsonObject data = response.body();
+                        if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
+                            JsonObject u = data.getAsJsonObject("user");
+                            String fetchedName = u.has("name") && !u.get("name").isJsonNull() ? u.get("name").getAsString() : null;
+                            String fetchedAvatar = u.has("avatar") && !u.get("avatar").isJsonNull() ? u.get("avatar").getAsString() : null;
+                            String fetchedPhotoUrl = u.has("photoUrl") && !u.get("photoUrl").isJsonNull() ? u.get("photoUrl").getAsString() : null;
+
+                            if (fetchedName != null && !fetchedName.trim().isEmpty() && !"Community Poster".equalsIgnoreCase(fetchedName) && !"User".equalsIgnoreCase(fetchedName)) {
+                                receiverName = fetchedName;
+                                toolbarUsername.setText(receiverName);
+                            }
+                            if (fetchedAvatar != null && !fetchedAvatar.isEmpty()) {
+                                receiverAvatar = fetchedAvatar;
+                            }
+                            String finalPhotoUrl = (fetchedPhotoUrl != null && !fetchedPhotoUrl.isEmpty()) ? fetchedPhotoUrl : receiverPhotoUrl;
+                            AvatarHelper.loadAvatar(ChatActivity.this, finalPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                }
+            });
+        }
 
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {

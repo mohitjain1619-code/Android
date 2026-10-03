@@ -124,9 +124,16 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
                             JsonArray notifArray = data.getAsJsonArray("notifications");
                             for (JsonElement element : notifArray) {
                                 JsonObject obj = element.getAsJsonObject();
+                                String type = obj.has("type") && !obj.get("type").isJsonNull() ? obj.get("type").getAsString() : "";
+
+                                // Skip RealMeet community post alerts (they belong exclusively in Community Alerts)
+                                if ("realmeet_request".equalsIgnoreCase(type) || "realmeet_accepted".equalsIgnoreCase(type) || "party_announcement".equalsIgnoreCase(type)) {
+                                    continue;
+                                }
+
                                 Notification notif = new Notification();
                                 notif.setNotificationId(obj.has("id") ? obj.get("id").getAsString() : "");
-                                notif.setType(obj.has("type") ? obj.get("type").getAsString() : "");
+                                notif.setType(type);
                                 notif.setTargetUserId(tokenManager.getUserId());
                                 notif.setPostId(obj.has("postId") && !obj.get("postId").isJsonNull() ? obj.get("postId").getAsString() : "");
                                 notif.setPostText(obj.has("postText") && !obj.get("postText").isJsonNull() ? obj.get("postText").getAsString() : "");

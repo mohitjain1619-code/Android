@@ -47,6 +47,12 @@ function formatRequest(r) {
     postId: r.post_id,
     postTitle: r.post_title,
     posterUserId: r.poster_user_id,
+    posterName: r.poster_name,
+    posterAvatar: r.poster_avatar,
+    posterPhotoUrl: r.poster_photo_url,
+    posterAge: r.poster_age,
+    posterGender: r.poster_gender,
+    posterVerified: r.poster_verified,
     applicantUserId: r.applicant_user_id,
     applicantName: r.applicant_name,
     applicantAvatar: r.applicant_avatar,
@@ -293,30 +299,47 @@ router.get("/requests", async (req, res) => {
     await cleanupExpiredPosts();
     const rows = await queryMany(
       `SELECT cr.*, cp.purpose as post_title,
-              u.name as applicant_name, u.avatar as applicant_avatar, u.photo_url as applicant_photo_url, u.gender as applicant_gender, u.verified as applicant_verified, u.dob
+              u.name as applicant_name, u.avatar as applicant_avatar, u.photo_url as applicant_photo_url, u.gender as applicant_gender, u.verified as applicant_verified, u.dob as applicant_dob,
+              pu.name as poster_name, pu.avatar as poster_avatar, pu.photo_url as poster_photo_url, pu.gender as poster_gender, pu.verified as poster_verified, pu.dob as poster_dob
        FROM community_requests cr
        JOIN community_posts cp ON cp.id = cr.post_id
        JOIN users u ON u.id = cr.applicant_user_id
+       LEFT JOIN users pu ON pu.id = cr.poster_user_id
        WHERE cr.poster_user_id = $1 OR cr.applicant_user_id = $1
        ORDER BY cr.created_at DESC`,
       [req.user.userId]
     );
 
     const requests = rows.map(r => {
-      let age = 22;
-      if (r.dob) {
+      let applicantAge = 22;
+      if (r.applicant_dob) {
         try {
-          const parts = r.dob.split('/');
+          const parts = r.applicant_dob.split('/');
           if (parts.length === 3) {
             const birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
             const today = new Date();
-            age = today.getFullYear() - birthDate.getFullYear();
+            applicantAge = today.getFullYear() - birthDate.getFullYear();
             const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) applicantAge--;
           }
         } catch (e) {}
       }
-      return formatRequest({ ...r, applicant_age: age });
+
+      let posterAge = 22;
+      if (r.poster_dob) {
+        try {
+          const parts = r.poster_dob.split('/');
+          if (parts.length === 3) {
+            const birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            const today = new Date();
+            posterAge = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) posterAge--;
+          }
+        } catch (e) {}
+      }
+
+      return formatRequest({ ...r, applicant_age: applicantAge, poster_age: posterAge });
     });
 
     res.json({ ok: true, requests });
@@ -433,13 +456,21 @@ router.post("/post/:id/announcements", async (req, res) => {
 
     const io = req.app.get("io");
     if (io) {
-      // Emit real-time announcements
+      const payload = {
+        partyId: req.params.id,
+        text,
+        createdAt: new Date(announcement.created_at).getTime()
+      };
+
+      // Emit to post/party room for anyone currently watching PartyBoard
+      io.emit(`party-announcement-${req.params.id}`, payload);
+
+      // Emit to host
+      io.emit(`party-announcement-received-${post.user_id}`, payload);
+
+      // Emit real-time announcements to all accepted members
       members.forEach(m => {
-        io.emit(`party-announcement-received-${m.applicant_user_id}`, {
-          partyId: req.params.id,
-          text,
-          createdAt: new Date(announcement.created_at).getTime()
-        });
+        io.emit(`party-announcement-received-${m.applicant_user_id}`, payload);
       });
     }
 
@@ -498,9 +529,22 @@ router.post("/request", async (req, res) => {
     const reqId = request.id || UUID.randomUUID().toString();
     const postId = request.postId;
     const postTitle = request.postTitle || "";
-    const posterUserId = request.posterUserId;
+    let posterUserId = request.posterUserId || request.hostUserId;
     const message = request.message || "";
     const contactPref = request.contactPreference || "Private Video Call";
+
+    if (!posterUserId && postId) {
+      const post = await queryOne("SELECT user_id FROM community_posts WHERE id = $1", [postId]);
+      if (post) posterUserId = post.user_id;
+    }
+
+    if (!posterUserId) {
+      return res.status(400).json({ ok: false, error: "Unable to determine post owner" });
+    }
+
+    if (posterUserId.toString() === req.user.userId.toString()) {
+      return res.status(400).json({ ok: false, error: "You cannot send a join request to your own post" });
+    }
 
     // Insert request
     const inserted = await queryOne(
@@ -514,17 +558,19 @@ router.post("/request", async (req, res) => {
       [reqId, postId, posterUserId, req.user.userId, message, contactPref]
     );
 
-    // Create a notification for the host
-    await query(
-      "INSERT INTO notifications (user_id, type, triggering_user_id, community_post_id) VALUES ($1, 'realmeet_request', $2, $3)",
-      [posterUserId, req.user.userId, postId]
-    );
+    // Create a notification for the host (avoid self-notification if testing with own user)
+    if (posterUserId !== req.user.userId) {
+      await query(
+        "INSERT INTO notifications (user_id, type, triggering_user_id, community_post_id) VALUES ($1, 'realmeet_request', $2, $3)",
+        [posterUserId, req.user.userId, postId]
+      );
+    }
 
     // Get applicant user details to emit
     const u = await queryOne("SELECT name as user_name, avatar as user_avatar, photo_url, gender, verified, dob FROM users WHERE id = $1", [req.user.userId]);
 
     let age = 22;
-    if (u.dob) {
+    if (u && u.dob) {
       try {
         const parts = u.dob.split('/');
         const birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
@@ -538,6 +584,7 @@ router.post("/request", async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       io.emit("realmeet-request-sent", formatted);
+      io.emit(`notification-received-${posterUserId}`, { type: "realmeet_request", triggeringUserId: req.user.userId, postId });
     }
 
     res.json({ ok: true, request: formatted });
@@ -565,7 +612,7 @@ router.put("/request/status", async (req, res) => {
 
     await query("UPDATE community_requests SET status = $1 WHERE id = $2", [status, requestId]);
 
-    if (status === "ACCEPTED") {
+    if (status === "ACCEPTED" && request.applicant_user_id !== req.user.userId) {
       // Create accepted notification for applicant
       await query(
         "INSERT INTO notifications (user_id, type, triggering_user_id, community_post_id) VALUES ($1, 'realmeet_accepted', $2, $3)",
@@ -576,6 +623,7 @@ router.put("/request/status", async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       io.emit("realmeet-status-updated", { requestId, status });
+      io.emit(`notification-received-${request.applicant_user_id}`, { type: "realmeet_accepted", triggeringUserId: req.user.userId, postId: request.post_id });
     }
 
     res.json({ ok: true, status });

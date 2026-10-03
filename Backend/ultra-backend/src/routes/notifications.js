@@ -6,7 +6,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 // ============================================
-// GET /notifications — Get user's notifications
+// GET /notifications — Get user's notifications (Excludes RealMeet community post alerts)
 // ============================================
 router.get("/", async (req, res) => {
   try {
@@ -23,14 +23,14 @@ router.get("/", async (req, res) => {
        LEFT JOIN users u ON u.id = n.triggering_user_id
        LEFT JOIN posts p ON p.id = n.post_id
        LEFT JOIN comments c ON c.id = n.comment_id
-       WHERE n.user_id = $1
+       WHERE n.user_id = $1 AND (n.type IS NULL OR n.type NOT IN ('realmeet_request', 'realmeet_accepted', 'party_announcement'))
        ORDER BY n.created_at DESC
        LIMIT $2 OFFSET $3`,
       [req.user.userId, parseInt(limit), parseInt(offset)]
     );
 
     const unreadCount = await queryOne(
-      "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = false",
+      "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = false AND (type IS NULL OR type NOT IN ('realmeet_request', 'realmeet_accepted', 'party_announcement'))",
       [req.user.userId]
     );
 
@@ -100,7 +100,7 @@ router.put("/:id/read", async (req, res) => {
 router.put("/read-all", async (req, res) => {
   try {
     await query(
-      "UPDATE notifications SET read = true WHERE user_id = $1 AND read = false",
+      "UPDATE notifications SET read = true WHERE user_id = $1 AND read = false AND (type IS NULL OR type NOT IN ('realmeet_request', 'realmeet_accepted', 'party_announcement'))",
       [req.user.userId]
     );
     return res.json({ ok: true });
@@ -116,7 +116,7 @@ router.put("/read-all", async (req, res) => {
 router.get("/unread-count", async (req, res) => {
   try {
     const result = await queryOne(
-      "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = false",
+      "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = false AND (type IS NULL OR type NOT IN ('realmeet_request', 'realmeet_accepted', 'party_announcement'))",
       [req.user.userId]
     );
     return res.json({ ok: true, count: parseInt(result.count), unreadCount: parseInt(result.count) });

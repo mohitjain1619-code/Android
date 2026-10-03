@@ -7,7 +7,7 @@ export default function AboutPage() {
     {
       icon: Heart,
       title: 'Real Authenticity',
-      desc: 'We believe live video interactions foster genuine connections. Verified profiles, real interactions, and no endless messaging queues.'
+      desc: 'We believe face-to-face video conversations foster true connection. No fake profiles, no filters, and no endless messaging queues. What you see is what you get.'
     },
     {
       icon: Shield,
@@ -17,7 +17,7 @@ export default function AboutPage() {
     {
       icon: Globe,
       title: 'Borderless Connections',
-      desc: 'Our platform matches members across continents. We break down cultural and geographical walls, allowing you to build authentic relationships globally.'
+      desc: 'Our platform matches people across continents. We break down cultural and geographical walls, allowing you to discover friendships and relationships globally.'
     }
   ];
 
@@ -25,7 +25,7 @@ export default function AboutPage() {
     <div className={styles.container}>
       <div className={styles.bgGradientPage} />
       <div className={styles.inner}>
-        
+
         {/* Hero Section */}
         <section className={styles.hero}>
           <div className={styles.badge}>
@@ -34,7 +34,7 @@ export default function AboutPage() {
           </div>
           <h1 className="neon-text">About Camverz</h1>
           <p className={styles.subtitle}>
-            We are redefining how people connect in the digital age by bringing back spontaneous, authentic video conversations.
+            We are redefining how people meet in the digital age by bringing back spontaneous, face-to-face conversations.
           </p>
         </section>
 
@@ -42,7 +42,7 @@ export default function AboutPage() {
         <section className={styles.storyCard}>
           <h2>Our Story</h2>
           <p>
-            Camverz was created to empower individuals, creators, and diverse social communities—including LGBTQ+ networks—to connect authentically through live video matching, story sharing, and real-time social networking.
+            Camverz was created to empower individuals, creators, and diverse social communities—including LGBTQ+ networks—to connect authentically through live video chat, story sharing, and real-time social communication.
           </p>
           <p>
             Whether you want to discover new friends, join inclusive social circles, practice languages, or share everyday moments on our social feed, Camverz provides a safe, seamless, and high-performance social networking platform.

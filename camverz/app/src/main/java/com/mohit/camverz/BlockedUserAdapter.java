@@ -44,17 +44,7 @@ public class BlockedUserAdapter extends RecyclerView.Adapter<BlockedUserAdapter.
         User user = blockedUsers.get(position);
         holder.userName.setText(user.getName());
         
-        String avatarName = user.getAvatar();
-        if (avatarName != null && !avatarName.isEmpty()) {
-            int avatarResId = context.getResources().getIdentifier(avatarName, "drawable", context.getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(context).load(avatarResId).into(holder.avatar);
-            } else {
-                Glide.with(context).load(R.drawable.av1).into(holder.avatar);
-            }
-        } else {
-            Glide.with(context).load(R.drawable.av1).into(holder.avatar);
-        }
+        AvatarHelper.loadAvatar(context, user.getPhotoUrl(), user.getAvatar(), user.getName(), holder.avatar);
 
         holder.btnUnblock.setOnClickListener(v -> listener.onUnblock(user, position));
     }

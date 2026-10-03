@@ -349,13 +349,7 @@ public class ProfileActivity extends BaseActivity {
             profileImageView.setClickable(false);
             otherUserActionsLayout.setVisibility(View.VISIBLE);
 
-            followButton.setOnClickListener(v -> {
-                if (isFromRealMeet) {
-                    followUser();
-                } else {
-                    toggleFollowUser();
-                }
-            });
+            followButton.setOnClickListener(v -> followUser());
             messageButton.setOnClickListener(v -> {
                 Intent intent = new Intent(ProfileActivity.this, ChatActivity.class);
                 intent.putExtra("userId", visitedUserId);
@@ -745,28 +739,18 @@ public class ProfileActivity extends BaseActivity {
         }
 
         if (!currentUserId.equals(visitedUserId)) {
-            if (isFromRealMeet) {
-                if ("friends".equals(friendshipStatus)) {
-                    followButton.setText("Friends");
-                    followButton.setBackgroundResource(R.drawable.bg_following_button);
-                } else if ("sent".equals(friendshipStatus)) {
-                    followButton.setText("Requested");
-                    followButton.setBackgroundResource(R.drawable.bg_following_button);
-                } else if ("received".equals(friendshipStatus)) {
-                    followButton.setText("Accept Request");
-                    followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
-                } else {
-                    followButton.setText("Add Friend");
-                    followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
-                }
+            if ("friends".equalsIgnoreCase(friendshipStatus)) {
+                followButton.setText("Friends");
+                followButton.setBackgroundResource(R.drawable.bg_following_button);
+            } else if ("sent".equalsIgnoreCase(friendshipStatus)) {
+                followButton.setText("Requested");
+                followButton.setBackgroundResource(R.drawable.bg_following_button);
+            } else if ("received".equalsIgnoreCase(friendshipStatus)) {
+                followButton.setText("Accept Request");
+                followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             } else {
-                if (visitedUser.isFollowedByMe()) {
-                    followButton.setText("Following");
-                    followButton.setBackgroundResource(R.drawable.bg_following_button);
-                } else {
-                    followButton.setText("Follow");
-                    followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
-                }
+                followButton.setText("Add Friend");
+                followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             }
         }
 
@@ -801,16 +785,10 @@ public class ProfileActivity extends BaseActivity {
             }
         }
 
-        String avatarName = visitedUser.getAvatar();
-        if (avatarName != null && !avatarName.isEmpty()) {
-            int avatarResId = getResources().getIdentifier(avatarName, "drawable", getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(this).load(avatarResId).placeholder(R.drawable.av1).into(profileImageView);
-            } else {
-                Glide.with(this).load(R.drawable.av1).into(profileImageView);
-            }
+        if (visitedUser != null) {
+            AvatarHelper.loadAvatar(this, visitedUser.getPhotoUrl(), visitedUser.getAvatar(), visitedUser.getName(), profileImageView);
         } else {
-            Glide.with(this).load(R.drawable.av1).into(profileImageView);
+            AvatarHelper.loadAvatar(this, null, visitedUser != null ? visitedUser.getAvatar() : null, null, profileImageView);
         }
 
         if (currentUserId.equals(visitedUserId) && tokenManager.hasActivePlan()) {
@@ -919,8 +897,7 @@ public class ProfileActivity extends BaseActivity {
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         Toast.makeText(ProfileActivity.this, "Profile updated", Toast.LENGTH_SHORT).show();
                         if ("avatar".equals(field)) {
-                            int avatarResId = getResources().getIdentifier(value, "drawable", getPackageName());
-                            Glide.with(ProfileActivity.this).load(avatarResId).into(profileImageView);
+                            AvatarHelper.loadAvatar(ProfileActivity.this, null, value, visitedUser != null ? visitedUser.getName() : tokenManager.getUserName(), profileImageView);
                             
                             // Save updated avatar in TokenManager
                             String currentGender = visitedUser != null ? visitedUser.getGender() : tokenManager.getUserGender();

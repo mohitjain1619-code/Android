@@ -3,22 +3,22 @@
     <!-- Premium Glassmorphism & Material 3 Color System -->
 
     <!-- Ambient & Page Backgrounds -->
-    <color name="bg_primary">#0B1115</color>
-    <color name="bg_ambient_start">#13252A</color>
-    <color name="bg_ambient_end">#211A20</color>
-    <color name="bg_card">#142126</color>
-    <color name="bg_glass_card">#D9142126</color>
+    <color name="bg_primary">#0B0E14</color>
+    <color name="bg_ambient_start">#12131C</color>
+    <color name="bg_ambient_end">#1E1028</color>
+    <color name="bg_card">#161722</color>
+    <color name="bg_glass_card">#E6161722</color>
     <color name="bg_glass_input">#1AFFFFFF</color>
-    <color name="bg_elevated">#1A2B31</color>
-    <color name="bg_dark">#0B1115</color>
-    <color name="surface_dark">#142126</color>
-    <color name="surface_elevated">#203239</color>
+    <color name="bg_elevated">#1F2030</color>
+    <color name="bg_dark">#0B0E14</color>
+    <color name="surface_dark">#12131C</color>
+    <color name="surface_elevated">#1A1B28</color>
 
     <!-- Navigation & Capsule Tints -->
     <color name="nav_active_pill">#2A4C50</color>
     <color name="nav_active_icon">#54D6D2</color>
     <color name="nav_inactive_icon">#89A2A5</color>
-    <color name="nav_glass_bg">#E6142126</color>
+    <color name="nav_glass_bg">#E612131C</color>
 
     <!-- Text -->
     <color name="text_primary">#F4FAF9</color>

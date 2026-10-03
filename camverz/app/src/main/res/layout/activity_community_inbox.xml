@@ -113,14 +113,20 @@
             </HorizontalScrollView>
         </LinearLayout>
 
-        <!-- RecyclerView for active community chats -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/inboxRecyclerView"
+        <!-- RecyclerView for active community chats with Pull To Refresh -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingTop="10dp"
-            android:paddingBottom="20dp" />
+            android:layout_height="match_parent">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/inboxRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="10dp"
+                android:paddingBottom="20dp" />
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
     <!-- Empty State -->

@@ -27,11 +27,14 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 public class CommunityInboxActivity extends BaseActivity {
 
     private ImageView btnBack;
     private TextView tvActiveCount;
     private RecyclerView inboxRecyclerView;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private LinearLayout emptyView;
 
     private LinearLayout activeNowLayout;
@@ -59,35 +62,84 @@ public class CommunityInboxActivity extends BaseActivity {
         btnBack = findViewById(R.id.btnBack);
         tvActiveCount = findViewById(R.id.tvActiveCount);
         inboxRecyclerView = findViewById(R.id.inboxRecyclerView);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         emptyView = findViewById(R.id.emptyView);
         activeNowLayout = findViewById(R.id.active_now_layout);
         activeUsersContainer = findViewById(R.id.active_users_container);
 
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setColorSchemeResources(R.color.accent_primary, R.color.accent_cyan);
+            swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.surface_dark);
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                fetchServerRequests();
+                loadAcceptedConnections();
+                updateActiveUsersRow();
+                UnreadManager.getInstance().fetchUnreadCount(CommunityInboxActivity.this);
+            });
+        }
+
         btnBack.setOnClickListener(v -> finish());
 
         inboxRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new CommunityInboxAdapter(activeConnections, request -> {
+        adapter = new CommunityInboxAdapter(currentUserId, activeConnections, request -> {
             Intent intent = new Intent(CommunityInboxActivity.this, ChatActivity.class);
             boolean isPoster = currentUserId != null && currentUserId.equalsIgnoreCase(request.getPosterUserId());
             String partnerId = isPoster ? request.getApplicantUserId() : request.getPosterUserId();
-            String partnerName = isPoster ? request.getApplicantName() : "Community Poster";
-            String partnerAvatar = isPoster ? request.getApplicantAvatar() : "";
+            String partnerName = isPoster ? request.getApplicantName() : (request.getPosterName() != null && !request.getPosterName().isEmpty() ? request.getPosterName() : "Community Host");
+            String partnerAvatar = isPoster ? request.getApplicantAvatar() : request.getPosterAvatar();
+            String partnerPhotoUrl = isPoster ? request.getApplicantPhotoUrl() : request.getPosterPhotoUrl();
 
             intent.putExtra("userId", partnerId);
             intent.putExtra("userName", partnerName);
             intent.putExtra("userAvatar", partnerAvatar);
+            intent.putExtra("userPhotoUrl", partnerPhotoUrl);
             startActivity(intent);
         });
         inboxRecyclerView.setAdapter(adapter);
 
         loadAcceptedConnections();
+        fetchServerRequests();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadAcceptedConnections();
+        fetchServerRequests();
         updateActiveUsersRow();
+    }
+
+    private void fetchServerRequests() {
+        if (api == null || !tokenManager.isLoggedIn()) return;
+        api.getRealMeetServerRequests().enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject body = response.body();
+                    if (body.has("ok") && body.get("ok").getAsBoolean() && body.has("requests")) {
+                        JsonArray arr = body.getAsJsonArray("requests");
+                        com.google.gson.Gson gson = new com.google.gson.Gson();
+                        List<RealMeetRequest> serverReqs = new ArrayList<>();
+                        for (JsonElement el : arr) {
+                            RealMeetRequest req = gson.fromJson(el, RealMeetRequest.class);
+                            serverReqs.add(req);
+                        }
+                        store.saveMeetRequests(serverReqs);
+                        runOnUiThread(() -> loadAcceptedConnections());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
+            }
+        });
     }
 
     private void updateActiveUsersRow() {
@@ -157,15 +209,30 @@ public class CommunityInboxActivity extends BaseActivity {
     private void loadAcceptedConnections() {
         activeConnections.clear();
         List<RealMeetRequest> allRequests = store.getMeetRequests();
+        java.util.Map<String, RealMeetRequest> partnerMap = new java.util.LinkedHashMap<>();
+
         for (RealMeetRequest req : allRequests) {
             boolean isMyPoster = currentUserId != null && currentUserId.equalsIgnoreCase(req.getPosterUserId());
             boolean isMyApplicant = currentUserId != null && currentUserId.equalsIgnoreCase(req.getApplicantUserId());
             
-            // Show accepted connections or requests involving the current user
             if ((isMyPoster || isMyApplicant) && ("ACCEPTED".equalsIgnoreCase(req.getStatus()) || isMyApplicant)) {
-                activeConnections.add(req);
+                String partnerId = isMyPoster ? req.getApplicantUserId() : req.getPosterUserId();
+                if (partnerId == null || partnerId.trim().isEmpty() || partnerId.equalsIgnoreCase(currentUserId)) {
+                    continue;
+                }
+
+                if (!partnerMap.containsKey(partnerId)) {
+                    partnerMap.put(partnerId, req);
+                } else {
+                    RealMeetRequest existing = partnerMap.get(partnerId);
+                    if (existing != null && req.getCreatedAt() > existing.getCreatedAt()) {
+                        partnerMap.put(partnerId, req);
+                    }
+                }
             }
         }
+
+        activeConnections.addAll(partnerMap.values());
 
         if (activeConnections.isEmpty()) {
             emptyView.setVisibility(View.VISIBLE);
@@ -174,7 +241,7 @@ public class CommunityInboxActivity extends BaseActivity {
         } else {
             emptyView.setVisibility(View.GONE);
             inboxRecyclerView.setVisibility(View.VISIBLE);
-            tvActiveCount.setText(activeConnections.size() + " Active");
+            tvActiveCount.setText(activeConnections.size() + (activeConnections.size() == 1 ? " Chat" : " Chats"));
         }
 
         adapter.notifyDataSetChanged();
@@ -186,10 +253,12 @@ public class CommunityInboxActivity extends BaseActivity {
             void onItemClick(RealMeetRequest request);
         }
 
+        private final String currentUserId;
         private final List<RealMeetRequest> list;
         private final OnItemClickListener listener;
 
-        public CommunityInboxAdapter(List<RealMeetRequest> list, OnItemClickListener listener) {
+        public CommunityInboxAdapter(String currentUserId, List<RealMeetRequest> list, OnItemClickListener listener) {
+            this.currentUserId = currentUserId;
             this.list = list;
             this.listener = listener;
         }
@@ -205,24 +274,37 @@ public class CommunityInboxActivity extends BaseActivity {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             RealMeetRequest req = list.get(position);
 
+            boolean isCurrentApplicant = currentUserId != null && currentUserId.equalsIgnoreCase(req.getApplicantUserId());
+            
+            String partnerName = isCurrentApplicant ? 
+                    (req.getPosterName() != null && !req.getPosterName().isEmpty() ? req.getPosterName() : "Community Host") :
+                    (req.getApplicantName() != null && !req.getApplicantName().isEmpty() ? req.getApplicantName() : "Community Member");
+
+            String partnerGender = isCurrentApplicant ? req.getPosterGender() : req.getApplicantGender();
+            int partnerAge = isCurrentApplicant ? (req.getPosterAge() > 0 ? req.getPosterAge() : 22) : (req.getApplicantAge() > 0 ? req.getApplicantAge() : 22);
+            boolean partnerVerified = isCurrentApplicant ? req.isPosterVerified() : req.isApplicantVerified();
+            String partnerAvatar = isCurrentApplicant ? req.getPosterAvatar() : req.getApplicantAvatar();
+            String partnerPhotoUrl = isCurrentApplicant ? req.getPosterPhotoUrl() : req.getApplicantPhotoUrl();
+            String partnerCity = isCurrentApplicant ? "Nearby" : (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby");
+
             String genderBadge = " ♂️ ";
-            if (req.getApplicantGender() != null && req.getApplicantGender().toLowerCase().startsWith("f")) {
+            if (partnerGender != null && partnerGender.toLowerCase().startsWith("f")) {
                 genderBadge = " ♀️ ";
             }
 
-            boolean isMale = req.getApplicantGender() == null || !req.getApplicantGender().toLowerCase().startsWith("f");
-            boolean isVerified = isMale || req.isApplicantVerified();
+            boolean isMale = partnerGender == null || !partnerGender.toLowerCase().startsWith("f");
+            boolean isVerified = isMale || partnerVerified;
             String verifiedBadge = isVerified ? " ✔️" : "";
 
-            holder.tvInboxNameAge.setText(req.getApplicantName() + " " + genderBadge + " " + req.getApplicantAge() + verifiedBadge);
-            holder.tvInboxSubtext.setText("📍 " + (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby") + " • For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Community Meet"));
+            holder.tvInboxNameAge.setText(partnerName + " " + genderBadge + " " + partnerAge + verifiedBadge);
+            holder.tvInboxSubtext.setText("📍 " + partnerCity + " • For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Community Meet"));
             holder.tvInboxLastMessage.setText(req.getMessage() != null && !req.getMessage().isEmpty() ? req.getMessage() : "Tap to open 1-on-1 community chat");
 
             String pref = req.getContactPreference() != null ? req.getContactPreference() : "Private Call";
             boolean isVideoPref = pref.toLowerCase().contains("video");
             holder.tvInboxPrefBadge.setText(isVideoPref ? "🎥 Video Call" : "💬 Direct Chat");
 
-            AvatarHelper.loadAvatar(holder.itemView.getContext(), req.getApplicantPhotoUrl(), req.getApplicantAvatar(), req.getApplicantName(), holder.ivInboxAvatar);
+            AvatarHelper.loadAvatar(holder.itemView.getContext(), partnerPhotoUrl, partnerAvatar, partnerName, holder.ivInboxAvatar);
 
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) listener.onItemClick(req);

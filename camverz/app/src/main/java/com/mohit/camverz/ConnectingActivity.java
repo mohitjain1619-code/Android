@@ -245,6 +245,7 @@ public class ConnectingActivity extends BaseActivity {
 
         // Ensure LevelPlay is initialized as a fallback
         BaseActivity.initializeIronSource(this);
+        AdAnalyticsTracker.trackEvent(this, "REQUEST", "native", "ironsource", "REQUESTED", "", "");
 
         levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
                 .withPlacementName("default")
@@ -252,19 +253,23 @@ public class ConnectingActivity extends BaseActivity {
                     @Override
                     public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                         Log.d(TAG, "LevelPlay Native Ad loaded");
+                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "");
                         runOnUiThread(() -> inflateLevelPlayNativeAd(ad));
                     }
 
                     @Override
                     public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
                         Log.w(TAG, "LevelPlay Native Ad load failed: " + error.getErrorMessage());
+                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "FAILED", "native", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "NO_FILL", error != null ? error.getErrorMessage() : "Native ad load failed");
                     }
 
                     @Override
                     public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
 
                     @Override
-                    public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                    public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "");
+                    }
                 })
                 .build();
         levelPlayNativeAd.loadAd();

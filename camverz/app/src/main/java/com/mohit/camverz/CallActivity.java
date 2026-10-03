@@ -358,13 +358,7 @@ public class CallActivity extends AppCompatActivity {
         if (btnSpeaker != null) btnSpeaker.setOnClickListener(v -> toggleSpeaker());
         followButton.setOnClickListener(v -> handleFollowClick());
 
-        String localAvatar = tokenManager.getUserAvatar();
-        if (localAvatar != null && !localAvatar.isEmpty()) {
-            int avatarResId = getResources().getIdentifier(localAvatar, "drawable", getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(this).load(avatarResId).placeholder(R.drawable.av1).into(localAvatarSmall);
-            }
-        }
+        AvatarHelper.loadAvatar(this, null, tokenManager.getUserAvatar(), tokenManager.getUserName(), localAvatarSmall);
         
         if (!isVideoCall) {
             localViewContainer.setVisibility(View.GONE);
@@ -1514,12 +1508,9 @@ public class CallActivity extends AppCompatActivity {
 
         if (passedAvatar != null && !passedAvatar.isEmpty()) {
             peerAvatarUrl = passedAvatar;
-            int avatarResId = getResources().getIdentifier(peerAvatarUrl, "drawable", getPackageName());
-            if (avatarResId != 0) {
-                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
-                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
-                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
-            }
+            AvatarHelper.loadAvatar(CallActivity.this, null, peerAvatarUrl, peerNameValue, peerAvatar);
+            AvatarHelper.loadAvatar(CallActivity.this, null, peerAvatarUrl, peerNameValue, remoteAvatarLarge);
+            AvatarHelper.loadAvatar(CallActivity.this, null, peerAvatarUrl, peerNameValue, remoteAvatarBlurBg);
         }
 
         if (peerId == null || peerId.isEmpty()) {
@@ -1540,21 +1531,13 @@ public class CallActivity extends AppCompatActivity {
                         JsonObject user = data.getAsJsonObject("user");
                         peerNameValue = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : (passedName != null ? passedName : "User");
                         peerAvatarUrl = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : (passedAvatar != null ? passedAvatar : "");
+                        String photoUrl = user.has("photoUrl") && !user.get("photoUrl").isJsonNull() ? user.get("photoUrl").getAsString() : null;
 
                         peerName.setText(peerNameValue);
                         remoteAvatarNameText.setText(peerNameValue);
-                        if (peerAvatarUrl != null && !peerAvatarUrl.isEmpty()) {
-                            int avatarResId = getResources().getIdentifier(peerAvatarUrl, "drawable", getPackageName());
-                            if (avatarResId != 0) {
-                                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
-                                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
-                                Glide.with(CallActivity.this).load(avatarResId).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
-                            } else {
-                                Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).circleCrop().into(peerAvatar);
-                                Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarLarge);
-                                Glide.with(CallActivity.this).load(peerAvatarUrl).placeholder(R.drawable.ic_user_placeholder).into(remoteAvatarBlurBg);
-                            }
-                        }
+                        AvatarHelper.loadAvatar(CallActivity.this, photoUrl, peerAvatarUrl, peerNameValue, peerAvatar);
+                        AvatarHelper.loadAvatar(CallActivity.this, photoUrl, peerAvatarUrl, peerNameValue, remoteAvatarLarge);
+                        AvatarHelper.loadAvatar(CallActivity.this, photoUrl, peerAvatarUrl, peerNameValue, remoteAvatarBlurBg);
                         return;
                     }
                 }
@@ -1823,19 +1806,25 @@ public class CallActivity extends AppCompatActivity {
 
     private void showInterstitialAndFinish() {
         android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
+        AdAnalyticsTracker.trackEvent(this, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "");
+
         if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
             prefs.edit().putBoolean("ad_watch_pending", true).apply();
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
             com.ironsource.mediationsdk.IronSource.showInterstitial("default");
         } else if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
             Log.d(TAG, "LevelPlay Interstitial not ready. Falling back to Rewarded Video.");
             loadAndShowRewardedAdAndFinish();
         } else {
+            AdAnalyticsTracker.trackEvent(this, "FAILED", "interstitial", "ironsource", "FAILED", "NO_FILL", "IronSource interstitial & rewarded not ready after call / No Fill");
             finish();
         }
     }
 
     private void loadAndShowRewardedAdAndFinish() {
         android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
+        AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
+
         if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
             prefs.edit().putBoolean("ad_watch_pending", true).apply();
             com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
@@ -1843,18 +1832,23 @@ public class CallActivity extends AppCompatActivity {
                 @Override public void onAdUnavailable() {}
                 @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = true;
+                    AdAnalyticsTracker.trackEvent(CallActivity.this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
                 }
                 @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
                     prefs.edit().putBoolean("ad_watch_pending", false).apply();
+                    AdAnalyticsTracker.trackEvent(CallActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
                     if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
+                        AdAnalyticsTracker.trackEvent(CallActivity.this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
                         com.ironsource.mediationsdk.IronSource.showInterstitial("default");
                     } else {
                         finish();
                     }
                 }
                 @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+                @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    AdAnalyticsTracker.trackEvent(CallActivity.this, "COMPLETED", "rewarded", "ironsource", "DELIVERED", "", "");
+                }
                 @Override
                 public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
@@ -1866,8 +1860,10 @@ public class CallActivity extends AppCompatActivity {
         } else if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
             Log.d(TAG, "LevelPlay Rewarded Video not available. Falling back to Interstitial.");
             prefs.edit().putBoolean("ad_watch_pending", true).apply();
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
             com.ironsource.mediationsdk.IronSource.showInterstitial("default");
         } else {
+            AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource rewarded & interstitial not ready after call / No Fill");
             finish();
         }
     }

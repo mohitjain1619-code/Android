@@ -9,6 +9,7 @@ import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -51,27 +52,35 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
 
         // Bind triggering user details
         CommunityNotification.TriggeringUser user = notification.getTriggeringUser();
-        String userName = user != null ? user.getName() : "Someone";
+        String userName = (user != null && user.getName() != null && !user.getName().trim().isEmpty())
+                ? user.getName().trim()
+                : "Someone";
         String avatar = user != null ? user.getAvatar() : "";
         String photoUrl = user != null ? user.getPhotoUrl() : "";
 
         AvatarHelper.loadAvatar(context, photoUrl, avatar, userName, holder.ivUserAvatar);
 
-        // Format message
+        // Format message with fail-safe fallbacks
         String text = "";
-        String title = notification.getPostTitle() != null ? notification.getPostTitle() : "Community Post";
-        if ("realmeet_request".equals(notification.getType())) {
+        String title = (notification.getPostTitle() != null && !notification.getPostTitle().trim().isEmpty())
+                ? notification.getPostTitle().trim()
+                : "Community Post";
+
+        String type = notification.getType() != null ? notification.getType() : "";
+        if ("realmeet_request".equalsIgnoreCase(type)) {
             text = userName + " requested to connect on your post: \"" + title + "\"";
-        } else if ("realmeet_accepted".equals(notification.getType())) {
+        } else if ("realmeet_accepted".equalsIgnoreCase(type)) {
             text = userName + " accepted your request for post: \"" + title + "\"";
-        } else if ("party_announcement".equals(notification.getType())) {
+        } else if ("party_announcement".equalsIgnoreCase(type) || "party".equalsIgnoreCase(type)) {
             text = userName + " posted an announcement for party: \"" + title + "\"";
+        } else {
+            text = userName + " sent a community notification regarding: \"" + title + "\"";
         }
 
         SpannableString ss = new SpannableString(text);
         if (text.startsWith(userName)) {
             ss.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, userName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            ss.setSpan(new ForegroundColorSpan(Color.WHITE), 0, userName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ss.setSpan(new ForegroundColorSpan(Color.parseColor("#FFFFFF")), 0, userName.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         holder.tvNotificationMessage.setText(ss);
 
@@ -166,7 +175,7 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        CircleImageView ivUserAvatar;
+        ImageView ivUserAvatar;
         TextView tvNotificationMessage, tvNotificationTimestamp;
         LinearLayout layoutActions;
         TextView btnAccept, btnReject;

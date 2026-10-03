@@ -45,7 +45,7 @@
                 android:id="@+id/tvNotificationMessage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
+                android:textColor="#E5E7EB"
                 android:textSize="13sp"
                 tools:text="User Name sent you a meet request." />
 
@@ -54,7 +54,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:textColor="#8E8E93"
+                android:textColor="#9CA3AF"
                 android:textSize="10sp"
                 tools:text="10 minutes ago" />
         </LinearLayout>

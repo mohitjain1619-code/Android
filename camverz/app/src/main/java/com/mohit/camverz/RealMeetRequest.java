@@ -5,6 +5,12 @@ public class RealMeetRequest {
     private String postId;
     private String postTitle;
     private String posterUserId;
+    private String posterName;
+    private String posterAvatar;
+    private String posterPhotoUrl;
+    private int posterAge;
+    private String posterGender;
+    private boolean posterVerified;
     private String applicantUserId;
     private String applicantName;
     private String applicantAvatar;
@@ -67,6 +73,24 @@ public class RealMeetRequest {
 
     public String getPosterUserId() { return posterUserId; }
     public void setPosterUserId(String posterUserId) { this.posterUserId = posterUserId; }
+
+    public String getPosterName() { return posterName; }
+    public void setPosterName(String posterName) { this.posterName = posterName; }
+
+    public String getPosterAvatar() { return posterAvatar; }
+    public void setPosterAvatar(String posterAvatar) { this.posterAvatar = posterAvatar; }
+
+    public String getPosterPhotoUrl() { return posterPhotoUrl; }
+    public void setPosterPhotoUrl(String posterPhotoUrl) { this.posterPhotoUrl = posterPhotoUrl; }
+
+    public int getPosterAge() { return posterAge; }
+    public void setPosterAge(int posterAge) { this.posterAge = posterAge; }
+
+    public String getPosterGender() { return posterGender; }
+    public void setPosterGender(String posterGender) { this.posterGender = posterGender; }
+
+    public boolean isPosterVerified() { return posterVerified; }
+    public void setPosterVerified(boolean posterVerified) { this.posterVerified = posterVerified; }
 
     public String getApplicantUserId() { return applicantUserId; }
     public void setApplicantUserId(String applicantUserId) { this.applicantUserId = applicantUserId; }

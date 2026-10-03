@@ -65,9 +65,8 @@ public class StoriesAdapter extends RecyclerView.Adapter<StoriesAdapter.ViewHold
                 holder.ivStoryAvatar.setOnClickListener(v -> {
                     if (listener != null) listener.onStorySelected(adminStories);
                 });
-            } else {
-                holder.storyRing.setVisibility(View.GONE);
-                holder.ivStoryAvatar.setImageResource(R.drawable.av1); // Default placeholder
+                com.mohit.camverz.api.TokenManager tm = com.mohit.camverz.api.TokenManager.getInstance(context);
+                AvatarHelper.loadAvatar(context, null, tm.getUserAvatar(), tm.getUserName(), holder.ivStoryAvatar);
                 holder.ivStoryAvatar.setOnClickListener(v -> {
                     if (listener != null) listener.onAddStorySelected();
                 });

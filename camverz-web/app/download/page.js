@@ -25,7 +25,7 @@ function DownloadRedirectContent() {
     const pkg = 'com.mohitt.camverz';
 
     // Standard Google Play Install Referrer format: utm_source=CODE&utm_medium=affiliate
-    const referrerString = destinationCode 
+    const referrerString = destinationCode
       ? `utm_source=${encodeURIComponent(destinationCode)}&utm_medium=affiliate`
       : 'utm_source=camverz_web&utm_medium=referral';
     const referrerParam = `&referrer=${encodeURIComponent(referrerString)}`;
@@ -36,7 +36,7 @@ function DownloadRedirectContent() {
   };
 
   return (
-    <div 
+    <div
       id="download-lock-overlay"
       onClick={goToPlayStore}
       style={{
@@ -66,7 +66,7 @@ function DownloadRedirectContent() {
       }}
     >
       {/* Interstitial Ad Container */}
-      <div 
+      <div
         onClick={goToPlayStore}
         style={{
           width: '92%',

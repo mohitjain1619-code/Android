@@ -61,75 +61,109 @@ public class AvatarHelper {
         return true;
     }
 
+    public static int resolveAvatarResId(Context context, String avatarName) {
+        if (context == null || avatarName == null || avatarName.trim().isEmpty() || "null".equalsIgnoreCase(avatarName)) {
+            return 0;
+        }
+
+        String cleanAvatar = avatarName.replaceAll("(?i)\\.(png|jpg|jpeg|webp|xml)$", "").trim();
+
+        // 1. Direct name match (e.g. "av1", "av2", "av10")
+        int avatarResId = context.getResources().getIdentifier(cleanAvatar, "drawable", context.getPackageName());
+        if (avatarResId != 0) return avatarResId;
+
+        // 2. Lowercase name match
+        avatarResId = context.getResources().getIdentifier(cleanAvatar.toLowerCase(), "drawable", context.getPackageName());
+        if (avatarResId != 0) return avatarResId;
+
+        // 3. Pure digits match (e.g. "1", "2", "15" -> "av1", "av2", "av15")
+        if (cleanAvatar.matches("\\d+")) {
+            avatarResId = context.getResources().getIdentifier("av" + cleanAvatar, "drawable", context.getPackageName());
+            if (avatarResId != 0) return avatarResId;
+        }
+
+        // 4. Extract digits from strings like "avatar_1", "ic_avatar_1", "avatar1" -> "av1"
+        String digitsOnly = cleanAvatar.replaceAll("[^0-9]", "");
+        if (!digitsOnly.isEmpty()) {
+            avatarResId = context.getResources().getIdentifier("av" + digitsOnly, "drawable", context.getPackageName());
+            if (avatarResId != 0) return avatarResId;
+
+            avatarResId = context.getResources().getIdentifier("ic_avatar_" + digitsOnly, "drawable", context.getPackageName());
+            if (avatarResId != 0) return avatarResId;
+        }
+
+        return 0;
+    }
+
     public static void loadAvatar(Context context, String photoUrl, String avatar, String userName, ImageView imageView) {
         if (!isValidContext(context) || imageView == null) return;
 
-        BitmapDrawable initials = getInitialAvatar(context, userName);
-        imageView.setImageDrawable(initials);
+        // Calculate a deterministic fallback drawable resource ID (av1..av15) based on userName
+        int fallbackResId = R.drawable.av1;
+        if (userName != null && !userName.trim().isEmpty()) {
+            int avatarNum = (Math.abs(userName.hashCode()) % 15) + 1;
+            int resolved = context.getResources().getIdentifier("av" + avatarNum, "drawable", context.getPackageName());
+            if (resolved != 0) {
+                fallbackResId = resolved;
+            }
+        }
 
-        // 1. Try photoUrl first if it is a valid HTTP URL or relative path
-        if (photoUrl != null && !photoUrl.isEmpty() && !"null".equalsIgnoreCase(photoUrl)) {
+        // 1. Try photoUrl first if valid HTTP URL or relative path
+        if (photoUrl != null && !photoUrl.trim().isEmpty() && !"null".equalsIgnoreCase(photoUrl)) {
             if (photoUrl.startsWith("http") || photoUrl.contains("/")) {
                 Glide.with(context)
                         .load(photoUrl)
-                        .placeholder(initials)
-                        .error(initials)
+                        .placeholder(fallbackResId)
+                        .error(fallbackResId)
+                        .circleCrop()
+                        .into(imageView);
+                return;
+            }
+            int photoResId = resolveAvatarResId(context, photoUrl);
+            if (photoResId != 0) {
+                Glide.with(context)
+                        .load(photoResId)
+                        .placeholder(fallbackResId)
+                        .error(fallbackResId)
                         .circleCrop()
                         .into(imageView);
                 return;
             }
         }
 
-        // 2. Try avatar field (could be HTTP URL or drawable name like av1, 1, avatar1, ic_avatar_1, etc.)
-        if (avatar != null && !avatar.isEmpty() && !"null".equalsIgnoreCase(avatar)) {
+        // 2. Try avatar field (could be HTTP URL or drawable name/number like av1, 1, avatar1, etc.)
+        if (avatar != null && !avatar.trim().isEmpty() && !"null".equalsIgnoreCase(avatar)) {
             if (avatar.startsWith("http") || avatar.contains("/")) {
                 Glide.with(context)
                         .load(avatar)
-                        .placeholder(initials)
-                        .error(initials)
+                        .placeholder(fallbackResId)
+                        .error(fallbackResId)
                         .circleCrop()
                         .into(imageView);
                 return;
             }
 
-            // Strip extension if present (e.g. av1.png -> av1)
-            String cleanAvatar = avatar.replaceAll("(?i)\\.(png|jpg|jpeg|webp)$", "").trim();
-            int avatarResId = context.getResources().getIdentifier(cleanAvatar, "drawable", context.getPackageName());
-
-            if (avatarResId == 0) {
-                avatarResId = context.getResources().getIdentifier(cleanAvatar.toLowerCase(), "drawable", context.getPackageName());
-            }
-
-            // Fallback 1: Pure number like "1", "2" -> "av1", "av2"
-            if (avatarResId == 0 && cleanAvatar.matches("\\d+")) {
-                avatarResId = context.getResources().getIdentifier("av" + cleanAvatar, "drawable", context.getPackageName());
-            }
-
-            // Fallback 2: Extract numbers from strings like "avatar_1", "ic_avatar_1", "avatar1" -> "av1"
-            if (avatarResId == 0) {
-                String digitsOnly = cleanAvatar.replaceAll("[^0-9]", "");
-                if (!digitsOnly.isEmpty()) {
-                    avatarResId = context.getResources().getIdentifier("av" + digitsOnly, "drawable", context.getPackageName());
-                }
-            }
-
-            // Fallback 3: Try ic_avatar_ prefix
-            if (avatarResId == 0) {
-                String digitsOnly = cleanAvatar.replaceAll("[^0-9]", "");
-                if (!digitsOnly.isEmpty()) {
-                    avatarResId = context.getResources().getIdentifier("ic_avatar_" + digitsOnly, "drawable", context.getPackageName());
-                }
-            }
-
+            int avatarResId = resolveAvatarResId(context, avatar);
             if (avatarResId != 0) {
                 Glide.with(context)
                         .load(avatarResId)
-                        .placeholder(initials)
-                        .error(initials)
+                        .placeholder(fallbackResId)
+                        .error(fallbackResId)
                         .circleCrop()
                         .into(imageView);
                 return;
             }
         }
+
+        // 3. Fallback: Load the assigned avatar graphic (av1..av15)
+        Glide.with(context)
+                .load(fallbackResId)
+                .circleCrop()
+                .into(imageView);
+    }
+
+    public static void loadAvatar(Context context, String avatar, String userName, ImageView imageView) {
+        loadAvatar(context, null, avatar, userName, imageView);
     }
 }
+

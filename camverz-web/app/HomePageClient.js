@@ -25,7 +25,7 @@ function HomeContent() {
       try {
         const gsapModule = await import('gsap');
         const scrollTriggerModule = await import('gsap/ScrollTrigger');
-        
+
         if (!isMounted) return;
 
         const gsapInstance = gsapModule.gsap;
@@ -108,11 +108,11 @@ function HomeContent() {
   };
 
   const features = [
-    { icon: Sparkles, title: 'Real Meet & Party Host', desc: 'Host or discover local city hangouts, community meetups, coffee chats, and events with real-time join requests & party approvals.' },
-    { icon: Video, title: 'Instant 1-on-1 Video Match', desc: 'Get matched instantly in live video connections with customized community orientation preferences.' },
+    { icon: Sparkles, title: 'Real Meet & Party Host', desc: 'Host or discover real-world meetups, house parties, coffee hangouts, and events with real-time join requests & party approvals.' },
+    { icon: Video, title: 'Instant 1-on-1 Video Match', desc: 'Get matched instantly in live face-to-face video calls with Straight, Gay, or Lesbian orientation filtering.' },
     { icon: Users, title: 'Stories & Community Feed', desc: 'Post daily stories, share social updates, like & comment on community posts, and engage with verified creators.' },
     { icon: UserCheck, title: 'Verified Profiles & Anti-Catfish', desc: 'Gender-verified members and AI profile checks ensure 100% authentic real-people connections with no fake bots.' },
-    { icon: MessageSquare, title: 'Private Direct Messaging', desc: 'Send direct messages, coordinate meetups, and keep in touch with your matches through real-time chat.' },
+    { icon: MessageSquare, title: 'Private Direct Messaging', desc: 'Send direct messages, coordinate party invites, and keep in touch with your matches through real-time chat.' },
     { icon: Lock, title: 'Strict Zero-Nudity & P2P Privacy', desc: '24/7 AI moderation, screenshot blocking, and encrypted peer-to-peer WebRTC calls with zero server recordings.' },
   ];
 
@@ -127,10 +127,10 @@ function HomeContent() {
           </div>
           <h1 className={styles.heroTitle}>
             Connect & Socialize<br />
-            Through <span className="neon-text">Live Video Connections</span>
+            Through <span className="neon-text">Live Video Chat</span>
           </h1>
           <p className={styles.heroDesc}>
-            Discover new friends, join inclusive community circles, share stories, and build real-time connections worldwide through instant 1-on-1 video matching.
+            Discover new friends, join inclusive LGBTQ+ social circles, share stories, and build real-time connections worldwide through instant 1-on-1 video chat.
           </p>
           <div className={styles.heroBtns}>
             <button className="btn-neon" onClick={() => handleStartCall('straight')}>
@@ -155,13 +155,13 @@ function HomeContent() {
         <div className="section">
           <div className="section-title">
             <h2>Choose Your Preference</h2>
-            <p>Select a community category to get matched with the right people</p>
+            <p>Select a category to get matched with the right people</p>
           </div>
           <div className={styles.prefGrid}>
             {[
-              { key: 'straight', emoji: '💑', label: 'Straight', desc: 'Inclusive Male & Female matching', color: '#FF006E' },
-              { key: 'gay', emoji: '👨‍❤️‍👨', label: 'Gay', desc: 'Male community matching', color: '#2979FF' },
-              { key: 'lesbian', emoji: '👩‍❤️‍👩', label: 'Lesbian', desc: 'Female community matching', color: '#BD00FF' },
+              { key: 'straight', emoji: '💑', label: 'Straight', desc: 'Male & Female matching', color: '#FF006E' },
+              { key: 'gay', emoji: '👨‍❤️‍👨', label: 'Gay', desc: 'Male only matching', color: '#2979FF' },
+              { key: 'lesbian', emoji: '👩‍❤️‍👩', label: 'Lesbian', desc: 'Female only matching', color: '#BD00FF' },
             ].map(cat => (
               <button
                 key={cat.key}
@@ -184,17 +184,17 @@ function HomeContent() {
         <div className="section">
           <div className={styles.appBannerCard}>
             <div className={styles.appBannerGlow} />
-            
+
             <div className={styles.appBannerContent}>
               <div className={styles.appBadge}>
                 <Smartphone size={15} />
                 <span>Camverz Android App</span>
               </div>
-              
+
               <h2 className={styles.appTitle}>
                 Find People <span className="neon-text">Faster & Better</span> On Mobile App
               </h2>
-              
+
               <p className={styles.appSubtitle}>
                 In our Mobile App, you find people much faster! Get instant push alerts, zero-lag video calls, real-world party check-ins, and camera optimizations designed for real-time socializing on the go.
               </p>
@@ -224,14 +224,14 @@ function HomeContent() {
               </div>
 
               <div className={styles.appButtonsRow}>
-                <a 
-                  href="https://play.google.com/store/apps/details?id=com.mohitt.camverz" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.mohitt.camverz"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={styles.playStoreBtn}
                 >
                   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor">
-                    <path d="M325.8 253.9L80.9 10.1C75.2 4.1 67.2 0 58.1 0 40 0 25.3 14.7 25.3 32.8c0 3.3.5 6.5 1.5 9.5l299 211.6zM25.3 479.2C25.3 497.3 40 512 58.1 512c9.1 0 17.1-4.1 22.8-10.1l244.9-243.8L26.8 469.7c-1 3-1.5 6.2-1.5 9.5zM468.9 220.8L360.7 160l-45.7 45.7 45.7 45.7 108.2-60.8c8.9-5.1 14.1-14.7 14.1-24.9s-5.2-19.8-14.1-24.9zM25.3 54.1v403.8l202.9-201.9L25.3 54.1z"/>
+                    <path d="M325.8 253.9L80.9 10.1C75.2 4.1 67.2 0 58.1 0 40 0 25.3 14.7 25.3 32.8c0 3.3.5 6.5 1.5 9.5l299 211.6zM25.3 479.2C25.3 497.3 40 512 58.1 512c9.1 0 17.1-4.1 22.8-10.1l244.9-243.8L26.8 469.7c-1 3-1.5 6.2-1.5 9.5zM468.9 220.8L360.7 160l-45.7 45.7 45.7 45.7 108.2-60.8c8.9-5.1 14.1-14.7 14.1-24.9s-5.2-19.8-14.1-24.9zM25.3 54.1v403.8l202.9-201.9L25.3 54.1z" />
                   </svg>
                   <div className={styles.btnText}>
                     <span className={styles.smallText}>GET IT ON</span>
@@ -248,9 +248,9 @@ function HomeContent() {
                   <span>Scan to Install App</span>
                 </div>
                 <div className={styles.qrFrame}>
-                  <img 
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://play.google.com/store/apps/details?id=com.mohitt.camverz&color=000000&bgcolor=ffffff" 
-                    alt="Scan QR Code to Download Camverz Android App" 
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://play.google.com/store/apps/details?id=com.mohitt.camverz&color=000000&bgcolor=ffffff"
+                    alt="Scan QR Code to Download Camverz Android App"
                     className={styles.qrImage}
                   />
                 </div>
@@ -299,7 +299,8 @@ export default function HomePageClient() {
     <Suspense fallback={
       <div style={{ minHeight: '100vh', minWidth: '950px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#060612', color: 'rgba(255, 255, 255, 0.7)' }}>
         <div style={{ width: '40px', height: '40px', border: '3px solid rgba(0, 229, 255, 0.1)', borderTopColor: '#00E5FF', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        <style dangerouslySetInnerHTML={{__html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           @keyframes spin {
             to { transform: rotate(360deg); }
           }

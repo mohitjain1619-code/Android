@@ -136,6 +136,7 @@ public class RealMeetActivity extends BaseActivity {
         currentUserName = tokenManager.getUserName();
         currentUserAvatar = tokenManager.getUserAvatar();
         currentUserGender = tokenManager.getUserGender();
+        currentUserCity = tokenManager.getUserCity();
 
         btnReturnToVideo = findViewById(R.id.btnReturnToVideo);
         btnHeaderRequests = findViewById(R.id.btnHeaderRequests);
@@ -158,6 +159,7 @@ public class RealMeetActivity extends BaseActivity {
         cityFilterContainer = findViewById(R.id.cityFilterContainer);
         chipFilterGlobal = findViewById(R.id.chipFilterGlobal);
         chipFilterCity = findViewById(R.id.chipFilterCity);
+        updateFilterChipsUI();
 
         recyclerView = findViewById(R.id.recyclerView);
         profileContainer = findViewById(R.id.profileContainer);
@@ -332,6 +334,7 @@ public class RealMeetActivity extends BaseActivity {
                 @Override
                 public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = true;
+                    AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
                 }
 
                 @Override
@@ -341,6 +344,7 @@ public class RealMeetActivity extends BaseActivity {
                 public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
                     Log.e(TAG, "ironSource Interstitial show failed: " + error.getErrorMessage());
+                    AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "FAILED", "interstitial", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
                     android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
                     prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply();
                     com.ironsource.mediationsdk.IronSource.loadInterstitial();
@@ -370,10 +374,12 @@ public class RealMeetActivity extends BaseActivity {
                 @Override public void onAdUnavailable() {}
                 @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = true;
+                    AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
                 }
                 @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
                     Log.e(TAG, "ironSource Rewarded Video show failed (fallback): " + error.getErrorMessage());
+                    AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
                     android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
                     prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply();
                 }
@@ -381,6 +387,7 @@ public class RealMeetActivity extends BaseActivity {
                 @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
                     BaseActivity.isAdShowing = false;
                     Log.d(TAG, "ironSource Rewarded Video completed (fallback watch)");
+                    AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "COMPLETED", "rewarded", "ironsource", "DELIVERED", "", "");
                     android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
                     prefs.edit()
                         .putBoolean(KEY_AD_WATCH_PENDING, false)
@@ -547,6 +554,7 @@ public class RealMeetActivity extends BaseActivity {
                         JsonObject userObj = data.getAsJsonObject("user");
                         if (userObj.has("city") && !userObj.get("city").isJsonNull()) {
                             currentUserCity = userObj.get("city").getAsString();
+                            tokenManager.saveUserCity(currentUserCity);
                         }
                         if (userObj.has("dob") && !userObj.get("dob").isJsonNull()) {
                             currentUserAge = calculateAgeFromDob(userObj.get("dob").getAsString());
@@ -559,6 +567,7 @@ public class RealMeetActivity extends BaseActivity {
                         }
                         runOnUiThread(() -> {
                             updateProfileUI();
+                            updateFilterChipsUI();
                             if (isCityFilterActive)
                                 loadCurrentTabFeed();
                         });
@@ -827,6 +836,7 @@ public class RealMeetActivity extends BaseActivity {
                             intent.putExtra("userId", request.getApplicantUserId());
                             intent.putExtra("userName", request.getApplicantName());
                             intent.putExtra("userAvatar", request.getApplicantAvatar());
+                            intent.putExtra("userPhotoUrl", request.getApplicantPhotoUrl());
                             intent.putExtra("autoStartCall", true);
                             startActivity(intent);
                         }
@@ -837,6 +847,7 @@ public class RealMeetActivity extends BaseActivity {
                             intent.putExtra("userId", request.getApplicantUserId());
                             intent.putExtra("userName", request.getApplicantName());
                             intent.putExtra("userAvatar", request.getApplicantAvatar());
+                            intent.putExtra("userPhotoUrl", request.getApplicantPhotoUrl());
                             startActivity(intent);
                         }
 
@@ -1054,6 +1065,27 @@ public class RealMeetActivity extends BaseActivity {
 
         btnCloseFullDialog.setOnClickListener(v -> dialog.dismiss());
 
+        boolean isHost = false;
+        if (currentUserId != null) {
+            if (posterUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
+                isHost = true;
+            }
+            if (!isHost && postId != null) {
+                for (PartyPost p : store.getPartyPosts()) {
+                    if (postId.equalsIgnoreCase(p.getId()) && currentUserId.equalsIgnoreCase(p.getHostUserId())) {
+                        isHost = true;
+                        break;
+                    }
+                }
+                for (RealMeetPost p : store.getRealMeetPosts()) {
+                    if (postId.equalsIgnoreCase(p.getId()) && currentUserId.equalsIgnoreCase(p.getUserId())) {
+                        isHost = true;
+                        break;
+                    }
+                }
+            }
+        }
+
         boolean isAcceptedMember = false;
         List<RealMeetRequest> allReqs = store.getMeetRequests();
         for (RealMeetRequest r : allReqs) {
@@ -1066,7 +1098,7 @@ public class RealMeetActivity extends BaseActivity {
         }
 
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, postId);
-        if (currentUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
+        if (isHost) {
             btnFullDialogAction.setText("📢 Party Board");
             btnFullDialogAction.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             btnFullDialogAction.setTextColor(Color.WHITE);
@@ -1792,15 +1824,20 @@ public class RealMeetActivity extends BaseActivity {
         android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
         prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, true).apply();
 
+        AdAnalyticsTracker.trackEvent(this, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "");
+
         if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
             Log.d(TAG, "Showing scheduled ironSource interstitial ad.");
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
             com.ironsource.mediationsdk.IronSource.showInterstitial();
         } else if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
             Log.d(TAG, "ironSource Interstitial not ready. Showing fallback Rewarded Video ad.");
+            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
             com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
             preloadInterstitialAd();
         } else {
             Log.d(TAG, "ironSource Interstitial and Rewarded ads not ready, preloading for next cycle.");
+            AdAnalyticsTracker.trackEvent(this, "FAILED", "interstitial", "ironsource", "FAILED", "NO_FILL", "IronSource interstitial & rewarded not ready / No Fill");
             prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, false).apply(); // Clear pending flag since no ad could render
             preloadInterstitialAd();
         }

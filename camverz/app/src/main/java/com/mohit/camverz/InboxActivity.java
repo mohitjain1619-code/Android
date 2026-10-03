@@ -31,10 +31,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 public class InboxActivity extends BaseActivity {
 
     private static final String TAG = "InboxActivity";
     private RecyclerView inboxRecyclerView;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private InboxAdapter inboxAdapter;
     private List<Conversation> conversationList;
     private List<Conversation> fullConversationList;
@@ -84,12 +87,23 @@ public class InboxActivity extends BaseActivity {
         });
 
         inboxRecyclerView = findViewById(R.id.inboxRecyclerView);
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
         noMessagesText = findViewById(R.id.no_messages_text);
         notificationLayout = findViewById(R.id.notification_layout);
         notificationBadge = findViewById(R.id.notification_badge);
         searchEditText = findViewById(R.id.search_edit_text);
         activeNowLayout = findViewById(R.id.active_now_layout);
         activeUsersContainer = findViewById(R.id.active_users_container);
+
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setColorSchemeResources(R.color.accent_primary, R.color.accent_cyan);
+            swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.surface_dark);
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                loadConversations();
+                checkForUnreadNotifications();
+                UnreadManager.getInstance().fetchUnreadCount(InboxActivity.this);
+            });
+        }
 
         inboxRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -263,10 +277,16 @@ public class InboxActivity extends BaseActivity {
                         }
                     }
                 }
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setRefreshing(false);
+                }
                 Log.e(TAG, "Failed to load chats", t);
                 Toast.makeText(InboxActivity.this, "Network error", Toast.LENGTH_SHORT).show();
             }

@@ -1,16 +1,22 @@
 package com.mohit.camverz;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import androidx.activity.OnBackPressedCallback;
 
@@ -19,6 +25,16 @@ public class BaseActivity extends AppCompatActivity {
     private static final boolean ENABLE_SCREENSHOT_PROTECTION = false;
     private static final String TAG = "BaseActivity";
     private static boolean isIronSourceInitialized = false;
+
+    private final BroadcastReceiver unreadCountReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && UnreadManager.ACTION_UNREAD_COUNT_CHANGED.equals(intent.getAction())) {
+                int count = intent.getIntExtra("unread_count", 0);
+                updateGlobalUnreadBadge(count);
+            }
+        }
+    };
 
     public static void initializeIronSource(android.app.Activity activity) {
         if (!isIronSourceInitialized) {
@@ -81,6 +97,56 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            IntentFilter filter = new IntentFilter(UnreadManager.ACTION_UNREAD_COUNT_CHANGED);
+            LocalBroadcastManager.getInstance(this).registerReceiver(unreadCountReceiver, filter);
+            UnreadManager.getInstance().fetchUnreadCount(this);
+            updateGlobalUnreadBadge(UnreadManager.getInstance().getUnreadCount());
+        } catch (Exception e) {
+            Log.e(TAG, "Error registering unread receiver in onResume", e);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(unreadCountReceiver);
+        } catch (Exception e) {
+            Log.e(TAG, "Error unregistering unread receiver in onPause", e);
+        }
+    }
+
+    protected void updateGlobalUnreadBadge(int count) {
+        runOnUiThread(() -> {
+            try {
+                TextView messageBadge = findViewById(R.id.message_badge);
+                if (messageBadge != null) {
+                    if (count > 0) {
+                        messageBadge.setText(String.valueOf(count));
+                        messageBadge.setVisibility(View.VISIBLE);
+                    } else {
+                        messageBadge.setVisibility(View.GONE);
+                    }
+                }
+
+                TextView headerInboxText = findViewById(R.id.tvHeaderInboxText);
+                if (headerInboxText != null) {
+                    if (count > 0) {
+                        headerInboxText.setText("💬 Inbox (" + count + ")");
+                    } else {
+                        headerInboxText.setText("💬 Inbox");
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error updating global unread badge UI", e);
+            }
+        });
     }
 
     @Override

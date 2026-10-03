@@ -82,7 +82,8 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         app.registerActivityLifecycleCallbacks(this);
         registerListeners();
         isRegistered = true;
-        Log.d(TAG, "IncomingCallHandler initialized");
+        UnreadManager.getInstance().init(appContext, socket);
+        Log.d(TAG, "IncomingCallHandler & UnreadManager initialized");
     }
 
     /**

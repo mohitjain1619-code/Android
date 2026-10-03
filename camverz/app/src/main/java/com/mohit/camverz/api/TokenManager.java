@@ -104,6 +104,14 @@ public class TokenManager {
         return prefs.getString(KEY_USER_AVATAR, "");
     }
 
+    public void saveUserCity(String city) {
+        prefs.edit().putString("user_city", city).apply();
+    }
+
+    public String getUserCity() {
+        return prefs.getString("user_city", "");
+    }
+
     public boolean isVerified() {
         return prefs.getBoolean(KEY_USER_VERIFIED, false);
     }
