@@ -66,8 +66,6 @@ public class MainScreenActivity extends BaseActivity {
     private boolean isRewardedVideoAvailable = false;
     private String pendingCategory = "straight";
     private boolean isAdLoading = false;
-    private Runnable currentAdSuccessCallback = null;
-    private Runnable currentAdFailureCallback = null;
     private RecyclerView storiesRecyclerView;
     private StoriesAdapter storiesAdapter;
     private List<UserStories> userStoriesList = new java.util.ArrayList<>();
@@ -339,81 +337,9 @@ public class MainScreenActivity extends BaseActivity {
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
 
-        // Initialize ironSource LevelPlay SDK
-        BaseActivity.initializeIronSource(this);
-        com.ironsource.mediationsdk.IronSource.loadInterstitial();
-
-        // Setup the global LevelPlay Interstitial listener
-        com.ironsource.mediationsdk.IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
-            @Override
-            public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                Log.d(TAG, "ironSource Interstitial ad ready");
-            }
-            @Override
-            public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
-                Log.w(TAG, "ironSource Interstitial ad load failed: " + error.getErrorMessage());
-            }
-            @Override
-            public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = true;
-            }
-            @Override
-            public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-            @Override
-            public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-                Log.e(TAG, "ironSource Interstitial Show Failed: " + error.getErrorMessage());
-                if (currentAdFailureCallback != null) {
-                    runOnUiThread(currentAdFailureCallback);
-                    currentAdFailureCallback = null;
-                }
-            }
-            @Override
-            public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-            @Override
-            public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-                Log.d(TAG, "ironSource Interstitial ad closed (granting reward for watch ads fallback)");
-                if (currentAdSuccessCallback != null) {
-                    runOnUiThread(currentAdSuccessCallback);
-                    currentAdSuccessCallback = null;
-                }
-                com.ironsource.mediationsdk.IronSource.loadInterstitial();
-            }
-        });
-
-        // Setup the global LevelPlay Rewarded Video listener
-        com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
-            @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                Log.d(TAG, "ironSource Rewarded Video Available");
-            }
-            @Override public void onAdUnavailable() {
-                Log.d(TAG, "ironSource Rewarded Video Unavailable");
-            }
-            @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = true;
-            }
-            @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-                Log.e(TAG, "ironSource Rewarded Show Failed: " + error.getErrorMessage());
-                if (currentAdFailureCallback != null) {
-                    runOnUiThread(currentAdFailureCallback);
-                    currentAdFailureCallback = null;
-                }
-            }
-            @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-            @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-                Log.d(TAG, "ironSource Rewarded Video completed");
-                if (currentAdSuccessCallback != null) {
-                    runOnUiThread(currentAdSuccessCallback);
-                    currentAdSuccessCallback = null;
-                }
-            }
-            @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-            }
-        });
+        // Initialize ironSource LevelPlay SDK & Preload Interstitial via AdManager
+        AdManager.getInstance().init(this);
+        AdManager.getInstance().preloadInterstitial(this);
     }
 
 
@@ -506,15 +432,12 @@ public class MainScreenActivity extends BaseActivity {
         if (appUpdateHelper != null) {
             appUpdateHelper.checkUpdateInProgress();
         }
-        com.ironsource.mediationsdk.IronSource.onResume(this);
         iconVideo.setColorFilter(Color.parseColor("#4F46E5"));
         iconProfile.setColorFilter(Color.parseColor("#9CA3AF"));
         iconImage.setColorFilter(Color.parseColor("#9CA3AF"));
         iconMessage.setColorFilter(Color.parseColor("#9CA3AF"));
 
-        android.content.SharedPreferences adPrefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-        boolean adPending = adPrefs.getBoolean("ad_watch_pending", false);
-        if (adPending) {
+        if (AdManager.getInstance().isAdWatchPending(this)) {
             showForceAdDialog();
         }
 
@@ -535,7 +458,6 @@ public class MainScreenActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        com.ironsource.mediationsdk.IronSource.onPause(this);
     }
 
     private void fetchUnreadNotificationsCount() {
@@ -809,54 +731,43 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
-        AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
-        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
-            Log.d(TAG, "Showing ironSource rewarded video...");
-            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
-            currentAdSuccessCallback = onSuccess;
-            currentAdFailureCallback = onFailure;
-            com.ironsource.mediationsdk.IronSource.showRewardedVideo();
-        } else if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
-            Log.d(TAG, "Rewarded Video not ready. Falling back to Interstitial...");
-            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
-            currentAdSuccessCallback = onSuccess;
-            currentAdFailureCallback = onFailure;
-            com.ironsource.mediationsdk.IronSource.showInterstitial();
-        } else {
-            Log.w(TAG, "ironSource Rewarded video and Interstitial not ready.");
-            AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource rewarded & interstitial not ready / No Fill");
-            com.ironsource.mediationsdk.IronSource.loadInterstitial();
-            runOnUiThread(onFailure);
-        }
+        AdManager.getInstance().showRewardedAd(this, "main_screen_reward", new AdManager.RewardedAdCallback() {
+            @Override
+            public void onRewardEarned() {
+                if (onSuccess != null) runOnUiThread(onSuccess);
+            }
+
+            @Override
+            public void onAdDismissed(boolean rewarded) {
+                if (!rewarded && onFailure != null) {
+                    runOnUiThread(onFailure);
+                }
+            }
+
+            @Override
+            public void onAdFailed(String reason) {
+                if (onFailure != null) runOnUiThread(onFailure);
+            }
+        });
     }
 
     private void showForceAdDialog() {
-        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
-        progressDialog.setMessage("Resuming ad playback...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
-
-        android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
-        final int[] attempts = {0};
-        Runnable checkRunnable = new Runnable() {
+        AdManager.getInstance().showRewardedAd(this, "force_ad_resume", new AdManager.RewardedAdCallback() {
             @Override
-            public void run() {
-                attempts[0]++;
-                if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable() || com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
-                    progressDialog.dismiss();
-                    android.content.SharedPreferences adPrefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-                    adPrefs.edit().putBoolean("ad_watch_pending", false).apply();
-                    loadAndShowRewardedAd(() -> {}, () -> {});
-                } else if (attempts[0] < 10) {
-                    handler.postDelayed(this, 1000);
-                } else {
-                    progressDialog.dismiss();
-                    android.content.SharedPreferences adPrefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-                    adPrefs.edit().putBoolean("ad_watch_pending", false).apply();
-                }
+            public void onRewardEarned() {
+                AdManager.getInstance().setAdWatchPending(false);
             }
-        };
-        handler.postDelayed(checkRunnable, 500);
+
+            @Override
+            public void onAdDismissed(boolean rewarded) {
+                AdManager.getInstance().setAdWatchPending(false);
+            }
+
+            @Override
+            public void onAdFailed(String reason) {
+                AdManager.getInstance().setAdWatchPending(false);
+            }
+        });
     }
 
     private void fetchActiveStories() {

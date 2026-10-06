@@ -300,6 +300,7 @@ public class CallActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        AdManager.getInstance().onPause(this);
         if (videoCapturer != null) {
             try {
                 videoCapturer.stopCapture();
@@ -312,6 +313,7 @@ public class CallActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        AdManager.getInstance().onResume(this);
         if (videoCapturer != null) {
             try {
                 videoCapturer.startCapture(720, 1280, 30);
@@ -1468,7 +1470,7 @@ public class CallActivity extends AppCompatActivity {
                 Log.d(TAG, "📞 Call finished. Duration: " + durationSec + " seconds.");
 
                 if (isPrivateCall && durationSec >= 30 && !tokenManager.isVideoCallAdFree()) {
-                    loadAndShowRewardedAdAndFinish();
+                    showInterstitialAndFinish();
                 } else {
                     boolean shouldShowAd = false;
                     if (durationSec >= 120) {
@@ -1742,38 +1744,7 @@ public class CallActivity extends AppCompatActivity {
         if (tokenManager != null && tokenManager.isVideoCallAdFree()) return;
         if (isFinishing() || isDestroyed()) return;
 
-        com.ironsource.mediationsdk.IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
-            @Override
-            public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                Log.d(TAG, "LevelPlay Interstitial loaded in CallActivity");
-            }
-
-            @Override
-            public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
-                Log.w(TAG, "LevelPlay Interstitial failed to load: " + error.getErrorMessage());
-            }
-
-            @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = true;
-            }
-            @Override public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-            @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-                android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-                prefs.edit().putBoolean("ad_watch_pending", false).apply();
-                finish();
-            }
-            @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-            @Override
-            public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                BaseActivity.isAdShowing = false;
-                android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-                prefs.edit().putBoolean("ad_watch_pending", false).apply();
-                finish();
-            }
-        });
-
-        com.ironsource.mediationsdk.IronSource.loadInterstitial();
+        AdManager.getInstance().preloadInterstitial(this);
     }
 
     @Override
@@ -1805,66 +1776,8 @@ public class CallActivity extends AppCompatActivity {
     }
 
     private void showInterstitialAndFinish() {
-        android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-        AdAnalyticsTracker.trackEvent(this, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "");
-
-        if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
-            prefs.edit().putBoolean("ad_watch_pending", true).apply();
-            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
-            com.ironsource.mediationsdk.IronSource.showInterstitial("default");
-        } else if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
-            Log.d(TAG, "LevelPlay Interstitial not ready. Falling back to Rewarded Video.");
-            loadAndShowRewardedAdAndFinish();
-        } else {
-            AdAnalyticsTracker.trackEvent(this, "FAILED", "interstitial", "ironsource", "FAILED", "NO_FILL", "IronSource interstitial & rewarded not ready after call / No Fill");
+        AdManager.getInstance().showInterstitialWithFallback(this, "call_exit", tokenManager != null && tokenManager.isVideoCallAdFree(), success -> {
             finish();
-        }
-    }
-
-    private void loadAndShowRewardedAdAndFinish() {
-        android.content.SharedPreferences prefs = getSharedPreferences("camverz_ad_timer", MODE_PRIVATE);
-        AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
-
-        if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
-            prefs.edit().putBoolean("ad_watch_pending", true).apply();
-            com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
-                @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdUnavailable() {}
-                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    BaseActivity.isAdShowing = true;
-                    AdAnalyticsTracker.trackEvent(CallActivity.this, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
-                }
-                @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    BaseActivity.isAdShowing = false;
-                    prefs.edit().putBoolean("ad_watch_pending", false).apply();
-                    AdAnalyticsTracker.trackEvent(CallActivity.this, "FAILED", "rewarded", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "SHOW_FAILED", error != null ? error.getErrorMessage() : "Ad show failed");
-                    if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
-                        AdAnalyticsTracker.trackEvent(CallActivity.this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
-                        com.ironsource.mediationsdk.IronSource.showInterstitial("default");
-                    } else {
-                        finish();
-                    }
-                }
-                @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    AdAnalyticsTracker.trackEvent(CallActivity.this, "COMPLETED", "rewarded", "ironsource", "DELIVERED", "", "");
-                }
-                @Override
-                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    BaseActivity.isAdShowing = false;
-                    prefs.edit().putBoolean("ad_watch_pending", false).apply();
-                    finish();
-                }
-            });
-            com.ironsource.mediationsdk.IronSource.showRewardedVideo("default");
-        } else if (com.ironsource.mediationsdk.IronSource.isInterstitialReady()) {
-            Log.d(TAG, "LevelPlay Rewarded Video not available. Falling back to Interstitial.");
-            prefs.edit().putBoolean("ad_watch_pending", true).apply();
-            AdAnalyticsTracker.trackEvent(this, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
-            com.ironsource.mediationsdk.IronSource.showInterstitial("default");
-        } else {
-            AdAnalyticsTracker.trackEvent(this, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "IronSource rewarded & interstitial not ready after call / No Fill");
-            finish();
-        }
+        });
     }
 }

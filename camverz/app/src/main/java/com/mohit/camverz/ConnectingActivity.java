@@ -248,7 +248,7 @@ public class ConnectingActivity extends BaseActivity {
         AdAnalyticsTracker.trackEvent(this, "REQUEST", "native", "ironsource", "REQUESTED", "", "");
 
         levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
-                .withPlacementName("default")
+                .withPlacementName("6bpplx6inl1ahz01")
                 .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
                     @Override
                     public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {

@@ -37,12 +37,7 @@ public class BaseActivity extends AppCompatActivity {
     };
 
     public static void initializeIronSource(android.app.Activity activity) {
-        if (!isIronSourceInitialized) {
-            String ironSourceAppKey = "27a0e2125";
-            com.ironsource.mediationsdk.IronSource.init(activity, ironSourceAppKey);
-            isIronSourceInitialized = true;
-            Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK Initialized Globally");
-        }
+        AdManager.getInstance().init(activity);
     }
 
     @Override
@@ -58,9 +53,24 @@ public class BaseActivity extends AppCompatActivity {
                 }
                 setEnabled(false);
                 getOnBackPressedDispatcher().onBackPressed();
-                setEnabled(true);
             }
         });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                    () -> {
+                        if (isAdShowing) {
+                            Log.d(TAG, "🚫 Predictive back gesture blocked in BaseActivity (isAdShowing = true)");
+                            return;
+                        }
+                    }
+                );
+            } catch (Exception e) {
+                Log.e(TAG, "Error registering OnBackInvokedCallback in BaseActivity", e);
+            }
+        }
 
         try {
             // Enable edge-to-edge window insets
@@ -102,6 +112,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        AdManager.getInstance().onResume(this);
         try {
             IntentFilter filter = new IntentFilter(UnreadManager.ACTION_UNREAD_COUNT_CHANGED);
             LocalBroadcastManager.getInstance(this).registerReceiver(unreadCountReceiver, filter);
@@ -115,6 +126,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        AdManager.getInstance().onPause(this);
         try {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(unreadCountReceiver);
         } catch (Exception e) {

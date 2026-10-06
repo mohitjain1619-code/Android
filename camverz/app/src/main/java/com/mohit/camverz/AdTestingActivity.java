@@ -89,47 +89,29 @@ public class AdTestingActivity extends AppCompatActivity {
 
         // LevelPlay Mediation Buttons
         findViewById(R.id.btn_lp_interstitial).setOnClickListener(v -> {
-            showToast("Loading LevelPlay Interstitial...");
-            com.ironsource.mediationsdk.IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
-                @Override
-                public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    showToast("LevelPlay Interstitial Ready");
-                    com.ironsource.mediationsdk.IronSource.showInterstitial();
-                }
-                @Override
-                public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
-                    showToast("LevelPlay Interstitial Load Failed: " + error.getErrorMessage());
-                }
-                @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                    showToast("LevelPlay Interstitial Show Failed: " + error.getErrorMessage());
-                }
-                @Override public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            showToast("Testing LevelPlay Interstitial via AdManager...");
+            AdManager.getInstance().showInterstitialWithFallback(this, "testing_interstitial", false, success -> {
+                showToast("LevelPlay Interstitial finished (Success: " + success + ")");
             });
-            com.ironsource.mediationsdk.IronSource.loadInterstitial();
         });
         findViewById(R.id.btn_lp_rewarded).setOnClickListener(v -> {
-            showToast("Checking LevelPlay Rewarded Video...");
-            if (com.ironsource.mediationsdk.IronSource.isRewardedVideoAvailable()) {
-                com.ironsource.mediationsdk.IronSource.setLevelPlayRewardedVideoListener(new com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener() {
-                    @Override public void onAdAvailable(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                    @Override public void onAdUnavailable() {}
-                    @Override public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                    @Override public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                        showToast("LevelPlay Rewarded Show Failed: " + error.getErrorMessage());
-                    }
-                    @Override public void onAdClicked(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                    @Override public void onAdRewarded(com.ironsource.mediationsdk.model.Placement placement, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                        showToast("LevelPlay Rewarded Video Completed! User rewarded.");
-                    }
-                    @Override public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-                });
-                com.ironsource.mediationsdk.IronSource.showRewardedVideo();
-            } else {
-                showToast("LevelPlay Rewarded Video not available yet.");
-            }
+            showToast("Testing LevelPlay Rewarded Video via AdManager...");
+            AdManager.getInstance().showRewardedAd(this, "testing_rewarded", new AdManager.RewardedAdCallback() {
+                @Override
+                public void onRewardEarned() {
+                    showToast("LevelPlay Rewarded Video Completed! Reward earned.");
+                }
+
+                @Override
+                public void onAdDismissed(boolean rewarded) {
+                    showToast("LevelPlay Rewarded Video Closed. Rewarded: " + rewarded);
+                }
+
+                @Override
+                public void onAdFailed(String reason) {
+                    showToast("LevelPlay Rewarded Video Failed: " + reason);
+                }
+            });
         });
         findViewById(R.id.btn_lp_native).setOnClickListener(v -> {
             showToast("Loading LevelPlay Native Ad...");
