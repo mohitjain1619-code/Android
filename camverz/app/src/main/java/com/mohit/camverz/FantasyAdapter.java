@@ -75,21 +75,21 @@ public class FantasyAdapter extends RecyclerView.Adapter<FantasyAdapter.ViewHold
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
 
         if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getUserId())) {
-            holder.btnConnectFantasy.setText("🗑️ Delete Fantasy");
+            holder.btnConnectFantasy.setText(context.getString(R.string.delete_fantasy_btn));
             holder.btnConnectFantasy.setBackgroundResource(R.drawable.bg_luxury_chip);
             holder.btnConnectFantasy.setTextColor(Color.WHITE);
             holder.btnConnectFantasy.setOnClickListener(v -> {
                 if (listener != null) listener.onDeleteFantasyClicked(post);
             });
         } else if (hasRequested) {
-            holder.btnConnectFantasy.setText("📩 Requested");
+            holder.btnConnectFantasy.setText(context.getString(R.string.requested_btn));
             holder.btnConnectFantasy.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
             holder.btnConnectFantasy.setTextColor(Color.parseColor("#8E8E93"));
             holder.btnConnectFantasy.setOnClickListener(v -> {
-                android.widget.Toast.makeText(context, "You have already requested to connect for this fantasy.", android.widget.Toast.LENGTH_SHORT).show();
+                android.widget.Toast.makeText(context, context.getString(R.string.already_requested_fantasy), android.widget.Toast.LENGTH_SHORT).show();
             });
         } else {
-            holder.btnConnectFantasy.setText("✨ Secret Connect");
+            holder.btnConnectFantasy.setText(context.getString(R.string.secret_connect_btn));
             holder.btnConnectFantasy.setBackgroundResource(R.drawable.bg_neon_magenta_button);
             holder.btnConnectFantasy.setTextColor(Color.WHITE);
             holder.btnConnectFantasy.setOnClickListener(v -> {

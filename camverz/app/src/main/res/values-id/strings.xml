@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">camverz</string>
+    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+
+    <!-- Language Selection -->
+    <string name="choose_language_title">Pilih Bahasa Anda</string>
+    <string name="choose_language_subtitle">Pilih bahasa yang Anda sukai untuk melanjutkan</string>
+    <string name="search_language_hint">Cari bahasa…</string>
+    <string name="change_language">Ubah Bahasa</string>
+
+    <!-- Call Activity -->
+    <string name="mute_audio">Bungkam audio</string>
+    <string name="switch_camera">Ganti kamera</string>
+    <string name="end_call">Akhiri panggilan</string>
+    <string name="connecting">Menghubungkan…</string>
+    <string name="calling">Memanggil…</string>
+    <string name="ringing">Mendering…</string>
+    <string name="call_declined">Panggilan Ditolak</string>
+    <string name="call_ended">Panggilan Berakhir</string>
+    <string name="speaker">Speaker</string>
+    <string name="mute">Bungkam</string>
+
+    <!-- Gender Selection & Onboarding -->
+    <string name="select_your_gender">Pilih Jenis Kelamin Anda</string>
+    <string name="gender_help_text">Ini membantu kami menghubungkan Anda dengan orang yang tepat</string>
+    <string name="male">👨 Pria</string>
+    <string name="female">👩 Wanita</string>
+    <string name="continue_arrow">Lanjutkan →</string>
+    <string name="step_1_of_4">Langkah 1 dari 4</string>
+    <string name="step_2_of_4">Langkah 2 dari 4</string>
+    <string name="step_3_of_4">Langkah 3 dari 4</string>
+    <string name="step_4_of_4">Langkah 4 dari 4</string>
+    <string name="whats_your_gender">Apa jenis kelamin Anda?</string>
+    <string name="gender_help_subtitle">Ini membantu kami mencocokkan Anda dengan orang yang tepat di komunitas Anda.</string>
+    <string name="male_title">Pria</string>
+    <string name="female_title">Wanita</string>
+    <string name="discover_matches">Temukan Pasangan</string>
+    <string name="continue_text">Lanjutkan</string>
+    <string name="whats_your_name">Siapa nama Anda?</string>
+    <string name="name_subtext">Ini adalah cara orang lain melihat Anda</string>
+    <string name="enter_name_hint">Masukkan nama Anda</string>
+    <string name="where_located">Di mana lokasi Anda?</string>
+    <string name="city_subtext">Membantu menghubungkan Anda dengan orang-orang terdekat di kota Anda.</string>
+    <string name="detecting_location">Mendeteksi lokasi...</string>
+    <string name="please_wait">Harap tunggu</string>
+    <string name="when_birthday">Kapan ulang tahun Anda?</string>
+    <string name="birthday_subtext">Anda harus berusia minimal 18 tahun untuk menggunakan Camverz.</string>
+    <string name="age_restricted">🛡️ Khusus 18+</string>
+    <string name="date_format_hint">DD / MM / YYYY</string>
+    <string name="youre_all_set">Semua Siap!</string>
+    <string name="finish_subtext">Tinjau profil Anda dan bersiaplah bertemu orang sungguhan.</string>
+    <string name="profile_summary_title">RINGKASAN PROFIL ANDA</string>
+    <string name="display_name_hint">Nama Tampilan Anda</string>
+    <string name="summary_gender">Jenis Kelamin: %1$s</string>
+    <string name="summary_city">Kota: %1$s</string>
+    <string name="summary_birthday">Ulang Tahun: %1$s</string>
+    <string name="permissions_privacy_title">IZIN &amp; PRIVASI</string>
+    <string name="perm_camera_mic">📷 Kamera &amp; Mikrofon: Untuk panggilan video langsung 1-lawan-1</string>
+    <string name="perm_location">📍 Geolokasi: Untuk pencocokan berdasarkan kota &amp; negara</string>
+    <string name="perm_zero_recording">🔒 Tanpa Perekaman: Panggilan WebRTC terenkripsi &amp; pribadi</string>
+    <string name="start_video_chatting">Mulai Obrolan Video</string>
+
+    <!-- Main Screen -->
+    <string name="welcome_user">Selamat Datang</string>
+    <string name="verified">✓ Terverifikasi</string>
+    <string name="not_verified">⚠ Belum Terverifikasi</string>
+    <string name="choose_interest">Pilih Minat Anda</string>
+    <string name="verified_users_text">Terhubung dengan pengguna terverifikasi di seluruh dunia</string>
+    <string name="complete_verification">Selesaikan Verifikasi</string>
+    <string name="logout">Keluar</string>
+
+    <!-- Categories -->
+    <string name="gay">Gay</string>
+    <string name="gay_emoji">👨</string>
+    <string name="gay_flag">🏳️‍🌈</string>
+    <string name="lesbian">Lesbian</string>
+    <string name="lesbian_emoji">👩</string>
+    <string name="lesbian_heart">💖</string>
+    <string name="straight">Hetero</string>
+    <string name="straight_couple">👫</string>
+    <string name="straight_fire">🔥</string>
+
+    <!-- Login & Welcome Screen -->
+    <string name="welcome_to_camverz">Selamat Datang di Camverz</string>
+    <string name="sign_in_google">Masuk dengan Google</string>
+    <string name="headline_meet_real_people">Temui Orang Sungguhan, Bukan Sekadar Profil</string>
+    <string name="subtitle_video_chat">Obrolan video, berteman, temukan orang terdekat, dan bangun hubungan yang nyata.</string>
+    <string name="chip_verified_users">✓ Pengguna Terverifikasi</string>
+    <string name="chip_hd_video">🎥 Panggilan Video HD</string>
+    <string name="chip_nearby_discovery">📍 Penemuan Terdekat</string>
+    <string name="chip_safe_community">🛡️ Komunitas Aman</string>
+    <string name="chip_instant_video">⚡ Video Instan</string>
+    <string name="chip_private_safe">🔒 100% Pribadi</string>
+    <string name="chip_real_meet">🔥 Real Meet</string>
+    <string name="login_continue_journey">Lanjutkan perjalanan Anda dengan Camverz</string>
+    <string name="login_join_thousands">Bergabunglah dengan ribuan pengguna terverifikasi setiap hari.</string>
+    <string name="privacy_no_post">🔒 Kami tidak pernah mengunggah apa pun tanpa izin Anda.</string>
+    <string name="trust_encrypted">⚡ Terenkripsi</string>
+    <string name="trust_secure">🛡️ Aman</string>
+    <string name="trust_verified_community">✓ Komunitas Terverifikasi</string>
+    <string name="terms_privacy_notice">Dengan melanjutkan, Anda menyetujui Ketentuan &amp; Kebijakan Privasi kami</string>
+    <string name="terms_privacy_notice_full">Dengan melanjutkan, Anda menyetujui Ketentuan, Kebijakan Privasi, dan Kebijakan Keselamatan Anak kami.</string>
+    <string name="terms_of_service">Ketentuan Layanan</string>
+    <string name="privacy_policy">Kebijakan Privasi</string>
+    <string name="tester_login">Masuk dengan Akun Penguji</string>
+    <string name="signing_in_wait">Sedang masuk... Harap tunggu</string>
+
+    <!-- Connecting Activity -->
+    <string name="finding_match">Mencari Pasangan…</string>
+    <string name="wait_connect_message">Harap tunggu sementara kami menghubungkan Anda…</string>
+    <string name="cancel">Batal</string>
+
+    <!-- Verification Activity -->
+    <string name="verification">Verifikasi</string>
+    <string name="selfie">Foto Selfie</string>
+    <string name="take_selfie">Ambil Selfie</string>
+    <string name="id_document">Dokumen Identitas</string>
+    <string name="upload_id">Unggah Identitas</string>
+    <string name="submit_verification">Kirim Verifikasi</string>
+
+    <!-- Status Messages -->
+    <string name="matched_starting_call">Cocok! Memulai panggilan…</string>
+    <string name="finding_match_status">Mencari kecocokan…</string>
+    <string name="error_loading_profile">Gagal memuat profil</string>
+
+    <!-- Navigation & Community -->
+    <string name="explore">Jelajahi</string>
+    <string name="messages">Pesan</string>
+    <string name="profile">Profil</string>
+    <string name="feed">Postingan</string>
+    <string name="real_meet">Real Meet</string>
+    <string name="create_post">Buat Postingan Baru</string>
+    <string name="block_user">Blokir Pengguna</string>
+    <string name="report_user">Laporkan Pengguna</string>
+    <string name="delete_account">Hapus Akun</string>
+
+    <!-- Home Screen Additional -->
+    <string name="greeting_evening">Selamat Malam 👋</string>
+    <string name="greeting_morning">Selamat Pagi ☀️</string>
+    <string name="greeting_afternoon">Selamat Siang 🌤️</string>
+    <string name="live_online">Online Sekarang</string>
+    <string name="online_count">%1$d Online</string>
+    <string name="quick_actions">Aksi Cepat</string>
+    <string name="community_hub_title">💬 Real Meet, Real Party, Fantasy</string>
+    <string name="hot_chip">TREN 🔥</string>
+    <string name="friends_chats_chip">👥 Teman &amp; Obrolan</string>
+    <string name="choose_your_interest">Pilih Minat Anda untuk Panggilan Video</string>
+    <string name="select_category_matching">Pilih kategori untuk memulai panggilan video</string>
+    <string name="straight_desc">Temui orang-orang yang mencari obrolan bermakna</string>
+    <string name="gay_desc">Terhubung dengan pengguna pria terverifikasi</string>
+    <string name="lesbian_desc">Temui pengguna wanita terverifikasi</string>
+    <string name="menu_share_app">Bagikan Aplikasi 🚀</string>
+    <string name="menu_rate_app">Beri Nilai Aplikasi ⭐</string>
+    <string name="toast_only_males_gay">Hanya pria yang dapat bergabung di bagian Gay</string>
+    <string name="toast_only_females_lesbian">Hanya wanita yang dapat bergabung di bagian Lesbian</string>
+
+    <!-- Create Post & Comments -->
+    <string name="create_post_title">Buat Postingan</string>
+    <string name="whats_on_your_mind">Apa yang sedang Anda pikirkan?</string>
+    <string name="audience_visibility">Visibilitas Pemirsa</string>
+    <string name="all">Semua</string>
+    <string name="publish_post">Publikasikan</string>
+    <string name="comments_title">Komentar</string>
+    <string name="write_a_comment">Tulis komentar...</string>
+    <string name="replying_to">Membalas %1$s</string>
+
+    <!-- Legacy / Alternate Aliases for Translations -->
+    <string name="enter_your_name">Siapa nama Anda?</string>
+    <string name="name_hint">Masukkan nama Anda</string>
+    <string name="select_your_city">Di mana lokasi Anda?</string>
+    <string name="city_hint">Masukkan kota Anda</string>
+    <string name="birthday_title">Kapan ulang tahun Anda?</string>
+    <string name="birthday_subtitle">Anda harus berusia minimal 18 tahun untuk menggunakan Camverz.</string>
+    <string name="profile_complete">Semua Siap!</string>
+    <string name="start_connecting">Mulai Obrolan Video</string>
+
+    <!-- Feed Empty State & Retry -->
+    <string name="no_posts_available">Tidak ada postingan yang tersedia saat ini.\nJadilah yang pertama membuatnya!</string>
+    <string name="refresh_feed">Segarkan Feed</string>
+    <string name="failed_to_load_posts">Gagal memuat postingan.\nKetuk untuk mencoba lagi.</string>
+    <string name="network_error_retry">Koneksi terputus atau kesalahan jaringan.\nHarap periksa koneksi Anda.</string>
+
+    <!-- Notifications Section -->
+    <string name="notifications_title">Notifikasi</string>
+    <string name="no_notifications_yet">Belum ada notifikasi</string>
+    <string name="delete_notification_title">Hapus Notifikasi</string>
+    <string name="delete_notification_confirm">Apakah Anda yakin ingin menghapus notifikasi ini?</string>
+    <string name="notif_liked_post">menyukai postingan Anda.</string>
+    <string name="notif_commented_post">mengomentari postingan Anda.</string>
+    <string name="notif_started_following">mulai mengikuti Anda.</string>
+    <string name="notif_visited_profile">mengunjungi profil Anda.</string>
+    <string name="notif_replied_comment">membalas komentar Anda.</string>
+    <string name="notif_sent_request">mengirimkan permintaan kepada Anda.</string>
+    <string name="notif_sent_request_accepted">mengirimkan permintaan (Diterima).</string>
+    <string name="notif_sent_request_rejected">mengirimkan permintaan (Ditolak).</string>
+    <string name="notif_accepted_friend_req">menerima permintaan pertemanan Anda.</string>
+    <string name="notif_sent_notification">mengirimkan notifikasi.</string>
+    <string name="failed_accept_request">Gagal menerima permintaan</string>
+    <string name="failed_reject_request">Gagal menolak permintaan</string>
+    <string name="accept">Terima</string>
+    <string name="reject">Tolak</string>
+    <string name="decline">Tolak</string>
+    <string name="someone">Seseorang</string>
+
+    <!-- Time / Timestamp Suffixes -->
+    <string name="time_days_ago">h lalu</string>
+    <string name="time_hours_ago">j lalu</string>
+    <string name="time_mins_ago">m lalu</string>
+    <string name="time_just_now">baru saja</string>
+
+    <!-- Community Alerts / Notifications -->
+    <string name="community_alerts_title">🔔 Peringatan Komunitas</string>
+    <string name="requests_and_party_broadcasts">Permintaan &amp; Pengumuman Pesta</string>
+    <string name="tab_real_meet">Real Meet</string>
+    <string name="tab_fantasy">Fantasi</string>
+    <string name="tab_party">Pesta</string>
+    <string name="no_notifications_in_category">Tidak ada notifikasi di kategori ini.</string>
+    <string name="notif_realmeet_request">%1$s meminta terhubung di postingan Anda: \"%2$s\"</string>
+    <string name="notif_realmeet_accepted">%1$s menerima permintaan Anda untuk postingan: \"%2$s\"</string>
+    <string name="notif_party_announcement">%1$s mempublikasikan pengumuman pesta: \"%2$s\"</string>
+    <string name="notif_community_generic">%1$s mengirim notifikasi komunitas mengenai: \"%2$s\"</string>
+    <string name="request_accepted_toast">Permintaan Diterima!</string>
+    <string name="request_declined_toast">Permintaan Ditolak</string>
+    <string name="failed_update_status">Gagal memperbarui status</string>
+    <string name="failed_to_decline">Gagal menolak</string>
+    <string name="network_error_loading_alerts">Kesalahan jaringan saat memuat peringatan</string>
+
+    <!-- Messages / Inbox Section -->
+    <string name="messages_title">Pesan</string>
+    <string name="search_messages_people">Cari pesan &amp; orang...</string>
+    <string name="active_now">Aktif Sekarang</string>
+    <string name="no_messages_yet">Belum ada pesan\nMulai mengobrol setelah panggilan video Anda</string>
+    <string name="delete_chat_title">Hapus Obrolan</string>
+    <string name="delete_chat_confirm">Apakah Anda yakin ingin menghapus obrolan ini?</string>
+    <string name="chat_deleted">Obrolan dihapus</string>
+    <string name="failed_delete_chat">Gagal menghapus obrolan</string>
+    <string name="unknown_user">Tidak Dikenal</string>
+
+    <!-- Community Inbox -->
+    <string name="community_inbox_title">💬 Kotak Masuk Komunitas</string>
+    <string name="realmeet_fantasy_connections">Koneksi Real Meet &amp; Fantasi</string>
+    <string name="friends_online">Teman Online</string>
+    <string name="no_active_community_chats">Belum ada obrolan komunitas yang aktif.</string>
+    <string name="accept_incoming_requests_subtext">Terima permintaan masuk untuk memulai percakapan pribadi 1-pada-1.</string>
+    <string name="chats_count_single">1 Obrolan</string>
+    <string name="chats_count_plural">%1$d Obrolan</string>
+    <string name="tap_to_open_chat">Ketuk untuk membuka obrolan komunitas 1-pada-1</string>
+    <string name="video_call_pref">🎥 Panggilan Video</string>
+    <string name="direct_chat_pref">💬 Obrolan Langsung</string>
+
+    <!-- Chat Room / Chat Screen -->
+    <string name="type_a_message">Ketik pesan...</string>
+    <string name="send">Kirim</string>
+    <string name="seen">Dilihat</string>
+    <string name="chat_title">Obrolan</string>
+    <string name="blocked_user_send_msg_error">Anda telah memblokir pengguna ini. Buka blokir untuk mengirim pesan.</string>
+    <string name="blocked_by_other_send_msg_error">Anda tidak dapat mengirim pesan karena pengguna ini telah memblokir Anda.</string>
+    <string name="blocked_user_call_error">Anda telah memblokir pengguna ini. Buka blokir untuk melakukan panggilan.</string>
+    <string name="blocked_by_other_call_error">Anda tidak dapat memanggil pengguna ini karena mereka telah memblokir Anda.</string>
+    <string name="failed_to_send">Gagal mengirim</string>
+    <string name="delete_message_title">Hapus Pesan</string>
+    <string name="delete_message_not_supported">Penghapusan pesan individual belum didukung.</string>
+    <string name="ok">OK</string>
+    <string name="delete">Hapus</string>
+    <string name="back">Kembali</string>
+    <string name="network_error">Kesalahan jaringan</string>
+
+    <!-- Profile Section -->
+    <string name="change">Ubah</string>
+    <string name="verify_identity">Verifikasi Identitas</string>
+    <string name="premium_vip_pass">Pas VIP Premium</string>
+    <string name="loading_plan_status">⏱️ Memuat status paket...</string>
+    <string name="followers">Pengikut</string>
+    <string name="following">Mengikuti</string>
+    <string name="follow">Ikuti</string>
+    <string name="message">Pesan</string>
+    <string name="bio">Bio</string>
+    <string name="write_your_bio_hint">Tulis bio Anda...</string>
+    <string name="primary_preference">Preferensi Utama</string>
+    <string name="posts">Postingan</string>
+    <string name="blocked_users">Pengguna Diblokir</string>
+    <string name="legal_privacy">Privasi &amp; Ketentuan Hukum</string>
+    <string name="unblock_user">Buka Blokir Pengguna</string>
+    <string name="unblock">Buka Blokir</string>
+    <string name="choose_avatar">Pilih Avatar Anda</string>
+    <string name="sex_pref_cannot_be_changed">Preferensi tidak dapat diubah setelah diatur.</string>
+    <string name="verify_identity_before_pref">Verifikasi identitas Anda sebelum mengatur preferensi.</string>
+    <string name="user_not_logged_in">Pengguna belum masuk.</string>
+    <string name="blocked_user_title">Pengguna Diblokir</string>
+    <string name="profile_updated_toast">Profil diperbarui</string>
+    <string name="failed_update_profile">Gagal memperbarui profil</string>
+    <string name="account_deleted_toast">Akun dihapus</string>
+    <string name="failed_delete_account">Gagal menghapus akun</string>
+    <string name="user_blocked_toast">Pengguna diblokir</string>
+    <string name="failed_block_user">Gagal memblokir pengguna</string>
+    <string name="user_unblocked_toast">Pengguna dibuka blokirnya</string>
+    <string name="failed_unblock_user">Gagal membuka blokir pengguna</string>
+    <string name="request_sent_toast">Permintaan Terkirim</string>
+    <string name="failed_send_request">Gagal mengirim permintaan</string>
+    <string name="unfriend_user_title">Hapus Pertemanan</string>
+    <string name="cancel_request_title">Batalkan Permintaan</string>
+    <string name="unfriend_user_confirm">Apakah Anda yakin ingin menghapus pengguna ini dari teman Anda?</string>
+    <string name="cancel_request_confirm">Apakah Anda yakin ingin membatalkan permintaan pertemanan?</string>
+    <string name="action_completed_toast">Tindakan berhasil diselesaikan</string>
+    <string name="failed_action_toast">Gagal menyelesaikan tindakan</string>
+    <string name="unfollowed_toast">Batal mengikuti</string>
+    <string name="following_toast">Mengikuti</string>
+    <string name="failed_unfollow">Gagal berhenti mengikuti</string>
+    <string name="failed_follow">Gagal mengikuti</string>
+    <string name="friends">Teman</string>
+    <string name="requested">Diminta</string>
+    <string name="accept_request">Terima Permintaan</string>
+    <string name="add_friend">Tambah Teman</string>
+    <string name="active_plan_prefix">\nPaket Aktif: %1$s</string>
+    <string name="expires_prefix"> (Kadaluarsa: %1$s)</string>
+    <string name="free_member">Anggota Gratis</string>
+    <string name="remaining_expired">Kadaluarsa</string>
+    <string name="remaining_days_hours">⏱️ Tersisa %1$d hari %2$d jam</string>
+    <string name="remaining_hours_mins">⏱️ Tersisa %1$d jam %2$d menit</string>
+    <string name="remaining_mins">⏱️ Tersisa %1$d menit</string>
+    <string name="block_user_title">Blokir Pengguna</string>
+    <string name="block_user_confirm">Apakah Anda yakin ingin memblokir pengguna ini? Mereka tidak akan dapat mengirim pesan atau melihat postingan Anda.</string>
+    <string name="unblock_user_title">Buka Blokir Pengguna</string>
+    <string name="unblock_user_confirm">Apakah Anda ingin membuka blokir pengguna ini?</string>
+    <string name="change_gender_title">Ubah Jenis Kelamin ke %1$s?</string>
+    <string name="change_gender_confirm">Apakah Anda yakin ingin mengubah jenis kelamin Anda?\n\n⚠️ PERINGATAN: Setelah diubah, pengaturan verifikasi profil Anda akan diperbarui.\n\n%1$s</string>
+    <string name="gender_warning_female">🔒 Profil wanita memerlukan verifikasi wajah langsung untuk mulai mencocokkan.</string>
+    <string name="gender_warning_male">🔓 Profil pria terverifikasi otomatis saat diubah.</string>
+    <string name="gender_updated_toast">Jenis kelamin diperbarui ke %1$s</string>
+    <string name="failed_change_gender">Gagal mengubah jenis kelamin</string>
+    <string name="user_not_found_title">Pengguna Tidak Ditemukan</string>
+    <string name="user_not_found_msg">Profil pengguna ini tidak ada lagi.</string>
+    <string name="failed_load_profile">Gagal memuat profil.</string>
+    <string name="delete_account_confirm">Tindakan ini permanen dan tidak dapat dibatalkan. Semua data Anda akan dihapus.</string>
+    <string name="type_delete_to_confirm">Ketik \'delete\' untuk mengonfirmasi</string>
+    <string name="delete_word">delete</string>
+    <string name="access_restricted">Akses Dibatasi</string>
+    <string name="user_blocked_you">Pengguna ini telah memblokir Anda.</string>
+    <string name="account_deleted_title">Akun Dihapus</string>
+    <string name="account_deleted_msg">Akun pengguna ini tidak tersedia lagi.</string>
+    <string name="failed_load_blocked_users">Gagal memuat pengguna diblokir</string>
+    <string name="unblocked_user_toast">%1$s dibuka blokirnya</string>
+    <string name="delete_post_title">Hapus Postingan</string>
+    <string name="delete_post_confirm">Apakah Anda yakin ingin menghapus postingan ini?</string>
+    <string name="post_deleted_toast">Postingan dihapus</string>
+    <string name="failed_delete_post">Gagal menghapus postingan</string>
+    <string name="login_to_like_posts">Masuk untuk menyukai postingan</string>
+    <string name="gender_male">Laki-laki</string>
+    <string name="gender_female">Perempuan</string>
+    <string name="yes_change">Ya, Ubah</string>
+    <string name="yes">Ya</string>
+    <string name="no">Tidak</string>
+    <string name="return_to_video_calling">Panggilan Video</string>
+    <string name="real_meet_subtitle">Lihat siapa yang ingin bertemu dengan Anda di dunia nyata hari ini</string>
+    <string name="requests_tab">📩 Permintaan</string>
+    <string name="inbox_tab">💬 Kotak Masuk</string>
+    <string name="notifications_tab">🔔 Notifikasi</string>
+    <string name="filter_all_cities">🌐 Semua Kota</string>
+    <string name="filter_in_my_city">🏙️ Di Kota Saya</string>
+    <string name="hint_search_realmeet">Cari kota, lokasi, tujuan...</string>
+    <string name="real_meet_default_bio">Selamat datang di profil Real Meet saya.</string>
+    <string name="my_active_posts_title">Postingan Aktif Real Meet &amp; Fantasi Saya</string>
+    <string name="my_hosted_parties_title">Pesta yang Saya Adakan</string>
+    <string name="my_saved_parties_title">Pesta yang Disimpan</string>
+    <string name="no_posts_found_search">Tidak ada postingan yang cocok dengan pencarian Anda.</string>
+    <string name="dock_meets">Pertemuan</string>
+    <string name="dock_fantasy">Fantasi</string>
+    <string name="dock_party">Pesta</string>
+    <string name="announcements_and_members">Pengumuman &amp; Anggota</string>
+    <string name="accepted_guests">👥 Tamu Diterima</string>
+    <string name="announcements">📢 Pengumuman</string>
+    <string name="hint_type_announcement">Ketik pengumuman untuk tamu...</string>
+    <string name="host_a_real_world_party">🎉 Adakan Pesta Dunia Nyata</string>
+    <string name="host_party_subtitle">Undang orang-orang sekitar ke acara atau pesta rumah Anda</string>
+    <string name="party_vibe_title">SUASANA / JUDUL PESTA</string>
+    <string name="hint_party_purpose">contoh: Pesta Rumah Akhir Pekan, BBQ</string>
+    <string name="venue_location">LOKASI ACARA</string>
+    <string name="hint_party_venue">contoh: Penthouse Rooftop, Pusat Kota</string>
+    <string name="max_capacity">KAPASITAS MAKSIMAL</string>
+    <string name="hint_capacity">contoh: 10</string>
+    <string name="target_audience">TARGET AUDIENS</string>
+    <string name="party_date_time">TANGGAL &amp; WAKTU PESTA</string>
+    <string name="select_time_hint">⏰ Pilih Waktu (Ketuk untuk membuka jam)</string>
+    <string name="clock">🕒 JAM</string>
+    <string name="host_event">Adakan Acara</string>
+    <string name="share_your_fantasy">💭 Bagikan Fantasi Anda</string>
+    <string name="fantasy_subtitle">Ungkapkan keinginan Anda dengan aman dan anonim</string>
+    <string name="relationship_status">STATUS HUBUNGAN</string>
+    <string name="interests_vibes">MINAT / SUASANA</string>
+    <string name="hint_interests">contoh: Melihat bintang, Kopi, Roleplay...</string>
+    <string name="fantasy_text_label">TEKS FANTASI (MAKS. 200 HURUF)</string>
+    <string name="hint_fantasy_description">Tulis rahasia fantasi Anda di sini...</string>
+    <string name="publish_fantasy">Publikasikan Fantasi</string>
+    <string name="vip_party_host_badge">👑 TUAN RUMAH PESTA VIP</string>
+    <string name="join_party_btn">🎉 Bergabung ke Pesta</string>
+    <string name="interests_and_vibe_upper">MINAT &amp; SUASANA</string>
+    <string name="my_fantasy_upper">FANTASI SAYA</string>
+    <string name="secret_connect_btn">✨ Koneksi Rahasia</string>
+    <string name="delete_post_btn">🗑️ Hapus Postingan</string>
+    <string name="requested_btn">📩 Diminta</string>
+    <string name="already_requested_connect">Anda telah meminta untuk terhubung untuk postingan ini.</string>
+    <string name="connect_and_meet_btn">⚡ Terhubung &amp; Bertemu</string>
+    <string name="by_prefix">Oleh</string>
+    <string name="yrs_suffix">Thn</string>
+    <string name="max_guests_format">👥 %1$d Maks • </string>
+    <string name="everyone">SEMUA ORANG</string>
+    <string name="delete_party_btn">🗑️ Hapus Pesta</string>
+    <string name="already_requested_party">Anda telah meminta undangan untuk pesta ini.</string>
+    <string name="delete_fantasy_btn">🗑️ Hapus Fantasi</string>
+    <string name="already_requested_fantasy">Anda telah meminta untuk terhubung untuk fantasi ini.</string>
+    <string name="nearby">Sekitar</string>
+    <string name="for_prefix">Untuk:</string>
+    <string name="real_meet_post">Postingan Real Meet</string>
+    <string name="private_video_call">Panggilan Video Pribadi</string>
+    <string name="prefers_video_call">🎥 Lebih menyukai Panggilan Video Pribadi</string>
+    <string name="prefers_direct_chat">💬 Lebih menyukai Obrolan Langsung</string>
+    <string name="status_accepted_btn">✅ Diterima</string>
+    <string name="status_declined_btn">❌ Ditolak</string>
+    <string name="access_required_title">Akses Diperlukan</string>
+    <string name="access_required_msg">Anda tidak memiliki akses ke filter kota lokal. Ketuk OK untuk mempelajari lebih lanjut.</string>
+    <string name="could_not_open_browser">Tidak dapat membuka peramban</string>
+    <string name="set_city_first">Silakan atur kota Anda di profil Anda terlebih dahulu</string>
+    <string name="party_deleted_toast">Pesta dihapus</string>
+    <string name="fantasy_deleted_toast">Fantasi dihapus</string>
+    <string name="request_status_updated">Status permintaan diperbarui</string>
+    <string name="request_deleted_toast">Permintaan dihapus</string>
+    <string name="own_post_toast">Ini adalah postingan Anda sendiri!</string>
+    <string name="request_already_sent">Permintaan sudah dikirim untuk postingan ini!</string>
+    <string name="request_sent_to_user">📩 Permintaan dikirim ke %1$s!</string>
+    <string name="removed_saved_party">Dihapus dari pesta yang disimpan</string>
+    <string name="saved_to_list">Disimpan ke daftar Anda!</string>
+    <string name="active_post_exists_title">Postingan Aktif Sudah Ada Hari Ini</string>
+    <string name="active_post_exists_msg">Anda sudah memiliki postingan Real Meet aktif hari ini:
+"%1$s" di %2$s.
+
+Anda hanya dapat memposting 1 Real Meet per hari. Apakah Anda ingin mengganti postingan sebelumnya?</string>
+    <string name="active_party_exists_title">Acara Pesta Aktif Sudah Ada Hari Ini</string>
+    <string name="active_party_exists_msg">Anda sudah memiliki acara pesta aktif yang diposting hari ini:
+"%1$s" di %2$s.
+
+Anda hanya dapat memposting 1 acara pesta per hari. Apakah Anda ingin mengganti acara sebelumnya?</string>
+    <string name="select_meeting_time_title">Pilih Waktu Pertemuan</string>
+    <string name="enter_meeting_purpose">Silakan masukkan tujuan pertemuan</string>
+    <string name="enter_location">Silakan masukkan lokasi</string>
+    <string name="write_description">Silakan tulis deskripsi singkat</string>
+    <string name="publishing_post">Mempublikasikan postingan...</string>
+    <string name="post_published_toast">✨ Postingan Real Meet berhasil dipublikasikan!</string>
+    <string name="failed_publish_post">Gagal mempublikasikan postingan. Coba lagi.</string>
+    <string name="select_party_time_title">Pilih Waktu Pesta</string>
+    <string name="fill_party_details">Silakan isi semua detail pesta</string>
+    <string name="publishing_party">Mempublikasikan acara pesta...</string>
+    <string name="party_published_toast">🎉 Acara pesta berhasil dipublikasikan!</string>
+    <string name="failed_publish_party">Gagal mempublikasikan acara pesta.</string>
+    <string name="enter_fantasy_text">Silakan masukkan teks fantasi Anda</string>
+    <string name="sharing_fantasy">Membagikan fantasi...</string>
+    <string name="fantasy_shared_toast">💭 Fantasi berhasil dibagikan!</string>
+    <string name="failed_share_fantasy">Gagal membagikan fantasi.</string>
+    <string name="ad_skipped_toast">Iklan dilewati. Postingan tidak dipublikasikan.</string>
+    <string name="failed_load_members">Gagal memuat anggota</string>
+    <string name="failed_load_announcements">Gagal memuat pengumuman</string>
+    <string name="announcement_posted_toast">Pengumuman berhasil diposting!</string>
+    <string name="failed_post_announcement">Gagal memposting pengumuman</string>
+    <string name="post_owner">pemilik postingan</string>
+    <string name="community_post">Postingan Komunitas</string>
+    <string name="nearby_venue">Lokasi Terdekat</string>
+    <string name="scheduled">Dijadwalkan</string>
+    <string name="no_additional_details">Tidak ada detail tambahan.</string>
+    <string name="preferred_audience_prefix">🎯 Audiens Favorit: </string>
+    <string name="replace_post_btn">Ganti Postingan</string>
+    <string name="replace_event_btn">Ganti Acara</string>
+    <string name="community_host">Tuan Rumah Komunitas</string>
+    <string name="community_member">Anggota Komunitas</string>
+    <string name="community_meet">Pertemuan Komunitas</string>
+    <string name="post_real_meet_dialog_title">📍 Publikasikan Real Meet</string>
+    <string name="post_real_meet_dialog_subtitle">Temukan orang-orang terdekat yang ingin bertemu hari ini</string>
+    <string name="purpose_of_meet_label">TUJUAN PERTEMUAN</string>
+    <string name="hint_realmeet_purpose">contoh: Kopi &amp; Obrolan Santai, Jalan-jalan, Bioskop...</string>
+    <string name="location_landmark_label">LOKASI / PATOKAN</string>
+    <string name="hint_realmeet_location">contoh: Kafe dekat pusat kota</string>
+    <string name="meeting_time_label">WAKTU PERTEMUAN</string>
+    <string name="description_label">DESKRIPSI (MAKS. 200 HURUF)</string>
+    <string name="hint_realmeet_description">Jelaskan mengapa Anda ingin bertemu...</string>
+    <string name="publish_post_btn">Publikasikan</string>
+    <string name="full_details_description_upper">DETAIL LENGKAP &amp; DESKRIPSI</string>
+    <string name="send_request_btn">⚡ Kirim Permintaan</string>
+    <string name="btn_video_call">🎥 Panggilan Video</string>
+    <string name="btn_chat_now">💬 Chat Sekarang</string>
+    <string name="select_date_title">Pilih Tanggal Pertemuan</string>
+    <string name="select_date_time_hint">📅 Pilih Tanggal &amp; Waktu</string>
+    <string name="select_party_date_time_hint">📅 Pilih Tanggal &amp; Waktu Pesta</string>
+    <string name="select_future_date_time">Silakan pilih tanggal &amp; waktu di masa mendatang</string>
+    <string name="target_audience_everyone">Semua Orang (Everyone)</string>
+    <string name="target_audience_female">Khusus Wanita (Female Only)</string>
+    <string name="target_audience_male">Khusus Pria (Male Only)</string>
+    <string name="status_single">Lajang (Single)</string>
+    <string name="status_married">Menikah (Married)</string>
+    <string name="status_divorced">Bercerai (Divorced)</string>
+    <string name="status_widowed">Duda/Janda (Widowed)</string>
+    <string name="send_meet_request_title">📩 Kirim Permintaan Pertemuan</string>
+    <string name="connecting_with_user">Terhubung dengan %1$s</string>
+    <string name="quick_icebreakers_upper">PESAN CEPAT</string>
+    <string name="icebreaker_coffee">☕ Halo! Saya ingin bertemu untuk minum kopi bersama</string>
+    <string name="icebreaker_count_me_in">🎉 Hitung saya masuk! Mari terhubung!</string>
+    <string name="icebreaker_talk_privately">🔒 Menyukai postingan Anda, mari bicara secara pribadi!</string>
+    <string name="your_message_note_upper">PESAN / CATATAN ANDA</string>
+    <string name="hint_request_message">Ketik pesan atau kalimat pembuka Anda...</string>
+    <string name="preferred_contact_mode_upper">MODE KONTAK PREFERENSI</string>
+    <string name="pref_video_call">🎥 Panggilan Video</string>
+    <string name="pref_direct_chat">💬 Chat Langsung</string>
+    <string name="filter_in_city_param">🏙️ Di %1$s</string>
+    <string name="no_posts_in_city">Belum ada postingan pertemuan di %1$s.</string>
+    <string name="no_parties_matching">Tidak ada pesta yang sesuai dengan pencarian.</string>
+    <string name="no_fantasies_matching">Tidak ada postingan fantasi yang sesuai dengan pencarian.</string>
+    <string name="post_expired">Postingan ini telah kedaluwarsa.</string>
+    <string name="default_request_msg">Halo! Saya tertarik dengan postingan pertemuan Anda.</string>
+</resources>

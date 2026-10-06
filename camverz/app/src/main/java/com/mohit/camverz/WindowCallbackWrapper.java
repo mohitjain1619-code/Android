@@ -37,8 +37,10 @@ public class WindowCallbackWrapper implements Window.Callback {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            Log.d(TAG, "🚫 KEYCODE_BACK blocked completely in WindowCallbackWrapper");
-            return true; // Consume event completely
+            if (BaseActivity.isAdShowing) {
+                Log.d(TAG, "🚫 KEYCODE_BACK blocked in WindowCallbackWrapper while ad is showing");
+                return true; // Consume event completely only while ad is showing
+            }
         }
         return delegate != null && delegate.dispatchKeyEvent(event);
     }

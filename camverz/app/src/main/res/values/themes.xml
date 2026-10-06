@@ -113,22 +113,31 @@
     </style>
 
     <!-- Custom Dark Mode DatePicker / TimePicker Theme -->
-    <style name="CustomDatePickerTheme" parent="Theme.MaterialComponents.DayNight.Dialog">
-        <item name="colorPrimary">@color/accent_cyan</item>
-        <item name="colorOnPrimary">@color/bg_dark</item>
-        <item name="colorAccent">@color/accent_cyan</item>
+    <style name="CustomDatePickerTheme" parent="Theme.MaterialComponents.Dialog.Alert">
+        <item name="android:windowBackground">@color/surface_dark</item>
         <item name="android:colorBackground">@color/surface_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
-        <item name="android:textColorPrimary">@color/text_white</item>
-        <item name="android:textColorSecondary">@color/text_secondary</item>
-        <item name="android:textColorPrimaryInverse">@color/bg_dark</item>
+        <item name="android:background">@color/surface_dark</item>
+
+        <!-- Primary & Accent Colors -->
+        <item name="colorPrimary">@color/accent_cyan</item>
+        <item name="colorOnPrimary">#000000</item>
+        <item name="colorAccent">@color/accent_cyan</item>
+        <item name="colorSecondary">@color/accent_cyan</item>
+
+        <!-- Text Colors -->
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">@color/accent_cyan</item>
+        <item name="android:textColorTertiary">#8E8E93</item>
+        <item name="android:textColorPrimaryInverse">#000000</item>
 
         <!-- TimePicker & DatePicker Header & Numbers -->
         <item name="android:headerBackground">@color/surface_elevated</item>
-        <item name="android:numbersTextColor">@color/text_white</item>
+        <item name="android:numbersTextColor">#FFFFFF</item>
         <item name="android:numbersBackgroundColor">@color/surface_dark</item>
-        <item name="android:numbersInnerTextColor">@color/text_white</item>
+        <item name="android:numbersInnerTextColor">#FFFFFF</item>
         <item name="android:numbersSelectorColor">@color/accent_cyan</item>
+        <item name="android:yearListSelectorColor">@color/accent_cyan</item>
 
         <!-- Buttons -->
         <item name="buttonBarPositiveButtonStyle">@style/CustomDatePickerButton</item>
@@ -137,5 +146,7 @@
 
     <style name="CustomDatePickerButton" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">@color/accent_cyan</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 </resources>

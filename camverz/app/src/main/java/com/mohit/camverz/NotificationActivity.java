@@ -138,16 +138,17 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
                                 notif.setPostId(obj.has("postId") && !obj.get("postId").isJsonNull() ? obj.get("postId").getAsString() : "");
                                 notif.setPostText(obj.has("postText") && !obj.get("postText").isJsonNull() ? obj.get("postText").getAsString() : "");
                                 
+                                String someoneStr = getString(R.string.someone);
                                 // Parse nested triggeringUser object
                                 if (obj.has("triggeringUser") && !obj.get("triggeringUser").isJsonNull()) {
                                     JsonObject trigUser = obj.getAsJsonObject("triggeringUser");
                                     notif.setTriggeringUserId(trigUser.has("id") && !trigUser.get("id").isJsonNull() ? trigUser.get("id").getAsString() : "");
-                                    notif.setTriggeringUserName(trigUser.has("name") && !trigUser.get("name").isJsonNull() ? trigUser.get("name").getAsString() : "Someone");
+                                    notif.setTriggeringUserName(trigUser.has("name") && !trigUser.get("name").isJsonNull() ? trigUser.get("name").getAsString() : someoneStr);
                                     notif.setTriggeringUserAvatar(trigUser.has("avatar") && !trigUser.get("avatar").isJsonNull() ? trigUser.get("avatar").getAsString() : "");
                                     notif.setTriggeringUserPhotoUrl(trigUser.has("photoUrl") && !trigUser.get("photoUrl").isJsonNull() ? trigUser.get("photoUrl").getAsString() : "");
                                 } else {
                                     notif.setTriggeringUserId("");
-                                    notif.setTriggeringUserName("Someone");
+                                    notif.setTriggeringUserName(someoneStr);
                                     notif.setTriggeringUserAvatar("");
                                     notif.setTriggeringUserPhotoUrl("");
                                 }
@@ -206,7 +207,7 @@ public class NotificationActivity extends BaseActivity implements NotificationAd
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 Log.e(TAG, "Error fetching notifications", t);
-                Toast.makeText(NotificationActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(NotificationActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

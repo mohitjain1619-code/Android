@@ -275,7 +275,7 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         if (replyIndicatorLayout != null) {
             replyIndicatorLayout.setVisibility(android.view.View.GONE);
         }
-        commentEditText.setHint("Write a comment...");
+        commentEditText.setHint(R.string.write_a_comment);
     }
 
     @Override
@@ -293,13 +293,13 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         }
         
         if (replyIndicatorText != null) {
-            replyIndicatorText.setText("Replying to " + username);
+            replyIndicatorText.setText(getString(R.string.replying_to, username));
         }
         if (replyIndicatorLayout != null) {
             replyIndicatorLayout.setVisibility(android.view.View.VISIBLE);
         }
         
-        commentEditText.setHint("Write a reply...");
+        commentEditText.setHint(R.string.write_a_comment);
         commentEditText.requestFocus();
     }
 

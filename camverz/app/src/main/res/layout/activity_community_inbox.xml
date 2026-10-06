@@ -38,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.02"
-                android:text="💬 Community Inbox"
+                android:text="@string/community_inbox_title"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -46,7 +46,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Real Meet &amp; Fantasy Connections"
+                android:text="@string/realmeet_fantasy_connections"
                 android:textColor="#8E8E93"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -91,7 +91,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="Friends Online"
+                android:text="@string/friends_online"
                 android:textColor="#00FFFF"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -149,7 +149,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="No active community chats yet."
+            android:text="@string/no_active_community_chats"
             android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:textStyle="bold" />
@@ -160,7 +160,7 @@
             android:layout_marginTop="4dp"
             android:gravity="center"
             android:paddingHorizontal="40dp"
-            android:text="Accept incoming requests to start 1-on-1 private conversations."
+            android:text="@string/accept_incoming_requests_subtext"
             android:textColor="#8E8E93"
             android:textSize="12sp" />
     </LinearLayout>

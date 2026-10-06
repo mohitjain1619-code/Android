@@ -60,7 +60,7 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
         boolean isVerified = isMale || post.isVerified();
 
         if (isSavedList) {
-            holder.tvHostNameAge.setText("By " + post.getHostName() + ", " + post.getHostAge() + " Yrs");
+            holder.tvHostNameAge.setText(context.getString(R.string.by_prefix) + " " + post.getHostName() + ", " + post.getHostAge() + " " + context.getString(R.string.yrs_suffix));
             if (holder.tvHostMetadata != null) {
                 holder.tvHostMetadata.setVisibility(View.GONE);
             }
@@ -88,7 +88,7 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
             SpannableStringBuilder capacityBuilder = new SpannableStringBuilder();
             capacityBuilder.append("👥 " + post.getCapacity() + " Max • ");
             int start = capacityBuilder.length();
-            String target = post.getTargetGender() != null ? post.getTargetGender().toUpperCase() : "EVERYONE";
+            String target = post.getTargetGender() != null ? post.getTargetGender().toUpperCase() : context.getString(R.string.everyone);
             capacityBuilder.append(target);
             if (target.contains("FEMALE")) {
                 capacityBuilder.setSpan(new ForegroundColorSpan(Color.parseColor("#FF2D55")), start, capacityBuilder.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -133,7 +133,7 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
             }
         } else {
             if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getHostUserId())) {
-                holder.btnJoinParty.setText("🗑️ Delete Party");
+                holder.btnJoinParty.setText(context.getString(R.string.delete_party_btn));
                 holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_chip);
                 holder.btnJoinParty.setTextColor(Color.WHITE);
                 holder.btnJoinParty.setOnClickListener(v -> {
@@ -153,14 +153,14 @@ public class PartyAdapter extends RecyclerView.Adapter<PartyAdapter.ViewHolder> 
                 });
 
                 if (hasRequested) {
-                    holder.btnJoinParty.setText("📩 Requested");
+                    holder.btnJoinParty.setText(context.getString(R.string.requested_btn));
                     holder.btnJoinParty.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
                     holder.btnJoinParty.setTextColor(Color.parseColor("#8E8E93"));
                     holder.btnJoinParty.setOnClickListener(v -> {
-                        android.widget.Toast.makeText(context, "You have already requested an invite for this party.", android.widget.Toast.LENGTH_SHORT).show();
+                        android.widget.Toast.makeText(context, context.getString(R.string.already_requested_party), android.widget.Toast.LENGTH_SHORT).show();
                     });
                 } else {
-                    holder.btnJoinParty.setText("🎉 Join Party");
+                    holder.btnJoinParty.setText(context.getString(R.string.join_party_btn));
                     holder.btnJoinParty.setBackgroundResource(R.drawable.bg_neon_emerald_button);
                     holder.btnJoinParty.setTextColor(Color.BLACK);
                     holder.btnJoinParty.setOnClickListener(v -> {

@@ -20,7 +20,7 @@
         android:id="@+id/titleBlocked"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Access Restricted"
+        android:text="@string/access_restricted"
         android:textColor="@color/text_primary"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -30,7 +30,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="This user has blocked you."
+        android:text="@string/user_blocked_you"
         android:textColor="@color/text_secondary"
         android:textSize="14sp"
         android:gravity="center"/>
@@ -41,7 +41,7 @@
         android:layout_height="48dp"
         android:layout_marginTop="24dp"
         android:background="@drawable/bg_btn_primary_gradient"
-        android:text="OK"
+        android:text="@string/ok"
         android:textColor="@color/text_white"
         android:textSize="15sp"
         android:textStyle="bold"

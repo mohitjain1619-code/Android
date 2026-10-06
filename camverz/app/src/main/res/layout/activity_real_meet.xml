@@ -46,7 +46,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
-                    android:text="Video Calling"
+                    android:text="@string/return_to_video_calling"
                     android:textColor="#FFFFFF"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -66,7 +66,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.1"
-                    android:text="REAL MEET"
+                    android:text="@string/real_meet"
                     android:textColor="#FFFFFF"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -76,7 +76,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.02"
-                    android:text="See who wants to meet you in real life today"
+                    android:text="@string/real_meet_subtitle"
                     android:textColor="#A0A0AA"
                     android:textSize="9.5sp"
                     android:textStyle="italic"
@@ -110,7 +110,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📩 Requests"
+                    android:text="@string/requests_tab"
                     android:textColor="#FFFFFF"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -134,7 +134,7 @@
                     android:id="@+id/tvHeaderInboxText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💬 Inbox"
+                    android:text="@string/inbox_tab"
                     android:textColor="#FFFFFF"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -157,7 +157,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🔔 Notifications"
+                    android:text="@string/notifications_tab"
                     android:textColor="#FFFFFF"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -184,7 +184,7 @@
                 android:gravity="center"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="8dp"
-                android:text="🌐 All Cities"
+                android:text="@string/filter_all_cities"
                 android:textColor="#000000"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -201,7 +201,7 @@
                 android:gravity="center"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="8dp"
-                android:text="🏙️ In My City"
+                android:text="@string/filter_in_my_city"
                 android:textColor="#8E8E93"
                 android:textSize="12sp"
                 android:textStyle="bold" />
@@ -233,7 +233,7 @@
                 android:layout_marginStart="10dp"
                 android:layout_toEndOf="@id/ivSearchIcon"
                 android:background="@null"
-                android:hint="Search city, venue, purpose..."
+                android:hint="@string/hint_search_realmeet"
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:maxLines="1"
@@ -249,14 +249,6 @@
         android:layout_height="1dp"
         android:layout_below="@id/top_realmeet_bar"
         android:background="#1A1A24" />
-
-    <!-- City Filter Container placeholder for programmatic visibility toggle -->
-    <LinearLayout
-        android:id="@+id/cityFilterContainer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_below="@id/headerDivider"
-        android:visibility="gone" />
 
     <!-- Main Content RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
@@ -359,7 +351,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Followers"
+                            android:text="@string/followers"
                             android:textColor="#A0A0AA"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -389,7 +381,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Following"
+                            android:text="@string/following"
                             android:textColor="#A0A0AA"
                             android:textSize="10sp" />
                     </LinearLayout>
@@ -401,7 +393,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:gravity="center"
-                    android:text="Welcome to my Real Meet profile."
+                    android:text="@string/real_meet_default_bio"
                     android:textColor="#D1D1D6"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -412,7 +404,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="12dp"
                 android:letterSpacing="0.05"
-                android:text="My Active Real Meet &amp; Fantasy Posts"
+                android:text="@string/my_active_posts_title"
                 android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -430,7 +422,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="12dp"
                 android:letterSpacing="0.05"
-                android:text="My Hosted Parties"
+                android:text="@string/my_hosted_parties_title"
                 android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -448,7 +440,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="12dp"
                 android:letterSpacing="0.05"
-                android:text="My Saved Parties"
+                android:text="@string/my_saved_parties_title"
                 android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -482,7 +474,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="No posts found matching your search."
+            android:text="@string/no_posts_found_search"
             android:textColor="#8E8E93"
             android:textSize="13sp" />
     </LinearLayout>
@@ -528,7 +520,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="Meets"
+                    android:text="@string/dock_meets"
                     android:textColor="#FFFFFF"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -557,7 +549,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="Fantasy"
+                    android:text="@string/dock_fantasy"
                     android:textColor="#8E8E93"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -591,7 +583,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="Party"
+                    android:text="@string/dock_party"
                     android:textColor="#8E8E93"
                     android:textSize="10sp"
                     android:textStyle="bold" />
@@ -620,7 +612,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
-                    android:text="Profile"
+                    android:text="@string/profile"
                     android:textColor="#8E8E93"
                     android:textSize="10sp"
                     android:textStyle="bold" />

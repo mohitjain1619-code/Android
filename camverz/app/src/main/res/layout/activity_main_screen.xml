@@ -45,7 +45,7 @@
                         android:id="@+id/tvGreeting"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Good Evening 👋"
+                        android:text="@string/greeting_evening"
                         android:textColor="#E2E8F0"
                         android:textSize="14sp"
                         android:textStyle="bold" />
@@ -83,7 +83,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:text="Live Online"
+                        android:text="@string/live_online"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -101,14 +101,12 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:scrollbars="none" />
-            </RelativeLayout>
-
-            <!-- Quick Actions Bar -->
+            </RelativeLayout>            <!-- Quick Actions Bar -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
-                android:text="Quick Actions"
+                android:text="@string/quick_actions"
                 android:textColor="#FFFFFF"
                 android:textSize="17sp"
                 android:textStyle="bold" />
@@ -142,7 +140,7 @@
                          <TextView
                              android:layout_width="wrap_content"
                              android:layout_height="wrap_content"
-                             android:text="💬 Real Meet, Real Party, Fantasy "
+                             android:text="@string/community_hub_title"
                              android:textColor="#FFFFFF"
                              android:textSize="14sp"
                              android:textStyle="bold" />
@@ -153,11 +151,11 @@
                              android:background="@drawable/bg_btn_primary_gradient"
                              android:paddingHorizontal="8dp"
                              android:paddingVertical="3dp"
-                             android:text="HOT 🔥"
+                             android:text="@string/hot_chip"
                              android:textColor="#FFFFFF"
                              android:textSize="10sp"
                              android:textStyle="bold" />
-                     </LinearLayout>
+                      </LinearLayout>
 
                     <!-- Friends Quick Chip -->
                     <LinearLayout
@@ -176,7 +174,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="👥 Friends &amp; Chats"
+                            android:text="@string/friends_chats_chip"
                             android:textColor="#FFFFFF"
                             android:textSize="14sp"
                             android:textStyle="bold" />
@@ -186,20 +184,20 @@
 
             <!-- Interests Section Header -->
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Choose Your Interest"
+                android:text="@string/choose_your_interest"
                 android:textColor="#FFFFFF"
-                android:textSize="22sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Select a category to start matching"
+                android:text="@string/select_category_matching"
                 android:textColor="#CBD5E1"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
             <!-- Straight Card -->
             <LinearLayout
@@ -233,7 +231,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Straight"
+                        android:text="@string/straight"
                         android:textColor="#FFFFFF"
                         android:textSize="20sp"
                         android:textStyle="bold" />
@@ -242,7 +240,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Meet people looking for meaningful conversations"
+                        android:text="@string/straight_desc"
                         android:textColor="#E2E8F0"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -287,7 +285,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Gay"
+                        android:text="@string/gay"
                         android:textColor="#FFFFFF"
                         android:textSize="20sp"
                         android:textStyle="bold" />
@@ -296,7 +294,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Connect with verified male users"
+                        android:text="@string/gay_desc"
                         android:textColor="#E2E8F0"
                         android:textSize="13sp" />
                 </LinearLayout>
@@ -341,7 +339,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Lesbian"
+                        android:text="@string/lesbian"
                         android:textColor="#FFFFFF"
                         android:textSize="20sp"
                         android:textStyle="bold" />
@@ -350,7 +348,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Meet verified female users"
+                        android:text="@string/lesbian_desc"
                         android:textColor="#E2E8F0"
                         android:textSize="13sp" />
                 </LinearLayout>

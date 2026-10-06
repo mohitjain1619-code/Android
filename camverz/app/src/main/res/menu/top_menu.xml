@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/action_share_app"
-        android:title="Share App 🚀" />
+        android:title="@string/menu_share_app" />
     <item
         android:id="@+id/action_rate_app"
-        android:title="Rate App ⭐" />
+        android:title="@string/menu_rate_app" />
     <item
         android:id="@+id/action_mediation_debugger"
         android:title="Mediation Debugger" />
@@ -13,6 +13,9 @@
         android:id="@+id/action_ad_testing"
         android:title="Ad Testing Dashboard" />
     <item
+        android:id="@+id/action_change_language"
+        android:title="@string/change_language" />
+    <item
         android:id="@+id/action_logout"
-        android:title="Logout" />
+        android:title="@string/logout" />
 </menu>

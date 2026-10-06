@@ -66,6 +66,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Language Selection Activity -->
+        <activity
+            android:name=".LanguageSelectionActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustPan" />
+
         <!-- Gender Selection Activity -->
         <activity
             android:name=".GenderSelectionActivity"

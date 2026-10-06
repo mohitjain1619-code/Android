@@ -46,7 +46,7 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_gravity="center"
-                            android:contentDescription="Back"
+                            android:contentDescription="@string/back"
                             android:src="@drawable/ic_arrow_back"
                             app:tint="#FFFFFF" />
                     </FrameLayout>
@@ -105,7 +105,7 @@
                                 android:id="@+id/verification_badge"
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
-                                android:contentDescription="Verified Badge"
+                                android:contentDescription="@string/verify_identity"
                                 android:src="@drawable/ic_verified_badge"
                                 android:visibility="gone" />
                         </FrameLayout>
@@ -151,7 +151,7 @@
                                 android:background="@drawable/bg_btn_primary_gradient"
                                 android:paddingHorizontal="8dp"
                                 android:paddingVertical="4dp"
-                                android:text="Change"
+                                android:text="@string/change"
                                 android:textColor="#FFFFFF"
                                 android:textSize="10sp"
                                 android:textStyle="bold"
@@ -194,7 +194,7 @@
                         android:layout_marginTop="16dp"
                         android:background="@drawable/bg_btn_primary_gradient"
                         android:paddingHorizontal="20dp"
-                        android:text="Verify Identity"
+                        android:text="@string/verify_identity"
                         android:textAllCaps="false"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp"
@@ -233,7 +233,7 @@
                                 android:textColor="#FFFFFF"
                                 android:textSize="15sp"
                                 android:textStyle="bold"
-                                android:text="Premium VIP Pass" />
+                                android:text="@string/premium_vip_pass" />
                         </LinearLayout>
 
                         <TextView
@@ -243,7 +243,7 @@
                             android:layout_marginTop="8dp"
                             android:textColor="#E2E8F0"
                             android:textSize="12sp"
-                            android:text="⏱️ Loading plan status..." />
+                            android:text="@string/loading_plan_status" />
                     </LinearLayout>
 
                     <!-- Stats Section Pills -->
@@ -277,7 +277,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Followers"
+                                android:text="@string/followers"
                                 android:textColor="#E2E8F0"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -307,7 +307,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
-                                android:text="Following"
+                                android:text="@string/following"
                                 android:textColor="#E2E8F0"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -330,7 +330,7 @@
                         android:layout_height="48dp"
                         android:layout_weight="1"
                         android:background="@drawable/bg_btn_primary_gradient"
-                        android:text="Follow"
+                        android:text="@string/follow"
                         android:textAllCaps="false"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
@@ -347,7 +347,7 @@
                         android:drawableStart="@drawable/ic_message"
                         android:drawableTint="#00FFFF"
                         android:paddingHorizontal="16dp"
-                        android:text="Message"
+                        android:text="@string/message"
                         android:textAllCaps="false"
                         android:textColor="#FFFFFF"
                         android:textSize="14sp"
@@ -374,7 +374,7 @@
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
                             android:layout_centerVertical="true"
-                            android:text="Bio"
+                            android:text="@string/bio"
                             android:textColor="#FFFFFF"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -398,6 +398,8 @@
                         android:layout_marginTop="10dp"
                         android:background="@android:color/transparent"
                         android:inputType="textMultiLine"
+                        android:hint="@string/write_your_bio_hint"
+                        android:textColorHint="#94A3B8"
                         android:textColor="#E2E8F0"
                         android:textSize="14sp"
                         tools:text="Write your bio..." />
@@ -427,7 +429,7 @@
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
                             android:layout_centerVertical="true"
-                            android:text="Primary Preference"
+                            android:text="@string/primary_preference"
                             android:textColor="#FFFFFF"
                             android:textSize="16sp"
                             android:textStyle="bold" />
@@ -458,7 +460,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="24dp"
                     android:layout_marginTop="24dp"
-                    android:text="Posts"
+                    android:text="@string/posts"
                     android:textColor="#FFFFFF"
                     android:textSize="20sp"
                     android:textStyle="bold" />

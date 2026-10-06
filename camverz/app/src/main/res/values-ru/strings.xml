@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">camverz</string>
+    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+
+    <!-- Language Selection -->
+    <string name="choose_language_title">Выберите ваш язык</string>
+    <string name="choose_language_subtitle">Выберите предпочитаемый язык для продолжения</string>
+    <string name="search_language_hint">Поиск языка…</string>
+    <string name="change_language">Сменить язык</string>
+
+    <!-- Call Activity -->
+    <string name="mute_audio">Выключить звук</string>
+    <string name="switch_camera">Переключить камеру</string>
+    <string name="end_call">Завершить вызов</string>
+    <string name="connecting">Соединение…</string>
+    <string name="calling">Вызов…</string>
+    <string name="ringing">Звонок…</string>
+    <string name="call_declined">Вызов отклонен</string>
+    <string name="call_ended">Звонок завершен</string>
+    <string name="speaker">Динамик</string>
+    <string name="mute">Без звука</string>
+
+    <!-- Gender Selection & Onboarding -->
+    <string name="select_your_gender">Выберите ваш пол</string>
+    <string name="gender_help_text">Это помогает нам связывать вас с нужными людьми</string>
+    <string name="male">👨 Мужской</string>
+    <string name="female">👩 Женский</string>
+    <string name="continue_arrow">Продолжить →</string>
+    <string name="step_1_of_4">Шаг 1 из 4</string>
+    <string name="step_2_of_4">Шаг 2 из 4</string>
+    <string name="step_3_of_4">Шаг 3 из 4</string>
+    <string name="step_4_of_4">Шаг 4 из 4</string>
+    <string name="whats_your_gender">Какой у вас пол?</string>
+    <string name="gender_help_subtitle">Это помогает подбирать подходящих собеседников в вашем сообществе.</string>
+    <string name="male_title">Мужской</string>
+    <string name="female_title">Женский</string>
+    <string name="discover_matches">Найти совпадения</string>
+    <string name="continue_text">Продолжить</string>
+    <string name="whats_your_name">Как вас зовут?</string>
+    <string name="name_subtext">Так вас будут видеть другие</string>
+    <string name="enter_name_hint">Введите ваше имя</string>
+    <string name="where_located">Где вы находитесь?</string>
+    <string name="city_subtext">Помогает находить людей рядом в вашем городе.</string>
+    <string name="detecting_location">Определение местоположения...</string>
+    <string name="please_wait">Пожалуйста, подождите</string>
+    <string name="when_birthday">Когда вы родились?</string>
+    <string name="birthday_subtext">Для использования Camverz вам должно быть не менее 18 лет.</string>
+    <string name="age_restricted">🛡️ Ограничение 18+</string>
+    <string name="date_format_hint">ДД / ММ / ГГГГ</string>
+    <string name="youre_all_set">Всё готово!</string>
+    <string name="finish_subtext">Проверьте профиль и приготовьтесь знакомиться с реальными людьми.</string>
+    <string name="profile_summary_title">ОБЗОР ВАШЕГО ПРОФИЛЯ</string>
+    <string name="display_name_hint">Отображаемое имя</string>
+    <string name="summary_gender">Пол: %1$s</string>
+    <string name="summary_city">Город: %1$s</string>
+    <string name="summary_birthday">День рождения: %1$s</string>
+    <string name="permissions_privacy_title">РАЗРЕШЕНИЯ И КОНФИДЕНЦИАЛЬНОСТЬ</string>
+    <string name="perm_camera_mic">📷 Камера и микрофон: Для живых видеозвонков 1 на 1</string>
+    <string name="perm_location">📍 Геолокация: Для поиска людей рядом в вашем городе и стране</string>
+    <string name="perm_zero_recording">🔒 Запись отключена: Звонки WebRTC зашифрованы и приватны</string>
+    <string name="start_video_chatting">Начать видеочат</string>
+
+    <!-- Main Screen -->
+    <string name="welcome_user">Добро пожаловать</string>
+    <string name="verified">✓ Верифицирован</string>
+    <string name="not_verified">⚠ Не верифицирован</string>
+    <string name="choose_interest">Выберите интересы</string>
+    <string name="verified_users_text">Общайтесь с проверенными пользователями со всего мира</string>
+    <string name="complete_verification">Пройти верификацию</string>
+    <string name="logout">Выйти</string>
+
+    <!-- Categories -->
+    <string name="gay">Гей</string>
+    <string name="gay_emoji">👨</string>
+    <string name="gay_flag">🏳️‍🌈</string>
+    <string name="lesbian">Лесби</string>
+    <string name="lesbian_emoji">👩</string>
+    <string name="lesbian_heart">💖</string>
+    <string name="straight">Гетеро</string>
+    <string name="straight_couple">👫</string>
+    <string name="straight_fire">🔥</string>
+
+    <!-- Login & Welcome Screen -->
+    <string name="welcome_to_camverz">Добро пожаловать в Camverz</string>
+    <string name="sign_in_google">Войти через Google</string>
+    <string name="headline_meet_real_people">Знакомьтесь с реальными людьми, а не только с профилями</string>
+    <string name="subtitle_video_chat">Видеочат, новые друзья, поиск людей рядом и реальные знакомства.</string>
+    <string name="chip_verified_users">✓ Проверенные профили</string>
+    <string name="chip_hd_video">🎥 HD Видеозвонки</string>
+    <string name="chip_nearby_discovery">📍 Поиск рядом</string>
+    <string name="chip_safe_community">🛡️ Безопасное сообщество</string>
+    <string name="chip_instant_video">⚡ Быстрый видеочат</string>
+    <string name="chip_private_safe">🔒 100% Приватно</string>
+    <string name="chip_real_meet">🔥 Real Meet</string>
+    <string name="login_continue_journey">Продолжите знакомства в Camverz</string>
+    <string name="login_join_thousands">Присоединяйтесь к тысячам проверенных пользователей ежедневно.</string>
+    <string name="privacy_no_post">🔒 Мы ничего не публикуем без вашего разрешения.</string>
+    <string name="trust_encrypted">⚡ Зашифровано</string>
+    <string name="trust_secure">🛡️ Безопасно</string>
+    <string name="trust_verified_community">✓ Проверенное сообщество</string>
+    <string name="terms_privacy_notice">Продолжая, вы соглашаетесь с Условиями и Политикой конфиденциальности</string>
+    <string name="terms_privacy_notice_full">Продолжая, вы соглашаетесь с Условиями использования, Политикой конфиденциальности и Защиты детей.</string>
+    <string name="terms_of_service">Условия использования</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="tester_login">Вход для тестировщиков</string>
+    <string name="signing_in_wait">Вход в систему... Пожалуйста, подождите</string>
+
+    <!-- Connecting Activity -->
+    <string name="finding_match">Поиск собеседника…</string>
+    <string name="wait_connect_message">Пожалуйста, подождите, мы соединяем вас…</string>
+    <string name="cancel">Отмена</string>
+
+    <!-- Verification Activity -->
+    <string name="verification">Верификация</string>
+    <string name="selfie">Селфи</string>
+    <string name="take_selfie">Сделать селфи</string>
+    <string name="id_document">Удостоверение личности</string>
+    <string name="upload_id">Загрузить документ</string>
+    <string name="submit_verification">Отправить на проверку</string>
+
+    <!-- Status Messages -->
+    <string name="matched_starting_call">Собеседник найден! Начинаем звонок…</string>
+    <string name="finding_match_status">Поиск совпадений…</string>
+    <string name="error_loading_profile">Ошибка загрузки профиля</string>
+
+    <!-- Navigation & Community -->
+    <string name="explore">Обзор</string>
+    <string name="messages">Сообщения</string>
+    <string name="profile">Профиль</string>
+    <string name="feed">Лента</string>
+    <string name="real_meet">Real Meet</string>
+    <string name="create_post">Создать публикацию</string>
+    <string name="block_user">Заблокировать</string>
+    <string name="report_user">Пожаловаться</string>
+    <string name="delete_account">Удалить аккаунт</string>
+
+    <!-- Home Screen Additional -->
+    <string name="greeting_evening">Добрый вечер 👋</string>
+    <string name="greeting_morning">Доброе утро ☀️</string>
+    <string name="greeting_afternoon">Добрый день 🌤️</string>
+    <string name="live_online">В сети</string>
+    <string name="online_count">%1$d В сети</string>
+    <string name="quick_actions">Быстрые действия</string>
+    <string name="community_hub_title">💬 Real Meet, Real Party, Fantasy</string>
+    <string name="hot_chip">ТОП 🔥</string>
+    <string name="friends_chats_chip">👥 Друзья и чаты</string>
+    <string name="choose_your_interest">Выберите интерес для видеозвонка</string>
+    <string name="select_category_matching">Выберите категорию для начала видеозвонка</string>
+    <string name="straight_desc">Общайтесь с людьми для интересных разговоров</string>
+    <string name="gay_desc">Знакомьтесь с проверенными мужчинами</string>
+    <string name="lesbian_desc">Знакомьтесь с проверенными женщинами</string>
+    <string name="menu_share_app">Поделиться приложением 🚀</string>
+    <string name="menu_rate_app">Оценить приложение ⭐</string>
+    <string name="toast_only_males_gay">Только мужчины могут заходить в раздел Гей</string>
+    <string name="toast_only_females_lesbian">Только женщины могут заходить в раздел Лесби</string>
+
+    <!-- Create Post & Comments -->
+    <string name="create_post_title">Создать пост</string>
+    <string name="whats_on_your_mind">О чем вы думаете?</string>
+    <string name="audience_visibility">Видимость публикации</string>
+    <string name="all">Все</string>
+    <string name="publish_post">Опубликовать</string>
+    <string name="comments_title">Комментарии</string>
+    <string name="write_a_comment">Написать комментарий...</string>
+    <string name="replying_to">Ответ пользователю %1$s</string>
+
+    <!-- Legacy / Alternate Aliases for Translations -->
+    <string name="enter_your_name">Как вас зовут?</string>
+    <string name="name_hint">Введите ваше имя</string>
+    <string name="select_your_city">Где вы находитесь?</string>
+    <string name="city_hint">Введите ваш город</string>
+    <string name="birthday_title">Когда вы родились?</string>
+    <string name="birthday_subtitle">Для использования Camverz вам должно быть не менее 18 лет.</string>
+    <string name="profile_complete">Всё готово!</string>
+    <string name="start_connecting">Начать видеочат</string>
+
+    <!-- Feed Empty State & Retry -->
+    <string name="no_posts_available">Сейчас нет доступных публикаций.\nБудьте первым, кто создаст пост!</string>
+    <string name="refresh_feed">Обновить ленту</string>
+    <string name="failed_to_load_posts">Не удалось загрузить публикации.\nНажмите, чтобы повторить.</string>
+    <string name="network_error_retry">Ошибка сети или время ожидания истекло.\nПожалуйста, проверьте подключение.</string>
+
+    <!-- Notifications Section -->
+    <string name="notifications_title">Уведомления</string>
+    <string name="no_notifications_yet">Пока нет уведомлений</string>
+    <string name="delete_notification_title">Удалить уведомление</string>
+    <string name="delete_notification_confirm">Вы уверены, что хотите удалить это уведомление?</string>
+    <string name="notif_liked_post">понравилась ваша публикация.</string>
+    <string name="notif_commented_post">прокомментировал(а) вашу публикацию.</string>
+    <string name="notif_started_following">подписался(лась) на вас.</string>
+    <string name="notif_visited_profile">посетил(а) ваш профиль.</string>
+    <string name="notif_replied_comment">ответил(а) на ваш комментарий.</string>
+    <string name="notif_sent_request">отправил(а) вам запрос.</string>
+    <string name="notif_sent_request_accepted">отправил(а) вам запрос (Принято).</string>
+    <string name="notif_sent_request_rejected">отправил(а) вам запрос (Отклонено).</string>
+    <string name="notif_accepted_friend_req">принял(а) ваш запрос в друзья.</string>
+    <string name="notif_sent_notification">отправил(а) уведомление.</string>
+    <string name="failed_accept_request">Не удалось принять запрос</string>
+    <string name="failed_reject_request">Не удалось отклонить запрос</string>
+    <string name="accept">Принять</string>
+    <string name="reject">Отклонить</string>
+    <string name="decline">Отклонить</string>
+    <string name="someone">Кто-то</string>
+
+    <!-- Time / Timestamp Suffixes -->
+    <string name="time_days_ago">д. назад</string>
+    <string name="time_hours_ago">ч. назад</string>
+    <string name="time_mins_ago">мин. назад</string>
+    <string name="time_just_now">только что</string>
+
+    <!-- Community Alerts / Notifications -->
+    <string name="community_alerts_title">🔔 Уведомления сообщества</string>
+    <string name="requests_and_party_broadcasts">Запросы и анонсы вечеринок</string>
+    <string name="tab_real_meet">Real Meet</string>
+    <string name="tab_fantasy">Фантазия</string>
+    <string name="tab_party">Вечеринка</string>
+    <string name="no_notifications_in_category">В этой категории нет уведомлений.</string>
+    <string name="notif_realmeet_request">%1$s запросил(а) связь по вашему посту: \"%2$s\"</string>
+    <string name="notif_realmeet_accepted">%1$s принял(а) ваш запрос по посту: \"%2$s\"</string>
+    <string name="notif_party_announcement">%1$s опубликовал(а) анонс вечеринки: \"%2$s\"</string>
+    <string name="notif_community_generic">%1$s отправил(а) уведомление относительно: \"%2$s\"</string>
+    <string name="request_accepted_toast">Запрос принят!</string>
+    <string name="request_declined_toast">Запрос отклонен</string>
+    <string name="failed_update_status">Не удалось обновить статус</string>
+    <string name="failed_to_decline">Не удалось отклонить</string>
+    <string name="network_error_loading_alerts">Ошибка сети при загрузке уведомлений</string>
+
+    <!-- Messages / Inbox Section -->
+    <string name="messages_title">Сообщения</string>
+    <string name="search_messages_people">Поиск сообщений и людей...</string>
+    <string name="active_now">В сети</string>
+    <string name="no_messages_yet">Пока нет сообщений\nНачните чат после видеозвонка</string>
+    <string name="delete_chat_title">Удалить чат</string>
+    <string name="delete_chat_confirm">Вы уверены, что хотите удалить этот чат?</string>
+    <string name="chat_deleted">Чат удален</string>
+    <string name="failed_delete_chat">Не удалось удалить чат</string>
+    <string name="unknown_user">Неизвестный</string>
+
+    <!-- Community Inbox -->
+    <string name="community_inbox_title">💬 Сообщения сообщества</string>
+    <string name="realmeet_fantasy_connections">Связи Real Meet и Фантазий</string>
+    <string name="friends_online">Друзья в сети</string>
+    <string name="no_active_community_chats">Пока нет активных чатов сообщества.</string>
+    <string name="accept_incoming_requests_subtext">Принимайте входящие запросы для личного общения 1 на 1.</string>
+    <string name="chats_count_single">1 чат</string>
+    <string name="chats_count_plural">%1$d чатов</string>
+    <string name="tap_to_open_chat">Нажмите, чтобы открыть личный чат</string>
+    <string name="video_call_pref">🎥 Видеозвонок</string>
+    <string name="direct_chat_pref">💬 Прямой чат</string>
+
+    <!-- Chat Room / Chat Screen -->
+    <string name="type_a_message">Введите сообщение...</string>
+    <string name="send">Отправить</string>
+    <string name="seen">Просмотрено</string>
+    <string name="chat_title">Чат</string>
+    <string name="blocked_user_send_msg_error">Вы заблокировали этого пользователя. Разблокируйте его для отправки сообщений.</string>
+    <string name="blocked_by_other_send_msg_error">Вы не можете отправлять сообщения, так как этот пользователь заблокировал вас.</string>
+    <string name="blocked_user_call_error">Вы заблокировали этого пользователя. Разблокируйте его для совершения звонков.</string>
+    <string name="blocked_by_other_call_error">Вы не можете позвонить этому пользователю, так как он заблокировал вас.</string>
+    <string name="failed_to_send">Не удалось отправить</string>
+    <string name="delete_message_title">Удалить сообщение</string>
+    <string name="delete_message_not_supported">Удаление отдельных сообщений пока не поддерживается.</string>
+    <string name="ok">ОК</string>
+    <string name="delete">Удалить</string>
+    <string name="back">Назад</string>
+    <string name="network_error">Ошибка сети</string>
+
+    <!-- Profile Section -->
+    <string name="change">Изменить</string>
+    <string name="verify_identity">Подтвердить личность</string>
+    <string name="premium_vip_pass">Премиум VIP подписка</string>
+    <string name="loading_plan_status">⏱️ Загрузка статуса подписки...</string>
+    <string name="followers">Подписчики</string>
+    <string name="following">Подписки</string>
+    <string name="follow">Подписаться</string>
+    <string name="message">Сообщение</string>
+    <string name="bio">О себе</string>
+    <string name="write_your_bio_hint">Напишите о себе...</string>
+    <string name="primary_preference">Основное предпочтение</string>
+    <string name="posts">Публикации</string>
+    <string name="blocked_users">Заблокированные пользователи</string>
+    <string name="legal_privacy">Конфиденциальность и условия</string>
+    <string name="unblock_user">Разблокировать пользователя</string>
+    <string name="unblock">Разблокировать</string>
+    <string name="choose_avatar">Выберите аватар</string>
+    <string name="sex_pref_cannot_be_changed">Предпочтения нельзя изменить после установки.</string>
+    <string name="verify_identity_before_pref">Подтвердите личность перед выбором предпочтений.</string>
+    <string name="user_not_logged_in">Пользователь не авторизован.</string>
+    <string name="blocked_user_title">Заблокированный пользователь</string>
+    <string name="profile_updated_toast">Профиль обновлен</string>
+    <string name="failed_update_profile">Не удалось обновить профиль</string>
+    <string name="account_deleted_toast">Аккаунт удален</string>
+    <string name="failed_delete_account">Не удалось удалить аккаунт</string>
+    <string name="user_blocked_toast">Пользователь заблокирован</string>
+    <string name="failed_block_user">Не удалось заблокировать пользователя</string>
+    <string name="user_unblocked_toast">Пользователь разблокирован</string>
+    <string name="failed_unblock_user">Не удалось разблокировать пользователя</string>
+    <string name="request_sent_toast">Запрос отправлен</string>
+    <string name="failed_send_request">Не удалось отправить запрос</string>
+    <string name="unfriend_user_title">Удалить из друзей</string>
+    <string name="cancel_request_title">Отменить запрос</string>
+    <string name="unfriend_user_confirm">Вы уверены, что хотите удалить этого пользователя из друзей?</string>
+    <string name="cancel_request_confirm">Вы уверены, что хотите отменить запрос в друзья?</string>
+    <string name="action_completed_toast">Действие успешно выполнено</string>
+    <string name="failed_action_toast">Не удалось выполнить действие</string>
+    <string name="unfollowed_toast">Вы отписались</string>
+    <string name="following_toast">Вы подписаны</string>
+    <string name="failed_unfollow">Не удалось отписаться</string>
+    <string name="failed_follow">Не удалось подписаться</string>
+    <string name="friends">Друзья</string>
+    <string name="requested">Запрошено</string>
+    <string name="accept_request">Принять запрос</string>
+    <string name="add_friend">Добавить в друзья</string>
+    <string name="active_plan_prefix">\nАктивный план: %1$s</string>
+    <string name="expires_prefix"> (Истекает: %1$s)</string>
+    <string name="free_member">Бесплатный аккаунт</string>
+    <string name="remaining_expired">Истекло</string>
+    <string name="remaining_days_hours">⏱️ Осталось %1$d дней и %2$d часов</string>
+    <string name="remaining_hours_mins">⏱️ Осталось %1$d часов и %2$d минут</string>
+    <string name="remaining_mins">⏱️ Осталось %1$d минут</string>
+    <string name="block_user_title">Заблокировать пользователя</string>
+    <string name="block_user_confirm">Вы уверены, что хотите заблокировать этого пользователя? Он не сможет писать вам и видеть ваши посты.</string>
+    <string name="unblock_user_title">Разблокировать пользователя</string>
+    <string name="unblock_user_confirm">Хотите разблокировать этого пользователя?</string>
+    <string name="change_gender_title">Изменить пол на %1$s?</string>
+    <string name="change_gender_confirm">Вы уверены, что хотите изменить пол?\n\n⚠️ ВНИМАНИЕ: После изменения настройки верификации профиля будут обновлены.\n\n%1$s</string>
+    <string name="gender_warning_female">🔒 Женским профилям требуется живая верификация лица для поиска пары.</string>
+    <string name="gender_warning_male">🔓 Мужские профили подтверждаются автоматически при изменении.</string>
+    <string name="gender_updated_toast">Пол изменен на %1$s</string>
+    <string name="failed_change_gender">Не удалось изменить пол</string>
+    <string name="user_not_found_title">Пользователь не найден</string>
+    <string name="user_not_found_msg">Этот профиль больше не существует.</string>
+    <string name="failed_load_profile">Не удалось загрузить профиль.</string>
+    <string name="delete_account_confirm">Это действие необратимо. Все ваши данные будут удалены.</string>
+    <string name="type_delete_to_confirm">Введите \'delete\' для подтверждения</string>
+    <string name="delete_word">delete</string>
+    <string name="access_restricted">Доступ ограничен</string>
+    <string name="user_blocked_you">Этот пользователь заблокировал вас.</string>
+    <string name="account_deleted_title">Аккаунт удален</string>
+    <string name="account_deleted_msg">Этот аккаунт больше недоступен.</string>
+    <string name="failed_load_blocked_users">Не удалось загрузить заблокированных пользователей</string>
+    <string name="unblocked_user_toast">%1$s разблокирован</string>
+    <string name="delete_post_title">Удалить публикацию</string>
+    <string name="delete_post_confirm">Вы уверены, что хотите удалить эту публикацию?</string>
+    <string name="post_deleted_toast">Публикация удалена</string>
+    <string name="failed_delete_post">Ошибка при удалении публикации</string>
+    <string name="login_to_like_posts">Войдите, чтобы ставить лайки</string>
+    <string name="gender_male">Мужской</string>
+    <string name="gender_female">Женский</string>
+    <string name="yes_change">Да, изменить</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="return_to_video_calling">Видеозвонок</string>
+    <string name="real_meet_subtitle">Узнайте, кто хочет встретиться с вами в реальной жизни сегодня</string>
+    <string name="requests_tab">📩 Запросы</string>
+    <string name="inbox_tab">💬 Входящие</string>
+    <string name="notifications_tab">🔔 Уведомления</string>
+    <string name="filter_all_cities">🌐 Все города</string>
+    <string name="filter_in_my_city">🏙️ В моем городе</string>
+    <string name="hint_search_realmeet">Поиск по городу, месту, цели...</string>
+    <string name="real_meet_default_bio">Добро пожаловать в мой профиль Real Meet.</string>
+    <string name="my_active_posts_title">Мои активные посты Real Meet и Фантазии</string>
+    <string name="my_hosted_parties_title">Мои вечеринки</string>
+    <string name="my_saved_parties_title">Сохраненные вечеринки</string>
+    <string name="no_posts_found_search">Постов по вашему запросу не найдено.</string>
+    <string name="dock_meets">Встречи</string>
+    <string name="dock_fantasy">Фантазия</string>
+    <string name="dock_party">Вечеринка</string>
+    <string name="announcements_and_members">Объявления и Участники</string>
+    <string name="accepted_guests">👥 Принятые гости</string>
+    <string name="announcements">📢 Объявления</string>
+    <string name="hint_type_announcement">Напишите объявление для гостей...</string>
+    <string name="host_a_real_world_party">🎉 Организовать вечеринку</string>
+    <string name="host_party_subtitle">Пригласите людей поблизости на ваше мероприятие</string>
+    <string name="party_vibe_title">АТМОСФЕРА / НАЗВАНИЕ ВЕЧЕРИНКИ</string>
+    <string name="hint_party_purpose">напр. Домашняя вечеринка, Барбекю</string>
+    <string name="venue_location">МЕСТО ПРОВЕДЕНИЯ</string>
+    <string name="hint_party_venue">напр. Пентхаус, Центр города</string>
+    <string name="max_capacity">МАКС. ВМЕСТИМОСТЬ</string>
+    <string name="hint_capacity">напр. 10</string>
+    <string name="target_audience">ЦЕЛЕВАЯ АУДИТОРИЯ</string>
+    <string name="party_date_time">ДАТА И ВРЕМЯ ВЕЧЕРИНКИ</string>
+    <string name="select_time_hint">⏰ Выберите время (нажмите, чтобы открыть часы)</string>
+    <string name="clock">🕒 ЧАСЫ</string>
+    <string name="host_event">Создать мероприятие</string>
+    <string name="share_your_fantasy">💭 Поделитесь фантазией</string>
+    <string name="fantasy_subtitle">Выражайте свои желания безопасно и анонимно</string>
+    <string name="relationship_status">СЕМЕЙНОЕ ПОЛОЖЕНИЕ</string>
+    <string name="interests_vibes">ИНТЕРЕСЫ / АТМОСФЕРА</string>
+    <string name="hint_interests">напр. Звезды, Кофе, Ролевые игры...</string>
+    <string name="fantasy_text_label">ТЕКСТ ФАНТАЗИИ (МАКС. 200 СИМВОЛОВ)</string>
+    <string name="hint_fantasy_description">Напишите вашу тайную фантазию здесь...</string>
+    <string name="publish_fantasy">Опубликовать фантазию</string>
+    <string name="vip_party_host_badge">👑 VIP ОРГАНИЗАТОР ВЕЧЕРИНКИ</string>
+    <string name="join_party_btn">🎉 Присоединиться к вечеринке</string>
+    <string name="interests_and_vibe_upper">ИНТЕРЕСЫ И АТМОСФЕРА</string>
+    <string name="my_fantasy_upper">МОЯ ФАНТАЗИЯ</string>
+    <string name="secret_connect_btn">✨ Секретное подключение</string>
+    <string name="delete_post_btn">🗑️ Удалить пост</string>
+    <string name="requested_btn">📩 Запрос отправлен</string>
+    <string name="already_requested_connect">Вы уже отправили запрос на подключение к этому посту.</string>
+    <string name="connect_and_meet_btn">⚡ Связаться и встретиться</string>
+    <string name="by_prefix">Организатор:</string>
+    <string name="yrs_suffix">лет</string>
+    <string name="max_guests_format">👥 %1$d Макс • </string>
+    <string name="everyone">ВСЕ</string>
+    <string name="delete_party_btn">🗑️ Удалить вечеринку</string>
+    <string name="already_requested_party">Вы уже запросили приглашение на эту вечеринку.</string>
+    <string name="delete_fantasy_btn">🗑️ Удалить фантазию</string>
+    <string name="already_requested_fantasy">Вы уже отправили запрос на эту фантазию.</string>
+    <string name="nearby">Рядом</string>
+    <string name="for_prefix">Для:</string>
+    <string name="real_meet_post">Пост Real Meet</string>
+    <string name="private_video_call">Личный видеозвонок</string>
+    <string name="prefers_video_call">🎥 Предпочитает видеозвонок</string>
+    <string name="prefers_direct_chat">💬 Предпочитает личный чат</string>
+    <string name="status_accepted_btn">✅ Принято</string>
+    <string name="status_declined_btn">❌ Отклонено</string>
+    <string name="access_required_title">Требуется доступ</string>
+    <string name="access_required_msg">У вас нет доступа к фильтрации по городам. Нажмите ОК, чтобы узнать больше.</string>
+    <string name="could_not_open_browser">Не удалось открыть браузер</string>
+    <string name="set_city_first">Пожалуйста, сначала укажите ваш город в профиле</string>
+    <string name="party_deleted_toast">Вечеринка удалена</string>
+    <string name="fantasy_deleted_toast">Фантазия удалена</string>
+    <string name="request_status_updated">Статус запроса обновлен</string>
+    <string name="request_deleted_toast">Запрос удален</string>
+    <string name="own_post_toast">Это ваш собственный пост!</string>
+    <string name="request_already_sent">Запрос для этого поста уже отправлен!</string>
+    <string name="request_sent_to_user">📩 Запрос отправлен пользователю %1$s!</string>
+    <string name="removed_saved_party">Удалено из сохраненных вечеринок</string>
+    <string name="saved_to_list">Сохранено в ваш список!</string>
+    <string name="active_post_exists_title">Активный пост уже существует</string>
+    <string name="active_post_exists_msg">У вас уже есть активный пост Real Meet сегодня:
+"%1$s" в %2$s.
+
+Вы можете публиковать только 1 Real Meet в день. Хотите заменить предыдущий пост?</string>
+    <string name="active_party_exists_title">Активная вечеринка уже существует</string>
+    <string name="active_party_exists_msg">У вас уже есть активная вечеринка сегодня:
+"%1$s" в %2$s.
+
+Вы можете публиковать только 1 вечеринку в день. Хотите заменить предыдущее мероприятие?</string>
+    <string name="select_meeting_time_title">Выберите время встречи</string>
+    <string name="enter_meeting_purpose">Пожалуйста, укажите цель встречи</string>
+    <string name="enter_location">Пожалуйста, укажите место</string>
+    <string name="write_description">Пожалуйста, напишите краткое описание</string>
+    <string name="publishing_post">Публикация поста...</string>
+    <string name="post_published_toast">✨ Пост Real Meet опубликован!</string>
+    <string name="failed_publish_post">Не удалось опубликовать пост. Попробуйте снова.</string>
+    <string name="select_party_time_title">Выберите время вечеринки</string>
+    <string name="fill_party_details">Пожалуйста, заполните все данные вечеринки</string>
+    <string name="publishing_party">Публикация вечеринки...</string>
+    <string name="party_published_toast">🎉 Вечеринка опубликована!</string>
+    <string name="failed_publish_party">Не удалось опубликовать вечеринку.</string>
+    <string name="enter_fantasy_text">Пожалуйста, введите текст вашей фантазии</string>
+    <string name="sharing_fantasy">Публикация фантазии...</string>
+    <string name="fantasy_shared_toast">💭 Фантазия опубликована!</string>
+    <string name="failed_share_fantasy">Не удалось опубликовать фантазию.</string>
+    <string name="ad_skipped_toast">Реклама пропущена. Пост не опубликован.</string>
+    <string name="failed_load_members">Не удалось загрузить участников</string>
+    <string name="failed_load_announcements">Не удалось загрузить объявления</string>
+    <string name="announcement_posted_toast">Объявление опубликовано!</string>
+    <string name="failed_post_announcement">Не удалось опубликовать объявление</string>
+    <string name="post_owner">владелец поста</string>
+    <string name="community_post">Пост сообщества</string>
+    <string name="nearby_venue">Место поблизости</string>
+    <string name="scheduled">Запланировано</string>
+    <string name="no_additional_details">Нет дополнительных деталей.</string>
+    <string name="preferred_audience_prefix">🎯 Предпочитаемая аудитория: </string>
+    <string name="replace_post_btn">Заменить пост</string>
+    <string name="replace_event_btn">Заменить мероприятие</string>
+    <string name="community_host">Организатор сообщества</string>
+    <string name="community_member">Участник сообщества</string>
+    <string name="community_meet">Встреча сообщества</string>
+    <string name="post_real_meet_dialog_title">📍 Опубликовать Real Meet</string>
+    <string name="post_real_meet_dialog_subtitle">Найдите людей поблизости, готовых встретиться сегодня</string>
+    <string name="purpose_of_meet_label">ЦЕЛЬ ВСТРЕЧИ</string>
+    <string name="hint_realmeet_purpose">напр. Кофе и общение, Поездка, Кино...</string>
+    <string name="location_landmark_label">МЕСТО / ОРИЕНТИР</string>
+    <string name="hint_realmeet_location">напр. Кофейня рядом с центром</string>
+    <string name="meeting_time_label">ВРЕМЯ ВСТРЕЧИ</string>
+    <string name="description_label">ОПИСАНИЕ (МАКС. 200 СИМВОЛОВ)</string>
+    <string name="hint_realmeet_description">Опишите, почему вы хотите встретиться...</string>
+    <string name="publish_post_btn">Опубликовать</string>
+    <string name="full_details_description_upper">ПОЛНЫЕ ДЕТАЛИ И ОПИСАНИЕ</string>
+    <string name="send_request_btn">⚡ Отправить запрос</string>
+    <string name="btn_video_call">🎥 Видеозвонок</string>
+    <string name="btn_chat_now">💬 Чат сейчас</string>
+    <string name="select_date_title">Выберите дату встречи</string>
+    <string name="select_date_time_hint">📅 Выберите дату и время</string>
+    <string name="select_party_date_time_hint">📅 Выберите дату и время вечеринки</string>
+    <string name="select_future_date_time">Пожалуйста, выберите будущую дату и время</string>
+    <string name="target_audience_everyone">Все (Everyone)</string>
+    <string name="target_audience_female">Только девушки (Female Only)</string>
+    <string name="target_audience_male">Только мужчины (Male Only)</string>
+    <string name="status_single">Не замужем / Холост (Single)</string>
+    <string name="status_married">В браке (Married)</string>
+    <string name="status_divorced">В разводе (Divorced)</string>
+    <string name="status_widowed">Вдовец / Вдова (Widowed)</string>
+    <string name="send_meet_request_title">📩 Отправить запрос на встречу</string>
+    <string name="connecting_with_user">Связываемся с %1$s</string>
+    <string name="quick_icebreakers_upper">БЫСТРЫЕ СООБЩЕНИЯ</string>
+    <string name="icebreaker_coffee">☕ Привет! Я бы с удовольствием выпил(а) кофе с тобой</string>
+    <string name="icebreaker_count_me_in">🎉 Я с вами! Давайте свяжемся!</string>
+    <string name="icebreaker_talk_privately">🔒 Понравился твой пост, давай пообщаемся лично!</string>
+    <string name="your_message_note_upper">ВАШЕ СООБЩЕНИЕ / ЗАМЕТКА</string>
+    <string name="hint_request_message">Напишите сообщение или приветствие...</string>
+    <string name="preferred_contact_mode_upper">ПРЕДПОЧТИТЕЛЬНЫЙ СПОСОБ СВЯЗИ</string>
+    <string name="pref_video_call">🎥 Видеозвонок</string>
+    <string name="pref_direct_chat">💬 Прямой чат</string>
+    <string name="filter_in_city_param">🏙️ В %1$s</string>
+    <string name="no_posts_in_city">Пока нет публикаций встреч в %1$s.</string>
+    <string name="no_parties_matching">Нет вечеринок, соответствующих поиску.</string>
+    <string name="no_fantasies_matching">Нет публикаций фантазий, соответствующих поиску.</string>
+    <string name="post_expired">Срок действия этой публикации истек.</string>
+    <string name="default_request_msg">Привет! Меня заинтересовал твой пост о встрече.</string>
+</resources>

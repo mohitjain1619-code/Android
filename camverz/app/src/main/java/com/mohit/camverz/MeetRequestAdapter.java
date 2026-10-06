@@ -53,13 +53,13 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         String verifiedBadge = isVerified ? " ✔️" : "";
 
         holder.tvApplicantNameAge.setText(req.getApplicantName() + " " + genderBadge + " " + req.getApplicantAge() + verifiedBadge);
-        holder.tvApplicantCity.setText("📍 " + (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby"));
-        holder.tvPostContext.setText("For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Real Meet Post"));
+        holder.tvApplicantCity.setText("📍 " + (req.getApplicantCity() != null ? req.getApplicantCity() : context.getString(R.string.nearby)));
+        holder.tvPostContext.setText(context.getString(R.string.for_prefix) + " " + (req.getPostTitle() != null ? req.getPostTitle() : context.getString(R.string.real_meet_post)));
         holder.tvRequestMessage.setText(req.getMessage());
 
         String pref = req.getContactPreference() != null ? req.getContactPreference() : "Private Video Call";
         boolean isVideoPref = pref.toLowerCase().contains("video");
-        holder.tvContactPreference.setText(isVideoPref ? "🎥 Prefers Private Video Call" : "💬 Prefers Direct Chat");
+        holder.tvContactPreference.setText(isVideoPref ? context.getString(R.string.prefers_video_call) : context.getString(R.string.prefers_direct_chat));
 
         if (isVideoPref) {
             holder.btnStartCall.setVisibility(View.VISIBLE);
@@ -72,17 +72,17 @@ public class MeetRequestAdapter extends RecyclerView.Adapter<MeetRequestAdapter.
         holder.tvStatusBadge.setText(req.getStatus());
         if ("ACCEPTED".equalsIgnoreCase(req.getStatus())) {
             holder.tvStatusBadge.setTextColor(Color.parseColor("#4ADE80")); // Green
-            holder.btnToggleAccept.setText("✅ Accepted");
+            holder.btnToggleAccept.setText(context.getString(R.string.status_accepted_btn));
             holder.btnToggleAccept.setEnabled(false); // Locked once accepted
             holder.btnToggleAccept.setAlpha(0.8f);
         } else if ("DECLINED".equalsIgnoreCase(req.getStatus())) {
             holder.tvStatusBadge.setTextColor(Color.parseColor("#F87171")); // Red
-            holder.btnToggleAccept.setText("❌ Declined");
+            holder.btnToggleAccept.setText(context.getString(R.string.status_declined_btn));
             holder.btnToggleAccept.setEnabled(true);
             holder.btnToggleAccept.setAlpha(1.0f);
         } else {
             holder.tvStatusBadge.setTextColor(Color.parseColor("#E5E5EA"));
-            holder.btnToggleAccept.setText("✅ Accept");
+            holder.btnToggleAccept.setText(context.getString(R.string.accept));
             holder.btnToggleAccept.setEnabled(true);
             holder.btnToggleAccept.setAlpha(1.0f);
         }

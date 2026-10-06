@@ -171,7 +171,7 @@ public class PartyBoardActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(PartyBoardActivity.this, "Failed to load members", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PartyBoardActivity.this, getString(R.string.failed_load_members), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -200,7 +200,7 @@ public class PartyBoardActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(PartyBoardActivity.this, "Failed to load announcements", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PartyBoardActivity.this, getString(R.string.failed_load_announcements), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -218,15 +218,15 @@ public class PartyBoardActivity extends BaseActivity {
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful()) {
                     fetchAnnouncements();
-                    Toast.makeText(PartyBoardActivity.this, "Announcement posted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PartyBoardActivity.this, getString(R.string.announcement_posted_toast), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(PartyBoardActivity.this, "Failed to post", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PartyBoardActivity.this, getString(R.string.failed_post_announcement), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(PartyBoardActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PartyBoardActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

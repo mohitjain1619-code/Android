@@ -61,7 +61,9 @@ public class WindowBackBlocker {
                     new OnBackInvokedCallback() {
                         @Override
                         public void onBackInvoked() {
-                            Log.d(TAG, "🚫 Predictive back gesture blocked on " + activity.getClass().getSimpleName());
+                            if (BaseActivity.isAdShowing) {
+                                Log.d(TAG, "🚫 Predictive back gesture blocked on " + activity.getClass().getSimpleName());
+                            }
                         }
                     }
                 );
@@ -78,7 +80,12 @@ public class WindowBackBlocker {
                     new OnBackPressedCallback(true) {
                         @Override
                         public void handleOnBackPressed() {
-                            Log.d(TAG, "🚫 ComponentActivity back press blocked on " + activity.getClass().getSimpleName());
+                            if (BaseActivity.isAdShowing) {
+                                Log.d(TAG, "🚫 ComponentActivity back press blocked on " + activity.getClass().getSimpleName());
+                            } else {
+                                setEnabled(false);
+                                ((ComponentActivity) activity).getOnBackPressedDispatcher().onBackPressed();
+                            }
                         }
                     }
                 );

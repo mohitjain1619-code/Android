@@ -52,9 +52,10 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
 
         // Bind triggering user details
         CommunityNotification.TriggeringUser user = notification.getTriggeringUser();
+        String someoneStr = context.getString(R.string.someone);
         String userName = (user != null && user.getName() != null && !user.getName().trim().isEmpty())
                 ? user.getName().trim()
-                : "Someone";
+                : someoneStr;
         String avatar = user != null ? user.getAvatar() : "";
         String photoUrl = user != null ? user.getPhotoUrl() : "";
 
@@ -64,17 +65,17 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
         String text = "";
         String title = (notification.getPostTitle() != null && !notification.getPostTitle().trim().isEmpty())
                 ? notification.getPostTitle().trim()
-                : "Community Post";
+                : "";
 
         String type = notification.getType() != null ? notification.getType() : "";
         if ("realmeet_request".equalsIgnoreCase(type)) {
-            text = userName + " requested to connect on your post: \"" + title + "\"";
+            text = context.getString(R.string.notif_realmeet_request, userName, title);
         } else if ("realmeet_accepted".equalsIgnoreCase(type)) {
-            text = userName + " accepted your request for post: \"" + title + "\"";
+            text = context.getString(R.string.notif_realmeet_accepted, userName, title);
         } else if ("party_announcement".equalsIgnoreCase(type) || "party".equalsIgnoreCase(type)) {
-            text = userName + " posted an announcement for party: \"" + title + "\"";
+            text = context.getString(R.string.notif_party_announcement, userName, title);
         } else {
-            text = userName + " sent a community notification regarding: \"" + title + "\"";
+            text = context.getString(R.string.notif_community_generic, userName, title);
         }
 
         SpannableString ss = new SpannableString(text);
@@ -107,11 +108,11 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
                         if (response.isSuccessful()) {
                             notification.setFriendshipStatus("ACCEPTED");
                             notifyItemChanged(holder.getAdapterPosition());
-                            Toast.makeText(context, "Request Accepted!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, context.getString(R.string.request_accepted_toast), Toast.LENGTH_SHORT).show();
                         } else {
                             holder.btnAccept.setEnabled(true);
                             holder.btnReject.setEnabled(true);
-                            Toast.makeText(context, "Failed to update status", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, context.getString(R.string.failed_update_status), Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -119,7 +120,7 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         holder.btnAccept.setEnabled(true);
                         holder.btnReject.setEnabled(true);
-                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                     }
                 });
             });
@@ -138,11 +139,11 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
                         if (response.isSuccessful()) {
                             notification.setFriendshipStatus("REJECTED");
                             notifyItemChanged(holder.getAdapterPosition());
-                            Toast.makeText(context, "Request Declined", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, context.getString(R.string.request_declined_toast), Toast.LENGTH_SHORT).show();
                         } else {
                             holder.btnAccept.setEnabled(true);
                             holder.btnReject.setEnabled(true);
-                            Toast.makeText(context, "Failed to decline", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, context.getString(R.string.failed_to_decline), Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -150,7 +151,7 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         holder.btnAccept.setEnabled(true);
                         holder.btnReject.setEnabled(true);
-                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                     }
                 });
             });
@@ -166,12 +167,12 @@ public class CommunityNotificationAdapter extends RecyclerView.Adapter<Community
 
     private String getFormattedTimestamp(long timestamp) {
         long diff = System.currentTimeMillis() - timestamp;
-        if (diff < 60000) return "Just now";
+        if (diff < 60000) return context.getString(R.string.time_just_now);
         long mins = diff / 60000;
-        if (mins < 60) return mins + "m ago";
+        if (mins < 60) return mins + " " + context.getString(R.string.time_mins_ago);
         long hours = mins / 60;
-        if (hours < 24) return hours + "h ago";
-        return (hours / 24) + "d ago";
+        if (hours < 24) return hours + " " + context.getString(R.string.time_hours_ago);
+        return (hours / 24) + " " + context.getString(R.string.time_days_ago);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

@@ -217,11 +217,12 @@ public class InboxActivity extends BaseActivity {
                             for (JsonElement element : chatsArray) {
                                 JsonObject chatObj = element.getAsJsonObject();
                                 Conversation conversation = new Conversation();
+                                String unknownUserStr = getString(R.string.unknown_user);
                                 conversation.setChatId(chatObj.has("id") ? chatObj.get("id").getAsString() : "");
                                 if (chatObj.has("otherUser") && !chatObj.get("otherUser").isJsonNull()) {
                                     JsonObject otherUserObj = chatObj.getAsJsonObject("otherUser");
                                     conversation.setUserId(otherUserObj.has("id") ? otherUserObj.get("id").getAsString() : "");
-                                    conversation.setName(otherUserObj.has("name") ? otherUserObj.get("name").getAsString() : "Unknown");
+                                    conversation.setName(otherUserObj.has("name") ? otherUserObj.get("name").getAsString() : unknownUserStr);
                                     String avatarVal = "";
                                     if (otherUserObj.has("avatar") && !otherUserObj.get("avatar").isJsonNull()) {
                                         avatarVal = otherUserObj.get("avatar").getAsString();
@@ -241,7 +242,7 @@ public class InboxActivity extends BaseActivity {
                                     conversation.setPhotoUrl(photoUrlVal);
                                 } else {
                                     conversation.setUserId("");
-                                    conversation.setName("Unknown");
+                                    conversation.setName(unknownUserStr);
                                     conversation.setProfileImageUrl("");
                                 }
                                 conversation.setLastMessage(chatObj.has("lastMessage") && !chatObj.get("lastMessage").isJsonNull() ? chatObj.get("lastMessage").getAsString() : "");
@@ -288,7 +289,7 @@ public class InboxActivity extends BaseActivity {
                     swipeRefreshLayout.setRefreshing(false);
                 }
                 Log.e(TAG, "Failed to load chats", t);
-                Toast.makeText(InboxActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(InboxActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

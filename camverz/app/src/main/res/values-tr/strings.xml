@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">camverz</string>
+    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+
+    <!-- Language Selection -->
+    <string name="choose_language_title">Dilinizi Seçin</string>
+    <string name="choose_language_subtitle">Devam etmek için tercih ettiğiniz dili seçin</string>
+    <string name="search_language_hint">Dil ara…</string>
+    <string name="change_language">Dili Değiştir</string>
+
+    <!-- Call Activity -->
+    <string name="mute_audio">Sesi kapat</string>
+    <string name="switch_camera">Kamerayı değiştir</string>
+    <string name="end_call">Aramayı sonlandır</string>
+    <string name="connecting">Bağlanıyor…</string>
+    <string name="calling">Aranıyor…</string>
+    <string name="ringing">Çalıyor…</string>
+    <string name="call_declined">Arama Reddedildi</string>
+    <string name="call_ended">Arama Sonlandı</string>
+    <string name="speaker">Hoparlör</string>
+    <string name="mute">Sessiz</string>
+
+    <!-- Gender Selection & Onboarding -->
+    <string name="select_your_gender">Cinsiyetinizi Seçin</string>
+    <string name="gender_help_text">Bu, sizi doğru insanlarla buluşturmamıza yardımcı olur</string>
+    <string name="male">👨 Erkek</string>
+    <string name="female">👩 Kadın</string>
+    <string name="continue_arrow">Devam Et →</string>
+    <string name="step_1_of_4">Adım 1 / 4</string>
+    <string name="step_2_of_4">Adım 2 / 4</string>
+    <string name="step_3_of_4">Adım 3 / 4</string>
+    <string name="step_4_of_4">Adım 4 / 4</string>
+    <string name="whats_your_gender">Cinsiyetiniz nedir?</string>
+    <string name="gender_help_subtitle">Bu, topluluğunuzdaki doğru insanlarla eşleşmenizi sağlar.</string>
+    <string name="male_title">Erkek</string>
+    <string name="female_title">Kadın</string>
+    <string name="discover_matches">Eşleşmeleri Keşfet</string>
+    <string name="continue_text">Devam Et</string>
+    <string name="whats_your_name">Adınız nedir?</string>
+    <string name="name_subtext">Diğer kullanıcılar sizi bu isimle görecek</string>
+    <string name="enter_name_hint">Adınızı girin</string>
+    <string name="where_located">Nerede yaşıyorsunuz?</string>
+    <string name="city_subtext">Şehrinizdeki yakın insanlarla bağlantı kurmanıza yardımcı olur.</string>
+    <string name="detecting_location">Konum tespit ediliyor...</string>
+    <string name="please_wait">Lütfen bekleyin</string>
+    <string name="when_birthday">Doğum tarihiniz nedir?</string>
+    <string name="birthday_subtext">Camverz kullanmak için en az 18 yaşında olmalısınız.</string>
+    <string name="age_restricted">🛡️ 18+ Yaş Sınırı</string>
+    <string name="date_format_hint">GG / AA / YYYY</string>
+    <string name="youre_all_set">Her şey hazır!</string>
+    <string name="finish_subtext">Profilinizi gözden geçirin ve gerçek insanlarla tanışmaya hazırlanın.</string>
+    <string name="profile_summary_title">PROFİL ÖZETİNİZ</string>
+    <string name="display_name_hint">Görünen Adınız</string>
+    <string name="summary_gender">Cinsiyet: %1$s</string>
+    <string name="summary_city">Şehir: %1$s</string>
+    <string name="summary_birthday">Doğum Günü: %1$s</string>
+    <string name="permissions_privacy_title">İZİNLER VE GİZLİLİK</string>
+    <string name="perm_camera_mic">📷 Kamera ve Mikrofon: Bire bir canlı görüntülü aramalar için</string>
+    <string name="perm_location">📍 Konum: Şehir ve ülke bazlı eşleşmeler için</string>
+    <string name="perm_zero_recording">🔒 Kayıt Yapılmaz: WebRTC aramaları şifrelidir ve özeldir</string>
+    <string name="start_video_chatting">Görüntülü Sohbeti Başlat</string>
+
+    <!-- Main Screen -->
+    <string name="welcome_user">Hoş Geldiniz</string>
+    <string name="verified">✓ Onaylı</string>
+    <string name="not_verified">⚠ Onaysız</string>
+    <string name="choose_interest">İlginizi Seçin</string>
+    <string name="verified_users_text">Dünya çapında onaylı kullanıcılarla bağlantı kurun</string>
+    <string name="complete_verification">Doğrulamayı Tamamla</string>
+    <string name="logout">Çıkış Yap</string>
+
+    <!-- Categories -->
+    <string name="gay">Gay</string>
+    <string name="gay_emoji">👨</string>
+    <string name="gay_flag">🏳️‍🌈</string>
+    <string name="lesbian">Lezbiyen</string>
+    <string name="lesbian_emoji">👩</string>
+    <string name="lesbian_heart">💖</string>
+    <string name="straight">Hetero</string>
+    <string name="straight_couple">👫</string>
+    <string name="straight_fire">🔥</string>
+
+    <!-- Login & Welcome Screen -->
+    <string name="welcome_to_camverz">Camverz\'e Hoş Geldiniz</string>
+    <string name="sign_in_google">Google ile Giriş Yap</string>
+    <string name="headline_meet_real_people">Sadece Profillerle Değil, Gerçek İnsanlarla Tanışın</string>
+    <string name="subtitle_video_chat">Görüntülü sohbet edin, arkadaş edinin, yakındaki insanları keşfedin.</string>
+    <string name="chip_verified_users">✓ Onaylı Kullanıcılar</string>
+    <string name="chip_hd_video">🎥 HD Görüntülü Arama</string>
+    <string name="chip_nearby_discovery">📍 Yakındakileri Keşfet</string>
+    <string name="chip_safe_community">🛡️ Güvenli Topluluk</string>
+    <string name="chip_instant_video">⚡ Anında Video</string>
+    <string name="chip_private_safe">🔒 %100 Gizli</string>
+    <string name="chip_real_meet">🔥 Real Meet</string>
+    <string name="login_continue_journey">Camverz ile yolculuğunuza devam edin</string>
+    <string name="login_join_thousands">Her gün yeni insanları keşfeden binlerce onaylı kullanıcıya katılın.</string>
+    <string name="privacy_no_post">🔒 Izininiz olmadan asla hiçbir şey paylaşmayız.</string>
+    <string name="trust_encrypted">⚡ Şifreli</string>
+    <string name="trust_secure">🛡️ Güvenli</string>
+    <string name="trust_verified_community">✓ Onaylı Topluluk</string>
+    <string name="terms_privacy_notice">Devam ederek Koşullarımızı ve Gizlilik Politikamızı kabul etmiş olursunuz</string>
+    <string name="terms_privacy_notice_full">Devam ederek Şartlarımızı, Gizlilik Politikamızı ve Çocuk Güvenliği Politikamızı kabul etmiş olursunuz.</string>
+    <string name="terms_of_service">Hizmet Şartları</string>
+    <string name="privacy_policy">Gizlilik Politikası</string>
+    <string name="tester_login">Test Hesabı ile Giriş Yap</string>
+    <string name="signing_in_wait">Giriş yapılıyor... Lütfen bekleyin</string>
+
+    <!-- Connecting Activity -->
+    <string name="finding_match">Eşleşme Aranıyor…</string>
+    <string name="wait_connect_message">Sizi bağlarken lütfen bekleyin…</string>
+    <string name="cancel">İptal</string>
+
+    <!-- Verification Activity -->
+    <string name="verification">Doğrulama</string>
+    <string name="selfie">Selfie</string>
+    <string name="take_selfie">Selfie Çek</string>
+    <string name="id_document">Kimlik Belgesi</string>
+    <string name="upload_id">Kimlik Yükle</string>
+    <string name="submit_verification">Doğrulamayı Gönder</string>
+
+    <!-- Status Messages -->
+    <string name="matched_starting_call">Eşleşti! Arama başlatılıyor…</string>
+    <string name="finding_match_status">Eşleşme aranıyor…</string>
+    <string name="error_loading_profile">Profil yüklenirken hata oluştu</string>
+
+    <!-- Navigation & Community -->
+    <string name="explore">Keşfet</string>
+    <string name="messages">Mesajlar</string>
+    <string name="profile">Profil</string>
+    <string name="feed">Gönderiler</string>
+    <string name="real_meet">Real Meet</string>
+    <string name="create_post">Yeni Gönderi Oluştur</string>
+    <string name="block_user">Kullanıcıyı Engelle</string>
+    <string name="report_user">Kullanıcıyı Bildir</string>
+    <string name="delete_account">Hesabı Sil</string>
+
+    <!-- Home Screen Additional -->
+    <string name="greeting_evening">İyi Akşamlar 👋</string>
+    <string name="greeting_morning">Günaydın ☀️</string>
+    <string name="greeting_afternoon">Tünaydın 🌤️</string>
+    <string name="live_online">Şimdi Çevrimiçi</string>
+    <string name="online_count">%1$d Çevrimiçi</string>
+    <string name="quick_actions">Hızlı Eylemler</string>
+    <string name="community_hub_title">💬 Real Meet, Real Party, Fantasy</string>
+    <string name="hot_chip">POPÜLER 🔥</string>
+    <string name="friends_chats_chip">👥 Arkadaşlar ve Sohbetler</string>
+    <string name="choose_your_interest">Görüntülü Arama için İlginizi Seçin</string>
+    <string name="select_category_matching">Görüntülü aramayı başlatmak için kategoriyi seçin</string>
+    <string name="straight_desc">Anlamlı sohbetler arayan insanlarla tanışın</string>
+    <string name="gay_desc">Onaylı erkek kullanıcılarla bağlantı kurun</string>
+    <string name="lesbian_desc">Onaylı kadın kullanıcılarla tanışın</string>
+    <string name="menu_share_app">Uygulamayı Paylaş 🚀</string>
+    <string name="menu_rate_app">Uygulamayı Değerlendir ⭐</string>
+    <string name="toast_only_males_gay">Gay bölümüne yalnızca erkekler katılabilir</string>
+    <string name="toast_only_females_lesbian">Lezbiyen bölümüne yalnızca kadınlar katılabilir</string>
+
+    <!-- Create Post & Comments -->
+    <string name="create_post_title">Gönderi Oluştur</string>
+    <string name="whats_on_your_mind">Ne düşünüyorsunuz?</string>
+    <string name="audience_visibility">Hedef Kitle Görünürlüğü</string>
+    <string name="all">Herkes</string>
+    <string name="publish_post">Yayınla</string>
+    <string name="comments_title">Yorumlar</string>
+    <string name="write_a_comment">Bir yorum yazın...</string>
+    <string name="replying_to">%1$s kullanıcısına yanıt veriliyor</string>
+
+    <!-- Legacy / Alternate Aliases for Translations -->
+    <string name="enter_your_name">Adınız nedir?</string>
+    <string name="name_hint">Adınızı girin</string>
+    <string name="select_your_city">Nerede yaşıyorsunuz?</string>
+    <string name="city_hint">Şehrinizi girin</string>
+    <string name="birthday_title">Doğum tarihiniz nedir?</string>
+    <string name="birthday_subtitle">Camverz kullanmak için en az 18 yaşında olmalısınız.</string>
+    <string name="profile_complete">Her şey hazır!</string>
+    <string name="start_connecting">Görüntülü Sohbeti Başlat</string>
+
+    <!-- Feed Empty State & Retry -->
+    <string name="no_posts_available">Şu an gösterilecek gönderi yok.\nİlk gönderiyi siz paylaşın!</string>
+    <string name="refresh_feed">Akışı Yenile</string>
+    <string name="failed_to_load_posts">Gönderiler yüklenemedi.\nTekrar denemek için dokunun.</string>
+    <string name="network_error_retry">Ağ hatası veya bağlantı zaman aşımı.\nLütfen bağlantınızı kontrol edin.</string>
+
+    <!-- Notifications Section -->
+    <string name="notifications_title">Bildirimler</string>
+    <string name="no_notifications_yet">Henüz bildirim yok</string>
+    <string name="delete_notification_title">Bildirimi Sil</string>
+    <string name="delete_notification_confirm">Bu bildirimi silmek istediğinizden emin misiniz?</string>
+    <string name="notif_liked_post">gönderinizi beğendi.</string>
+    <string name="notif_commented_post">gönderinize yorum yaptı.</string>
+    <string name="notif_started_following">sizi takip etmeye başladı.</string>
+    <string name="notif_visited_profile">profilinizi ziyaret etti.</string>
+    <string name="notif_replied_comment">yorumunuza yanıt verdi.</string>
+    <string name="notif_sent_request">size bir istek gönderdi.</string>
+    <string name="notif_sent_request_accepted">size bir istek gönderdi (Kabul Edildi).</string>
+    <string name="notif_sent_request_rejected">size bir istek gönderdi (Reddedildi).</string>
+    <string name="notif_accepted_friend_req">arkadaşlık isteğinizi kabul etti.</string>
+    <string name="notif_sent_notification">bir bildirim gönderdi.</string>
+    <string name="failed_accept_request">İstek kabul edilemedi</string>
+    <string name="failed_reject_request">İstek reddedilemedi</string>
+    <string name="accept">Kabul Et</string>
+    <string name="reject">Reddet</string>
+    <string name="decline">Reddet</string>
+    <string name="someone">Birisi</string>
+
+    <!-- Time / Timestamp Suffixes -->
+    <string name="time_days_ago">g önce</string>
+    <string name="time_hours_ago">s önce</string>
+    <string name="time_mins_ago">dk önce</string>
+    <string name="time_just_now">az önce</string>
+
+    <!-- Community Alerts / Notifications -->
+    <string name="community_alerts_title">🔔 Topluluk Bildirimleri</string>
+    <string name="requests_and_party_broadcasts">İstekler ve Parti Duyuruları</string>
+    <string name="tab_real_meet">Real Meet</string>
+    <string name="tab_fantasy">Fantezi</string>
+    <string name="tab_party">Parti</string>
+    <string name="no_notifications_in_category">Bu kategoride bildirim yok.</string>
+    <string name="notif_realmeet_request">%1$s gönderinizde bağlantı kurma isteğinde bulundu: \"%2$s\"</string>
+    <string name="notif_realmeet_accepted">%1$s gönderi için isteğinizi kabul etti: \"%2$s\"</string>
+    <string name="notif_party_announcement">%1$s parti için bir duyuru yayınladı: \"%2$s\"</string>
+    <string name="notif_community_generic">%1$s konuyla ilgili topluluk bildirimi gönderdi: \"%2$s\"</string>
+    <string name="request_accepted_toast">İstek Kabul Edildi!</string>
+    <string name="request_declined_toast">İstek Reddedildi</string>
+    <string name="failed_update_status">Durum güncellenemedi</string>
+    <string name="failed_to_decline">Reddedilemedi</string>
+    <string name="network_error_loading_alerts">Bildirimler yüklenirken ağ hatası oluştu</string>
+
+    <!-- Messages / Inbox Section -->
+    <string name="messages_title">Mesajlar</string>
+    <string name="search_messages_people">Mesaj ve kişi ara...</string>
+    <string name="active_now">Şimdi Aktif</string>
+    <string name="no_messages_yet">Henüz mesaj yok\nGörüntülü aramanızdan sonra sohbet etmeye başlayın</string>
+    <string name="delete_chat_title">Sohbeti Sil</string>
+    <string name="delete_chat_confirm">Bu sohbeti silmek istediğinizden emin misiniz?</string>
+    <string name="chat_deleted">Sohbet silindi</string>
+    <string name="failed_delete_chat">Sohbet silinemedi</string>
+    <string name="unknown_user">Bilinmiyor</string>
+
+    <!-- Community Inbox -->
+    <string name="community_inbox_title">💬 Topluluk Gelen Kutusu</string>
+    <string name="realmeet_fantasy_connections">Real Meet ve Fantezi Bağlantıları</string>
+    <string name="friends_online">Çevrimiçi Arkadaşlar</string>
+    <string name="no_active_community_chats">Henüz aktif topluluk sohbeti yok.</string>
+    <string name="accept_incoming_requests_subtext">Bire bir özel sohbetler başlatmak için gelen istekleri kabul edin.</string>
+    <string name="chats_count_single">1 Sohbet</string>
+    <string name="chats_count_plural">%1$d Sohbet</string>
+    <string name="tap_to_open_chat">Özel topluluk sohbetini açmak için dokunun</string>
+    <string name="video_call_pref">🎥 Görüntülü Arama</string>
+    <string name="direct_chat_pref">💬 Doğrudan Sohbet</string>
+
+    <!-- Chat Room / Chat Screen -->
+    <string name="type_a_message">Bir mesaj yazın...</string>
+    <string name="send">Gönder</string>
+    <string name="seen">Görüldü</string>
+    <string name="chat_title">Sohbet</string>
+    <string name="blocked_user_send_msg_error">Bu kullanıcıyı engellediniz. Mesaj göndermek için engeli kaldırın.</string>
+    <string name="blocked_by_other_send_msg_error">Bu kullanıcı sizi engellediği için mesaj gönderemezsiniz.</string>
+    <string name="blocked_user_call_error">Bu kullanıcıyı engellediniz. Arama yapmak için engeli kaldırın.</string>
+    <string name="blocked_by_other_call_error">Bu kullanıcı sizi engellediği için arama yapamazsınız.</string>
+    <string name="failed_to_send">Gönderilemedi</string>
+    <string name="delete_message_title">Mesajı Sil</string>
+    <string name="delete_message_not_supported">Tekil mesaj silme henüz desteklenmiyor.</string>
+    <string name="ok">Tamam</string>
+    <string name="delete">Sil</string>
+    <string name="back">Geri</string>
+    <string name="network_error">Ağ hatası</string>
+
+    <!-- Profile Section -->
+    <string name="change">Değiştir</string>
+    <string name="verify_identity">Kimliği Doğrula</string>
+    <string name="premium_vip_pass">Premium VIP Bilet</string>
+    <string name="loading_plan_status">⏱️ Paket durumu yükleniyor...</string>
+    <string name="followers">Takipçiler</string>
+    <string name="following">Takip Edilen</string>
+    <string name="follow">Takip Et</string>
+    <string name="message">Mesaj</string>
+    <string name="bio">Biyografi</string>
+    <string name="write_your_bio_hint">Biyografinizi yazın...</string>
+    <string name="primary_preference">Birincil Tercih</string>
+    <string name="posts">Gönderiler</string>
+    <string name="blocked_users">Engellenen Kullanıcılar</string>
+    <string name="legal_privacy">Gizlilik &amp; Yasal Şartlar</string>
+    <string name="unblock_user">Engeli Kaldır</string>
+    <string name="unblock">Engeli Kaldır</string>
+    <string name="choose_avatar">Avatarınızı Seçin</string>
+    <string name="sex_pref_cannot_be_changed">Cinsiyet tercihi bir kez ayarlandıktan sonra değiştirilemez.</string>
+    <string name="verify_identity_before_pref">Lütfen tercih ayarlamadan önce kimliğinizi doğrulayın.</string>
+    <string name="user_not_logged_in">Kullanıcı giriş yapmadı.</string>
+    <string name="blocked_user_title">Engellenen Kullanıcı</string>
+    <string name="profile_updated_toast">Profil güncellendi</string>
+    <string name="failed_update_profile">Profil güncellenemedi</string>
+    <string name="account_deleted_toast">Hesap silindi</string>
+    <string name="failed_delete_account">Hesap silinemedi</string>
+    <string name="user_blocked_toast">Kullanıcı engellendi</string>
+    <string name="failed_block_user">Kullanıcı engellenemedi</string>
+    <string name="user_unblocked_toast">Kullanıcı engeli kaldırıldı</string>
+    <string name="failed_unblock_user">Engel kaldırılamadı</string>
+    <string name="request_sent_toast">İstek Gönderildi</string>
+    <string name="failed_send_request">İstek gönderilemedi</string>
+    <string name="unfriend_user_title">Arkadaşlıktan Çıkar</string>
+    <string name="cancel_request_title">İsteği İptal Et</string>
+    <string name="unfriend_user_confirm">Bu kullanıcıyı arkadaşlarınızdan çıkarmak istediğinizden emin misiniz?</string>
+    <string name="cancel_request_confirm">Arkadaşlık isteğinizi iptal etmek istediğinizden emin misiniz?</string>
+    <string name="action_completed_toast">İşlem başarıyla tamamlandı</string>
+    <string name="failed_action_toast">İşlem tamamlanamadı</string>
+    <string name="unfollowed_toast">Takipten çıkarıldı</string>
+    <string name="following_toast">Takip ediliyor</string>
+    <string name="failed_unfollow">Takipten çıkarma başarısız</string>
+    <string name="failed_follow">Takip etme başarısız</string>
+    <string name="friends">Arkadaşlar</string>
+    <string name="requested">İstendi</string>
+    <string name="accept_request">İsteği Kabul Et</string>
+    <string name="add_friend">Arkadaş Ekle</string>
+    <string name="active_plan_prefix">\nAktif Paket: %1$s</string>
+    <string name="expires_prefix"> (Bitiş: %1$s)</string>
+    <string name="free_member">Ücretsiz Üye</string>
+    <string name="remaining_expired">Süresi doldu</string>
+    <string name="remaining_days_hours">⏱️ %1$d gün %2$d saat kaldı</string>
+    <string name="remaining_hours_mins">⏱️ %1$d saat %2$d dakika kaldı</string>
+    <string name="remaining_mins">⏱️ %1$d dakika kaldı</string>
+    <string name="block_user_title">Kullanıcıyı Engelle</string>
+    <string name="block_user_confirm">Bu kullanıcıyı engellemek istediğinizden emin misiniz? Size mesaj gönderemeyecek ve gönderilerinizi göremeyecektir.</string>
+    <string name="unblock_user_title">Engeli Kaldır</string>
+    <string name="unblock_user_confirm">Bu kullanıcının engelini kaldırmak istiyor musunuz?</string>
+    <string name="change_gender_title">Cinsiyeti %1$s olarak değiştir?</string>
+    <string name="change_gender_confirm">Cinsiyetinizi değiştirmek istediğinizden emin misiniz?\n\n⚠️ UYARI: Değiştirildiğinde profil doğrulama ayarlarınız güncellenecektir.\n\n%1$s</string>
+    <string name="gender_warning_female">🔒 Kadın profilleri eşleşmeye başlamak için canlı yüz doğrulaması gerektirir.</string>
+    <string name="gender_warning_male">🔓 Erkek profilleri değiştirildiğinde otomatik doğrulanır.</string>
+    <string name="gender_updated_toast">Cinsiyet %1$s olarak güncellendi</string>
+    <string name="failed_change_gender">Cinsiyet değiştirilemedi</string>
+    <string name="user_not_found_title">Kullanıcı Bulunamadı</string>
+    <string name="user_not_found_msg">Bu kullanıcı profili artık mevcut değil.</string>
+    <string name="failed_load_profile">Profil yüklenemedi.</string>
+    <string name="delete_account_confirm">Bu işlem kalıcıdır ve geri alınamaz. Tüm verileriniz silinecektir.</string>
+    <string name="type_delete_to_confirm">Onaylamak için \'delete\' yazın</string>
+    <string name="delete_word">delete</string>
+    <string name="access_restricted">Erişim Kısıtlandı</string>
+    <string name="user_blocked_you">Bu kullanıcı sizi engelledi.</string>
+    <string name="account_deleted_title">Hesap Silindi</string>
+    <string name="account_deleted_msg">Bu kullanıcı hesabı artık kullanılabilir değil.</string>
+    <string name="failed_load_blocked_users">Engellenen kullanıcılar yüklenemedi</string>
+    <string name="unblocked_user_toast">%1$s engeli kaldırıldı</string>
+    <string name="delete_post_title">Gönderiyi Sil</string>
+    <string name="delete_post_confirm">Bu gönderiyi silmek istediğinizden emin misiniz?</string>
+    <string name="post_deleted_toast">Gönderi silindi</string>
+    <string name="failed_delete_post">Gönderi silinirken hata oluştu</string>
+    <string name="login_to_like_posts">Gönderileri beğenmek için giriş yapın</string>
+    <string name="gender_male">Erkek</string>
+    <string name="gender_female">Kadın</string>
+    <string name="yes_change">Evet, Değiştir</string>
+    <string name="yes">Evet</string>
+    <string name="no">Hayır</string>
+    <string name="return_to_video_calling">Görüntülü Arama</string>
+    <string name="real_meet_subtitle">Bugün gerçek hayatta sizinle kimlerin buluşmak istediğini görün</string>
+    <string name="requests_tab">📩 İstekler</string>
+    <string name="inbox_tab">💬 Gelen Kutusu</string>
+    <string name="notifications_tab">🔔 Bildirimler</string>
+    <string name="filter_all_cities">🌐 Tüm Şehirler</string>
+    <string name="filter_in_my_city">🏙️ Şehrimde</string>
+    <string name="hint_search_realmeet">Şehir, mekan, amaç ara...</string>
+    <string name="real_meet_default_bio">Real Meet profilime hoş geldiniz.</string>
+    <string name="my_active_posts_title">Aktif Real Meet ve Fantezi Gönderilerim</string>
+    <string name="my_hosted_parties_title">Ev Sahipliği Yaptığım Partiler</string>
+    <string name="my_saved_parties_title">Kaydedilen Partilerim</string>
+    <string name="no_posts_found_search">Aramanızla eşleşen gönderi bulunamadı.</string>
+    <string name="dock_meets">Buluşmalar</string>
+    <string name="dock_fantasy">Fantezi</string>
+    <string name="dock_party">Parti</string>
+    <string name="announcements_and_members">Duyurular ve Üyeler</string>
+    <string name="accepted_guests">👥 Kabul Edilen Konuklar</string>
+    <string name="announcements">📢 Duyurular</string>
+    <string name="hint_type_announcement">Konuklar için duyuru yazın...</string>
+    <string name="host_a_real_world_party">🎉 Gerçek Bir Partiye Ev Sahipliği Yapın</string>
+    <string name="host_party_subtitle">Yakındaki insanları etkinliğinize veya ev partinize davet edin</string>
+    <string name="party_vibe_title">PARTİ HAWASI / BAŞLIĞI</string>
+    <string name="hint_party_purpose">ör. Hafta Sonu Ev Partisi, Barbekü</string>
+    <string name="venue_location">MEKAN KONUMU</string>
+    <string name="hint_party_venue">ör. Çatı Penthouse, Şehir Merkezi</string>
+    <string name="max_capacity">MAKSİMUM KAPASİTE</string>
+    <string name="hint_capacity">ör. 10</string>
+    <string name="target_audience">HEDEF KİTLE</string>
+    <string name="party_date_time">PARTİ TARİHİ VE SAATİ</string>
+    <string name="select_time_hint">⏰ Saat Seçin (Saati açmak için dokunun)</string>
+    <string name="clock">🕒 SAAT</string>
+    <string name="host_event">Etkinlik Düzenle</string>
+    <string name="share_your_fantasy">💭 Fantezinizi Paylaşın</string>
+    <string name="fantasy_subtitle">Arzularınızı güvenli ve anonim olarak ifade edin</string>
+    <string name="relationship_status">İLİŞKİ DURUMU</string>
+    <string name="interests_vibes">İLGİ ALANLARI / TARZ</string>
+    <string name="hint_interests">ör. Yıldızları izlemek, Kahve, Rol yapma...</string>
+    <string name="fantasy_text_label">FANTEZİ METNİ (MAKS. 200 HARF)</string>
+    <string name="hint_fantasy_description">Gizli fantezinizi buraya yazın...</string>
+    <string name="publish_fantasy">Fanteziyi Yayınla</string>
+    <string name="vip_party_host_badge">👑 VIP PARTİ EV SAHİBİ</string>
+    <string name="join_party_btn">🎉 Partiye Katıl</string>
+    <string name="interests_and_vibe_upper">İLGİ ALANLARI VE TARZ</string>
+    <string name="my_fantasy_upper">FANTEZİM</string>
+    <string name="secret_connect_btn">✨ Gizli Bağlantı</string>
+    <string name="delete_post_btn">🗑️ Gönderiyi Sil</string>
+    <string name="requested_btn">📩 İstendi</string>
+    <string name="already_requested_connect">Bu gönderi için zaten bağlantı isteği gönderdiniz.</string>
+    <string name="connect_and_meet_btn">⚡ Bağlan ve Buluş</string>
+    <string name="by_prefix">Tarafından</string>
+    <string name="yrs_suffix">Yaş</string>
+    <string name="max_guests_format">👥 %1$d Maks • </string>
+    <string name="everyone">HERKES</string>
+    <string name="delete_party_btn">🗑️ Partiyi Sil</string>
+    <string name="already_requested_party">Bu parti için zaten davet isteğinde bulundunuz.</string>
+    <string name="delete_fantasy_btn">🗑️ Fanteziyi Sil</string>
+    <string name="already_requested_fantasy">Bu fantezi için zaten bağlantı isteğinde bulundunuz.</string>
+    <string name="nearby">Yakında</string>
+    <string name="for_prefix">İçin:</string>
+    <string name="real_meet_post">Real Meet Gönderisi</string>
+    <string name="private_video_call">Özel Görüntülü Arama</string>
+    <string name="prefers_video_call">🎥 Özel Görüntülü Aramayı Tercih Eder</string>
+    <string name="prefers_direct_chat">💬 Doğrudan Sohbeti Tercih Eder</string>
+    <string name="status_accepted_btn">✅ Kabul Edildi</string>
+    <string name="status_declined_btn">❌ Reddedildi</string>
+    <string name="access_required_title">Erişim Gerekli</string>
+    <string name="access_required_msg">Yerel şehir filtrelemesine erişiminiz yok. Daha fazla bilgi için Tamam\'a dokunun.</string>
+    <string name="could_not_open_browser">Tarayıcı açılamadı</string>
+    <string name="set_city_first">Lütfen önce profilinizde şehrinizi ayarlayın</string>
+    <string name="party_deleted_toast">Parti silindi</string>
+    <string name="fantasy_deleted_toast">Fantezi silindi</string>
+    <string name="request_status_updated">İstek durumu güncellendi</string>
+    <string name="request_deleted_toast">İstek silindi</string>
+    <string name="own_post_toast">Bu sizin kendi gönderiniz!</string>
+    <string name="request_already_sent">Bu gönderi için zaten istek gönderildi!</string>
+    <string name="request_sent_to_user">📩 İstek %1$s kullanıcısına gönderildi!</string>
+    <string name="removed_saved_party">Kaydedilen partilerden kaldırıldı</string>
+    <string name="saved_to_list">Listenize kaydedildi!</string>
+    <string name="active_post_exists_title">Bugün Aktif Gönderi Var</string>
+    <string name="active_post_exists_msg">Bugün zaten aktif bir Real Meet gönderiniz var:
+"%1$s" (%2$s konumunda).
+
+Günde yalnızca 1 Real Meet yayınlayabilirsiniz. Önceki gönderinizi değiştirmek ister misiniz?</string>
+    <string name="active_party_exists_title">Bugün Aktif Parti Etkinliği Var</string>
+    <string name="active_party_exists_msg">Bugün zaten yayınlanmış aktif bir parti etkinliğiniz var:
+"%1$s" (%2$s konumunda).
+
+Günde yalnızca 1 parti etkinliği yayınlayabilirsiniz. Önceki etkinliğinizi değiştirmek ister misiniz?</string>
+    <string name="select_meeting_time_title">Buluşma Saatini Seçin</string>
+    <string name="enter_meeting_purpose">Lütfen buluşma amacını girin</string>
+    <string name="enter_location">Lütfen konumu girin</string>
+    <string name="write_description">Lütfen kısa bir açıklama yazın</string>
+    <string name="publishing_post">Gönderi yayınlanıyor...</string>
+    <string name="post_published_toast">✨ Real Meet gönderisi yayınlandı!</string>
+    <string name="failed_publish_post">Gönderi yayınlanamadı. Tekrar deneyin.</string>
+    <string name="select_party_time_title">Parti Saatini Seçin</string>
+    <string name="fill_party_details">Lütfen tüm parti detaylarını doldurun</string>
+    <string name="publishing_party">Parti etkinliği yayınlanıyor...</string>
+    <string name="party_published_toast">🎉 Parti etkinliği yayınlandı!</string>
+    <string name="failed_publish_party">Parti etkinliği yayınlanamadı.</string>
+    <string name="enter_fantasy_text">Lütfen fantezi metninizi girin</string>
+    <string name="sharing_fantasy">Fantezi paylaşılıyor...</string>
+    <string name="fantasy_shared_toast">💭 Fantezi paylaşıldı!</string>
+    <string name="failed_share_fantasy">Fantezi paylaşılamadı.</string>
+    <string name="ad_skipped_toast">Reklam atlandı. Yayınlanmadı.</string>
+    <string name="failed_load_members">Üyeler yüklenemedi</string>
+    <string name="failed_load_announcements">Duyurular yüklenemedi</string>
+    <string name="announcement_posted_toast">Duyuru yayınlandı!</string>
+    <string name="failed_post_announcement">Duyuru yayınlanamadı</string>
+    <string name="post_owner">gönderi sahibi</string>
+    <string name="community_post">Topluluk Gönderisi</string>
+    <string name="nearby_venue">Yakındaki Mekan</string>
+    <string name="scheduled">Planlandı</string>
+    <string name="no_additional_details">Ek detay yok.</string>
+    <string name="preferred_audience_prefix">🎯 Tercih Edilen Kitle: </string>
+    <string name="replace_post_btn">Gönderiyi Değiştir</string>
+    <string name="replace_event_btn">Etkinliği Değiştir</string>
+    <string name="community_host">Topluluk Ev Sahibi</string>
+    <string name="community_member">Topluluk Üyesi</string>
+    <string name="community_meet">Topluluk Buluşması</string>
+    <string name="post_real_meet_dialog_title">📍 Real Meet Yayınla</string>
+    <string name="post_real_meet_dialog_subtitle">Bugün yakınınızda buluşmak isteyen insanları bulun</string>
+    <string name="purpose_of_meet_label">BULUŞMA AMACI</string>
+    <string name="hint_realmeet_purpose">ör. Kahve ve Sohbet, Sürüş, Sinema...</string>
+    <string name="location_landmark_label">KONUM / NENGİ</string>
+    <string name="hint_realmeet_location">ör. Şehir merkezi yakınındaki kafe</string>
+    <string name="meeting_time_label">BULUŞMA SAATİ</string>
+    <string name="description_label">AÇIKLAMA (MAKS. 200 HARF)</string>
+    <string name="hint_realmeet_description">Neden buluşmak istediğinizi açıklayın...</string>
+    <string name="publish_post_btn">Yayınla</string>
+    <string name="full_details_description_upper">TÜM DETAYLAR VE AÇIKLAMA</string>
+    <string name="send_request_btn">⚡ İstek Gönder</string>
+    <string name="btn_video_call">🎥 Görüntülü Arama</string>
+    <string name="btn_chat_now">💬 Şimdi Sohbet Et</string>
+    <string name="select_date_title">Buluşma Tarihini Seçin</string>
+    <string name="select_date_time_hint">📅 Tarih ve Saat Seçin</string>
+    <string name="select_party_date_time_hint">📅 Parti Tarih ve Saatini Seçin</string>
+    <string name="select_future_date_time">Lütfen gelecekteki bir tarih ve saat seçin</string>
+    <string name="target_audience_everyone">Herkes (Everyone)</string>
+    <string name="target_audience_female">Yalnızca Kadınlar (Female Only)</string>
+    <string name="target_audience_male">Yalnızca Erkekler (Male Only)</string>
+    <string name="status_single">Bekar (Single)</string>
+    <string name="status_married">Evli (Married)</string>
+    <string name="status_divorced">Boşanmış (Divorced)</string>
+    <string name="status_widowed">Dul (Widowed)</string>
+    <string name="send_meet_request_title">📩 Buluşma İsteği Gönder</string>
+    <string name="connecting_with_user">%1$s ile bağlantı kuruluyor</string>
+    <string name="quick_icebreakers_upper">HIZLI MESAJLAR</string>
+    <string name="icebreaker_coffee">☕ Selam! Seninle bir kahve içmek isterim</string>
+    <string name="icebreaker_count_me_in">🎉 Beni de say! Bağlantı kuralım!</string>
+    <string name="icebreaker_talk_privately">🔒 Gönderini beğendim, özelden konuşalım!</string>
+    <string name="your_message_note_upper">MESAJINIZ / NOTUNUZ</string>
+    <string name="hint_request_message">Mesajınızı veya karşılama cümlenizi yazın...</string>
+    <string name="preferred_contact_mode_upper">TERCİH EDİLEN İLETİŞİM MODU</string>
+    <string name="pref_video_call">🎥 Görüntülü Arama</string>
+    <string name="pref_direct_chat">💬 Doğrudan Sohbet</string>
+    <string name="filter_in_city_param">🏙️ %1$s Konumunda</string>
+    <string name="no_posts_in_city">%1$s konumunda henüz buluşma gönderisi yok.</string>
+    <string name="no_parties_matching">Aramanızla eşleşen parti bulunamadı.</string>
+    <string name="no_fantasies_matching">Aramanızla eşleşen fantezi gönderisi bulunamadı.</string>
+    <string name="post_expired">Bu gönderinin süresi doldu.</string>
+    <string name="default_request_msg">Selam! Buluşma gönderinizle ilgileniyorum.</string>
+</resources>

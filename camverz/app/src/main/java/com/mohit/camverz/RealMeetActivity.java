@@ -1,7 +1,9 @@
 package com.mohit.camverz;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import java.text.SimpleDateFormat;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -290,15 +292,15 @@ public class RealMeetActivity extends BaseActivity {
         chipFilterCity.setOnClickListener(v -> {
             if (!tokenManager.hasCommunityPlan()) {
                 new androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("Access Required")
-                        .setMessage("You don't have access to local city filtering. Tap OK to learn more.")
+                        .setTitle(getString(R.string.access_required_title))
+                        .setMessage(getString(R.string.access_required_msg))
                         .setPositiveButton("OK", (dialog, which) -> {
                             try {
                                 Intent browserIntent = new Intent(Intent.ACTION_VIEW,
                                         android.net.Uri.parse("https://camverz.com"));
                                 startActivity(browserIntent);
                             } catch (Exception e) {
-                                Toast.makeText(this, "Could not open browser", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, getString(R.string.could_not_open_browser), Toast.LENGTH_SHORT).show();
                             }
                         })
                         .setNegativeButton("Cancel", null)
@@ -307,7 +309,7 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             if (currentUserCity == null || currentUserCity.isEmpty()) {
-                Toast.makeText(this, "Please set your city in your profile first", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.set_city_first), Toast.LENGTH_SHORT).show();
                 return;
             }
             isCityFilterActive = true;
@@ -408,7 +410,17 @@ public class RealMeetActivity extends BaseActivity {
                             JsonArray arr = body.getAsJsonArray("realMeetPosts");
                             List<RealMeetPost> serverPosts = new ArrayList<>();
                             for (JsonElement el : arr) {
-                                serverPosts.add(gson.fromJson(el, RealMeetPost.class));
+                                RealMeetPost p = gson.fromJson(el, RealMeetPost.class);
+                                if (p != null) {
+                                    if (p.isExpired()) {
+                                        api.deleteRealMeetServerPost(p.getId()).enqueue(new Callback<JsonObject>() {
+                                            @Override public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {}
+                                            @Override public void onFailure(Call<JsonObject> c, Throwable t) {}
+                                        });
+                                    } else {
+                                        serverPosts.add(p);
+                                    }
+                                }
                             }
                             store.setRealMeetPosts(serverPosts);
                         }
@@ -416,7 +428,17 @@ public class RealMeetActivity extends BaseActivity {
                             JsonArray arr = body.getAsJsonArray("partyPosts");
                             List<PartyPost> serverParties = new ArrayList<>();
                             for (JsonElement el : arr) {
-                                serverParties.add(gson.fromJson(el, PartyPost.class));
+                                PartyPost p = gson.fromJson(el, PartyPost.class);
+                                if (p != null) {
+                                    if (p.isExpired()) {
+                                        api.deleteRealMeetServerPost(p.getId()).enqueue(new Callback<JsonObject>() {
+                                            @Override public void onResponse(Call<JsonObject> c, Response<JsonObject> r) {}
+                                            @Override public void onFailure(Call<JsonObject> c, Throwable t) {}
+                                        });
+                                    } else {
+                                        serverParties.add(p);
+                                    }
+                                }
                             }
                             store.setPartyPosts(serverParties);
                         }
@@ -578,8 +600,9 @@ public class RealMeetActivity extends BaseActivity {
                 isCityFilterActive ? R.drawable.bg_luxury_tab_unselected : R.drawable.bg_luxury_tab_selected);
         chipFilterGlobal.setTextColor(isCityFilterActive ? Color.parseColor("#8E8E93") : Color.BLACK);
 
-        String cityText = (currentUserCity != null && !currentUserCity.isEmpty()) ? "🏙️ In " + currentUserCity
-                : "🏙️ In My City";
+        String cityText = (currentUserCity != null && !currentUserCity.isEmpty())
+                ? getString(R.string.filter_in_city_param, currentUserCity)
+                : getString(R.string.filter_in_my_city);
         chipFilterCity.setText(cityText);
         chipFilterCity.setBackgroundResource(
                 isCityFilterActive ? R.drawable.bg_luxury_tab_selected : R.drawable.bg_luxury_tab_unselected);
@@ -592,6 +615,7 @@ public class RealMeetActivity extends BaseActivity {
             List<RealMeetPost> allPosts = store.getRealMeetPosts();
             List<RealMeetPost> filtered = new ArrayList<>();
             for (RealMeetPost p : allPosts) {
+                if (p.isExpired()) continue;
                 boolean cityMatches = !isCityFilterActive
                         || (currentUserCity != null && currentUserCity.equalsIgnoreCase(p.getCity()));
                 boolean searchMatches = searchQuery.isEmpty() ||
@@ -605,8 +629,8 @@ public class RealMeetActivity extends BaseActivity {
             }
             if (filtered.isEmpty()) {
                 emptyView.setVisibility(View.VISIBLE);
-                tvEmptyText.setText(isCityFilterActive ? "No Real Meet posts in " + currentUserCity + " yet."
-                        : "No Real Meet posts available right now.");
+                tvEmptyText.setText(isCityFilterActive ? getString(R.string.no_posts_in_city, currentUserCity != null ? currentUserCity : "")
+                        : getString(R.string.no_posts_found_search));
             }
             RealMeetAdapter adapter = new RealMeetAdapter(this, filtered, currentUserId,
                     new RealMeetAdapter.OnPostActionListener() {
@@ -629,7 +653,7 @@ public class RealMeetActivity extends BaseActivity {
                                 }
                             });
                             loadCurrentTabFeed();
-                            Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.post_deleted_toast), Toast.LENGTH_SHORT).show();
                         }
                     });
             recyclerView.setAdapter(adapter);
@@ -638,6 +662,7 @@ public class RealMeetActivity extends BaseActivity {
             List<PartyPost> partyPosts = store.getPartyPosts();
             List<PartyPost> filtered = new ArrayList<>();
             for (PartyPost p : partyPosts) {
+                if (p.isExpired()) continue;
                 boolean searchMatches = searchQuery.isEmpty() ||
                         (p.getPurpose() != null && p.getPurpose().toLowerCase().contains(searchQuery)) ||
                         (p.getVenue() != null && p.getVenue().toLowerCase().contains(searchQuery)) ||
@@ -648,19 +673,19 @@ public class RealMeetActivity extends BaseActivity {
             }
             if (filtered.isEmpty()) {
                 emptyView.setVisibility(View.VISIBLE);
-                tvEmptyText.setText("No parties hosted right now matching search.");
+                tvEmptyText.setText(getString(R.string.no_parties_matching));
             }
             PartyAdapter adapter = new PartyAdapter(this, filtered, currentUserId,
                     new PartyAdapter.OnPartyActionListener() {
                         @Override
                         public void onJoinPartyClicked(PartyPost post) {
-                            if ("female only".equalsIgnoreCase(post.getTargetGender())) {
+                            if ("female only".equalsIgnoreCase(post.getTargetGender()) || "केवल महिलाएं (female only)".equalsIgnoreCase(post.getTargetGender())) {
                                 boolean isFemale = currentUserGender != null
                                         && currentUserGender.toLowerCase().startsWith("f");
                                 boolean isVerified = tokenManager.isVerified();
                                 if (!isFemale || !isVerified) {
                                     Toast.makeText(RealMeetActivity.this,
-                                            "🔒 Only verified females can join this party event.", Toast.LENGTH_LONG)
+                                            getString(R.string.access_required_msg), Toast.LENGTH_LONG)
                                             .show();
                                     return;
                                 }
@@ -682,7 +707,7 @@ public class RealMeetActivity extends BaseActivity {
                                 }
                             });
                             loadCurrentTabFeed();
-                            Toast.makeText(RealMeetActivity.this, "Party deleted", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.party_deleted_toast), Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -707,7 +732,7 @@ public class RealMeetActivity extends BaseActivity {
             }
             if (filtered.isEmpty()) {
                 emptyView.setVisibility(View.VISIBLE);
-                tvEmptyText.setText("No fantasy posts matching search.");
+                tvEmptyText.setText(getString(R.string.no_fantasies_matching));
             }
             FantasyAdapter adapter = new FantasyAdapter(this, filtered, currentUserId,
                     new FantasyAdapter.OnFantasyActionListener() {
@@ -730,7 +755,7 @@ public class RealMeetActivity extends BaseActivity {
                                 }
                             });
                             loadCurrentTabFeed();
-                            Toast.makeText(RealMeetActivity.this, "Fantasy deleted", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.fantasy_deleted_toast), Toast.LENGTH_SHORT).show();
                         }
                     });
             recyclerView.setAdapter(adapter);
@@ -791,7 +816,7 @@ public class RealMeetActivity extends BaseActivity {
                             });
 
                             loadCurrentTabFeed();
-                            Toast.makeText(RealMeetActivity.this, "Request status updated to " + newStatus,
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.request_status_updated) + ": " + newStatus,
                                     Toast.LENGTH_SHORT).show();
                         }
 
@@ -799,7 +824,7 @@ public class RealMeetActivity extends BaseActivity {
                         public void onDeleteRequestClicked(RealMeetRequest request) {
                             store.deleteMeetRequest(request.getId());
                             loadCurrentTabFeed();
-                            Toast.makeText(RealMeetActivity.this, "Request deleted", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.request_deleted_toast), Toast.LENGTH_SHORT).show();
                         }
                     });
             recyclerView.setAdapter(adapter);
@@ -808,12 +833,12 @@ public class RealMeetActivity extends BaseActivity {
 
     private void openSendRequestModal(String postId, String postTitle, String posterUserId, String posterName) {
         if (currentUserId != null && currentUserId.equalsIgnoreCase(posterUserId)) {
-            Toast.makeText(this, "This is your own post!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.own_post_toast), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (store.hasUserRequestedPost(currentUserId, postId)) {
-            Toast.makeText(this, "Request already sent for this post!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.request_already_sent), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -830,16 +855,16 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnCancelReq = dialogView.findViewById(R.id.btnCancelReq);
         TextView btnSendReq = dialogView.findViewById(R.id.btnSendReq);
 
-        tvDialogSub.setText("Connecting with " + (posterName != null ? posterName : "Post Owner"));
+        tvDialogSub.setText(getString(R.string.connecting_with_user, (posterName != null ? posterName : getString(R.string.post_owner))));
 
-        final String[] selectedPref = { "Private Video Call" };
+        final String[] selectedPref = { getString(R.string.private_video_call) };
 
         chipIce1.setOnClickListener(v -> etRequestMessage.setText(chipIce1.getText().toString()));
         chipIce2.setOnClickListener(v -> etRequestMessage.setText(chipIce2.getText().toString()));
         chipIce3.setOnClickListener(v -> etRequestMessage.setText(chipIce3.getText().toString()));
 
         btnPrefVideo.setOnClickListener(v -> {
-            selectedPref[0] = "Private Video Call";
+            selectedPref[0] = getString(R.string.private_video_call);
             btnPrefVideo.setBackgroundResource(R.drawable.bg_luxury_tab_selected);
             btnPrefVideo.setTextColor(Color.BLACK);
             btnPrefChat.setBackgroundResource(R.drawable.bg_luxury_tab_unselected);
@@ -847,7 +872,7 @@ public class RealMeetActivity extends BaseActivity {
         });
 
         btnPrefChat.setOnClickListener(v -> {
-            selectedPref[0] = "Direct Chat";
+            selectedPref[0] = getString(R.string.prefers_direct_chat);
             btnPrefChat.setBackgroundResource(R.drawable.bg_luxury_tab_selected);
             btnPrefChat.setTextColor(Color.BLACK);
             btnPrefVideo.setBackgroundResource(R.drawable.bg_luxury_tab_unselected);
@@ -859,7 +884,7 @@ public class RealMeetActivity extends BaseActivity {
         btnSendReq.setOnClickListener(v -> {
             String msg = etRequestMessage.getText().toString().trim();
             if (msg.isEmpty()) {
-                msg = "Hey! I'm interested in your meet post.";
+                msg = getString(R.string.default_request_msg);
             }
 
             RealMeetRequest req = new RealMeetRequest(
@@ -895,7 +920,7 @@ public class RealMeetActivity extends BaseActivity {
             });
 
             dialog.dismiss();
-            Toast.makeText(this, "📩 Request sent to " + (posterName != null ? posterName : "post owner") + "!",
+            Toast.makeText(this, getString(R.string.request_sent_to_user, posterName != null ? posterName : getString(R.string.post_owner)),
                     Toast.LENGTH_LONG).show();
         });
 
@@ -922,7 +947,7 @@ public class RealMeetActivity extends BaseActivity {
         tvFullNameAge.setText(TextHelper.getPostHeader(this, name, null, isVerified, null));
 
         SpannableStringBuilder meta = new SpannableStringBuilder();
-        meta.append(age + " Yrs");
+        meta.append(age + " ").append(getString(R.string.yrs_suffix));
         if (gender != null && !gender.isEmpty()) {
             meta.append(" • ");
             int start = meta.length();
@@ -953,13 +978,13 @@ public class RealMeetActivity extends BaseActivity {
 
         tvFullSubtext.setText(meta);
 
-        tvFullTitle.setText(title != null ? title : "Community Post");
-        tvFullVenue.setText(venue != null ? "📍 " + venue : "📍 Nearby Venue");
-        tvFullTime.setText(time != null ? "⏰ " + time : "⏰ Scheduled");
-        tvFullDescription.setText(description != null ? description : "No additional details.");
+        tvFullTitle.setText(title != null ? title : getString(R.string.community_post));
+        tvFullVenue.setText(venue != null ? "📍 " + venue : "📍 " + getString(R.string.nearby_venue));
+        tvFullTime.setText(time != null ? "⏰ " + time : "⏰ " + getString(R.string.scheduled));
+        tvFullDescription.setText(description != null ? description : getString(R.string.no_additional_details));
 
         if (targetGender != null && !targetGender.isEmpty()) {
-            tvFullTargetAudience.setText("🎯 Preferred Audience: " + targetGender);
+            tvFullTargetAudience.setText(getString(R.string.preferred_audience_prefix) + targetGender);
             tvFullTargetAudience.setVisibility(View.VISIBLE);
         } else {
             tvFullTargetAudience.setVisibility(View.GONE);
@@ -1079,7 +1104,7 @@ public class RealMeetActivity extends BaseActivity {
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                 }
             });
-            Toast.makeText(this, "Removed from saved parties", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.removed_saved_party), Toast.LENGTH_SHORT).show();
         } else {
             api.saveParty(postId).enqueue(new Callback<JsonObject>() {
                 @Override
@@ -1090,7 +1115,7 @@ public class RealMeetActivity extends BaseActivity {
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                 }
             });
-            Toast.makeText(this, "Saved to your list!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.saved_to_list), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -1199,7 +1224,7 @@ public class RealMeetActivity extends BaseActivity {
                             }
                         });
                         updateProfileUI();
-                        Toast.makeText(RealMeetActivity.this, "Post deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(RealMeetActivity.this, getString(R.string.post_deleted_toast), Toast.LENGTH_SHORT).show();
                     }
                 });
         profileRecyclerView.setAdapter(profileAdapter);
@@ -1221,12 +1246,10 @@ public class RealMeetActivity extends BaseActivity {
         RealMeetPost existingPost = store.getUserPostToday(currentUserId);
         if (existingPost != null) {
             new AlertDialog.Builder(this)
-                    .setTitle("Active Post Exists Today")
-                    .setMessage("You already have an active Real Meet post today:\n\"" + existingPost.getPurpose()
-                            + "\" at " + existingPost.getLocation()
-                            + ".\n\nYou can only post 1 Real Meet per day. Would you like to replace your previous post?")
-                    .setPositiveButton("Replace Post", (dialog, which) -> openRealMeetDialog(existingPost))
-                    .setNegativeButton("Cancel", null)
+                    .setTitle(getString(R.string.active_post_exists_title))
+                    .setMessage(getString(R.string.active_post_exists_msg, existingPost.getPurpose(), existingPost.getLocation()))
+                    .setPositiveButton(getString(R.string.replace_post_btn), (dialog, which) -> openRealMeetDialog(existingPost))
+                    .setNegativeButton(getString(R.string.cancel), null)
                     .show();
         } else {
             openRealMeetDialog(null);
@@ -1237,12 +1260,10 @@ public class RealMeetActivity extends BaseActivity {
         PartyPost existingParty = store.getUserPartyPostToday(currentUserId);
         if (existingParty != null) {
             new AlertDialog.Builder(this)
-                    .setTitle("Active Party Event Exists Today")
-                    .setMessage("You already have an active Party event posted today:\n\"" + existingParty.getPurpose()
-                            + "\" at " + existingParty.getVenue()
-                            + ".\n\nYou can only post 1 Party event per day. Would you like to replace your previous event?")
-                    .setPositiveButton("Replace Event", (dialog, which) -> openPartyDialog(existingParty))
-                    .setNegativeButton("Cancel", null)
+                    .setTitle(getString(R.string.active_party_exists_title))
+                    .setMessage(getString(R.string.active_party_exists_msg, existingParty.getPurpose(), existingParty.getVenue()))
+                    .setPositiveButton(getString(R.string.replace_event_btn), (dialog, which) -> openPartyDialog(existingParty))
+                    .setNegativeButton(getString(R.string.cancel), null)
                     .show();
         } else {
             openPartyDialog(null);
@@ -1262,35 +1283,57 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnCancel = dialogView.findViewById(R.id.btnCancel);
         TextView btnPublish = dialogView.findViewById(R.id.btnPublish);
 
-        Calendar nowCal = Calendar.getInstance();
-        int curHour = nowCal.get(Calendar.HOUR_OF_DAY);
-        int curMin = nowCal.get(Calendar.MINUTE);
-        String initialAmPm = curHour >= 12 ? "PM" : "AM";
-        int initialFormattedHour = curHour % 12;
-        if (initialFormattedHour == 0)
-            initialFormattedHour = 12;
-        String initialTime = String.format(Locale.getDefault(), "Today at %d:%02d %s", initialFormattedHour, curMin,
-                initialAmPm);
+        Calendar selectedCal = Calendar.getInstance();
+        selectedCal.add(Calendar.HOUR_OF_DAY, 2);
 
-        final String[] selectedTime = { initialTime };
-        tvSelectedTime.setText("⏰ " + initialTime);
+        final long[] selectedMeetingTimestamp = { selectedCal.getTimeInMillis() };
+        SimpleDateFormat sdfDefault = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
+        final String[] selectedTime = { sdfDefault.format(selectedCal.getTime()) };
+        tvSelectedTime.setText("📅 " + selectedTime[0]);
 
         btnPickTime.setOnClickListener(v -> {
-            Calendar mcurrentTime = Calendar.getInstance();
-            int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
-            int minute = mcurrentTime.get(Calendar.MINUTE);
-            TimePickerDialog mTimePicker = new TimePickerDialog(RealMeetActivity.this,
-                    (timePicker, selectedHour, selectedMinute) -> {
-                        String amPm = selectedHour >= 12 ? "PM" : "AM";
-                        int formattedHour = selectedHour % 12;
-                        if (formattedHour == 0)
-                            formattedHour = 12;
-                        selectedTime[0] = String.format(Locale.getDefault(), "Today at %d:%02d %s", formattedHour,
-                                selectedMinute, amPm);
-                        tvSelectedTime.setText("⏰ " + selectedTime[0]);
-                    }, hour, minute, false);
-            mTimePicker.setTitle("Select Meeting Time");
-            mTimePicker.show();
+            Calendar nowCal = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    RealMeetActivity.this,
+                    R.style.CustomDatePickerTheme,
+                    (view, year, month, dayOfMonth) -> {
+                        selectedCal.set(Calendar.YEAR, year);
+                        selectedCal.set(Calendar.MONTH, month);
+                        selectedCal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                                RealMeetActivity.this,
+                                R.style.CustomDatePickerTheme,
+                                (timeView, hourOfDay, minute) -> {
+                                    selectedCal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                    selectedCal.set(Calendar.MINUTE, minute);
+                                    selectedCal.set(Calendar.SECOND, 0);
+
+                                    long chosenTs = selectedCal.getTimeInMillis();
+                                    if (chosenTs < System.currentTimeMillis()) {
+                                        Toast.makeText(RealMeetActivity.this, getString(R.string.select_future_date_time), Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+
+                                    selectedMeetingTimestamp[0] = chosenTs;
+                                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
+                                    selectedTime[0] = sdf.format(selectedCal.getTime());
+                                    tvSelectedTime.setText("📅 " + selectedTime[0]);
+                                },
+                                nowCal.get(Calendar.HOUR_OF_DAY),
+                                nowCal.get(Calendar.MINUTE),
+                                false
+                        );
+                        timePickerDialog.setTitle(getString(R.string.select_meeting_time_title));
+                        timePickerDialog.show();
+                    },
+                    nowCal.get(Calendar.YEAR),
+                    nowCal.get(Calendar.MONTH),
+                    nowCal.get(Calendar.DAY_OF_MONTH)
+            );
+            datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+            datePickerDialog.setTitle(getString(R.string.select_date_title));
+            datePickerDialog.show();
         });
 
         etDescription.addTextChangedListener(new TextWatcher() {
@@ -1316,15 +1359,15 @@ public class RealMeetActivity extends BaseActivity {
             String description = etDescription.getText().toString().trim();
 
             if (purpose.isEmpty()) {
-                Toast.makeText(this, "Please enter meeting purpose", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.enter_meeting_purpose), Toast.LENGTH_SHORT).show();
                 return;
             }
             if (location.isEmpty()) {
-                Toast.makeText(this, "Please enter location", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.enter_location), Toast.LENGTH_SHORT).show();
                 return;
             }
             if (description.isEmpty()) {
-                Toast.makeText(this, "Please write a brief description", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.write_description), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -1357,6 +1400,7 @@ public class RealMeetActivity extends BaseActivity {
                     tokenManager.isVerified(),
                     tokenManager.isVerified(),
                     tokenManager.getSexPreference() != null ? tokenManager.getSexPreference() : "Straight",
+                    selectedMeetingTimestamp[0],
                     System.currentTimeMillis());
 
             dialog.setCancelable(false);
@@ -1373,14 +1417,14 @@ public class RealMeetActivity extends BaseActivity {
                 Map<String, Object> body = new HashMap<>();
                 body.put("type", "REAL_MEET");
                 body.put("post", newPost);
-                Toast.makeText(this, "Publishing post...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.publishing_post), Toast.LENGTH_SHORT).show();
                 api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                     @Override
                     public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
                             fetchFeedFromServer();
-                            Toast.makeText(RealMeetActivity.this, "✨ Real Meet post published!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.post_published_toast), Toast.LENGTH_LONG).show();
                         });
                     }
 
@@ -1388,7 +1432,7 @@ public class RealMeetActivity extends BaseActivity {
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
-                            Toast.makeText(RealMeetActivity.this, "Failed to publish post. Try again.", Toast.LENGTH_SHORT)
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_publish_post), Toast.LENGTH_SHORT)
                                     .show();
                             fetchFeedFromServer();
                         });
@@ -1414,39 +1458,61 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnPublishParty = dialogView.findViewById(R.id.btnPublishParty);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
-                new String[] { "Everyone", "Female Only", "Male Only" });
+                new String[] { getString(R.string.target_audience_everyone), getString(R.string.target_audience_female), getString(R.string.target_audience_male) });
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerTargetGender.setAdapter(adapter);
 
-        Calendar nowPartyCal = Calendar.getInstance();
-        int curPartyHour = nowPartyCal.get(Calendar.HOUR_OF_DAY);
-        int curPartyMin = nowPartyCal.get(Calendar.MINUTE);
-        String initialPartyAmPm = curPartyHour >= 12 ? "PM" : "AM";
-        int initialPartyFormattedHour = curPartyHour % 12;
-        if (initialPartyFormattedHour == 0)
-            initialPartyFormattedHour = 12;
-        String initialPartyTime = String.format(Locale.getDefault(), "Upcoming %d:%02d %s", initialPartyFormattedHour,
-                curPartyMin, initialPartyAmPm);
+        Calendar selectedPartyCal = Calendar.getInstance();
+        selectedPartyCal.add(Calendar.HOUR_OF_DAY, 3);
 
-        final String[] selectedTime = { initialPartyTime };
-        tvSelectedPartyTime.setText("⏰ " + initialPartyTime);
+        final long[] selectedPartyTimestamp = { selectedPartyCal.getTimeInMillis() };
+        SimpleDateFormat sdfDefaultParty = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
+        final String[] selectedPartyTimeStr = { sdfDefaultParty.format(selectedPartyCal.getTime()) };
+        tvSelectedPartyTime.setText("📅 " + selectedPartyTimeStr[0]);
 
         btnPickPartyTime.setOnClickListener(v -> {
-            Calendar mcurrentTime = Calendar.getInstance();
-            int hour = mcurrentTime.get(Calendar.HOUR_OF_DAY);
-            int minute = mcurrentTime.get(Calendar.MINUTE);
-            TimePickerDialog mTimePicker = new TimePickerDialog(RealMeetActivity.this,
-                    (timePicker, selectedHour, selectedMinute) -> {
-                        String amPm = selectedHour >= 12 ? "PM" : "AM";
-                        int formattedHour = selectedHour % 12;
-                        if (formattedHour == 0)
-                            formattedHour = 12;
-                        selectedTime[0] = String.format(Locale.getDefault(), "Upcoming %d:%02d %s", formattedHour,
-                                selectedMinute, amPm);
-                        tvSelectedPartyTime.setText("⏰ " + selectedTime[0]);
-                    }, hour, minute, false);
-            mTimePicker.setTitle("Select Party Time");
-            mTimePicker.show();
+            Calendar nowCal = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(
+                    RealMeetActivity.this,
+                    R.style.CustomDatePickerTheme,
+                    (view, year, month, dayOfMonth) -> {
+                        selectedPartyCal.set(Calendar.YEAR, year);
+                        selectedPartyCal.set(Calendar.MONTH, month);
+                        selectedPartyCal.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                                RealMeetActivity.this,
+                                R.style.CustomDatePickerTheme,
+                                (timeView, hourOfDay, minute) -> {
+                                    selectedPartyCal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                                    selectedPartyCal.set(Calendar.MINUTE, minute);
+                                    selectedPartyCal.set(Calendar.SECOND, 0);
+
+                                    long chosenTs = selectedPartyCal.getTimeInMillis();
+                                    if (chosenTs < System.currentTimeMillis()) {
+                                        Toast.makeText(RealMeetActivity.this, getString(R.string.select_future_date_time), Toast.LENGTH_SHORT).show();
+                                        return;
+                                    }
+
+                                    selectedPartyTimestamp[0] = chosenTs;
+                                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
+                                    selectedPartyTimeStr[0] = sdf.format(selectedPartyCal.getTime());
+                                    tvSelectedPartyTime.setText("📅 " + selectedPartyTimeStr[0]);
+                                },
+                                nowCal.get(Calendar.HOUR_OF_DAY),
+                                nowCal.get(Calendar.MINUTE),
+                                false
+                        );
+                        timePickerDialog.setTitle(getString(R.string.select_party_time_title));
+                        timePickerDialog.show();
+                    },
+                    nowCal.get(Calendar.YEAR),
+                    nowCal.get(Calendar.MONTH),
+                    nowCal.get(Calendar.DAY_OF_MONTH)
+            );
+            datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
+            datePickerDialog.setTitle(getString(R.string.select_date_title));
+            datePickerDialog.show();
         });
 
         btnCancelParty.setOnClickListener(v -> dialog.dismiss());
@@ -1458,7 +1524,7 @@ public class RealMeetActivity extends BaseActivity {
             String targetGender = spinnerTargetGender.getSelectedItem().toString();
 
             if (purpose.isEmpty() || venue.isEmpty() || capStr.isEmpty()) {
-                Toast.makeText(this, "Please fill out all party details", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.fill_party_details), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -1485,10 +1551,11 @@ public class RealMeetActivity extends BaseActivity {
                     purpose,
                     capacity,
                     targetGender,
-                    selectedTime[0],
+                    selectedPartyTimeStr[0],
                     currentUserGender,
                     tokenManager.isVerified(),
                     tokenManager.isVerified(),
+                    selectedPartyTimestamp[0],
                     System.currentTimeMillis());
 
             dialog.setCancelable(false);
@@ -1505,14 +1572,14 @@ public class RealMeetActivity extends BaseActivity {
                 Map<String, Object> body = new HashMap<>();
                 body.put("type", "PARTY");
                 body.put("post", partyPost);
-                Toast.makeText(this, "Publishing party event...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.publishing_party), Toast.LENGTH_SHORT).show();
                 api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                     @Override
                     public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
                             fetchFeedFromServer();
-                            Toast.makeText(RealMeetActivity.this, "🎉 Party event published!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.party_published_toast), Toast.LENGTH_LONG).show();
                         });
                     }
 
@@ -1520,7 +1587,7 @@ public class RealMeetActivity extends BaseActivity {
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
-                            Toast.makeText(RealMeetActivity.this, "Failed to publish party event.", Toast.LENGTH_SHORT)
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_publish_party), Toast.LENGTH_SHORT)
                                     .show();
                             fetchFeedFromServer();
                         });
@@ -1544,7 +1611,7 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnPublishFantasy = dialogView.findViewById(R.id.btnPublishFantasy);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
-                new String[] { "Single", "Married", "Divorced", "Widowed" });
+                new String[] { getString(R.string.status_single), getString(R.string.status_married), getString(R.string.status_divorced), getString(R.string.status_widowed) });
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerStatus.setAdapter(adapter);
 
@@ -1571,7 +1638,7 @@ public class RealMeetActivity extends BaseActivity {
             String description = etFantasyDescription.getText().toString().trim();
 
             if (description.isEmpty()) {
-                Toast.makeText(this, "Please enter your fantasy text", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.enter_fantasy_text), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -1604,14 +1671,14 @@ public class RealMeetActivity extends BaseActivity {
                 Map<String, Object> body = new HashMap<>();
                 body.put("type", "FANTASY");
                 body.put("post", fantasyPost);
-                Toast.makeText(this, "Sharing fantasy...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.sharing_fantasy), Toast.LENGTH_SHORT).show();
                 api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                     @Override
                     public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
                             fetchFeedFromServer();
-                            Toast.makeText(RealMeetActivity.this, "💭 Fantasy shared!", Toast.LENGTH_LONG).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.fantasy_shared_toast), Toast.LENGTH_LONG).show();
                         });
                     }
 
@@ -1619,7 +1686,7 @@ public class RealMeetActivity extends BaseActivity {
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
-                            Toast.makeText(RealMeetActivity.this, "Failed to share fantasy.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_share_fantasy), Toast.LENGTH_SHORT).show();
                             fetchFeedFromServer();
                         });
                     }
@@ -1651,7 +1718,7 @@ public class RealMeetActivity extends BaseActivity {
                 if (rewarded) {
                     if (onAdCompleted != null) runOnUiThread(onAdCompleted);
                 } else {
-                    runOnUiThread(() -> Toast.makeText(RealMeetActivity.this, "Ad skipped or incomplete. Post was not published.", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> Toast.makeText(RealMeetActivity.this, getString(R.string.ad_skipped_toast), Toast.LENGTH_SHORT).show());
                 }
             }
 

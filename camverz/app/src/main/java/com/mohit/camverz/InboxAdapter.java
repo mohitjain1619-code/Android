@@ -86,12 +86,12 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.InboxViewHol
 
         holder.itemView.setOnLongClickListener(v -> {
             new AlertDialog.Builder(context)
-                    .setTitle("Delete Chat")
-                    .setMessage("Are you sure you want to delete this chat?")
-                    .setPositiveButton("Delete", (dialog, which) -> {
+                    .setTitle(context.getString(R.string.delete_chat_title))
+                    .setMessage(context.getString(R.string.delete_chat_confirm))
+                    .setPositiveButton(context.getString(R.string.delete), (dialog, which) -> {
                         deleteConversation(conversation.getUserId(), holder.getAdapterPosition());
                     })
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(context.getString(R.string.cancel), null)
                     .show();
             return true;
         });
@@ -118,16 +118,16 @@ public class InboxAdapter extends RecyclerView.Adapter<InboxAdapter.InboxViewHol
                             conversationList.remove(position);
                             notifyItemRemoved(position);
                         }
-                        Toast.makeText(context, "Chat deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.chat_deleted), Toast.LENGTH_SHORT).show();
                         return;
                     }
                 }
-                Toast.makeText(context, "Failed to delete chat", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.failed_delete_chat), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

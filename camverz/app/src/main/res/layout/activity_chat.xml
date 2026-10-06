@@ -31,7 +31,7 @@
                 app:tint="@color/text_primary"
                 android:clickable="true"
                 android:focusable="true"
-                android:contentDescription="Back" />
+                android:contentDescription="@string/back" />
 
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/toolbar_avatar"
@@ -117,7 +117,7 @@
             android:layout_marginEnd="10dp"
             android:layout_weight="1"
             android:background="@drawable/bg_glass_card_premium"
-            android:hint="Type a message..."
+            android:hint="@string/type_a_message"
             android:paddingStart="18dp"
             android:paddingEnd="18dp"
             android:textColor="@color/text_primary"
@@ -130,7 +130,7 @@
             android:layout_height="46dp"
             android:background="@drawable/bg_btn_primary_glossy"
             android:paddingHorizontal="22dp"
-            android:text="Send"
+            android:text="@string/send"
             android:textAllCaps="false"
             android:textColor="@color/text_white"
             android:textSize="14sp"

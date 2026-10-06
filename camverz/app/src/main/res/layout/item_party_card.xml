@@ -25,7 +25,7 @@
             android:letterSpacing="0.05"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
-            android:text="👑 VIP PARTY HOST"
+            android:text="@string/vip_party_host_badge"
             android:textColor="#FFD60A"
             android:textSize="9sp"
             android:textStyle="bold" />
@@ -179,7 +179,7 @@
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="9dp"
-            android:text="🎉 Join Party"
+            android:text="@string/join_party_btn"
             android:textColor="#000000"
             android:textSize="11sp"
             android:textStyle="bold" />

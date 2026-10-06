@@ -46,7 +46,7 @@
                 android:id="@+id/tvBoardSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Announcements &amp; Members"
+                android:text="@string/announcements_and_members"
                 android:textColor="#8E8E93"
                 android:textSize="10sp" />
         </LinearLayout>
@@ -73,7 +73,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="👥 Accepted Guests"
+                android:text="@string/accepted_guests"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold"
@@ -90,7 +90,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📢 Announcements"
+            android:text="@string/announcements"
             android:textColor="#FFFFFF"
             android:textSize="13sp"
             android:textStyle="bold"
@@ -123,7 +123,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@drawable/bg_search_bar"
-            android:hint="Type announcement to guests..."
+            android:hint="@string/hint_type_announcement"
             android:textColorHint="#636366"
             android:textColor="#FFFFFF"
             android:textSize="13sp"

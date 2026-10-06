@@ -85,7 +85,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="INTERESTS &amp; VIBE"
+        android:text="@string/interests_and_vibe_upper"
         android:textColor="#8E8E93"
         android:textSize="8sp"
         android:textStyle="bold" />
@@ -108,7 +108,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="MY FANTASY"
+        android:text="@string/my_fantasy_upper"
         android:textColor="#8E8E93"
         android:textSize="8sp"
         android:textStyle="bold" />
@@ -145,7 +145,7 @@
         android:focusable="true"
         android:gravity="center"
         android:paddingVertical="9dp"
-        android:text="✨ Secret Connect"
+        android:text="@string/secret_connect_btn"
         android:textColor="#FFFFFF"
         android:textSize="11sp"
         android:textStyle="bold" />

@@ -67,7 +67,7 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
                 System.currentTimeMillis(),
                 DateUtils.MINUTE_IN_MILLIS
         );
-        holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : "Nearby") + " • " + relativeTime);
+        holder.tvCity.setText("📍 " + (post.getCity() != null ? post.getCity() : context.getString(R.string.nearby)) + " • " + relativeTime);
         holder.tvTimeAgo.setVisibility(View.GONE);
 
         if (post.isPremium()) {
@@ -93,21 +93,21 @@ public class RealMeetAdapter extends RecyclerView.Adapter<RealMeetAdapter.ViewHo
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, post.getId());
 
         if (currentUserId != null && currentUserId.equalsIgnoreCase(post.getUserId())) {
-            holder.btnConnect.setText("🗑️ Delete Post");
+            holder.btnConnect.setText(context.getString(R.string.delete_post_btn));
             holder.btnConnect.setBackgroundResource(R.drawable.bg_luxury_chip);
             holder.btnConnect.setTextColor(Color.WHITE);
             holder.btnConnect.setOnClickListener(v -> {
                 if (listener != null) listener.onDeleteClicked(post);
             });
         } else if (hasRequested) {
-            holder.btnConnect.setText("📩 Requested");
+            holder.btnConnect.setText(context.getString(R.string.requested_btn));
             holder.btnConnect.setBackgroundResource(R.drawable.bg_luxury_pill_dark);
             holder.btnConnect.setTextColor(Color.parseColor("#8E8E93"));
             holder.btnConnect.setOnClickListener(v -> {
-                android.widget.Toast.makeText(context, "You have already requested to connect for this post.", android.widget.Toast.LENGTH_SHORT).show();
+                android.widget.Toast.makeText(context, context.getString(R.string.already_requested_connect), android.widget.Toast.LENGTH_SHORT).show();
             });
         } else {
-            holder.btnConnect.setText("⚡ Connect & Meet");
+            holder.btnConnect.setText(context.getString(R.string.connect_and_meet_btn));
             holder.btnConnect.setBackgroundResource(R.drawable.bg_neon_amber_button);
             holder.btnConnect.setTextColor(Color.BLACK);
             holder.btnConnect.setOnClickListener(v -> {

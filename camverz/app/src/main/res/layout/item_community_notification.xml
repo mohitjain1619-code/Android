@@ -81,7 +81,7 @@
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="8dp"
-            android:text="Accept"
+            android:text="@string/accept"
             android:textColor="#000000"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -96,7 +96,7 @@
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="8dp"
-            android:text="Decline"
+            android:text="@string/decline"
             android:textColor="#FFFFFF"
             android:textSize="11sp"
             android:textStyle="bold" />

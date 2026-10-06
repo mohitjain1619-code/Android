@@ -104,7 +104,7 @@ public class CommunityNotificationActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(CommunityNotificationActivity.this, "Network error loading alerts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CommunityNotificationActivity.this, getString(R.string.network_error_loading_alerts), Toast.LENGTH_SHORT).show();
             }
         });
     }

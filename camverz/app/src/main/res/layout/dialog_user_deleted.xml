@@ -26,7 +26,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="Account Deleted"
+            android:text="@string/account_deleted_title"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:gravity="center"
-            android:text="This user account is no longer available."
+            android:text="@string/account_deleted_msg"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/bg_btn_primary_gradient"
-            android:text="OK"
+            android:text="@string/ok"
             android:textAllCaps="false"
             android:textColor="@color/text_white"
             android:textSize="15sp"

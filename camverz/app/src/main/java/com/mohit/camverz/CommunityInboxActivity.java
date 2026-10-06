@@ -85,7 +85,7 @@ public class CommunityInboxActivity extends BaseActivity {
             Intent intent = new Intent(CommunityInboxActivity.this, ChatActivity.class);
             boolean isPoster = currentUserId != null && currentUserId.equalsIgnoreCase(request.getPosterUserId());
             String partnerId = isPoster ? request.getApplicantUserId() : request.getPosterUserId();
-            String partnerName = isPoster ? request.getApplicantName() : (request.getPosterName() != null && !request.getPosterName().isEmpty() ? request.getPosterName() : "Community Host");
+            String partnerName = isPoster ? request.getApplicantName() : (request.getPosterName() != null && !request.getPosterName().isEmpty() ? request.getPosterName() : getString(R.string.community_host));
             String partnerAvatar = isPoster ? request.getApplicantAvatar() : request.getPosterAvatar();
             String partnerPhotoUrl = isPoster ? request.getApplicantPhotoUrl() : request.getPosterPhotoUrl();
 
@@ -237,11 +237,15 @@ public class CommunityInboxActivity extends BaseActivity {
         if (activeConnections.isEmpty()) {
             emptyView.setVisibility(View.VISIBLE);
             inboxRecyclerView.setVisibility(View.GONE);
-            tvActiveCount.setText("0 Chats");
+            tvActiveCount.setText(getString(R.string.chats_count_plural, 0));
         } else {
             emptyView.setVisibility(View.GONE);
             inboxRecyclerView.setVisibility(View.VISIBLE);
-            tvActiveCount.setText(activeConnections.size() + (activeConnections.size() == 1 ? " Chat" : " Chats"));
+            if (activeConnections.size() == 1) {
+                tvActiveCount.setText(getString(R.string.chats_count_single));
+            } else {
+                tvActiveCount.setText(getString(R.string.chats_count_plural, activeConnections.size()));
+            }
         }
 
         adapter.notifyDataSetChanged();
@@ -277,15 +281,15 @@ public class CommunityInboxActivity extends BaseActivity {
             boolean isCurrentApplicant = currentUserId != null && currentUserId.equalsIgnoreCase(req.getApplicantUserId());
             
             String partnerName = isCurrentApplicant ? 
-                    (req.getPosterName() != null && !req.getPosterName().isEmpty() ? req.getPosterName() : "Community Host") :
-                    (req.getApplicantName() != null && !req.getApplicantName().isEmpty() ? req.getApplicantName() : "Community Member");
+                    (req.getPosterName() != null && !req.getPosterName().isEmpty() ? req.getPosterName() : holder.itemView.getContext().getString(R.string.community_host)) :
+                    (req.getApplicantName() != null && !req.getApplicantName().isEmpty() ? req.getApplicantName() : holder.itemView.getContext().getString(R.string.community_member));
 
             String partnerGender = isCurrentApplicant ? req.getPosterGender() : req.getApplicantGender();
             int partnerAge = isCurrentApplicant ? (req.getPosterAge() > 0 ? req.getPosterAge() : 22) : (req.getApplicantAge() > 0 ? req.getApplicantAge() : 22);
             boolean partnerVerified = isCurrentApplicant ? req.isPosterVerified() : req.isApplicantVerified();
             String partnerAvatar = isCurrentApplicant ? req.getPosterAvatar() : req.getApplicantAvatar();
             String partnerPhotoUrl = isCurrentApplicant ? req.getPosterPhotoUrl() : req.getApplicantPhotoUrl();
-            String partnerCity = isCurrentApplicant ? "Nearby" : (req.getApplicantCity() != null ? req.getApplicantCity() : "Nearby");
+            String partnerCity = isCurrentApplicant ? holder.itemView.getContext().getString(R.string.nearby) : (req.getApplicantCity() != null ? req.getApplicantCity() : holder.itemView.getContext().getString(R.string.nearby));
 
             String genderBadge = " ♂️ ";
             if (partnerGender != null && partnerGender.toLowerCase().startsWith("f")) {
@@ -297,12 +301,14 @@ public class CommunityInboxActivity extends BaseActivity {
             String verifiedBadge = isVerified ? " ✔️" : "";
 
             holder.tvInboxNameAge.setText(partnerName + " " + genderBadge + " " + partnerAge + verifiedBadge);
-            holder.tvInboxSubtext.setText("📍 " + partnerCity + " • For: " + (req.getPostTitle() != null ? req.getPostTitle() : "Community Meet"));
-            holder.tvInboxLastMessage.setText(req.getMessage() != null && !req.getMessage().isEmpty() ? req.getMessage() : "Tap to open 1-on-1 community chat");
+            holder.tvInboxSubtext.setText("📍 " + partnerCity + " • " + holder.itemView.getContext().getString(R.string.for_prefix) + " " + (req.getPostTitle() != null ? req.getPostTitle() : holder.itemView.getContext().getString(R.string.community_meet)));
+            
+            String tapToOpenStr = holder.itemView.getContext().getString(R.string.tap_to_open_chat);
+            holder.tvInboxLastMessage.setText(req.getMessage() != null && !req.getMessage().isEmpty() ? req.getMessage() : tapToOpenStr);
 
             String pref = req.getContactPreference() != null ? req.getContactPreference() : "Private Call";
             boolean isVideoPref = pref.toLowerCase().contains("video");
-            holder.tvInboxPrefBadge.setText(isVideoPref ? "🎥 Video Call" : "💬 Direct Chat");
+            holder.tvInboxPrefBadge.setText(isVideoPref ? holder.itemView.getContext().getString(R.string.video_call_pref) : holder.itemView.getContext().getString(R.string.direct_chat_pref));
 
             AvatarHelper.loadAvatar(holder.itemView.getContext(), partnerPhotoUrl, partnerAvatar, partnerName, holder.ivInboxAvatar);
 

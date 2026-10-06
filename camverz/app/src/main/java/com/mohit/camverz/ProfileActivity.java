@@ -160,7 +160,7 @@ public class ProfileActivity extends BaseActivity {
 
                 // Once set, no change!
                 if (!tokenManager.getSexPreference().isEmpty()) {
-                    Toast.makeText(this, "Sex preference once set cannot be changed.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.sex_pref_cannot_be_changed), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -168,7 +168,7 @@ public class ProfileActivity extends BaseActivity {
                 String gender = tokenManager.getUserGender();
                 boolean isVerified = tokenManager.isVerified();
                 if ("female".equalsIgnoreCase(gender) && !isVerified) {
-                    Toast.makeText(this, "Please verify your identity before setting preference.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.verify_identity_before_pref), Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -208,7 +208,7 @@ public class ProfileActivity extends BaseActivity {
                 visitedUserId = currentUserId;
             }
         } else {
-            Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.user_not_logged_in), Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -289,7 +289,7 @@ public class ProfileActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -316,7 +316,7 @@ public class ProfileActivity extends BaseActivity {
     }
 
     private void updateUIForBlockedUser() {
-        profileName.setText("Blocked User");
+        profileName.setText(getString(R.string.blocked_user_title));
         bio.setText("");
         profileDetails.setText("");
         userId.setText("");
@@ -419,29 +419,35 @@ public class ProfileActivity extends BaseActivity {
     private void showPopupMenu(View view) {
         PopupMenu popup = new PopupMenu(this, view);
 
+        String blockedUsersStr = getString(R.string.blocked_users);
+        String legalPrivacyStr = getString(R.string.legal_privacy);
+        String deleteAccountStr = getString(R.string.delete_account);
+        String unblockUserStr = getString(R.string.unblock_user);
+        String blockUserStr = getString(R.string.block_user);
+
         if (currentUserId.equals(visitedUserId)) {
-            popup.getMenu().add("Blocked Users");
-            popup.getMenu().add("Privacy & Legal Terms");
-            popup.getMenu().add("Delete Account");
+            popup.getMenu().add(blockedUsersStr);
+            popup.getMenu().add(legalPrivacyStr);
+            popup.getMenu().add(deleteAccountStr);
         } else {
             if (isBlocked) {
-                popup.getMenu().add("Unblock User");
+                popup.getMenu().add(unblockUserStr);
             } else {
-                popup.getMenu().add("Block User");
+                popup.getMenu().add(blockUserStr);
             }
         }
 
         popup.setOnMenuItemClickListener(item -> {
             String title = item.getTitle().toString();
-            if (title.equals("Blocked Users")) {
+            if (title.equals(blockedUsersStr)) {
                 startActivity(new Intent(this, BlockedUsersActivity.class));
-            } else if (title.equals("Privacy & Legal Terms")) {
+            } else if (title.equals(legalPrivacyStr)) {
                 startActivity(new Intent(this, LegalActivity.class));
-            } else if (title.equals("Block User")) {
+            } else if (title.equals(blockUserStr)) {
                 showBlockConfirmationDialog();
-            } else if (title.equals("Unblock User")) {
+            } else if (title.equals(unblockUserStr)) {
                 showUnblockConfirmationDialog();
-            } else if (title.equals("Delete Account")) {
+            } else if (title.equals(deleteAccountStr)) {
                 showDeleteAccountDialog();
             }
             return true;
@@ -500,7 +506,7 @@ public class ProfileActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        Toast.makeText(ProfileActivity.this, "Account deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.account_deleted_toast), Toast.LENGTH_SHORT).show();
                         
                         // Sign out of Google to ensure account picker shows next time
                         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -520,32 +526,32 @@ public class ProfileActivity extends BaseActivity {
                     }
                 }
                 setUpdatingState(false);
-                Toast.makeText(ProfileActivity.this, "Failed to delete account", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.failed_delete_account), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 setUpdatingState(false);
-                Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void showBlockConfirmationDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("Block User")
-                .setMessage("Are you sure you want to block this user? They won't be able to message you or see your posts.")
-                .setPositiveButton("Block", (dialog, which) -> blockUser())
-                .setNegativeButton("Cancel", null)
+                .setTitle(getString(R.string.block_user_title))
+                .setMessage(getString(R.string.block_user_confirm))
+                .setPositiveButton(getString(R.string.block_user), (dialog, which) -> blockUser())
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
     private void showUnblockConfirmationDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("Unblock User")
-                .setMessage("Do you want to unblock this user?")
-                .setPositiveButton("Unblock", (dialog, which) -> unblockUser())
-                .setNegativeButton("Cancel", null)
+                .setTitle(getString(R.string.unblock_user_title))
+                .setMessage(getString(R.string.unblock_user_confirm))
+                .setPositiveButton(getString(R.string.unblock), (dialog, which) -> unblockUser())
+                .setNegativeButton(getString(R.string.cancel), null)
                 .show();
     }
 
@@ -556,17 +562,17 @@ public class ProfileActivity extends BaseActivity {
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 setUpdatingState(false);
                 if (response.isSuccessful()) {
-                    Toast.makeText(ProfileActivity.this, "User blocked", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.user_blocked_toast), Toast.LENGTH_SHORT).show();
                     isBlocked = true;
                     updateUIForBlockedUser();
                 } else {
-                    Toast.makeText(ProfileActivity.this, "Failed to block user", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.failed_block_user), Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 setUpdatingState(false);
-                Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -578,20 +584,20 @@ public class ProfileActivity extends BaseActivity {
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 setUpdatingState(false);
                 if (response.isSuccessful()) {
-                    Toast.makeText(ProfileActivity.this, "User unblocked", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.user_unblocked_toast), Toast.LENGTH_SHORT).show();
                     isBlocked = false;
                     loadData(); 
                     followButton.setVisibility(View.VISIBLE);
                     messageButton.setVisibility(View.VISIBLE);
                     otherUserActionsLayout.setVisibility(View.VISIBLE);
                 } else {
-                    Toast.makeText(ProfileActivity.this, "Failed to unblock user", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.failed_unblock_user), Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 setUpdatingState(false);
-                Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -609,16 +615,16 @@ public class ProfileActivity extends BaseActivity {
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     setUpdatingState(false);
                     if (response.isSuccessful()) {
-                        Toast.makeText(ProfileActivity.this, "Request Sent", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.request_sent_toast), Toast.LENGTH_SHORT).show();
                         loadData();
                     } else {
-                        Toast.makeText(ProfileActivity.this, "Failed to send request", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.failed_send_request), Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     setUpdatingState(false);
-                    Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                 }
             });
         } else if ("received".equals(friendshipStatus)) {
@@ -632,43 +638,43 @@ public class ProfileActivity extends BaseActivity {
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     setUpdatingState(false);
                     if (response.isSuccessful()) {
-                        Toast.makeText(ProfileActivity.this, "Request Accepted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.request_accepted_toast), Toast.LENGTH_SHORT).show();
                         loadData();
                     } else {
-                        Toast.makeText(ProfileActivity.this, "Failed to accept request", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.failed_accept_request), Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     setUpdatingState(false);
-                    Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                 }
             });
         } else if ("sent".equals(friendshipStatus) || "friends".equals(friendshipStatus)) {
             // Cancel request or Unfriend
             new AlertDialog.Builder(this)
-                .setTitle("friends".equals(friendshipStatus) ? "Unfriend User" : "Cancel Request")
-                .setMessage("friends".equals(friendshipStatus) ? "Are you sure you want to remove this user from your friends?" : "Are you sure you want to cancel your friend request?")
-                .setPositiveButton("Yes", (dialog, which) -> {
+                .setTitle("friends".equals(friendshipStatus) ? getString(R.string.unfriend_user_title) : getString(R.string.cancel_request_title))
+                .setMessage("friends".equals(friendshipStatus) ? getString(R.string.unfriend_user_confirm) : getString(R.string.cancel_request_confirm))
+                .setPositiveButton(getString(R.string.yes), (dialog, which) -> {
                     api.deleteFriendRequest(visitedUserId).enqueue(new Callback<JsonObject>() {
                         @Override
                         public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                             setUpdatingState(false);
                             if (response.isSuccessful()) {
-                                Toast.makeText(ProfileActivity.this, "Action completed successfully", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ProfileActivity.this, getString(R.string.action_completed_toast), Toast.LENGTH_SHORT).show();
                                 loadData();
                             } else {
-                                Toast.makeText(ProfileActivity.this, "Failed to complete action", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(ProfileActivity.this, getString(R.string.failed_action_toast), Toast.LENGTH_SHORT).show();
                             }
                         }
                         @Override
                         public void onFailure(Call<JsonObject> call, Throwable t) {
                             setUpdatingState(false);
-                            Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                         }
                     });
                 })
-                .setNegativeButton("No", (dialog, which) -> setUpdatingState(false))
+                .setNegativeButton(getString(R.string.no), (dialog, which) -> setUpdatingState(false))
                 .show();
         }
     }
@@ -683,16 +689,16 @@ public class ProfileActivity extends BaseActivity {
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     setUpdatingState(false);
                     if (response.isSuccessful()) {
-                        Toast.makeText(ProfileActivity.this, "Unfollowed", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.unfollowed_toast), Toast.LENGTH_SHORT).show();
                         loadData();
                     } else {
-                        Toast.makeText(ProfileActivity.this, "Failed to unfollow", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.failed_unfollow), Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     setUpdatingState(false);
-                    Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                 }
             });
         } else {
@@ -701,16 +707,16 @@ public class ProfileActivity extends BaseActivity {
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     setUpdatingState(false);
                     if (response.isSuccessful()) {
-                        Toast.makeText(ProfileActivity.this, "Following", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.following_toast), Toast.LENGTH_SHORT).show();
                         loadData();
                     } else {
-                        Toast.makeText(ProfileActivity.this, "Failed to follow", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.failed_follow), Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     setUpdatingState(false);
-                    Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -740,16 +746,16 @@ public class ProfileActivity extends BaseActivity {
 
         if (!currentUserId.equals(visitedUserId)) {
             if ("friends".equalsIgnoreCase(friendshipStatus)) {
-                followButton.setText("Friends");
+                followButton.setText(getString(R.string.friends));
                 followButton.setBackgroundResource(R.drawable.bg_following_button);
             } else if ("sent".equalsIgnoreCase(friendshipStatus)) {
-                followButton.setText("Requested");
+                followButton.setText(getString(R.string.requested));
                 followButton.setBackgroundResource(R.drawable.bg_following_button);
             } else if ("received".equalsIgnoreCase(friendshipStatus)) {
-                followButton.setText("Accept Request");
+                followButton.setText(getString(R.string.accept_request));
                 followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             } else {
-                followButton.setText("Add Friend");
+                followButton.setText(getString(R.string.add_friend));
                 followButton.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             }
         }
@@ -895,7 +901,7 @@ public class ProfileActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        Toast.makeText(ProfileActivity.this, "Profile updated", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, getString(R.string.profile_updated_toast), Toast.LENGTH_SHORT).show();
                         if ("avatar".equals(field)) {
                             AvatarHelper.loadAvatar(ProfileActivity.this, null, value, visitedUser != null ? visitedUser.getName() : tokenManager.getUserName(), profileImageView);
                             
@@ -928,14 +934,14 @@ public class ProfileActivity extends BaseActivity {
                         return;
                     }
                 }
-                Toast.makeText(ProfileActivity.this, "Failed to update profile", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.failed_update_profile), Toast.LENGTH_SHORT).show();
                 setUpdatingState(false);
                 loadData();
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(ProfileActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                 setUpdatingState(false);
                 loadData(); 
             }
@@ -1034,7 +1040,7 @@ public class ProfileActivity extends BaseActivity {
                                         if (expiresAt.after(new java.util.Date())) {
                                             planNotExpired = true;
                                             java.text.SimpleDateFormat localFormat = new java.text.SimpleDateFormat("dd MMM yyyy, hh:mm a", java.util.Locale.getDefault());
-                                            planExpiryText = " (Expires: " + localFormat.format(expiresAt) + ")";
+                                            planExpiryText = getString(R.string.expires_prefix, localFormat.format(expiresAt));
                                         }
                                     }
                                 } catch (Exception e) {
@@ -1044,7 +1050,7 @@ public class ProfileActivity extends BaseActivity {
 
                             boolean hasActivePlan = !planName.isEmpty() && !planName.equalsIgnoreCase("free") && planNotExpired;
                             if (hasActivePlan) {
-                                activePlanDetails = "\nActive Plan: " + planName + planExpiryText;
+                                activePlanDetails = getString(R.string.active_plan_prefix, planName) + planExpiryText;
                                 tokenManager.savePlanName(planName);
                                 tokenManager.saveHasActivePlan(true);
                                 boolean planIsAdFree = userObj.has("planIsAdFree") && userObj.get("planIsAdFree").getAsBoolean();
@@ -1067,7 +1073,7 @@ public class ProfileActivity extends BaseActivity {
                                     } catch (Exception e) {}
                                 }
                             } else {
-                                activePlanDetails = "\nActive Plan: Free Member";
+                                activePlanDetails = getString(R.string.active_plan_prefix, getString(R.string.free_member));
                                 tokenManager.savePlanName("");
                                 tokenManager.saveHasActivePlan(false);
                                 tokenManager.savePlanIsAdFree(false);
@@ -1104,7 +1110,7 @@ public class ProfileActivity extends BaseActivity {
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
                 setLoadingState(false);
-                Toast.makeText(ProfileActivity.this, "Failed to load profile.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.failed_load_profile), Toast.LENGTH_SHORT).show();
             }
         });
         
@@ -1159,20 +1165,21 @@ public class ProfileActivity extends BaseActivity {
         if (visitedUser == null) return;
         
         final String currentGender = visitedUser.getGender();
-        final String newGender = "male".equalsIgnoreCase(currentGender) ? "female" : "male";
+        final String newGenderLabel = "male".equalsIgnoreCase(currentGender) ? getString(R.string.gender_female) : getString(R.string.gender_male);
+        final String newGenderCode = "male".equalsIgnoreCase(currentGender) ? "female" : "male";
         
         String warningMsg = "male".equalsIgnoreCase(currentGender)
-            ? "🔒 Female profiles require live face verification to start matching."
-            : "🔓 Male profiles are auto-verified on change.";
+            ? getString(R.string.gender_warning_female)
+            : getString(R.string.gender_warning_male);
             
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Change Gender to " + ("male".equalsIgnoreCase(currentGender) ? "Female" : "Male") + "?")
-                .setMessage("Are you sure you want to change your gender?\n\n⚠️ WARNING: Once changed, your profile verification settings will update accordingly.\n\n" + warningMsg)
-                .setPositiveButton("Yes, Change", (dialog, which) -> {
+        builder.setTitle(getString(R.string.change_gender_title, newGenderLabel))
+                .setMessage(getString(R.string.change_gender_confirm, warningMsg))
+                .setPositiveButton(getString(R.string.yes_change), (dialog, which) -> {
                     dialog.dismiss();
-                    performGenderChange(newGender);
+                    performGenderChange(newGenderCode);
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
@@ -1187,7 +1194,8 @@ public class ProfileActivity extends BaseActivity {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null && response.body().get("ok").getAsBoolean()) {
-                    Toast.makeText(ProfileActivity.this, "Gender updated to " + newGender, Toast.LENGTH_SHORT).show();
+                    String genderLabel = "female".equalsIgnoreCase(newGender) ? getString(R.string.gender_female) : getString(R.string.gender_male);
+                    Toast.makeText(ProfileActivity.this, getString(R.string.gender_updated_toast, genderLabel), Toast.LENGTH_SHORT).show();
                     
                     // Update TokenManager local cache
                     String userId = tokenManager.getUserId();
@@ -1199,14 +1207,14 @@ public class ProfileActivity extends BaseActivity {
                     setUpdatingState(false);
                     loadData(); // Reload profile details
                 } else {
-                    Toast.makeText(ProfileActivity.this, "Failed to change gender", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProfileActivity.this, getString(R.string.failed_change_gender), Toast.LENGTH_SHORT).show();
                     setUpdatingState(false);
                 }
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(ProfileActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                 setUpdatingState(false);
             }
         });
@@ -1214,10 +1222,10 @@ public class ProfileActivity extends BaseActivity {
 
     private void showUserDeletedDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("User Not Found")
-                .setMessage("This user profile no longer exists.")
+        builder.setTitle(getString(R.string.user_not_found_title))
+                .setMessage(getString(R.string.user_not_found_msg))
                 .setCancelable(false)
-                .setPositiveButton("OK", (dialog, which) -> {
+                .setPositiveButton(getString(R.string.ok), (dialog, which) -> {
                     dialog.dismiss();
                     finish();
                 });
@@ -1233,7 +1241,7 @@ public class ProfileActivity extends BaseActivity {
 
     private String getRemainingTimeText(long expiryMs) {
         long diffMs = expiryMs - System.currentTimeMillis();
-        if (diffMs <= 0) return "Expired";
+        if (diffMs <= 0) return getString(R.string.remaining_expired);
 
         long diffSec = diffMs / 1000;
         long diffMin = diffSec / 60;
@@ -1242,12 +1250,12 @@ public class ProfileActivity extends BaseActivity {
 
         if (diffDay > 0) {
             long remainingHours = diffHour % 24;
-            return "⏱️ " + diffDay + " days " + remainingHours + " hours remaining";
+            return getString(R.string.remaining_days_hours, diffDay, remainingHours);
         } else if (diffHour > 0) {
             long remainingMin = diffMin % 60;
-            return "⏱️ " + diffHour + " hours " + remainingMin + " minutes remaining";
+            return getString(R.string.remaining_hours_mins, diffHour, remainingMin);
         } else {
-            return "⏱️ " + diffMin + " minutes remaining";
+            return getString(R.string.remaining_mins, diffMin);
         }
     }
 

@@ -86,7 +86,7 @@ public class CallActivity extends AppCompatActivity {
     private FrameLayout localAvatarOverlay;
     private ImageView remoteAvatarBlurBg;
     private CircleImageView remoteAvatarLarge, localAvatarSmall;
-    private TextView remoteAvatarNameText;
+    private TextView remoteAvatarNameText, remoteAvatarStatusText;
 
     private boolean isMuted = false, isVideoOff = false, isSpeakerOn = false;
     private boolean isCameraSwitching = false;
@@ -349,6 +349,7 @@ public class CallActivity extends AppCompatActivity {
         remoteAvatarLarge = findViewById(R.id.remote_avatar_large);
         localAvatarSmall = findViewById(R.id.local_avatar_small);
         remoteAvatarNameText = findViewById(R.id.remote_avatar_name_text);
+        remoteAvatarStatusText = findViewById(R.id.remote_avatar_status_text);
 
         isSpeakerOn = isVideoCall;
         updateSpeakerButtonUI();
@@ -362,23 +363,24 @@ public class CallActivity extends AppCompatActivity {
 
         AvatarHelper.loadAvatar(this, null, tokenManager.getUserAvatar(), tokenManager.getUserName(), localAvatarSmall);
         
+        // Show remote avatar overlay while calling / connecting
+        if (remoteAvatarOverlay != null) {
+            remoteAvatarOverlay.setVisibility(View.VISIBLE);
+        }
+        
         if (!isVideoCall) {
             localViewContainer.setVisibility(View.GONE);
             btnToggleVideo.setVisibility(View.GONE);
             btnSwitchCamera.setVisibility(View.GONE);
             if (btnSpeaker != null) btnSpeaker.setVisibility(View.VISIBLE);
             
-            // For audio calls, force remote overlay (large avatar blur bg) to stay visible
-            remoteAvatarOverlay.setVisibility(View.VISIBLE);
-            TextView textCameraOff = findViewById(R.id.remote_avatar_overlay).findViewById(R.id.remote_avatar_overlay).findViewById(R.id.remote_avatar_name_text);
-            if (textCameraOff != null) {
-                // Remove the "Camera is off" label or replace it with "Voice Call"
-                try {
-                    View textMuted = ((LinearLayout) textCameraOff.getParent()).getChildAt(2);
-                    if (textMuted instanceof TextView) {
-                        ((TextView) textMuted).setText("Voice Call");
-                    }
-                } catch (Exception e) {}
+            // For audio calls, force earpiece default or speaker based on preference
+            if (remoteAvatarStatusText != null) {
+                remoteAvatarStatusText.setText(isPrivateCall && isCaller && !isCallAccepted ? "Calling..." : "Voice Call");
+            }
+        } else {
+            if (remoteAvatarStatusText != null) {
+                remoteAvatarStatusText.setText(isPrivateCall && isCaller && !isCallAccepted ? "Calling..." : "Connecting...");
             }
         }
         
@@ -571,20 +573,6 @@ public class CallActivity extends AppCompatActivity {
         iceServers.add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer());
         iceServers.add(PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer());
 
-        // OpenRelay TURN Servers for NAT Traversal on Mobile Cellular Networks
-        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
-                .setUsername("openrelayproject")
-                .setPassword("openrelayproject")
-                .createIceServer());
-        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443")
-                .setUsername("openrelayproject")
-                .setPassword("openrelayproject")
-                .createIceServer());
-        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443?transport=tcp")
-                .setUsername("openrelayproject")
-                .setPassword("openrelayproject")
-                .createIceServer());
-
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
         rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
@@ -621,7 +609,16 @@ public class CallActivity extends AppCompatActivity {
             
             @Override public void onConnectionChange(PeerConnection.PeerConnectionState s) {
                 Log.d(TAG, "onConnectionChange: " + s);
-                if (s == PeerConnection.PeerConnectionState.CLOSED || s == PeerConnection.PeerConnectionState.FAILED) {
+                if (s == PeerConnection.PeerConnectionState.FAILED) {
+                    if (!turnFallbackAttempted) {
+                        Log.w(TAG, "WebRTC connection failed, attempting TURN fallback...");
+                        turnFallbackAttempted = true;
+                        fetchTurnServersAndReconnect();
+                    } else {
+                        Log.e(TAG, "WebRTC connection failed after TURN fallback");
+                        disconnect();
+                    }
+                } else if (s == PeerConnection.PeerConnectionState.CLOSED) {
                     disconnect();
                 }
             }
@@ -636,11 +633,12 @@ public class CallActivity extends AppCompatActivity {
                         callConnectedTime = System.currentTimeMillis();
                         startLimitCountdown();
                     }
-                }
-                if (s == PeerConnection.IceConnectionState.FAILED && !turnFallbackAttempted) {
-                    Log.w(TAG, "STUN failed, attempting TURN fallback...");
-                    turnFallbackAttempted = true;
-                    fetchTurnServersAndReconnect();
+                } else if (s == PeerConnection.IceConnectionState.FAILED) {
+                    if (!turnFallbackAttempted) {
+                        Log.w(TAG, "STUN failed, attempting TURN fallback...");
+                        turnFallbackAttempted = true;
+                        fetchTurnServersAndReconnect();
+                    }
                 }
             }
             @Override public void onIceConnectionReceivingChange(boolean b) {}
@@ -705,22 +703,42 @@ public class CallActivity extends AppCompatActivity {
                 org.json.JSONArray array = jsonObj.getJSONArray("iceServers");
                 for (int i = 0; i < array.length(); i++) {
                     JSONObject serverObj = array.getJSONObject(i);
+                    String username = serverObj.optString("username", serverObj.optString("username", null));
+                    String credential = serverObj.optString("credential", serverObj.optString("password", null));
+
                     if (serverObj.has("urls")) {
                         Object urlsObj = serverObj.get("urls");
                         
                         if (urlsObj instanceof String) {
-                            iceServers.add(PeerConnection.IceServer.builder((String) urlsObj).createIceServer());
+                            String u = (String) urlsObj;
+                            if (!u.contains("localhost") && !u.contains("127.0.0.1")) {
+                                PeerConnection.IceServer.Builder builder = PeerConnection.IceServer.builder(u);
+                                if (username != null && !username.isEmpty()) builder.setUsername(username);
+                                if (credential != null && !credential.isEmpty()) builder.setPassword(credential);
+                                iceServers.add(builder.createIceServer());
+                            }
                         } else if (urlsObj instanceof org.json.JSONArray) {
                             org.json.JSONArray urlArray = (org.json.JSONArray) urlsObj;
                             List<String> urls = new ArrayList<>();
                             for (int j = 0; j < urlArray.length(); j++) {
-                                urls.add(urlArray.getString(j));
+                                String u = urlArray.getString(j);
+                                if (!u.contains("localhost") && !u.contains("127.0.0.1")) {
+                                    urls.add(u);
+                                }
                             }
-                            PeerConnection.IceServer.Builder builder = PeerConnection.IceServer.builder(urls);
-                            if (serverObj.has("username") && serverObj.has("credential")) {
-                                builder.setUsername(serverObj.getString("username"));
-                                builder.setPassword(serverObj.getString("credential"));
+                            if (!urls.isEmpty()) {
+                                PeerConnection.IceServer.Builder builder = PeerConnection.IceServer.builder(urls);
+                                if (username != null && !username.isEmpty()) builder.setUsername(username);
+                                if (credential != null && !credential.isEmpty()) builder.setPassword(credential);
+                                iceServers.add(builder.createIceServer());
                             }
+                        }
+                    } else if (serverObj.has("url")) {
+                        String u = serverObj.getString("url");
+                        if (!u.contains("localhost") && !u.contains("127.0.0.1")) {
+                            PeerConnection.IceServer.Builder builder = PeerConnection.IceServer.builder(u);
+                            if (username != null && !username.isEmpty()) builder.setUsername(username);
+                            if (credential != null && !credential.isEmpty()) builder.setPassword(credential);
                             iceServers.add(builder.createIceServer());
                         }
                     }
@@ -730,12 +748,11 @@ public class CallActivity extends AppCompatActivity {
             Log.e(TAG, "Error parsing ICE servers: " + e.getMessage());
         }
         
-        if (iceServers.isEmpty()) {
-            iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer());
-            iceServers.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
-            iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80").setUsername("openrelayproject").setPassword("openrelayproject").createIceServer());
-            iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443").setUsername("openrelayproject").setPassword("openrelayproject").createIceServer());
-        }
+        // Always append Google STUN servers as reliable fallback
+        iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer());
         
         return iceServers;
     }
@@ -779,7 +796,8 @@ public class CallActivity extends AppCompatActivity {
             }
             
             @Override public void onConnectionChange(PeerConnection.PeerConnectionState s) {
-                if (s == PeerConnection.PeerConnectionState.CLOSED || s == PeerConnection.PeerConnectionState.FAILED) {
+                Log.d(TAG, "reconnected peerConnection onConnectionChange: " + s);
+                if (s == PeerConnection.PeerConnectionState.CLOSED) {
                     disconnect();
                 }
             }
@@ -904,12 +922,24 @@ public class CallActivity extends AppCompatActivity {
     private void markConnected() {
         stopConnectionAnimation();
         runOnUiThread(() -> {
+            if (isPrivateCall && !isCallAccepted && isCaller) {
+                if (connectionStatus != null) {
+                    connectionStatus.setText("Calling...");
+                }
+                if (remoteAvatarStatusText != null) {
+                    remoteAvatarStatusText.setText("Calling...");
+                }
+                return;
+            }
             if (connectionStatus != null) {
                 connectionStatus.setText("Connected");
             }
             if (isVideoCall) {
                 fadeOutRemoteOverlay(null);
             } else {
+                if (remoteAvatarStatusText != null) {
+                    remoteAvatarStatusText.setText("Voice Call");
+                }
                 fadeInRemoteOverlay();
             }
         });
@@ -1110,6 +1140,9 @@ public class CallActivity extends AppCompatActivity {
                 if (connectionStatus != null) {
                     connectionStatus.setText("Call accepted. Connecting...");
                 }
+                if (remoteAvatarStatusText != null) {
+                    remoteAvatarStatusText.setText("Connecting...");
+                }
                 Toast.makeText(CallActivity.this, "Private call accepted.", Toast.LENGTH_SHORT).show();
             });
             socket.on("private-call-accepted", privateCallAcceptedListener);
@@ -1156,7 +1189,16 @@ public class CallActivity extends AppCompatActivity {
                 String senderId = data.getString("senderId");
 
                 if (!myUid.equals(senderId) && "video".equals(type)) {
-                    runOnUiThread(() -> remoteAvatarOverlay.setVisibility(enabled ? View.GONE : View.VISIBLE));
+                    runOnUiThread(() -> {
+                        if (enabled) {
+                            fadeOutRemoteOverlay(null);
+                        } else {
+                            if (remoteAvatarStatusText != null) {
+                                remoteAvatarStatusText.setText("Camera is off");
+                            }
+                            fadeInRemoteOverlay();
+                        }
+                    });
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error processing call-control event", e);
@@ -1500,12 +1542,17 @@ public class CallActivity extends AppCompatActivity {
 
     private void loadPeerUserInfo() {
         String passedName = getIntent().getStringExtra("peerName");
+        if (passedName == null || passedName.isEmpty()) passedName = getIntent().getStringExtra("targetUserName");
+        if (passedName == null || passedName.isEmpty()) passedName = getIntent().getStringExtra("callerName");
+
         String passedAvatar = getIntent().getStringExtra("peerAvatar");
+        if (passedAvatar == null || passedAvatar.isEmpty()) passedAvatar = getIntent().getStringExtra("targetUserAvatar");
+        if (passedAvatar == null || passedAvatar.isEmpty()) passedAvatar = getIntent().getStringExtra("callerAvatar");
 
         if (passedName != null && !passedName.isEmpty()) {
             peerNameValue = passedName;
-            peerName.setText(peerNameValue);
-            remoteAvatarNameText.setText(peerNameValue);
+            if (peerName != null) peerName.setText(peerNameValue);
+            if (remoteAvatarNameText != null) remoteAvatarNameText.setText(peerNameValue);
         }
 
         if (passedAvatar != null && !passedAvatar.isEmpty()) {
@@ -1517,12 +1564,16 @@ public class CallActivity extends AppCompatActivity {
 
         if (peerId == null || peerId.isEmpty()) {
             if (passedName == null || passedName.isEmpty()) {
-                peerName.setText("User");
+                if (peerName != null) peerName.setText("User");
+                if (remoteAvatarNameText != null) remoteAvatarNameText.setText("User");
             }
             return;
         }
 
         checkFriendStatus();
+
+        final String fallbackName = passedName;
+        final String fallbackAvatar = passedAvatar;
 
         api.getUser(peerId).enqueue(new retrofit2.Callback<JsonObject>() {
             @Override
@@ -1531,12 +1582,12 @@ public class CallActivity extends AppCompatActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
                         JsonObject user = data.getAsJsonObject("user");
-                        peerNameValue = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : (passedName != null ? passedName : "User");
-                        peerAvatarUrl = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : (passedAvatar != null ? passedAvatar : "");
+                        peerNameValue = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : (fallbackName != null ? fallbackName : "User");
+                        peerAvatarUrl = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : (fallbackAvatar != null ? fallbackAvatar : "");
                         String photoUrl = user.has("photoUrl") && !user.get("photoUrl").isJsonNull() ? user.get("photoUrl").getAsString() : null;
 
-                        peerName.setText(peerNameValue);
-                        remoteAvatarNameText.setText(peerNameValue);
+                        if (peerName != null) peerName.setText(peerNameValue);
+                        if (remoteAvatarNameText != null) remoteAvatarNameText.setText(peerNameValue);
                         AvatarHelper.loadAvatar(CallActivity.this, photoUrl, peerAvatarUrl, peerNameValue, peerAvatar);
                         AvatarHelper.loadAvatar(CallActivity.this, photoUrl, peerAvatarUrl, peerNameValue, remoteAvatarLarge);
                         AvatarHelper.loadAvatar(CallActivity.this, photoUrl, peerAvatarUrl, peerNameValue, remoteAvatarBlurBg);
@@ -1653,8 +1704,13 @@ public class CallActivity extends AppCompatActivity {
 
     private void updateSpeakerButtonUI() {
         if (btnSpeaker != null) {
-            btnSpeaker.setImageResource(isSpeakerOn ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
-            btnSpeaker.setBackgroundResource(isSpeakerOn ? R.drawable.bg_call_btn_red : R.drawable.bg_round_white);
+            btnSpeaker.setImageResource(isSpeakerOn ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
+            btnSpeaker.setBackgroundResource(isSpeakerOn ? R.drawable.bg_round_white : R.drawable.bg_call_btn_red);
+            if (isSpeakerOn) {
+                btnSpeaker.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#0F172A")));
+            } else {
+                btnSpeaker.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+            }
         }
     }
 

@@ -49,7 +49,7 @@
                 android:id="@+id/app_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Meet Real People, Not Just Profiles"
+                android:text="@string/headline_meet_real_people"
                 android:textColor="#FFFFFF"
                 android:textSize="27sp"
                 android:textStyle="bold"
@@ -64,7 +64,7 @@
                 android:layout_marginTop="10dp"
                 android:gravity="center"
                 android:lineSpacingMultiplier="1.3"
-                android:text="Video chat, make friends, discover nearby people and build meaningful connections."
+                android:text="@string/subtitle_video_chat"
                 android:textColor="#E2E8F0"
                 android:textSize="15sp" />
 
@@ -92,7 +92,7 @@
                         android:paddingEnd="15dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:text="✓ Verified Users"
+                        android:text="@string/chip_verified_users"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -106,7 +106,7 @@
                         android:paddingEnd="15dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:text="🎥 HD Video Calls"
+                        android:text="@string/chip_hd_video"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -128,7 +128,7 @@
                         android:paddingEnd="15dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:text="📍 Nearby Discovery"
+                        android:text="@string/chip_nearby_discovery"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -142,7 +142,7 @@
                         android:paddingEnd="15dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:text="🛡️ Safe Community"
+                        android:text="@string/chip_safe_community"
                         android:textColor="#FFFFFF"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -166,7 +166,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Continue your journey with Camverz"
+                android:text="@string/login_continue_journey"
                 android:textColor="#FFFFFF"
                 android:textSize="17sp"
                 android:textStyle="bold"
@@ -177,7 +177,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
-                android:text="Join thousands of verified users discovering new people every day."
+                android:text="@string/login_join_thousands"
                 android:textColor="#CBD5E1"
                 android:textSize="13sp" />
 
@@ -193,7 +193,7 @@
                 android:paddingStart="24dp"
                 android:paddingEnd="24dp"
                 android:stateListAnimator="@null"
-                android:text="Continue with Google"
+                android:text="@string/sign_in_google"
                 android:textAllCaps="false"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
@@ -205,7 +205,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="🔒 We never post anything without your permission."
+                android:text="@string/privacy_no_post"
                 android:textColor="#E2E8F0"
                 android:textSize="12sp"
                 android:gravity="center" />
@@ -221,7 +221,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚡ Encrypted"
+                    android:text="@string/trust_encrypted"
                     android:textColor="#94A3B8"
                     android:textSize="11sp" />
 
@@ -237,7 +237,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
-                    android:text="🛡️ Secure"
+                    android:text="@string/trust_secure"
                     android:textColor="#94A3B8"
                     android:textSize="11sp" />
 
@@ -253,7 +253,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
-                    android:text="✓ Verified Community"
+                    android:text="@string/trust_verified_community"
                     android:textColor="#94A3B8"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -266,7 +266,7 @@
                 android:layout_marginTop="12dp"
                 android:gravity="center"
                 android:padding="6dp"
-                android:text="By continuing, you agree to our Terms, Privacy Policy, and Child Safety Policy."
+                android:text="@string/terms_privacy_notice_full"
                 android:textColor="#94A3B8"
                 android:textSize="10sp"
                 android:clickable="true"
@@ -279,7 +279,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 android:padding="6dp"
-                android:text="Sign in with Tester Account"
+                android:text="@string/tester_login"
                 android:textColor="#00E5FF"
                 android:textSize="13sp"
                 android:textStyle="bold"
@@ -315,7 +315,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Signing in... Please wait"
+                    android:text="@string/signing_in_wait"
                     android:textColor="#FFFFFF"
                     android:textSize="16sp"
                     android:textStyle="bold" />

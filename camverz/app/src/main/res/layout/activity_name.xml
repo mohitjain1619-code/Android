@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/progress1"
         android:layout_marginTop="40dp"
-        android:text="What's your name?"
+        android:text="@string/whats_your_name"
         android:textColor="@color/text_primary"
         android:textSize="28sp"
         android:textStyle="bold" />
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/titleName"
         android:layout_marginTop="8dp"
-        android:text="This is how others will see you"
+        android:text="@string/name_subtext"
         android:textColor="@color/text_secondary"
         android:textSize="15sp" />
 
@@ -45,7 +45,7 @@
         android:layout_below="@id/subName"
         android:layout_marginTop="32dp"
         android:background="@drawable/bg_glass_card_premium"
-        android:hint="Enter your name"
+        android:hint="@string/enter_name_hint"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:textColor="@color/text_primary"
@@ -59,7 +59,7 @@
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_btn_primary_glossy"
-        android:text="Continue"
+        android:text="@string/continue_text"
         android:textAllCaps="false"
         android:textColor="@color/text_white"
         android:textSize="16sp"

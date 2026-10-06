@@ -17,7 +17,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Delete Account"
+            android:text="@string/delete_account"
             android:textColor="@color/accent_rose"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -27,7 +27,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="This action is permanent and cannot be undone. All your data will be deleted."
+            android:text="@string/delete_account_confirm"
             android:textColor="@color/text_secondary"
             android:textSize="14sp"
             android:gravity="center"
@@ -37,7 +37,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Type 'delete' to confirm"
+            android:text="@string/type_delete_to_confirm"
             android:textColor="@color/text_muted"
             android:textSize="12sp"
             android:layout_marginBottom="8dp"/>
@@ -47,7 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/bg_glass_input"
-            android:hint="delete"
+            android:hint="@string/delete_word"
             android:textColorHint="@color/text_muted"
             android:textColor="@color/text_primary"
             android:paddingHorizontal="16dp"
@@ -66,7 +66,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="Cancel"
+                android:text="@string/cancel"
                 android:background="@drawable/bg_glass_card_luxury"
                 android:textColor="@color/text_primary"
                 android:layout_marginEnd="8dp"
@@ -79,7 +79,7 @@
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
-                android:text="Delete"
+                android:text="@string/delete"
                 android:background="@drawable/bg_call_btn_red"
                 android:textColor="@color/text_white"
                 android:layout_marginStart="8dp"

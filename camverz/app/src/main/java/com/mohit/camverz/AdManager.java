@@ -482,7 +482,7 @@ public class AdManager {
 
         @Override
         public void onAdShowFailed(IronSourceError error, AdInfo adInfo) {
-            mainHandler.postDelayed(() -> BaseActivity.isAdShowing = false, 1000);
+            BaseActivity.isAdShowing = false;
             setAdWatchPending(false);
             String errMsg = error != null ? error.getErrorMessage() : "Show failed";
             int errCode = error != null ? error.getErrorCode() : -1;
@@ -516,7 +516,7 @@ public class AdManager {
 
         @Override
         public void onAdClosed(AdInfo adInfo) {
-            mainHandler.postDelayed(() -> BaseActivity.isAdShowing = false, 1000);
+            BaseActivity.isAdShowing = false;
             setAdWatchPending(false);
             setLastInterstitialTime(System.currentTimeMillis());
             Log.d(TAG, "⏹️ LevelPlay Interstitial closed");
@@ -564,7 +564,7 @@ public class AdManager {
 
         @Override
         public void onAdShowFailed(IronSourceError error, AdInfo adInfo) {
-            mainHandler.postDelayed(() -> BaseActivity.isAdShowing = false, 1000);
+            BaseActivity.isAdShowing = false;
             setAdWatchPending(false);
             String errMsg = error != null ? error.getErrorMessage() : "Show failed";
             int errCode = error != null ? error.getErrorCode() : -1;
@@ -611,7 +611,7 @@ public class AdManager {
 
         @Override
         public void onAdClosed(AdInfo adInfo) {
-            mainHandler.postDelayed(() -> BaseActivity.isAdShowing = false, 1000);
+            BaseActivity.isAdShowing = false;
             setAdWatchPending(false);
             setLastInterstitialTime(System.currentTimeMillis());
             Log.d(TAG, "⏹️ LevelPlay Rewarded Video closed");

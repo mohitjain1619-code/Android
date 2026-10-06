@@ -38,7 +38,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.02"
-                android:text="🔔 Community Alerts"
+                android:text="@string/community_alerts_title"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -46,7 +46,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Requests &amp; Party Broadcasts"
+                android:text="@string/requests_and_party_broadcasts"
                 android:textColor="#8E8E93"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -81,7 +81,7 @@
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="8dp"
-            android:text="Real Meet"
+            android:text="@string/tab_real_meet"
             android:textColor="#000000"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -97,7 +97,7 @@
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="8dp"
-            android:text="Fantasy"
+            android:text="@string/tab_fantasy"
             android:textColor="#8E8E93"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -112,7 +112,7 @@
             android:focusable="true"
             android:gravity="center"
             android:paddingVertical="8dp"
-            android:text="Party"
+            android:text="@string/tab_party"
             android:textColor="#8E8E93"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -155,7 +155,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="No notifications in this category."
+            android:text="@string/no_notifications_in_category"
             android:textColor="#FFFFFF"
             android:textSize="15sp"
             android:textStyle="bold" />

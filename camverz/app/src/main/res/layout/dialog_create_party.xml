@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:letterSpacing="0.05"
-            android:text="🎉 Host a Real World Party"
+            android:text="@string/host_a_real_world_party"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -31,7 +31,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Invite people nearby to your event or house party"
+            android:text="@string/host_party_subtitle"
             android:textColor="#8E8E93"
             android:textSize="12sp" />
 
@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="PARTY VIBE / TITLE"
+            android:text="@string/party_vibe_title"
             android:textColor="#E5E5EA"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -51,7 +51,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:background="@drawable/bg_luxury_input"
-            android:hint="e.g. Weekend House Party &amp; BBQ, Pool Party"
+            android:hint="@string/hint_party_purpose"
             android:inputType="textCapWords"
             android:padding="13dp"
             android:textColor="#FFFFFF"
@@ -63,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="VENUE LOCATION"
+            android:text="@string/venue_location"
             android:textColor="#E5E5EA"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -74,7 +74,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:background="@drawable/bg_luxury_input"
-            android:hint="e.g. Rooftop Penthouse, HSR Layout"
+            android:hint="@string/hint_party_venue"
             android:inputType="textCapWords"
             android:padding="13dp"
             android:textColor="#FFFFFF"
@@ -98,7 +98,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="MAX CAPACITY"
+                    android:text="@string/max_capacity"
                     android:textColor="#E5E5EA"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -109,7 +109,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:background="@drawable/bg_luxury_input"
-                    android:hint="e.g. 10"
+                    android:hint="@string/hint_capacity"
                     android:inputType="number"
                     android:padding="13dp"
                     android:textColor="#FFFFFF"
@@ -127,7 +127,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TARGET AUDIENCE"
+                    android:text="@string/target_audience"
                     android:textColor="#E5E5EA"
                     android:textSize="11sp"
                     android:textStyle="bold" />
@@ -147,7 +147,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="PARTY DATE &amp; TIME"
+            android:text="@string/party_date_time"
             android:textColor="#E5E5EA"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -169,14 +169,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="⏰ Select Time (Tap to open Clock)"
+                android:text="@string/select_time_hint"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="🕒 CLOCK"
+                android:text="@string/clock"
                 android:textColor="#8E8E93"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -198,7 +198,7 @@
                 android:background="@drawable/bg_luxury_pill_dark"
                 android:gravity="center"
                 android:paddingVertical="12dp"
-                android:text="Cancel"
+                android:text="@string/cancel"
                 android:textColor="#8E8E93"
                 android:textSize="13sp"
                 android:textStyle="bold" />
@@ -212,7 +212,7 @@
                 android:background="@drawable/bg_luxury_pill_white"
                 android:gravity="center"
                 android:paddingVertical="12dp"
-                android:text="Host Event"
+                android:text="@string/host_event"
                 android:textColor="#000000"
                 android:textSize="13sp"
                 android:textStyle="bold" />

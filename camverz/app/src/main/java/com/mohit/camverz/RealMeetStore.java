@@ -44,7 +44,23 @@ public class RealMeetStore {
         String json = prefs.getString(KEY_REAL_MEET_POSTS, null);
         if (json == null) return new ArrayList<>();
         RealMeetPost[] array = gson.fromJson(json, RealMeetPost[].class);
-        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
+        if (array == null) return new ArrayList<>();
+        
+        List<RealMeetPost> validPosts = new ArrayList<>();
+        boolean modified = false;
+        for (RealMeetPost p : array) {
+            if (p != null && p.getId() != null) {
+                if (p.isExpired()) {
+                    modified = true;
+                } else {
+                    validPosts.add(p);
+                }
+            }
+        }
+        if (modified) {
+            saveRealMeetPosts(validPosts);
+        }
+        return validPosts;
     }
 
     public synchronized void saveRealMeetPosts(List<RealMeetPost> posts) {
@@ -56,7 +72,7 @@ public class RealMeetStore {
         if (newPosts == null) return;
         List<RealMeetPost> deduplicated = new ArrayList<>();
         for (RealMeetPost p : newPosts) {
-            if (p != null && p.getId() != null) {
+            if (p != null && p.getId() != null && !p.isExpired()) {
                 boolean exists = false;
                 for (RealMeetPost existing : deduplicated) {
                     if (existing.getId().equalsIgnoreCase(p.getId())) {
@@ -81,7 +97,7 @@ public class RealMeetStore {
         int todayDay = todayCal.get(Calendar.DAY_OF_YEAR);
 
         for (RealMeetPost post : posts) {
-            if (userId.equalsIgnoreCase(post.getUserId())) {
+            if (userId.equalsIgnoreCase(post.getUserId()) && !post.isExpired()) {
                 Calendar postCal = Calendar.getInstance();
                 postCal.setTimeInMillis(post.getCreatedAt());
                 if (postCal.get(Calendar.YEAR) == todayYear && postCal.get(Calendar.DAY_OF_YEAR) == todayDay) {
@@ -93,7 +109,7 @@ public class RealMeetStore {
     }
 
     public synchronized void addRealMeetPost(RealMeetPost post) {
-        if (post == null || post.getId() == null) return;
+        if (post == null || post.getId() == null || post.isExpired()) return;
         List<RealMeetPost> posts = getRealMeetPosts();
         posts.removeIf(p -> p.getId().equalsIgnoreCase(post.getId()));
         posts.add(0, post);
@@ -114,7 +130,23 @@ public class RealMeetStore {
         String json = prefs.getString(KEY_PARTY_POSTS, null);
         if (json == null) return new ArrayList<>();
         PartyPost[] array = gson.fromJson(json, PartyPost[].class);
-        return array != null ? new ArrayList<>(Arrays.asList(array)) : new ArrayList<>();
+        if (array == null) return new ArrayList<>();
+        
+        List<PartyPost> validPosts = new ArrayList<>();
+        boolean modified = false;
+        for (PartyPost p : array) {
+            if (p != null && p.getId() != null) {
+                if (p.isExpired()) {
+                    modified = true;
+                } else {
+                    validPosts.add(p);
+                }
+            }
+        }
+        if (modified) {
+            savePartyPosts(validPosts);
+        }
+        return validPosts;
     }
 
     public synchronized void savePartyPosts(List<PartyPost> posts) {
@@ -126,7 +158,7 @@ public class RealMeetStore {
         if (newPosts == null) return;
         List<PartyPost> deduplicated = new ArrayList<>();
         for (PartyPost p : newPosts) {
-            if (p != null && p.getId() != null) {
+            if (p != null && p.getId() != null && !p.isExpired()) {
                 boolean exists = false;
                 for (PartyPost existing : deduplicated) {
                     if (existing.getId().equalsIgnoreCase(p.getId())) {
@@ -141,7 +173,7 @@ public class RealMeetStore {
     }
 
     public synchronized void addPartyPost(PartyPost post) {
-        if (post == null || post.getId() == null) return;
+        if (post == null || post.getId() == null || post.isExpired()) return;
         List<PartyPost> posts = getPartyPosts();
         posts.removeIf(p -> p.getId().equalsIgnoreCase(post.getId()));
         posts.add(0, post);
@@ -160,7 +192,7 @@ public class RealMeetStore {
 
         for (PartyPost post : posts) {
             String postUser = post.getHostUserId();
-            if (postUser != null && userId.equalsIgnoreCase(postUser)) {
+            if (postUser != null && userId.equalsIgnoreCase(postUser) && !post.isExpired()) {
                 Calendar postCal = Calendar.getInstance();
                 postCal.setTimeInMillis(post.getCreatedAt());
                 if (postCal.get(Calendar.YEAR) == todayYear && postCal.get(Calendar.DAY_OF_YEAR) == todayDay) {

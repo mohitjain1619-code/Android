@@ -34,7 +34,7 @@ public class TextHelper {
         }
 
         // 3. Age
-        builder.append(" • ").append(String.valueOf(age)).append(" Yrs");
+        builder.append(" • ").append(String.valueOf(age)).append(" ").append(context.getString(R.string.yrs_suffix));
 
         // 4. Premium Crown
         if (isPremium) {
@@ -123,7 +123,7 @@ public class TextHelper {
 
     public static SpannableStringBuilder getUserMetadata(Context context, int age, String gender, String sexPreference) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        builder.append(age + " Yrs");
+        builder.append(String.valueOf(age)).append(" ").append(context.getString(R.string.yrs_suffix));
         if (gender != null && !gender.isEmpty()) {
             builder.append(" • ");
             int start = builder.length();
@@ -147,7 +147,7 @@ public class TextHelper {
 
     public static SpannableStringBuilder getHostMetadata(Context context, int age, String gender) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        builder.append(age + " Yrs");
+        builder.append(String.valueOf(age)).append(" ").append(context.getString(R.string.yrs_suffix));
         if (gender != null && !gender.isEmpty()) {
             builder.append(" • ");
             int start = builder.length();

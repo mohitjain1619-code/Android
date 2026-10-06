@@ -91,7 +91,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                         } else {
                             holder.acceptButton.setEnabled(true);
                             holder.rejectButton.setEnabled(true);
-                            Toast.makeText(context, "Failed to accept request", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, context.getString(R.string.failed_accept_request), Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -99,7 +99,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         holder.acceptButton.setEnabled(true);
                         holder.rejectButton.setEnabled(true);
-                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                     }
                 });
             });
@@ -116,7 +116,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                         } else {
                             holder.acceptButton.setEnabled(true);
                             holder.rejectButton.setEnabled(true);
-                            Toast.makeText(context, "Failed to reject request", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, context.getString(R.string.failed_reject_request), Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -124,7 +124,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         holder.acceptButton.setEnabled(true);
                         holder.rejectButton.setEnabled(true);
-                        Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, context.getString(R.string.network_error), Toast.LENGTH_SHORT).show();
                     }
                 });
             });
@@ -136,14 +136,14 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         holder.itemView.setOnLongClickListener(v -> {
             new AlertDialog.Builder(context)
-                    .setTitle("Delete Notification")
-                    .setMessage("Are you sure you want to delete this notification?")
-                    .setPositiveButton("Delete", (dialog, which) -> {
+                    .setTitle(context.getString(R.string.delete_notification_title))
+                    .setMessage(context.getString(R.string.delete_notification_confirm))
+                    .setPositiveButton(context.getString(R.string.delete), (dialog, which) -> {
                         if (listener != null) {
                             listener.onNotificationDelete(notification);
                         }
                     })
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(context.getString(R.string.cancel), null)
                     .show();
             return true;
         });
@@ -164,39 +164,40 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     private void setNotificationText(NotificationViewHolder holder, Notification notification) {
-        String userName = notification.getTriggeringUserName() != null ? notification.getTriggeringUserName() : "Someone";
+        String someoneStr = context.getString(R.string.someone);
+        String userName = notification.getTriggeringUserName() != null ? notification.getTriggeringUserName() : someoneStr;
         String messageSuffix;
 
         switch (notification.getType()) {
             case "like":
-                messageSuffix = " liked your post.";
+                messageSuffix = " " + context.getString(R.string.notif_liked_post);
                 break;
             case "comment":
-                messageSuffix = " commented on your post.";
+                messageSuffix = " " + context.getString(R.string.notif_commented_post);
                 break;
             case "follow":
-                messageSuffix = " started following you.";
+                messageSuffix = " " + context.getString(R.string.notif_started_following);
                 break;
             case "profile_visit":
-                messageSuffix = " visited your profile.";
+                messageSuffix = " " + context.getString(R.string.notif_visited_profile);
                 break;
             case "reply":
-                messageSuffix = " replied to your comment.";
+                messageSuffix = " " + context.getString(R.string.notif_replied_comment);
                 break;
             case "friend_request":
                 if ("accepted".equals(notification.getFriendshipStatus())) {
-                    messageSuffix = " sent you a request (Accepted).";
+                    messageSuffix = " " + context.getString(R.string.notif_sent_request_accepted);
                 } else if ("rejected".equals(notification.getFriendshipStatus())) {
-                    messageSuffix = " sent you a request (Rejected).";
+                    messageSuffix = " " + context.getString(R.string.notif_sent_request_rejected);
                 } else {
-                    messageSuffix = " sent you a request.";
+                    messageSuffix = " " + context.getString(R.string.notif_sent_request);
                 }
                 break;
             case "friend_accepted":
-                messageSuffix = " accepted your friend request.";
+                messageSuffix = " " + context.getString(R.string.notif_accepted_friend_req);
                 break;
             default:
-                messageSuffix = " sent a notification.";
+                messageSuffix = " " + context.getString(R.string.notif_sent_notification);
                 break;
         }
 
@@ -253,13 +254,13 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         long days = hours / 24;
 
         if (days > 0) {
-            return days + "d ago";
+            return days + " " + context.getString(R.string.time_days_ago);
         } else if (hours > 0) {
-            return hours + "h ago";
+            return hours + " " + context.getString(R.string.time_hours_ago);
         } else if (minutes > 0) {
-            return minutes + "m ago";
+            return minutes + " " + context.getString(R.string.time_mins_ago);
         } else {
-            return "just now";
+            return context.getString(R.string.time_just_now);
         }
     }
 

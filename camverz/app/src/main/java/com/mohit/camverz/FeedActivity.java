@@ -225,7 +225,7 @@ public class FeedActivity extends BaseActivity {
                         return;
                     }
                 }
-                updateEmptyState(true, "Failed to load posts.\nTap to try again.");
+                updateEmptyState(true, getString(R.string.failed_to_load_posts));
             }
 
             @Override
@@ -234,7 +234,7 @@ public class FeedActivity extends BaseActivity {
                     swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(false));
                 }
                 Log.e(TAG, "Failed to load posts", t);
-                updateEmptyState(true, "Connection timed out or network error.\nPlease check your connection.");
+                updateEmptyState(true, getString(R.string.network_error_retry));
             }
         });
     }
@@ -251,7 +251,7 @@ public class FeedActivity extends BaseActivity {
                 if (errorMessage != null) {
                     tvEmptyMessage.setText(errorMessage);
                 } else {
-                    tvEmptyMessage.setText("No posts available right now.\nBe the first to create one!");
+                    tvEmptyMessage.setText(R.string.no_posts_available);
                 }
             }
         } else {

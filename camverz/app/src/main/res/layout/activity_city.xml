@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Step 2 of 4"
+            android:text="@string/step_2_of_4"
             android:textColor="#00FFFF"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -49,7 +49,7 @@
             android:id="@+id/titleCity"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Where are you located?"
+            android:text="@string/where_located"
             android:textColor="#FFFFFF"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -59,7 +59,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Helps connect you with nearby people in your city."
+            android:text="@string/city_subtext"
             android:textColor="#E2E8F0"
             android:textSize="15sp"
             android:lineSpacingMultiplier="1.2" />
@@ -91,7 +91,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="Detecting location..."
+            android:text="@string/detecting_location"
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -102,7 +102,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:gravity="center"
-            android:text="Please wait"
+            android:text="@string/please_wait"
             android:textColor="#CBD5E1"
             android:textSize="16sp" />
     </LinearLayout>
@@ -116,7 +116,7 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_btn_primary_gradient"
         android:stateListAnimator="@null"
-        android:text="Continue"
+        android:text="@string/continue_text"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
         android:textSize="16sp"

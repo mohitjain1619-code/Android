@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DIALOG" />
-        <DropdownSelection timestamp="2026-10-03T20:50:25.568278600Z">
+        <DropdownSelection timestamp="2026-10-06T18:07:17.401065Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="Wireless" identifier="serviceName=adb-RZCX70X5CQW-umWmFr" />
+              <DeviceId pluginId="Wireless" identifier="serviceName=adb-RZCXA094SLW-sWU3Pj" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -15,12 +15,12 @@
           <targets>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=RZCXA094SLW" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=IZ6T8PRCUORCMFJ7" />
               </handle>
             </Target>
             <Target type="DEFAULT_BOOT">
               <handle>
-                <DeviceId pluginId="PhysicalDevice" identifier="serial=IZ6T8PRCUORCMFJ7" />
+                <DeviceId pluginId="PhysicalDevice" identifier="serial=RZCXA094SLW" />
               </handle>
             </Target>
           </targets>

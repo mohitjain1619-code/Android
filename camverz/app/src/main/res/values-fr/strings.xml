@@ -1,0 +1,514 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Language Selection -->
+    <string name="choose_language_title">Choisissez votre langue</string>
+    <string name="choose_language_subtitle">Sélectionnez votre langue préférée pour continuer</string>
+    <string name="search_language_hint">Rechercher une langue…</string>
+    <string name="change_language">Changer de langue</string>
+
+    <!-- Call Activity -->
+    <string name="mute_audio">Couper l\'audio</string>
+    <string name="switch_camera">Changer de caméra</string>
+    <string name="end_call">Raccrocher</string>
+    <string name="connecting">Connexion en cours…</string>
+    <string name="calling">Appel en cours…</string>
+    <string name="ringing">Sonnerie…</string>
+    <string name="call_declined">Appel refusé</string>
+    <string name="call_ended">Appel terminé</string>
+    <string name="speaker">Haut-parleur</string>
+    <string name="mute">Muet</string>
+    
+    <!-- Gender Selection & Onboarding -->
+    <string name="select_your_gender">Sélectionnez votre genre</string>
+    <string name="gender_help_text">Cela nous aide à vous connecter avec les bonnes personnes</string>
+    <string name="male">👨 Homme</string>
+    <string name="female">👩 Femme</string>
+    <string name="continue_arrow">Continuer →</string>
+    <string name="step_1_of_4">Étape 1 sur 4</string>
+    <string name="step_2_of_4">Étape 2 sur 4</string>
+    <string name="step_3_of_4">Étape 3 sur 4</string>
+    <string name="step_4_of_4">Étape 4 sur 4</string>
+    <string name="whats_your_gender">Quel est votre genre ?</string>
+    <string name="gender_help_subtitle">Cela nous aide à vous associer aux bonnes personnes de votre communauté.</string>
+    <string name="male_title">Homme</string>
+    <string name="female_title">Femme</string>
+    <string name="discover_matches">Découvrir des profils</string>
+    <string name="continue_text">Continuer</string>
+    <string name="whats_your_name">Quel est votre prénom ?</string>
+    <string name="name_subtext">C\'est ainsi que les autres vous verront</string>
+    <string name="enter_name_hint">Entrez votre prénom</string>
+    <string name="where_located">Où vous trouvez-vous ?</string>
+    <string name="city_subtext">Aide à vous connecter avec des personnes proches de vous.</string>
+    <string name="detecting_location">Détection de la localisation...</string>
+    <string name="please_wait">Veuillez patienter</string>
+    <string name="when_birthday">Quelle est votre date de naissance ?</string>
+    <string name="birthday_subtext">Vous devez avoir au moins 18 ans pour utiliser Camverz.</string>
+    <string name="age_restricted">🛡️ Réservé aux 18+</string>
+    <string name="date_format_hint">JJ / MM / AAAA</string>
+    <string name="youre_all_set">Vous êtes prêt !</string>
+    <string name="finish_subtext">Vérifiez votre profil et préparez-vous à rencontrer de vraies personnes.</string>
+    <string name="profile_summary_title">RÉSUMÉ DE VOTRE PROFIL</string>
+    <string name="display_name_hint">Votre nom d\'affichage</string>
+    <string name="summary_gender">Genre : %1$s</string>
+    <string name="summary_city">Ville : %1$s</string>
+    <string name="summary_birthday">Date de naissance : %1$s</string>
+    <string name="permissions_privacy_title">AUTORISATIONS ET CONFIDENTIALITÉ</string>
+    <string name="perm_camera_mic">📷 Caméra &amp; Micro : Pour les appels vidéo 1-sur-1 en direct</string>
+    <string name="perm_location">📍 Géolocalisation : Pour les rencontres par ville et pays</string>
+    <string name="perm_zero_recording">🔒 Zéro enregistrement : Les appels WebRTC sont chiffrés et privés</string>
+    <string name="start_video_chatting">Démarrer le chat vidéo</string>
+    
+    <!-- Main Screen -->
+    <string name="welcome_user">Bienvenue</string>
+    <string name="verified">✓ Vérifié</string>
+    <string name="not_verified">⚠ Non vérifié</string>
+    <string name="choose_interest">Choisissez votre intérêt</string>
+    <string name="verified_users_text">Connectez-vous avec des utilisateurs vérifiés du monde entier</string>
+    <string name="complete_verification">Compléter la vérification</string>
+    <string name="logout">Déconnexion</string>
+    
+    <!-- Categories -->
+    <string name="gay">Gay</string>
+    <string name="gay_emoji">👨</string>
+    <string name="gay_flag">🏳️‍🌈</string>
+    <string name="lesbian">Lesbienne</string>
+    <string name="lesbian_emoji">👩</string>
+    <string name="lesbian_heart">💖</string>
+    <string name="straight">Hétéro</string>
+    <string name="straight_couple">👫</string>
+    <string name="straight_fire">🔥</string>
+    
+    <!-- Login & Welcome Screen -->
+    <string name="welcome_to_camverz">Bienvenue sur Camverz</string>
+    <string name="sign_in_google">Se connecter avec Google</string>
+    <string name="headline_meet_real_people">Rencontrez de vraies personnes, pas seulement des profils</string>
+    <string name="subtitle_video_chat">Discutez en vidéo, faites-vous des amis, découvrez des personnes à proximité.</string>
+    <string name="chip_verified_users">✓ Utilisateurs vérifiés</string>
+    <string name="chip_hd_video">🎥 Appels vidéo HD</string>
+    <string name="chip_nearby_discovery">📍 Proximité</string>
+    <string name="chip_safe_community">🛡️ Communauté sécurisée</string>
+    <string name="chip_instant_video">⚡ Vidéo instantanée</string>
+    <string name="chip_private_safe">🔒 100% Privé</string>
+    <string name="chip_real_meet">🔥 Real Meet</string>
+    <string name="login_continue_journey">Continuez votre aventure avec Camverz</string>
+    <string name="login_join_thousands">Rejoignez des milliers d\'utilisateurs vérifiés chaque jour.</string>
+    <string name="privacy_no_post">🔒 Nous ne publions jamais rien sans votre autorisation.</string>
+    <string name="trust_encrypted">⚡ Chiffré</string>
+    <string name="trust_secure">🛡️ Sécurisé</string>
+    <string name="trust_verified_community">✓ Communauté vérifiée</string>
+    <string name="terms_privacy_notice">En continuant, vous acceptez nos conditions et politique de confidentialité</string>
+    <string name="terms_privacy_notice_full">En continuant, vous acceptez nos Conditions, Politique de confidentialité et Sécurité des enfants.</string>
+    <string name="terms_of_service">Conditions d\'utilisation</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
+    <string name="tester_login">Connexion compte testeur</string>
+    <string name="signing_in_wait">Connexion en cours... Veuillez patienter</string>
+    
+    <!-- Connecting Activity -->
+    <string name="finding_match">Recherche de correspondance…</string>
+    <string name="wait_connect_message">Veuillez patienter pendant la connexion…</string>
+    <string name="cancel">Annuler</string>
+    
+    <!-- Verification Activity -->
+    <string name="verification">Vérification</string>
+    <string name="selfie">Selfie</string>
+    <string name="take_selfie">Prendre un selfie</string>
+    <string name="id_document">Pièce d\'identité</string>
+    <string name="upload_id">Téléverser l\'ID</string>
+    <string name="submit_verification">Soumettre la vérification</string>
+    
+    <!-- Status Messages -->
+    <string name="matched_starting_call">Correspondance trouvée ! Démarrage de l\'appel…</string>
+    <string name="finding_match_status">Recherche en cours…</string>
+    <string name="error_loading_profile">Erreur de chargement du profil</string>
+
+    <!-- Navigation & Community -->
+    <string name="explore">Explorer</string>
+    <string name="messages">Messages</string>
+    <string name="profile">Profil</string>
+    <string name="feed">Fil d\'actualité</string>
+    <string name="real_meet">Real Meet</string>
+    <string name="create_post">Créer une publication</string>
+    <string name="block_user">Bloquer l\'utilisateur</string>
+    <string name="report_user">Signaler l\'utilisateur</string>
+    <string name="delete_account">Supprimer le compte</string>
+
+    <!-- Home Screen Additional -->
+    <string name="greeting_evening">Bonsoir 👋</string>
+    <string name="greeting_morning">Bonjour ☀️</string>
+    <string name="greeting_afternoon">Bon après-midi 🌤️</string>
+    <string name="live_online">En ligne</string>
+    <string name="online_count">%1$d En ligne</string>
+    <string name="quick_actions">Actions rapides</string>
+    <string name="community_hub_title">💬 Real Meet, Real Party, Fantasy</string>
+    <string name="hot_chip">TENDANCE 🔥</string>
+    <string name="friends_chats_chip">👥 Amis &amp; Discussions</string>
+    <string name="choose_your_interest">Choisissez votre intérêt pour l\'appel vidéo</string>
+    <string name="select_category_matching">Sélectionnez la catégorie pour démarrer l\'appel vidéo</string>
+    <string name="straight_desc">Rencontrez des personnes qui cherchent de vraies conversations</string>
+    <string name="gay_desc">Connectez-vous avec des hommes vérifiés</string>
+    <string name="lesbian_desc">Rencontrez des femmes vérifiées</string>
+    <string name="menu_share_app">Partager l\'application 🚀</string>
+    <string name="menu_rate_app">Évaluer l\'application ⭐</string>
+    <string name="toast_only_males_gay">Seuls les hommes peuvent rejoindre la section Gay</string>
+    <string name="toast_only_females_lesbian">Seules les femmes peuvent rejoindre la section Lesbienne</string>
+
+    <!-- Create Post & Comments -->
+    <string name="create_post_title">Créer une publication</string>
+    <string name="whats_on_your_mind">À quoi pensez-vous ?</string>
+    <string name="audience_visibility">Visibilité de l\'audience</string>
+    <string name="all">Tous</string>
+    <string name="publish_post">Publier</string>
+    <string name="comments_title">Commentaires</string>
+    <string name="write_a_comment">Écrire un commentaire...</string>
+    <string name="replying_to">En réponse à %1$s</string>
+
+    <!-- Legacy / Alternate Aliases for Translations -->
+    <string name="enter_your_name">Quel est votre prénom ?</string>
+    <string name="name_hint">Entrez votre prénom</string>
+    <string name="select_your_city">Où vous trouvez-vous ?</string>
+    <string name="city_hint">Entrez votre ville</string>
+    <string name="birthday_title">Quelle est votre date de naissance ?</string>
+    <string name="birthday_subtitle">Vous devez avoir au moins 18 ans pour utiliser Camverz.</string>
+    <string name="profile_complete">Vous êtes prêt !</string>
+    <string name="start_connecting">Démarrer le chat vidéo</string>
+
+    <!-- Feed Empty State & Retry -->
+    <string name="no_posts_available">Aucune publication disponible pour le moment.\nSoyez le premier à en créer une !</string>
+    <string name="refresh_feed">Actualiser le fil</string>
+    <string name="failed_to_load_posts">Échec du chargement des publications.\nAppuyez pour réessayer.</string>
+    <string name="network_error_retry">Erreur réseau ou délai dépassé.\nVeuillez vérifier votre connexion.</string>
+
+    <!-- Notifications Section -->
+    <string name="notifications_title">Notifications</string>
+    <string name="no_notifications_yet">Aucune notification pour le moment</string>
+    <string name="delete_notification_title">Supprimer la notification</string>
+    <string name="delete_notification_confirm">Voulez-vous vraiment supprimer cette notification ?</string>
+    <string name="notif_liked_post">a aimé votre publication.</string>
+    <string name="notif_commented_post">a commenté votre publication.</string>
+    <string name="notif_started_following">a commencé à vous suivre.</string>
+    <string name="notif_visited_profile">a visité votre profil.</string>
+    <string name="notif_replied_comment">a répondu à votre commentaire.</string>
+    <string name="notif_sent_request">vous a envoyé une demande.</string>
+    <string name="notif_sent_request_accepted">vous a envoyé une demande (Acceptée).</string>
+    <string name="notif_sent_request_rejected">vous a envoyé une demande (Refusée).</string>
+    <string name="notif_accepted_friend_req">a accepté votre demande d\'ami.</string>
+    <string name="notif_sent_notification">a envoyé une notification.</string>
+    <string name="failed_accept_request">Échec de l\'acceptation</string>
+    <string name="failed_reject_request">Échec du refus</string>
+    <string name="accept">Accepter</string>
+    <string name="reject">Refuser</string>
+    <string name="decline">Décliner</string>
+    <string name="someone">Quelqu\'un</string>
+
+    <!-- Time / Timestamp Suffixes -->
+    <string name="time_days_ago">j</string>
+    <string name="time_hours_ago">h</string>
+    <string name="time_mins_ago">min</string>
+    <string name="time_just_now">À l\'instant</string>
+
+    <!-- Community Alerts / Notifications -->
+    <string name="community_alerts_title">🔔 Alertes de la communauté</string>
+    <string name="requests_and_party_broadcasts">Demandes &amp; Annonces de fêtes</string>
+    <string name="tab_real_meet">Real Meet</string>
+    <string name="tab_fantasy">Fantasy</string>
+    <string name="tab_party">Party</string>
+    <string name="no_notifications_in_category">Aucune notification dans cette catégorie.</string>
+    <string name="notif_realmeet_request">%1$s a demandé à se connecter sur votre post : \"%2$s\"</string>
+    <string name="notif_realmeet_accepted">%1$s a accepté votre demande pour le post : \"%2$s\"</string>
+    <string name="notif_party_announcement">%1$s a publié une annonce pour la fête : \"%2$s\"</string>
+    <string name="notif_community_generic">%1$s a envoyé une notification concernant : \"%2$s\"</string>
+    <string name="request_accepted_toast">Demande acceptée !</string>
+    <string name="request_declined_toast">Demande refusée</string>
+    <string name="failed_update_status">Échec de la mise à jour</string>
+    <string name="failed_to_decline">Échec du refus</string>
+    <string name="network_error_loading_alerts">Erreur réseau lors du chargement des alertes</string>
+
+    <!-- Messages / Inbox Section -->
+    <string name="messages_title">Messages</string>
+    <string name="search_messages_people">Rechercher des messages &amp; personnes...</string>
+    <string name="active_now">En ligne actuellement</string>
+    <string name="no_messages_yet">Pas encore de messages\nCommencez à discuter après votre appel vidéo</string>
+    <string name="delete_chat_title">Supprimer la discussion</string>
+    <string name="delete_chat_confirm">Voulez-vous vraiment supprimer cette discussion ?</string>
+    <string name="chat_deleted">Discussion supprimée</string>
+    <string name="failed_delete_chat">Échec de la suppression de la discussion</string>
+    <string name="unknown_user">Inconnu</string>
+
+    <!-- Community Inbox -->
+    <string name="community_inbox_title">💬 Boîte de réception</string>
+    <string name="realmeet_fantasy_connections">Connexions Real Meet &amp; Fantasy</string>
+    <string name="friends_online">Amis en ligne</string>
+    <string name="no_active_community_chats">Aucune discussion de communauté active.</string>
+    <string name="accept_incoming_requests_subtext">Acceptez les demandes pour démarrer des conversations privées 1 contre 1.</string>
+    <string name="chats_count_single">1 Discussion</string>
+    <string name="chats_count_plural">%1$d Discussions</string>
+    <string name="tap_to_open_chat">Appuyez pour ouvrir la discussion privée 1 contre 1</string>
+    <string name="video_call_pref">🎥 Appel vidéo</string>
+    <string name="direct_chat_pref">💬 Chat direct</string>
+
+    <!-- Chat Room / Chat Screen -->
+    <string name="type_a_message">Écrivez un message...</string>
+    <string name="send">Envoyer</string>
+    <string name="seen">Vu</string>
+    <string name="chat_title">Chat</string>
+    <string name="blocked_user_send_msg_error">Vous avez bloqué cet utilisateur. Débloquez-le pour envoyer des messages.</string>
+    <string name="blocked_by_other_send_msg_error">Vous ne pouvez pas envoyer de messages car cet utilisateur vous a bloqué.</string>
+    <string name="blocked_user_call_error">Vous avez bloqué cet utilisateur. Débloquez-le pour passer des appels.</string>
+    <string name="blocked_by_other_call_error">Vous ne pouvez pas appeler cet utilisateur car il vous a bloqué.</string>
+    <string name="failed_to_send">Échec de l\'envoi</string>
+    <string name="delete_message_title">Supprimer le message</string>
+    <string name="delete_message_not_supported">La suppression de messages individuels n\'est pas encore prise en charge.</string>
+    <string name="ok">OK</string>
+    <string name="delete">Supprimer</string>
+    <string name="back">Retour</string>
+    <string name="network_error">Erreur réseau</string>
+
+    <!-- Profile Section -->
+    <string name="change">Changer</string>
+    <string name="verify_identity">Vérifier l\'identité</string>
+    <string name="premium_vip_pass">Pass VIP Premium</string>
+    <string name="loading_plan_status">⏱️ Chargement du statut de l\'abonnement...</string>
+    <string name="followers">Abonnés</string>
+    <string name="following">Abonnements</string>
+    <string name="follow">S\'abonner</string>
+    <string name="message">Message</string>
+    <string name="bio">Biographie</string>
+    <string name="write_your_bio_hint">Rédigez votre biographie...</string>
+    <string name="primary_preference">Préférence Principale</string>
+    <string name="posts">Publications</string>
+    <string name="blocked_users">Utilisateurs Bloqués</string>
+    <string name="legal_privacy">Confidentialité &amp; Mentions Légales</string>
+    <string name="unblock_user">Débloquer l\'utilisateur</string>
+    <string name="unblock">Débloquer</string>
+    <string name="choose_avatar">Choisissez votre Avatar</string>
+    <string name="sex_pref_cannot_be_changed">La préférence sexuelle ne peut pas être modifiée une fois définie.</string>
+    <string name="verify_identity_before_pref">Veuillez vérifier votre identité avant de définir une préférence.</string>
+    <string name="user_not_logged_in">Utilisateur non connecté.</string>
+    <string name="blocked_user_title">Utilisateur Bloqué</string>
+    <string name="profile_updated_toast">Profil mis à jour</string>
+    <string name="failed_update_profile">Échec de la mise à jour du profil</string>
+    <string name="account_deleted_toast">Compte supprimé</string>
+    <string name="failed_delete_account">Échec de la suppression du compte</string>
+    <string name="user_blocked_toast">Utilisateur bloqué</string>
+    <string name="failed_block_user">Échec du blocage de l\'utilisateur</string>
+    <string name="user_unblocked_toast">Utilisateur débloqué</string>
+    <string name="failed_unblock_user">Échec du déblocage de l\'utilisateur</string>
+    <string name="request_sent_toast">Demande envoyée</string>
+    <string name="failed_send_request">Échec de l\'envoi de la demande</string>
+    <string name="unfriend_user_title">Retirer des amis</string>
+    <string name="cancel_request_title">Annuler la demande</string>
+    <string name="unfriend_user_confirm">Voulez-vous vraiment retirer cet utilisateur de vos amis ?</string>
+    <string name="cancel_request_confirm">Voulez-vous vraiment annuler votre demande d\'ami ?</string>
+    <string name="action_completed_toast">Action effectuée avec succès</string>
+    <string name="failed_action_toast">Échec de l\'exécution de l\'action</string>
+    <string name="unfollowed_toast">Abonnement retiré</string>
+    <string name="following_toast">Abonné</string>
+    <string name="failed_unfollow">Échec du désabonnement</string>
+    <string name="failed_follow">Échec de l\'abonnement</string>
+    <string name="friends">Amis</string>
+    <string name="requested">Demandé</string>
+    <string name="accept_request">Accepter la demande</string>
+    <string name="add_friend">Ajouter en ami</string>
+    <string name="active_plan_prefix">\nPlan Actif: %1$s</string>
+    <string name="expires_prefix"> (Expire: %1$s)</string>
+    <string name="free_member">Membre Gratuit</string>
+    <string name="remaining_expired">Expiré</string>
+    <string name="remaining_days_hours">⏱️ %1$d jours et %2$d heures restants</string>
+    <string name="remaining_hours_mins">⏱️ %1$d heures et %2$d minutes restantes</string>
+    <string name="remaining_mins">⏱️ %1$d minutes restantes</string>
+    <string name="block_user_title">Bloquer l\'utilisateur</string>
+    <string name="block_user_confirm">Voulez-vous vraiment bloquer cet utilisateur ? Il ne pourra plus vous envoyer de messages ni voir vos publications.</string>
+    <string name="unblock_user_title">Débloquer l\'utilisateur</string>
+    <string name="unblock_user_confirm">Voulez-vous débloquer cet utilisateur ?</string>
+    <string name="change_gender_title">Changer le genre en %1$s ?</string>
+    <string name="change_gender_confirm">Voulez-vous vraiment changer de genre ?\n\n⚠️ AVERTISSEMENT : Une fois modifié, vos paramètres de vérification de profil seront mis à jour.\n\n%1$s</string>
+    <string name="gender_warning_female">🔒 Les profils féminins nécessitent une vérification faciale en direct pour commencer les matchs.</string>
+    <string name="gender_warning_male">🔓 Les profils masculins sont automatiquement vérifiés lors du changement.</string>
+    <string name="gender_updated_toast">Genre mis à jour en %1$s</string>
+    <string name="failed_change_gender">Échec du changement de genre</string>
+    <string name="user_not_found_title">Utilisateur introuvable</string>
+    <string name="user_not_found_msg">Ce profil utilisateur n\'existe plus.</string>
+    <string name="failed_load_profile">Échec du chargement du profil.</string>
+    <string name="delete_account_confirm">Cette action est permanente et irréversible. Toutes vos données seront supprimées.</string>
+    <string name="type_delete_to_confirm">Tapez \'delete\' pour confirmer</string>
+    <string name="delete_word">delete</string>
+    <string name="access_restricted">Accès restreint</string>
+    <string name="user_blocked_you">Cet utilisateur vous a bloqué.</string>
+    <string name="account_deleted_title">Compte supprimé</string>
+    <string name="account_deleted_msg">Ce compte utilisateur n\'est plus disponible.</string>
+    <string name="failed_load_blocked_users">Échec du chargement des utilisateurs bloqués</string>
+    <string name="unblocked_user_toast">%1$s débloqué</string>
+    <string name="delete_post_title">Supprimer la publication</string>
+    <string name="delete_post_confirm">Voulez-vous vraiment supprimer cette publication ?</string>
+    <string name="post_deleted_toast">Publication supprimée</string>
+    <string name="failed_delete_post">Erreur lors de la suppression de la publication</string>
+    <string name="login_to_like_posts">Connectez-vous pour aimer les publications</string>
+    <string name="gender_male">Homme</string>
+    <string name="gender_female">Femme</string>
+    <string name="yes_change">Oui, changer</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="return_to_video_calling">Appel Vidéo</string>
+    <string name="real_meet_subtitle">Découvrez qui souhaite vous rencontrer en vrai aujourd\'hui</string>
+    <string name="requests_tab">📩 Demandes</string>
+    <string name="inbox_tab">💬 Boîte de réception</string>
+    <string name="notifications_tab">🔔 Notifications</string>
+    <string name="filter_all_cities">🌐 Toutes les villes</string>
+    <string name="filter_in_my_city">🏙️ Dans ma ville</string>
+    <string name="hint_search_realmeet">Rechercher ville, lieu, objectif...</string>
+    <string name="real_meet_default_bio">Bienvenue sur mon profil Real Meet.</string>
+    <string name="my_active_posts_title">Mes publications actives Real Meet &amp; Fantasy</string>
+    <string name="my_hosted_parties_title">Mes soirées organisées</string>
+    <string name="my_saved_parties_title">Mes soirées enregistrées</string>
+    <string name="no_posts_found_search">Aucune publication ne correspond à votre recherche.</string>
+    <string name="dock_meets">Rencontres</string>
+    <string name="dock_fantasy">Fantasme</string>
+    <string name="dock_party">Soirée</string>
+    <string name="announcements_and_members">Annonces &amp; Membres</string>
+    <string name="accepted_guests">👥 Invités acceptés</string>
+    <string name="announcements">📢 Annonces</string>
+    <string name="hint_type_announcement">Rédiger une annonce pour les invités...</string>
+    <string name="host_a_real_world_party">🎉 Organiser une soirée réelle</string>
+    <string name="host_party_subtitle">Invitez des personnes à proximité à votre événement</string>
+    <string name="party_vibe_title">AMBIANCE / TITRE DE LA SOIRÉE</string>
+    <string name="hint_party_purpose">ex. Soirée maison, Barbecue, Pool Party</string>
+    <string name="venue_location">LIEU / ADRESSE</string>
+    <string name="hint_party_venue">ex. Penthouse avec terrasse, Centre-ville</string>
+    <string name="max_capacity">CAPACITÉ MAXIMALE</string>
+    <string name="hint_capacity">ex. 10</string>
+    <string name="target_audience">PUBLIC CIBLE</string>
+    <string name="party_date_time">DATE ET HEURE DE LA SOIRÉE</string>
+    <string name="select_time_hint">⏰ Sélectionner l\'heure (Appuyer pour ouvrir l\'horloge)</string>
+    <string name="clock">🕒 HORLOGE</string>
+    <string name="host_event">Publier la soirée</string>
+    <string name="share_your_fantasy">💭 Partagez votre fantasme</string>
+    <string name="fantasy_subtitle">Exprimez vos désirs en toute sécurité et anonymat</string>
+    <string name="relationship_status">STATUT RELATIONNEL</string>
+    <string name="interests_vibes">CENTRES D\'INTÉRÊT / AMBIANCE</string>
+    <string name="hint_interests">ex. Regarder les étoiles, Café, JdR...</string>
+    <string name="fantasy_text_label">TEXTE DU FANTASME (MAX 200 LETTRES)</string>
+    <string name="hint_fantasy_description">Écrivez votre fantasme secret ici...</string>
+    <string name="publish_fantasy">Publier le fantasme</string>
+    <string name="vip_party_host_badge">👑 HÔTE DE SOIRÉE VIP</string>
+    <string name="join_party_btn">🎉 Rejoindre la soirée</string>
+    <string name="interests_and_vibe_upper">INTÉRÊTS &amp; AMBIANCE</string>
+    <string name="my_fantasy_upper">MON FANTASME</string>
+    <string name="secret_connect_btn">✨ Connexion secrète</string>
+    <string name="delete_post_btn">🗑️ Supprimer la publication</string>
+    <string name="requested_btn">📩 Demandé</string>
+    <string name="already_requested_connect">Vous avez déjà envoyé une demande de connexion pour cette publication.</string>
+    <string name="connect_and_meet_btn">⚡ Se connecter et se rencontrer</string>
+    <string name="by_prefix">Par</string>
+    <string name="yrs_suffix">Ans</string>
+    <string name="max_guests_format">👥 %1$d Max • </string>
+    <string name="everyone">TOUT LE MONDE</string>
+    <string name="delete_party_btn">🗑️ Supprimer la soirée</string>
+    <string name="already_requested_party">Vous avez déjà demandé une invitation pour cette soirée.</string>
+    <string name="delete_fantasy_btn">🗑️ Supprimer le fantasme</string>
+    <string name="already_requested_fantasy">Vous avez déjà demandé à vous connecter pour ce fantasme.</string>
+    <string name="nearby">À proximité</string>
+    <string name="for_prefix">Pour :</string>
+    <string name="real_meet_post">Publication Real Meet</string>
+    <string name="private_video_call">Appel vidéo privé</string>
+    <string name="prefers_video_call">🎥 Préfère l\'appel vidéo privé</string>
+    <string name="prefers_direct_chat">💬 Préfère le chat direct</string>
+    <string name="status_accepted_btn">✅ Accepté</string>
+    <string name="status_declined_btn">❌ Refusé</string>
+    <string name="access_required_title">Accès requis</string>
+    <string name="access_required_msg">Vous n\'avez pas accès au filtrage par ville. Appuyez sur OK pour en savoir plus.</string>
+    <string name="could_not_open_browser">Impossible d\'ouvrir le navigateur</string>
+    <string name="set_city_first">Veuillez d\'abord définir votre ville dans votre profil</string>
+    <string name="party_deleted_toast">Soirée supprimée</string>
+    <string name="fantasy_deleted_toast">Fantasme supprimé</string>
+    <string name="request_status_updated">Statut de la demande mis à jour</string>
+    <string name="request_deleted_toast">Demande supprimée</string>
+    <string name="own_post_toast">C\'est votre propre publication !</string>
+    <string name="request_already_sent">Demande déjà envoyée pour cette publication !</string>
+    <string name="request_sent_to_user">📩 Demande envoyée à %1$s !</string>
+    <string name="removed_saved_party">Retiré des soirées enregistrées</string>
+    <string name="saved_to_list">Enregistré dans votre liste !</string>
+    <string name="active_post_exists_title">Une publication active existe déjà</string>
+    <string name="active_post_exists_msg">Vous avez déjà une publication Real Meet active aujourd\'hui :
+"%1$s" à %2$s.
+
+Vous ne pouvez publier qu\'un seul Real Meet par jour. Souhaitez-vous remplacer votre publication précédente ?</string>
+    <string name="active_party_exists_title">Une soirée active existe déjà</string>
+    <string name="active_party_exists_msg">Vous avez déjà une soirée active publiée aujourd\'hui :
+"%1$s" à %2$s.
+
+Vous ne pouvez publier qu\'une seule soirée par jour. Souhaitez-vous remplacer votre événement précédent ?</string>
+    <string name="select_meeting_time_title">Sélectionner l\'heure du rendez-vous</string>
+    <string name="enter_meeting_purpose">Veuillez entrer le motif du rendez-vous</string>
+    <string name="enter_location">Veuillez entrer le lieu</string>
+    <string name="write_description">Veuillez écrire une courte description</string>
+    <string name="publishing_post">Publication en cours...</string>
+    <string name="post_published_toast">✨ Publication Real Meet publiée !</string>
+    <string name="failed_publish_post">Échec de la publication. Réessayez.</string>
+    <string name="select_party_time_title">Sélectionner l\'heure de la soirée</string>
+    <string name="fill_party_details">Veuillez remplir tous les détails de la soirée</string>
+    <string name="publishing_party">Publication de la soirée...</string>
+    <string name="party_published_toast">🎉 Soirée publiée !</string>
+    <string name="failed_publish_party">Échec de la publication de la soirée.</string>
+    <string name="enter_fantasy_text">Veuillez entrer le texte de votre fantasme</string>
+    <string name="sharing_fantasy">Partage du fantasme...</string>
+    <string name="fantasy_shared_toast">💭 Fantasme partagé !</string>
+    <string name="failed_share_fantasy">Échec du partage du fantasme.</string>
+    <string name="ad_skipped_toast">Publicité ignorée ou incomplète. Non publié.</string>
+    <string name="failed_load_members">Échec du chargement des membres</string>
+    <string name="failed_load_announcements">Échec du chargement des annonces</string>
+    <string name="announcement_posted_toast">Annonce publiée !</string>
+    <string name="failed_post_announcement">Échec de la publication de l\'annonce</string>
+    <string name="post_owner">propriétaire de la publication</string>
+    <string name="community_post">Publication communautaire</string>
+    <string name="nearby_venue">Lieu à proximité</string>
+    <string name="scheduled">Programmé</string>
+    <string name="no_additional_details">Aucun détail supplémentaire.</string>
+    <string name="preferred_audience_prefix">🎯 Public préféré : </string>
+    <string name="replace_post_btn">Remplacer la publication</string>
+    <string name="replace_event_btn">Remplacer l\'événement</string>
+    <string name="community_host">Hôte communautaire</string>
+    <string name="community_member">Membre communautaire</string>
+    <string name="community_meet">Rencontre communautaire</string>
+    <string name="post_real_meet_dialog_title">📍 Publier un Real Meet</string>
+    <string name="post_real_meet_dialog_subtitle">Trouvez des personnes intéressées pour se rencontrer à proximité aujourd\'hui</string>
+    <string name="purpose_of_meet_label">MOTIF DE LA RENCONTRE</string>
+    <string name="hint_realmeet_purpose">ex. Café &amp; discussion, Balade, Cinéma...</string>
+    <string name="location_landmark_label">LIEU / POINT DE REPÈRE</string>
+    <string name="hint_realmeet_location">ex. Café près du centre-ville</string>
+    <string name="meeting_time_label">HEURE DE LA RENCONTRE</string>
+    <string name="description_label">DESCRIPTION (MAX 200 LETTRES)</string>
+    <string name="hint_realmeet_description">Décrivez pourquoi vous souhaitez vous rencontrer...</string>
+    <string name="publish_post_btn">Publier</string>
+    <string name="full_details_description_upper">DÉTAILS COMPLETS ET DESCRIPTION</string>
+    <string name="send_request_btn">⚡ Envoyer la demande</string>
+    <string name="btn_video_call">🎥 Appel vidéo</string>
+    <string name="btn_chat_now">💬 Discuter maintenant</string>
+    <string name="select_date_title">Sélectionner la date de la rencontre</string>
+    <string name="select_date_time_hint">📅 Sélectionner la date et l\'heure</string>
+    <string name="select_party_date_time_hint">📅 Sélectionner la date et l\'heure de la fête</string>
+    <string name="select_future_date_time">Veuillez sélectionner une date et une heure futures</string>
+    <string name="target_audience_everyone">Tout le monde (Everyone)</string>
+    <string name="target_audience_female">Femmes uniquement (Female Only)</string>
+    <string name="target_audience_male">Hommes uniquement (Male Only)</string>
+    <string name="status_single">Célibataire (Single)</string>
+    <string name="status_married">Marié(e) (Married)</string>
+    <string name="status_divorced">Divorcé(e) (Divorced)</string>
+    <string name="status_widowed">Veuf/Veuve (Widowed)</string>
+    <string name="send_meet_request_title">📩 Envoyer une demande de rencontre</string>
+    <string name="connecting_with_user">Connexion avec %1$s</string>
+    <string name="quick_icebreakers_upper">MESSAGES RAPIDES</string>
+    <string name="icebreaker_coffee">☕ Salut ! J\'aimerais prendre un café avec toi</string>
+    <string name="icebreaker_count_me_in">🎉 Compte sur moi ! Connectons-nous !</string>
+    <string name="icebreaker_talk_privately">🔒 J\'ai aimé ta publication, parlons en privé !</string>
+    <string name="your_message_note_upper">VOTRE MESSAGE / NOTE</string>
+    <string name="hint_request_message">Tapez votre message ou votre phrase d\'accroche...</string>
+    <string name="preferred_contact_mode_upper">MODE DE CONTACT PRÉFÉRÉ</string>
+    <string name="pref_video_call">🎥 Appel vidéo</string>
+    <string name="pref_direct_chat">💬 Chat direct</string>
+    <string name="filter_in_city_param">🏙️ À %1$s</string>
+    <string name="no_posts_in_city">Aucune publication de rencontre à %1$s pour le moment.</string>
+    <string name="no_parties_matching">Aucune fête organisée ne correspond à votre recherche.</string>
+    <string name="no_fantasies_matching">Aucune publication de fantasme ne correspond à votre recherche.</string>
+    <string name="post_expired">Cette publication a expiré.</string>
+    <string name="default_request_msg">Salut ! Je suis intéressé(e) par ta publication de rencontre.</string>
+</resources>

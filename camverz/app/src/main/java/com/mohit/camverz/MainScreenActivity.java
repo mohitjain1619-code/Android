@@ -323,14 +323,14 @@ public class MainScreenActivity extends BaseActivity {
 
         cardGay.setOnClickListener(v -> {
             if (!"male".equalsIgnoreCase(tokenManager.getUserGender())) {
-                Toast.makeText(MainScreenActivity.this, "Only males can join Gay section", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainScreenActivity.this, R.string.toast_only_males_gay, Toast.LENGTH_SHORT).show();
                 return;
             }
             goToConnecting("gay");
         });
         cardLesbian.setOnClickListener(v -> {
             if (!"female".equalsIgnoreCase(tokenManager.getUserGender())) {
-                Toast.makeText(MainScreenActivity.this, "Only females can join Lesbian section", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainScreenActivity.this, R.string.toast_only_females_lesbian, Toast.LENGTH_SHORT).show();
                 return;
             }
             goToConnecting("lesbian");
@@ -382,6 +382,11 @@ public class MainScreenActivity extends BaseActivity {
             int itemId = item.getItemId();
             if (itemId == R.id.action_logout) {
                 logout();
+                return true;
+            } else if (itemId == R.id.action_change_language) {
+                Intent intent = new Intent(this, LanguageSelectionActivity.class);
+                intent.putExtra("is_from_settings", true);
+                startActivity(intent);
                 return true;
             } else if (itemId == R.id.action_mediation_debugger) {
                 Toast.makeText(this, "Mediation debugger is disabled", Toast.LENGTH_SHORT).show();
@@ -532,7 +537,7 @@ public class MainScreenActivity extends BaseActivity {
     private void setupSocketListeners() {
         connectListener = args -> runOnUiThread(() -> {
             if (tvLiveCount != null) {
-                tvLiveCount.setText("Live Online");
+                tvLiveCount.setText(R.string.live_online);
             }
         });
         socket.on(Socket.EVENT_CONNECT, connectListener);
@@ -541,7 +546,7 @@ public class MainScreenActivity extends BaseActivity {
             if (args != null && args.length > 0 && tvLiveCount != null) {
                 try {
                     int count = Integer.parseInt(args[0].toString());
-                    runOnUiThread(() -> tvLiveCount.setText(count + " Online"));
+                    runOnUiThread(() -> tvLiveCount.setText(getString(R.string.online_count, count)));
                 } catch (Exception e) {
                     Log.e(TAG, "Error parsing online count", e);
                 }
@@ -553,7 +558,7 @@ public class MainScreenActivity extends BaseActivity {
             if (args != null && args.length > 0 && tvLiveCount != null) {
                 try {
                     int count = Integer.parseInt(args[0].toString());
-                    runOnUiThread(() -> tvLiveCount.setText(count + " Online"));
+                    runOnUiThread(() -> tvLiveCount.setText(getString(R.string.online_count, count)));
                 } catch (Exception e) {
                     Log.e(TAG, "Error parsing online count", e);
                 }

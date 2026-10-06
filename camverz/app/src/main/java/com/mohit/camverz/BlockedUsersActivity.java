@@ -78,12 +78,12 @@ public class BlockedUsersActivity extends BaseActivity {
                         return;
                     }
                 }
-                Toast.makeText(BlockedUsersActivity.this, "Failed to load blocked users", Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlockedUsersActivity.this, getString(R.string.failed_load_blocked_users), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(BlockedUsersActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlockedUsersActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -97,7 +97,7 @@ public class BlockedUsersActivity extends BaseActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        Toast.makeText(BlockedUsersActivity.this, "Unblocked " + user.getName(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(BlockedUsersActivity.this, getString(R.string.unblocked_user_toast, user.getName()), Toast.LENGTH_SHORT).show();
                         if (position >= 0 && position < blockedUsers.size()) {
                             blockedUsers.remove(position);
                             adapter.notifyItemRemoved(position);
@@ -105,12 +105,12 @@ public class BlockedUsersActivity extends BaseActivity {
                         return;
                     }
                 }
-                Toast.makeText(BlockedUsersActivity.this, "Failed to unblock user", Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlockedUsersActivity.this, getString(R.string.failed_unblock_user), Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(BlockedUsersActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(BlockedUsersActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

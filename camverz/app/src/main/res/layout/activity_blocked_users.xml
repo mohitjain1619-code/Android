@@ -25,13 +25,13 @@
             android:padding="10dp"
             android:clickable="true"
             android:focusable="true"
-            android:contentDescription="Back" />
+            android:contentDescription="@string/back" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Blocked Users"
+            android:text="@string/blocked_users"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold"/>

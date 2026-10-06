@@ -38,13 +38,13 @@
                     android:layout_gravity="center"
                     android:src="@drawable/ic_arrow_back"
                     app:tint="@color/text_primary"
-                    android:contentDescription="Back" />
+                    android:contentDescription="@string/back" />
             </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Notifications"
+                android:text="@string/notifications_title"
                 android:textColor="@color/text_primary"
                 android:textSize="20sp"
                 android:textStyle="bold"
@@ -70,7 +70,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
-        android:text="No notifications yet"
+        android:text="@string/no_notifications_yet"
         android:textColor="@color/text_muted"
         android:textSize="15sp"
         android:visibility="gone" />

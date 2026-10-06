@@ -56,21 +56,21 @@
                 style="@style/FilterButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="All" />
+                android:text="@string/all" />
 
             <TextView
                 android:id="@+id/filter_male"
                 style="@style/FilterButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Male" />
+                android:text="@string/male_title" />
 
             <TextView
                 android:id="@+id/filter_female"
                 style="@style/FilterButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Female" />
+                android:text="@string/female_title" />
 
         </LinearLayout>
 
@@ -138,7 +138,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
-            android:text="No posts available right now.\nBe the first to create one!"
+            android:text="@string/no_posts_available"
             android:textColor="#A0A0AA"
             android:textSize="14sp" />
 
@@ -152,7 +152,7 @@
             android:focusable="true"
             android:paddingHorizontal="20dp"
             android:paddingVertical="10dp"
-            android:text="Refresh Feed"
+            android:text="@string/refresh_feed"
             android:textColor="#FFFFFF"
             android:textSize="13sp"
             android:textStyle="bold" />

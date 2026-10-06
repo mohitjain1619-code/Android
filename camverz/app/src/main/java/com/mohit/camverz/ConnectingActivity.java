@@ -26,7 +26,10 @@ public class ConnectingActivity extends BaseActivity {
     private Emitter.Listener matchFoundListener;
     private Emitter.Listener matchCancelledListener;
     private Emitter.Listener limitExceededListener;
+    private Emitter.Listener connectListener;
     private TokenManager tokenManager;
+    private Handler queueHeartbeatHandler;
+    private Runnable queueHeartbeatRunnable;
 
     private String category = "";
     private String userGender = "";
@@ -97,8 +100,7 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void joinQueue() {
-        if (isWaiting) return;
-        isWaiting = true;
+        if (!isWaiting) isWaiting = true;
         matchedPeerId = null;
 
         if (waitingText != null) {
@@ -111,15 +113,50 @@ public class ConnectingActivity extends BaseActivity {
             obj.put("gender", userGender);
             obj.put("category", category);
 
-            Log.d(TAG, "📤 join-queue");
+            Log.d(TAG, "📤 join-queue (category: " + category + ")");
             socket.emit("join-queue", obj);
         } catch (Exception e) {
             Log.e(TAG, "join-queue failed: " + e.getMessage());
+        }
+
+        startQueueHeartbeat();
+    }
+
+    private void startQueueHeartbeat() {
+        stopQueueHeartbeat();
+        queueHeartbeatHandler = new Handler(Looper.getMainLooper());
+        queueHeartbeatRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isWaiting && !isFinishing() && !isDestroyed()) {
+                    Log.d(TAG, "💓 Queue heartbeat: Refreshing join-queue on backend...");
+                    try {
+                        JSONObject obj = new JSONObject();
+                        obj.put("uid", myUid);
+                        obj.put("gender", userGender);
+                        obj.put("category", category);
+                        socket.emit("join-queue", obj);
+                    } catch (Exception e) {}
+                    if (queueHeartbeatHandler != null) {
+                        queueHeartbeatHandler.postDelayed(this, 8000); // 8 second heartbeat
+                    }
+                }
+            }
+        };
+        queueHeartbeatHandler.postDelayed(queueHeartbeatRunnable, 8000);
+    }
+
+    private void stopQueueHeartbeat() {
+        if (queueHeartbeatHandler != null && queueHeartbeatRunnable != null) {
+            queueHeartbeatHandler.removeCallbacks(queueHeartbeatRunnable);
+            queueHeartbeatHandler = null;
+            queueHeartbeatRunnable = null;
         }
     }
 
     private void leaveQueue() {
         isWaiting = false;
+        stopQueueHeartbeat();
         cancelCountdown();
 
         // If user cancels during matched countdown, notify peer immediately
@@ -158,6 +195,22 @@ public class ConnectingActivity extends BaseActivity {
     private void setupSocketListeners() {
         removeSocketListeners();
 
+        connectListener = args -> {
+            Log.d(TAG, "Socket reconnected in ConnectingActivity.");
+            try {
+                if (myUid != null && !myUid.isEmpty()) {
+                    JSONObject regObj = new JSONObject();
+                    regObj.put("uid", myUid);
+                    socket.emit("register-user", regObj);
+                }
+            } catch (Exception e) {}
+            if (isWaiting) {
+                Log.d(TAG, "Re-emitting join-queue after socket reconnect");
+                joinQueue();
+            }
+        };
+        socket.on(Socket.EVENT_CONNECT, connectListener);
+
         limitExceededListener = args -> {
             Log.w(TAG, "⚠️ Received limit-exceeded socket event.");
             runOnUiThread(this::showLimitExceededDialog);
@@ -190,6 +243,7 @@ public class ConnectingActivity extends BaseActivity {
 
                 runOnUiThread(() -> {
                     isWaiting = false;
+                    stopQueueHeartbeat();
                     matchedPeerId = peerId;
                     startMatchTransitionCountdown(peerId, peerName, peerAvatar);
                 });
@@ -400,6 +454,10 @@ public class ConnectingActivity extends BaseActivity {
 
     private void removeSocketListeners() {
         if (socket == null) return;
+        if (connectListener != null) {
+            socket.off(Socket.EVENT_CONNECT, connectListener);
+            connectListener = null;
+        }
         if (matchFoundListener != null) {
             socket.off("match-found", matchFoundListener);
             matchFoundListener = null;
@@ -412,6 +470,7 @@ public class ConnectingActivity extends BaseActivity {
             socket.off("limit-exceeded", limitExceededListener);
             limitExceededListener = null;
         }
+        stopQueueHeartbeat();
     }
 
     @Override

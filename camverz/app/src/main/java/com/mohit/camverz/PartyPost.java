@@ -15,6 +15,7 @@ public class PartyPost {
     private String gender;
     private boolean verified;
     private boolean premium;
+    private long eventTimestamp;
     private long createdAt;
 
     public PartyPost() {}
@@ -69,6 +70,25 @@ public class PartyPost {
         this.createdAt = createdAt;
     }
 
+    public PartyPost(String id, String hostUserId, String hostName, String hostAvatar, String hostPhotoUrl, int hostAge, String venue, String purpose, int capacity, String targetGender, String partyTime, String gender, boolean verified, boolean premium, long eventTimestamp, long createdAt) {
+        this.id = id;
+        this.hostUserId = hostUserId;
+        this.hostName = hostName;
+        this.hostAvatar = hostAvatar;
+        this.hostPhotoUrl = hostPhotoUrl;
+        this.hostAge = hostAge;
+        this.venue = venue;
+        this.purpose = purpose;
+        this.capacity = capacity;
+        this.targetGender = targetGender;
+        this.partyTime = partyTime;
+        this.gender = gender;
+        this.verified = verified;
+        this.premium = premium;
+        this.eventTimestamp = eventTimestamp;
+        this.createdAt = createdAt;
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -111,6 +131,18 @@ public class PartyPost {
     public boolean isPremium() { return premium; }
     public void setPremium(boolean premium) { this.premium = premium; }
 
+    public long getEventTimestamp() { return eventTimestamp; }
+    public void setEventTimestamp(long eventTimestamp) { this.eventTimestamp = eventTimestamp; }
+
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+
+    public boolean isExpired() {
+        long now = System.currentTimeMillis();
+        if (eventTimestamp > 0) {
+            return eventTimestamp < now;
+        }
+        // Fallback for legacy posts without eventTimestamp: auto-expire after 24h
+        return createdAt > 0 && (now - createdAt > 24 * 60 * 60 * 1000L);
+    }
 }

@@ -43,8 +43,22 @@ public class LoginActivity extends AppCompatActivity {
     private AppUpdateHelper appUpdateHelper;
 
     @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(LocaleHelper.applyLocale(newBase));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Language selection MUST happen before Google Sign-In on first launch
+        if (!LocaleHelper.isLanguageSelected(this)) {
+            Intent intent = new Intent(this, LanguageSelectionActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
         // Initialize ironSource LevelPlay SDK early

@@ -96,7 +96,7 @@ public class ProfilePostAdapter extends RecyclerView.Adapter<ProfilePostAdapter.
             });
         } else {
             holder.likeButton.setImageResource(R.drawable.ic_like_outline);
-            holder.likeButton.setOnClickListener(v -> Toast.makeText(context, "You need to be logged in to like posts", Toast.LENGTH_SHORT).show());
+            holder.likeButton.setOnClickListener(v -> Toast.makeText(context, context.getString(R.string.login_to_like_posts), Toast.LENGTH_SHORT).show());
         }
 
         holder.commentButton.setOnClickListener(v -> {
@@ -115,14 +115,14 @@ public class ProfilePostAdapter extends RecyclerView.Adapter<ProfilePostAdapter.
 
     private void showPopupMenu(View view, Post post, int position) {
         PopupMenu popup = new PopupMenu(context, view);
-        popup.getMenu().add(0, DELETE_ID, 0, "Delete");
+        popup.getMenu().add(0, DELETE_ID, 0, context.getString(R.string.delete));
         popup.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == DELETE_ID) {
                 new AlertDialog.Builder(context)
-                        .setTitle("Delete Post")
-                        .setMessage("Are you sure you want to delete this post?")
-                        .setPositiveButton("Delete", (dialog, which) -> deletePost(post, position))
-                        .setNegativeButton("Cancel", null)
+                        .setTitle(context.getString(R.string.delete_post_title))
+                        .setMessage(context.getString(R.string.delete_post_confirm))
+                        .setPositiveButton(context.getString(R.string.delete), (dialog, which) -> deletePost(post, position))
+                        .setNegativeButton(context.getString(R.string.cancel), null)
                         .show();
                 return true;
             }
@@ -142,14 +142,14 @@ public class ProfilePostAdapter extends RecyclerView.Adapter<ProfilePostAdapter.
                         notifyItemRemoved(position);
                         notifyItemRangeChanged(position, postList.size());
                     }
-                    Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.post_deleted_toast), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(context, "Error deleting post", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.failed_delete_post), Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(context, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

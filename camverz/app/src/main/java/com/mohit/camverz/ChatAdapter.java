@@ -61,7 +61,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         if (getItemViewType(position) == MSG_TYPE_RIGHT) {
             if (message.isSeen()) {
                 holder.seenStatus.setVisibility(View.VISIBLE);
-                holder.seenStatus.setText("Seen");
+                holder.seenStatus.setText(context.getString(R.string.seen));
             } else {
                 holder.seenStatus.setVisibility(View.GONE);
             }
@@ -118,9 +118,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         // Individual message deletion is currently not supported by the backend API.
         // Alert the user.
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Delete Message");
-        builder.setMessage("Individual message deletion is not supported yet.");
-        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.setTitle(context.getString(R.string.delete_message_title));
+        builder.setMessage(context.getString(R.string.delete_message_not_supported));
+        builder.setPositiveButton(context.getString(R.string.ok), (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 }

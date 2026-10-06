@@ -16,6 +16,7 @@ public class RealMeetPost {
     private boolean verified;
     private boolean premium;
     private String sexPreference;
+    private long eventTimestamp;
     private long createdAt;
 
     public RealMeetPost() {}
@@ -89,6 +90,26 @@ public class RealMeetPost {
         this.createdAt = createdAt;
     }
 
+    public RealMeetPost(String id, String userId, String userName, String userAvatar, String photoUrl, int age, String city, String purpose, String location, String time, String description, String gender, boolean verified, boolean premium, String sexPreference, long eventTimestamp, long createdAt) {
+        this.id = id;
+        this.userId = userId;
+        this.userName = userName;
+        this.userAvatar = userAvatar;
+        this.photoUrl = photoUrl;
+        this.age = age;
+        this.city = city;
+        this.purpose = purpose;
+        this.location = location;
+        this.time = time;
+        this.description = description;
+        this.gender = gender;
+        this.verified = verified;
+        this.premium = premium;
+        this.sexPreference = sexPreference;
+        this.eventTimestamp = eventTimestamp;
+        this.createdAt = createdAt;
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -134,6 +155,18 @@ public class RealMeetPost {
     public String getSexPreference() { return sexPreference != null ? sexPreference : "Straight"; }
     public void setSexPreference(String sexPreference) { this.sexPreference = sexPreference; }
 
+    public long getEventTimestamp() { return eventTimestamp; }
+    public void setEventTimestamp(long eventTimestamp) { this.eventTimestamp = eventTimestamp; }
+
     public long getCreatedAt() { return createdAt; }
     public void setCreatedAt(long createdAt) { this.createdAt = createdAt; }
+
+    public boolean isExpired() {
+        long now = System.currentTimeMillis();
+        if (eventTimestamp > 0) {
+            return eventTimestamp < now;
+        }
+        // Fallback for legacy posts without eventTimestamp: auto-expire after 24h
+        return createdAt > 0 && (now - createdAt > 24 * 60 * 60 * 1000L);
+    }
 }

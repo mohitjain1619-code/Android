@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Language Selection -->
+    <string name="choose_language_title">अपनी भाषा चुनें</string>
+    <string name="choose_language_subtitle">आगे बढ़ने के लिए अपनी पसंदीदा भाषा चुनें</string>
+    <string name="search_language_hint">भाषा खोजें…</string>
+    <string name="change_language">भाषा बदलें</string>
+
+    <!-- Call Activity -->
+    <string name="mute_audio">आवाज बंद करें</string>
+    <string name="switch_camera">कैमरा बदलें</string>
+    <string name="end_call">कॉल समाप्त करें</string>
+    <string name="connecting">कनेक्ट हो रहा है…</string>
+    <string name="calling">कॉल जा रही है…</string>
+    <string name="ringing">घंटी बज रही है…</string>
+    <string name="call_declined">कॉल अस्वीकार की गई</string>
+    <string name="call_ended">कॉल समाप्त हो गई</string>
+    <string name="speaker">स्पीकर</string>
+    <string name="mute">म्यूट</string>
+    
+    <!-- Gender Selection & Onboarding -->
+    <string name="select_your_gender">अपना जेंडर चुनें</string>
+    <string name="gender_help_text">यह हमें आपको सही लोगों से जोड़ने में मदद करता है</string>
+    <string name="male">👨 पुरुष</string>
+    <string name="female">👩 महिला</string>
+    <string name="continue_arrow">आगे बढ़ें →</string>
+    <string name="step_1_of_4">चरण 1 का 4</string>
+    <string name="step_2_of_4">चरण 2 का 4</string>
+    <string name="step_3_of_4">चरण 3 का 4</string>
+    <string name="step_4_of_4">चरण 4 का 4</string>
+    <string name="whats_your_gender">आपका जेंडर क्या है?</string>
+    <string name="gender_help_subtitle">यह हमें आपको अपने समुदाय के सही लोगों से मिलाने में मदद करता है।</string>
+    <string name="male_title">पुरुष</string>
+    <string name="female_title">महिला</string>
+    <string name="discover_matches">मैच खोजें</string>
+    <string name="continue_text">आगे बढ़ें</string>
+    <string name="whats_your_name">आपका नाम क्या है?</string>
+    <string name="name_subtext">दूसरे लोग आपको इसी नाम से देखेंगे</string>
+    <string name="enter_name_hint">अपना नाम दर्ज करें</string>
+    <string name="where_located">आप कहाँ रहते हैं?</string>
+    <string name="city_subtext">आपके शहर के आसपास के लोगों से जोड़ने में मदद करता है।</string>
+    <string name="detecting_location">लोकेशन खोजी जा रही है...</string>
+    <string name="please_wait">कृपया प्रतीक्षा करें</string>
+    <string name="when_birthday">आपका जन्म कब हुआ था?</string>
+    <string name="birthday_subtext">Camverz का उपयोग करने के लिए आपकी आयु कम से कम 18 वर्ष होनी चाहिए।</string>
+    <string name="age_restricted">🛡️ 18+ आयु प्रतिबंधित</string>
+    <string name="date_format_hint">दिन / माह / वर्ष</string>
+    <string name="youre_all_set">आप बिल्कुल तैयार हैं!</string>
+    <string name="finish_subtext">अपनी प्रोफाइल की समीक्षा करें और असली लोगों से मिलने के लिए तैयार हों।</string>
+    <string name="profile_summary_title">आपकी प्रोफाइल का विवरण</string>
+    <string name="display_name_hint">आपका नाम</string>
+    <string name="summary_gender">जेंडर: %1$s</string>
+    <string name="summary_city">शहर: %1$s</string>
+    <string name="summary_birthday">जन्मदिन: %1$s</string>
+    <string name="permissions_privacy_title">अनुमतियाँ और गोपनीयता</string>
+    <string name="perm_camera_mic">📷 कैमरा और माइक्रोफोन: लाइव वीडियो कॉल के लिए</string>
+    <string name="perm_location">📍 लोकेशन: आसपास के लोगों से मिलान के लिए</string>
+    <string name="perm_zero_recording">🔒 ज़ीरो-रिकॉर्डिंग: वीडियो कॉल 100% निजी और एन्क्रिप्टेड हैं</string>
+    <string name="start_video_chatting">वीडियो चैट शुरू करें</string>
+    
+    <!-- Main Screen -->
+    <string name="welcome_user">स्वागत है</string>
+    <string name="verified">✓ सत्यापित</string>
+    <string name="not_verified">⚠ असत्यापित</string>
+    <string name="choose_interest">वीडियो कॉल के लिए अपनी रुचि चुनें</string>
+    <string name="verified_users_text">दुनिया भर के सत्यापित यूज़र्स से जुड़ें</string>
+    <string name="complete_verification">सत्यापन पूरा करें</string>
+    <string name="logout">लॉग आउट</string>
+    
+    <!-- Categories -->
+    <string name="gay">गे</string>
+    <string name="lesbian">लेस्बियन</string>
+    <string name="straight">स्ट्रेट</string>
+    
+    <!-- Login & Welcome Screen -->
+    <string name="welcome_to_camverz">Camverz में आपका स्वागत है</string>
+    <string name="sign_in_google">Google से साइन इन करें</string>
+    <string name="headline_meet_real_people">असली लोगों से मिलें, सिर्फ प्रोफाइल नहीं</string>
+    <string name="subtitle_video_chat">वीडियो चैट करें, दोस्त बनाएं, आसपास के लोगों को खोजें और नए रिश्ते बनाएं।</string>
+    <string name="chip_verified_users">✓ सत्यापित यूज़र्स</string>
+    <string name="chip_hd_video">🎥 HD वीडियो कॉल</string>
+    <string name="chip_nearby_discovery">📍 आसपास के लोग</string>
+    <string name="chip_safe_community">🛡️ सुरक्षित कम्युनिटी</string>
+    <string name="chip_instant_video">⚡ इंस्टेंट वीडियो</string>
+    <string name="chip_private_safe">🔒 100% सुरक्षित</string>
+    <string name="chip_real_meet">🔥 रियल मीट</string>
+    <string name="login_continue_journey">Camverz के साथ अपनी यात्रा शुरू करें</string>
+    <string name="login_join_thousands">हर दिन नए लोगों की खोज करने वाले हज़ारों सत्यापित यूज़र्स से जुड़ें।</string>
+    <string name="privacy_no_post">🔒 हम आपकी अनुमति के बिना कुछ भी पोस्ट नहीं करते।</string>
+    <string name="trust_encrypted">⚡ एन्क्रिप्टेड</string>
+    <string name="trust_secure">🛡️ सुरक्षित</string>
+    <string name="trust_verified_community">✓ सत्यापित कम्युनिटी</string>
+    <string name="terms_privacy_notice">आगे बढ़कर आप हमारी शर्तों और गोपनीयता नीति से सहमत होते हैं</string>
+    <string name="terms_privacy_notice_full">आगे बढ़कर, आप हमारी शर्तों, गोपनीयता नीति और बाल सुरक्षा नीति से सहमत होते हैं।</string>
+    <string name="terms_of_service">सेवा की शर्तें</string>
+    <string name="privacy_policy">गोपनीयता नीति</string>
+    <string name="tester_login">टेस्टर अकाउंट से साइन इन करें</string>
+    <string name="signing_in_wait">साइन इन हो रहा है... कृपया प्रतीक्षा करें</string>
+    
+    <!-- Connecting Activity -->
+    <string name="finding_match">मैच खोज रहे हैं…</string>
+    <string name="wait_connect_message">कृपया प्रतीक्षा करें जब तक हम आपको जोड़ते हैं…</string>
+    <string name="cancel">रद्द करें</string>
+    
+    <!-- Verification Activity -->
+    <string name="verification">सत्यापन</string>
+    <string name="selfie">सेल्फी</string>
+    <string name="take_selfie">सेल्फी लें</string>
+    <string name="id_document">पहचान पत्र</string>
+    <string name="upload_id">आईडी अपलोड करें</string>
+    <string name="submit_verification">सत्यापन सबमिट करें</string>
+    
+    <!-- Status Messages -->
+    <string name="matched_starting_call">मैच मिला! कॉल शुरू हो रही है…</string>
+    <string name="finding_match_status">मैच खोज रहे हैं…</string>
+    <string name="error_loading_profile">प्रोफाइल लोड करने में त्रुटि</string>
+
+    <!-- Navigation & Community -->
+    <string name="explore">खोजें</string>
+    <string name="messages">संदेश</string>
+    <string name="profile">प्रोफाइल</string>
+    <string name="feed">फ़ीड</string>
+    <string name="real_meet">रियल मीट</string>
+    <string name="create_post">नई पोस्ट बनाएं</string>
+    <string name="block_user">यूज़र को ब्लॉक करें</string>
+    <string name="report_user">रिपोर्ट करें</string>
+    <string name="delete_account">अकाउंट हटाएं</string>
+
+    <!-- Home Screen Additional -->
+    <string name="greeting_evening">शुभ संध्या 👋</string>
+    <string name="greeting_morning">सुप्रभात ☀️</string>
+    <string name="greeting_afternoon">नमस्कार 🌤️</string>
+    <string name="live_online">लाइव ऑनलाइन</string>
+    <string name="online_count">%1$d ऑनलाइन</string>
+    <string name="quick_actions">त्वरित कार्य</string>
+    <string name="community_hub_title">💬 रियल मीट, रियल पार्टी, फैंटेसी</string>
+    <string name="hot_chip">हॉट 🔥</string>
+    <string name="friends_chats_chip">👥 मित्र और चैट</string>
+    <string name="choose_your_interest">वीडियो कॉल के लिए अपनी रुचि चुनें</string>
+    <string name="select_category_matching">वीडियो कॉल शुरू करने के लिए श्रेणी चुनें</string>
+    <string name="straight_desc">सार्थक बातचीत की तलाश करने वाले लोगों से मिलें</string>
+    <string name="gay_desc">सत्यापित पुरुष यूज़र्स से जुड़ें</string>
+    <string name="lesbian_desc">सत्यापित महिला यूज़र्स से मिलें</string>
+    <string name="menu_share_app">ऐप शेयर करें 🚀</string>
+    <string name="menu_rate_app">ऐप को रेटिंग दें ⭐</string>
+    <string name="toast_only_males_gay">केवल पुरुष ही गे सेक्शन में शामिल हो सकते हैं</string>
+    <string name="toast_only_females_lesbian">केवल महिलाएं ही लेस्बियन सेक्शन में शामिल हो सकती हैं</string>
+
+    <!-- Create Post & Comments -->
+    <string name="create_post_title">पोस्ट बनाएं</string>
+    <string name="whats_on_your_mind">आपके मन में क्या है?</string>
+    <string name="audience_visibility">दर्शकों की दृश्यता</string>
+    <string name="all">सभी</string>
+    <string name="publish_post">पोस्ट प्रकाशित करें</string>
+    <string name="comments_title">टिप्पणियाँ</string>
+    <string name="write_a_comment">एक टिप्पणी लिखें...</string>
+    <string name="replying_to">%1$s को जवाब दे रहे हैं</string>
+
+    <!-- Legacy / Alternate Aliases for Translations -->
+    <string name="enter_your_name">आपका नाम क्या है?</string>
+    <string name="name_hint">अपना नाम दर्ज करें</string>
+    <string name="select_your_city">आप कहाँ रहते हैं?</string>
+    <string name="city_hint">अपना शहर दर्ज करें</string>
+    <string name="birthday_title">आपका जन्म कब हुआ था?</string>
+    <string name="birthday_subtitle">Camverz का उपयोग करने के लिए आपकी आयु कम से कम 18 वर्ष होनी चाहिए।</string>
+    <string name="profile_complete">आप बिल्कुल तैयार हैं!</string>
+    <string name="start_connecting">वीडियो चैट शुरू करें</string>
+
+    <!-- Feed Empty State & Retry -->
+    <string name="no_posts_available">अभी कोई पोस्ट उपलब्ध नहीं है।\nपहली पोस्ट बनाएं!</string>
+    <string name="refresh_feed">फ़ीड रिफ़्रेश करें</string>
+    <string name="failed_to_load_posts">पोस्ट लोड करने में विफल।\nपुनः प्रयास करने के लिए टैप करें।</string>
+    <string name="network_error_retry">नेटवर्क त्रुटि या कनेक्शन टाइमआउट।\nकृपया अपना इंटरनेट कनेक्शन जांचें।</string>
+
+    <!-- Notifications Section -->
+    <string name="notifications_title">सूचनाएं</string>
+    <string name="no_notifications_yet">अभी कोई सूचना नहीं है</string>
+    <string name="delete_notification_title">सूचना हटाएं</string>
+    <string name="delete_notification_confirm">क्या आप निश्चित रूप से इस सूचना को हटाना चाहते हैं?</string>
+    <string name="notif_liked_post">ने आपकी पोस्ट को पसंद किया।</string>
+    <string name="notif_commented_post">ने आपकी पोस्ट पर टिप्पणी की।</string>
+    <string name="notif_started_following">ने आपका अनुसरण करना शुरू कर दिया।</string>
+    <string name="notif_visited_profile">ने आपकी प्रोफ़ाइल देखी।</string>
+    <string name="notif_replied_comment">ने आपकी टिप्पणी का उत्तर दिया।</string>
+    <string name="notif_sent_request">ने आपको एक अनुरोध भेजा।</string>
+    <string name="notif_sent_request_accepted">ने आपको एक अनुरोध भेजा (स्वीकृत)।</string>
+    <string name="notif_sent_request_rejected">ने आपको एक अनुरोध भेजा (अस्वीकृत)।</string>
+    <string name="notif_accepted_friend_req">ने आपका मित्र अनुरोध स्वीकार कर लिया।</string>
+    <string name="notif_sent_notification">ने एक सूचना भेजी।</string>
+    <string name="failed_accept_request">अनुरोध स्वीकार करने में विफल</string>
+    <string name="failed_reject_request">अनुरोध अस्वीकार करने में विफल</string>
+    <string name="accept">स्वीकार करें</string>
+    <string name="reject">अस्वीकार करें</string>
+    <string name="decline">अस्वीकार</string>
+    <string name="someone">किसी ने</string>
+
+    <!-- Time / Timestamp Suffixes -->
+    <string name="time_days_ago">दिन पहले</string>
+    <string name="time_hours_ago">घंटे पहले</string>
+    <string name="time_mins_ago">मिनट पहले</string>
+    <string name="time_just_now">अभी-अभी</string>
+
+    <!-- Community Alerts / Notifications -->
+    <string name="community_alerts_title">🔔 कम्युनिटी अलर्ट</string>
+    <string name="requests_and_party_broadcasts">अनुरोध और पार्टी प्रसारण</string>
+    <string name="tab_real_meet">रियल मीट</string>
+    <string name="tab_fantasy">फैंटेसी</string>
+    <string name="tab_party">पार्टी</string>
+    <string name="no_notifications_in_category">इस श्रेणी में कोई सूचना नहीं है।</string>
+    <string name="notif_realmeet_request">%1$s ने आपकी पोस्ट पर कनेक्ट करने का अनुरोध किया: \"%2$s\"</string>
+    <string name="notif_realmeet_accepted">%1$s ने आपकी पोस्ट के लिए अनुरोध स्वीकार कर लिया: \"%2$s\"</string>
+    <string name="notif_party_announcement">%1$s ने पार्टी के लिए एक घोषणा पोस्ट की: \"%2$s\"</string>
+    <string name="notif_community_generic">%1$s ने के संबंध में एक कम्युनिटी सूचना भेजी: \"%2$s\"</string>
+    <string name="request_accepted_toast">अनुरोध स्वीकृत!</string>
+    <string name="request_declined_toast">अनुरोध अस्वीकृत</string>
+    <string name="failed_update_status">स्थिति अपडेट करने में विफल</string>
+    <string name="failed_to_decline">अस्वीकार करने में विफल</string>
+    <string name="network_error_loading_alerts">अलर्ट लोड करने में नेटवर्क त्रुटि</string>
+
+    <!-- Messages / Inbox Section -->
+    <string name="messages_title">संदेश</string>
+    <string name="search_messages_people">संदेश और लोग खोजें...</string>
+    <string name="active_now">अभी सक्रिय</string>
+    <string name="no_messages_yet">अभी कोई संदेश नहीं हैं\nवीडियो कॉल के बाद चैट शुरू करें</string>
+    <string name="delete_chat_title">चैट हटाएं</string>
+    <string name="delete_chat_confirm">क्या आप निश्चित रूप से इस चैट को हटाना चाहते हैं?</string>
+    <string name="chat_deleted">चैट हटा दी गई</string>
+    <string name="failed_delete_chat">चैट हटाने में विफल</string>
+    <string name="unknown_user">अज्ञात</string>
+
+    <!-- Community Inbox -->
+    <string name="community_inbox_title">💬 कम्युनिटी इनबॉक्स</string>
+    <string name="realmeet_fantasy_connections">रियल मीट और फैंटेसी कनेक्शन</string>
+    <string name="friends_online">मित्र ऑनलाइन हैं</string>
+    <string name="no_active_community_chats">अभी कोई सक्रिय कम्युनिटी चैट नहीं है।</string>
+    <string name="accept_incoming_requests_subtext">1-ऑन-1 निजी बातचीत शुरू करने के लिए आने वाले अनुरोधों को स्वीकार करें।</string>
+    <string name="chats_count_single">1 चैट</string>
+    <string name="chats_count_plural">%1$d चैट</string>
+    <string name="tap_to_open_chat">1-ऑन-1 कम्युनिटी चैट खोलने के लिए टैप करें</string>
+    <string name="video_call_pref">🎥 वीडियो कॉल</string>
+    <string name="direct_chat_pref">💬 सीधी चैट</string>
+
+    <!-- Chat Room / Chat Screen -->
+    <string name="type_a_message">एक संदेश लिखें...</string>
+    <string name="send">भेजें</string>
+    <string name="seen">देखा गया</string>
+    <string name="chat_title">चैट</string>
+    <string name="blocked_user_send_msg_error">आपने इस उपयोगकर्ता को ब्लॉक कर दिया है। संदेश भेजने के लिए उन्हें अनब्लॉक करें।</string>
+    <string name="blocked_by_other_send_msg_error">आप संदेश नहीं भेज सकते क्योंकि इस उपयोगकर्ता ने आपको ब्लॉक कर दिया है।</string>
+    <string name="blocked_user_call_error">आपने इस उपयोगकर्ता को ब्लॉक कर दिया है। कॉल करने के लिए उन्हें अनब्लॉक करें।</string>
+    <string name="blocked_by_other_call_error">आप इस उपयोगकर्ता को कॉल नहीं कर सकते क्योंकि उन्होंने आपको ब्लॉक कर दिया है।</string>
+    <string name="failed_to_send">भेजने में विफल</string>
+    <string name="delete_message_title">संदेश हटाएं</string>
+    <string name="delete_message_not_supported">व्यक्तिगत संदेश हटाना अभी समर्थित नहीं है।</string>
+    <string name="ok">ठीक है</string>
+    <string name="delete">हटाएं</string>
+    <string name="back">वापस</string>
+    <string name="network_error">नेटवर्क त्रुटि</string>
+
+    <!-- Profile Section -->
+    <string name="change">बदलें</string>
+    <string name="verify_identity">पहचान सत्यापित करें</string>
+    <string name="premium_vip_pass">प्रीमियम वीआईपी पास</string>
+    <string name="loading_plan_status">⏱️ प्लान स्थिति लोड हो रही है...</string>
+    <string name="followers">फ़ॉलोअर्स</string>
+    <string name="following">फ़ॉलो कर रहे हैं</string>
+    <string name="follow">फ़ॉलो करें</string>
+    <string name="message">संदेश</string>
+    <string name="bio">बायो</string>
+    <string name="write_your_bio_hint">अपना बायो लिखें...</string>
+    <string name="primary_preference">प्राथमिक प्राथमिकता</string>
+    <string name="posts">पोस्ट्स</string>
+    <string name="blocked_users">ब्लॉक किए गए उपयोगकर्ता</string>
+    <string name="legal_privacy">गोपनीयता और कानूनी शर्तें</string>
+    <string name="unblock_user">अनब्लॉक करें</string>
+    <string name="unblock">अनब्लॉक करें</string>
+    <string name="choose_avatar">अपना अवतार चुनें</string>
+    <string name="sex_pref_cannot_be_changed">एक बार सेट होने के बाद लैंगिक प्राथमिकता नहीं बदली जा सकती।</string>
+    <string name="verify_identity_before_pref">प्राथमिकता सेट करने से पहले अपनी पहचान सत्यापित करें।</string>
+    <string name="user_not_logged_in">उपयोगकर्ता लॉग इन नहीं है।</string>
+    <string name="blocked_user_title">ब्लॉक किया गया उपयोगकर्ता</string>
+    <string name="profile_updated_toast">प्रोफ़ाइल अपडेट की गई</string>
+    <string name="failed_update_profile">प्रोफ़ाइल अपडेट करने में विफल</string>
+    <string name="account_deleted_toast">खाता हटा दिया गया</string>
+    <string name="failed_delete_account">खाता हटाने में विफल</string>
+    <string name="user_blocked_toast">उपयोगकर्ता ब्लॉक किया गया</string>
+    <string name="failed_block_user">उपयोगकर्ता को ब्लॉक करने में विफल</string>
+    <string name="user_unblocked_toast">उपयोगकर्ता अनब्लॉक किया गया</string>
+    <string name="failed_unblock_user">अनब्लॉक करने में विफल</string>
+    <string name="request_sent_toast">अनुरोध भेजा गया</string>
+    <string name="failed_send_request">अनुरोध भेजने में विफल</string>
+    <string name="unfriend_user_title">अनफ़्रेंड करें</string>
+    <string name="cancel_request_title">अनुरोध रद्द करें</string>
+    <string name="unfriend_user_confirm">क्या आप निश्चित रूप से इस उपयोगकर्ता को मित्रों से हटाना चाहते हैं?</string>
+    <string name="cancel_request_confirm">क्या आप अपना मित्र अनुरोध रद्द करना चाहते हैं?</string>
+    <string name="action_completed_toast">कार्रवाई सफलतापूर्वक पूरी हुई</string>
+    <string name="failed_action_toast">कार्रवाई पूरी करने में विफल</string>
+    <string name="unfollowed_toast">अनफ़ॉलो किया गया</string>
+    <string name="following_toast">फ़ॉलो कर रहे हैं</string>
+    <string name="failed_unfollow">अनफ़ॉलो करने में विफल</string>
+    <string name="failed_follow">फ़ॉलो करने में विफल</string>
+    <string name="friends">मित्र</string>
+    <string name="requested">अनुरोधित</string>
+    <string name="accept_request">अनुरोध स्वीकार करें</string>
+    <string name="add_friend">मित्र जोड़ें</string>
+    <string name="active_plan_prefix">\nसक्रिय प्लान: %1$s</string>
+    <string name="expires_prefix"> (समाप्ति: %1$s)</string>
+    <string name="free_member">मुफ़्त सदस्य</string>
+    <string name="remaining_expired">समाप्त हो गया</string>
+    <string name="remaining_days_hours">⏱️ %1$d दिन %2$d घंटे शेष</string>
+    <string name="remaining_hours_mins">⏱️ %1$d घंटे %2$d मिनट शेष</string>
+    <string name="remaining_mins">⏱️ %1$d मिनट शेष</string>
+    <string name="block_user_title">उपयोगकर्ता ब्लॉक करें</string>
+    <string name="block_user_confirm">क्या आप निश्चित रूप से इस उपयोगकर्ता को ब्लॉक करना चाहते हैं? वे आपको संदेश नहीं भेज पाएंगे और न ही आपकी पोस्ट देख पाएंगे।</string>
+    <string name="unblock_user_title">अनब्लॉक करें</string>
+    <string name="unblock_user_confirm">क्या आप इस उपयोगकर्ता को अनब्लॉक करना चाहते हैं?</string>
+    <string name="change_gender_title">लिंग बदलकर %1$s करें?</string>
+    <string name="change_gender_confirm">क्या आप निश्चित रूप से अपना लिंग बदलना चाहते हैं?\n\n⚠️ चेतावनी: बदलने के बाद, आपकी प्रोफ़ाइल सत्यापन सेटिंग तदनुसार अपडेट हो जाएगी।\n\n%1$s</string>
+    <string name="gender_warning_female">🔒 महिला प्रोफ़ाइलों के लिए मैचिंग शुरू करने हेतु लाइव फ़ेस सत्यापन आवश्यक है।</string>
+    <string name="gender_warning_male">🔓 पुरुष प्रोफ़ाइल बदलने पर स्वतः सत्यापित हो जाती हैं।</string>
+    <string name="gender_updated_toast">लिंग बदलकर %1$s किया गया</string>
+    <string name="failed_change_gender">लिंग बदलने में विफल</string>
+    <string name="user_not_found_title">उपयोगकर्ता नहीं मिला</string>
+    <string name="user_not_found_msg">यह प्रोफ़ाइल अब मौजूद नहीं है।</string>
+    <string name="failed_load_profile">प्रोफ़ाइल लोड करने में विफल।</string>
+    <string name="delete_account_confirm">यह कार्रवाई स्थायी है और इसे पूर्ववत नहीं किया जा सकता। आपका सारा डेटा हटा दिया जाएगा।</string>
+    <string name="type_delete_to_confirm">पुष्टि के लिए \'delete\' लिखें</string>
+    <string name="delete_word">delete</string>
+    <string name="access_restricted">पहुंच प्रतिबंधित</string>
+    <string name="user_blocked_you">इस उपयोगकर्ता ने आपको ब्लॉक कर दिया है।</string>
+    <string name="account_deleted_title">खाता हटा दिया गया</string>
+    <string name="account_deleted_msg">यह उपयोगकर्ता खाता अब उपलब्ध नहीं है।</string>
+    <string name="failed_load_blocked_users">ब्लॉक किए गए उपयोगकर्ताओं को लोड करने में विफल</string>
+    <string name="unblocked_user_toast">%1$s को अनब्लॉक किया गया</string>
+    <string name="delete_post_title">पोस्ट हटाएं</string>
+    <string name="delete_post_confirm">क्या आप निश्चित रूप से इस पोस्ट को हटाना चाहते हैं?</string>
+    <string name="post_deleted_toast">पोस्ट हटा दी गई</string>
+    <string name="failed_delete_post">पोस्ट हटाने में त्रुटि</string>
+    <string name="login_to_like_posts">पोस्ट लाइक करने के लिए लॉग इन करें</string>
+    <string name="gender_male">पुरुष</string>
+    <string name="gender_female">महिला</string>
+    <string name="yes_change">हाँ, बदलें</string>
+    <string name="yes">हाँ</string>
+    <string name="no">नहीं</string>
+    <string name="return_to_video_calling">वीडियो कॉलिंग</string>
+    <string name="real_meet_subtitle">देखें कि आज आपसे असल जिंदगी में कौन मिलना चाहता है</string>
+    <string name="requests_tab">📩 अनुरोध</string>
+    <string name="inbox_tab">💬 इनबॉक्स</string>
+    <string name="notifications_tab">🔔 सूचनाएं</string>
+    <string name="filter_all_cities">🌐 सभी शहर</string>
+    <string name="filter_in_my_city">🏙️ मेरे शहर में</string>
+    <string name="hint_search_realmeet">शहर, स्थान, उद्देश्य खोजें...</string>
+    <string name="real_meet_default_bio">मेरी रियल मीट प्रोफ़ाइल में आपका स्वागत है।</string>
+    <string name="my_active_posts_title">मेरी सक्रिय रियल मीट और फैंटेसी पोस्ट</string>
+    <string name="my_hosted_parties_title">मेरी होस्ट की गई पार्टियां</string>
+    <string name="my_saved_parties_title">मेरी सहेजी गई पार्टियां</string>
+    <string name="no_posts_found_search">आपकी खोज से मेल खाती कोई पोस्ट नहीं मिली।</string>
+    <string name="dock_meets">मुलाकातें</string>
+    <string name="dock_fantasy">फैंटेसी</string>
+    <string name="dock_party">पार्टी</string>
+    <string name="announcements_and_members">घोषणाएं और सदस्य</string>
+    <string name="accepted_guests">👥 स्वीकृत मेहमान</string>
+    <string name="announcements">📢 घोषणाएं</string>
+    <string name="hint_type_announcement">मेहमानों के लिए घोषणा टाइप करें...</string>
+    <string name="host_a_real_world_party">🎉 रियल वर्ल्ड पार्टी होस्ट करें</string>
+    <string name="host_party_subtitle">आस-पास के लोगों को अपने ईवेंट या हाउस पार्टी में आमंत्रित करें</string>
+    <string name="party_vibe_title">पार्टी वाइब / शीर्षक</string>
+    <string name="hint_party_purpose">जैसे: वीकेंड हाउस पार्टी और बारबेक्यू, पूल पार्टी</string>
+    <string name="venue_location">स्थान का पता</string>
+    <string name="hint_party_venue">जैसे: रूफटॉप पेंटहाउस, एचएसआर लेआउट</string>
+    <string name="max_capacity">अधिकतम क्षमता</string>
+    <string name="hint_capacity">जैसे: 10</string>
+    <string name="target_audience">लक्षित दर्शक</string>
+    <string name="party_date_time">पार्टी की तिथि और समय</string>
+    <string name="select_time_hint">⏰ समय चुनें (घड़ी खोलने के लिए टैप करें)</string>
+    <string name="clock">🕒 घड़ी</string>
+    <string name="host_event">ईवेंट होस्ट करें</string>
+    <string name="share_your_fantasy">💭 अपनी फैंटेसी साझा करें</string>
+    <string name="fantasy_subtitle">अपनी इच्छाओं को सुरक्षित और अज्ञात रूप से व्यक्त करें</string>
+    <string name="relationship_status">रिलेशनशिप स्टेटस</string>
+    <string name="interests_vibes">रुचियां / वाइब्स</string>
+    <string name="hint_interests">जैसे: तारों को देखना, कॉफ़ी, रोलप्ले...</string>
+    <string name="fantasy_text_label">फैंटेसी विवरण (अधिकतम 200 अक्षर)</string>
+    <string name="hint_fantasy_description">अपनी गुप्त फैंटेसी यहाँ लिखें...</string>
+    <string name="publish_fantasy">फैंटेसी प्रकाशित करें</string>
+    <string name="vip_party_host_badge">👑 वीआईपी पार्टी होस्ट</string>
+    <string name="join_party_btn">🎉 पार्टी में शामिल हों</string>
+    <string name="interests_and_vibe_upper">रुचियां और वाइब</string>
+    <string name="my_fantasy_upper">मेरी फैंटेसी</string>
+    <string name="secret_connect_btn">✨ सीक्रेट कनेक्ट</string>
+    <string name="delete_post_btn">🗑️ पोस्ट हटाएं</string>
+    <string name="requested_btn">📩 अनुरोध किया गया</string>
+    <string name="already_requested_connect">आप इस पोस्ट के लिए पहले ही कनेक्ट अनुरोध भेज चुके हैं।</string>
+    <string name="connect_and_meet_btn">⚡ कनेक्ट करें और मिलें</string>
+    <string name="by_prefix">द्वारा</string>
+    <string name="yrs_suffix">वर्ष</string>
+    <string name="max_guests_format">👥 अधिकतम %1$d • </string>
+    <string name="everyone">सभी</string>
+    <string name="delete_party_btn">🗑️ पार्टी हटाएं</string>
+    <string name="already_requested_party">आप इस पार्टी के लिए पहले ही निमंत्रण अनुरोध भेज चुके हैं।</string>
+    <string name="delete_fantasy_btn">🗑️ फैंटेसी हटाएं</string>
+    <string name="already_requested_fantasy">आप इस फैंटेसी के लिए पहले ही कनेक्ट अनुरोध भेज चुके हैं।</string>
+    <string name="nearby">आस-पास</string>
+    <string name="for_prefix">के लिए:</string>
+    <string name="real_meet_post">रियल मीट पोस्ट</string>
+    <string name="private_video_call">प्राइवेट वीडियो कॉल</string>
+    <string name="prefers_video_call">🎥 प्राइवेट वीडियो कॉल पसंद है</string>
+    <string name="prefers_direct_chat">💬 डायरेक्ट चैट पसंद है</string>
+    <string name="status_accepted_btn">✅ स्वीकृत</string>
+    <string name="status_declined_btn">❌ अस्वीकृत</string>
+    <string name="access_required_title">एक्सेस आवश्यक है</string>
+    <string name="access_required_msg">आपके पास स्थानीय शहर फ़िल्टरिंग का एक्सेस नहीं है। अधिक जानने के लिए ठीक है पर टैप करें।</string>
+    <string name="could_not_open_browser">ब्राउज़र नहीं खोला जा सका</string>
+    <string name="set_city_first">कृपया पहले अपनी प्रोफ़ाइल में अपना शहर सेट करें</string>
+    <string name="party_deleted_toast">पार्टी हटा दी गई</string>
+    <string name="fantasy_deleted_toast">फैंटेसी हटा दी गई</string>
+    <string name="request_status_updated">अनुरोध स्थिति अपडेट की गई</string>
+    <string name="request_deleted_toast">अनुरोध हटा दिया गया</string>
+    <string name="own_post_toast">यह आपकी अपनी पोस्ट है!</string>
+    <string name="request_already_sent">इस पोस्ट के लिए अनुरोध पहले ही भेजा जा चुका है!</string>
+    <string name="request_sent_to_user">📩 %1$s को अनुरोध भेजा गया!</string>
+    <string name="removed_saved_party">सहेजी गई पार्टियों से हटा दिया गया</string>
+    <string name="saved_to_list">आपकी सूची में सहेजा गया!</string>
+    <string name="active_post_exists_title">आज सक्रिय पोस्ट मौजूद है</string>
+    <string name="active_post_exists_msg">आपके पास आज पहले से ही एक सक्रिय रियल मीट पोस्ट है:
+"%1$s" (%2$s पर)।
+
+आप प्रति दिन केवल 1 रियल मीट पोस्ट कर सकते हैं। क्या आप अपनी पिछली पोस्ट को बदलना चाहते हैं?</string>
+    <string name="active_party_exists_title">आज सक्रिय पार्टी ईवेंट मौजूद है</string>
+    <string name="active_party_exists_msg">आपके पास आज पहले से ही एक सक्रिय पार्टी ईवेंट है:
+"%1$s" (%2$s पर)।
+
+आप प्रति दिन केवल 1 पार्टी ईवेंट पोस्ट कर सकते हैं। क्या आप अपने पिछले ईवेंट को बदलना चाहते हैं?</string>
+    <string name="select_meeting_time_title">मीटिंग का समय चुनें</string>
+    <string name="enter_meeting_purpose">कृपया मीटिंग का उद्देश्य दर्ज करें</string>
+    <string name="enter_location">कृपया स्थान दर्ज करें</string>
+    <string name="write_description">कृपया संक्षिप्त विवरण लिखें</string>
+    <string name="publishing_post">पोस्ट प्रकाशित की जा रही है...</string>
+    <string name="post_published_toast">✨ रियल मीट पोस्ट प्रकाशित हो गई!</string>
+    <string name="failed_publish_post">पोस्ट प्रकाशित करने में विफल। पुनः प्रयास करें।</string>
+    <string name="select_party_time_title">पार्टी का समय चुनें</string>
+    <string name="fill_party_details">कृपया पार्टी के सभी विवरण भरें</string>
+    <string name="publishing_party">पार्टी ईवेंट प्रकाशित किया जा रहा है...</string>
+    <string name="party_published_toast">🎉 पार्टी ईवेंट प्रकाशित हो गया!</string>
+    <string name="failed_publish_party">पार्टी ईवेंट प्रकाशित करने में विफल।</string>
+    <string name="enter_fantasy_text">कृपया अपनी फैंटेसी का विवरण दर्ज करें</string>
+    <string name="sharing_fantasy">फैंटेसी साझा की जा रही है...</string>
+    <string name="fantasy_shared_toast">💭 फैंटेसी साझा की गई!</string>
+    <string name="failed_share_fantasy">फैंटेसी साझा करने में विफल।</string>
+    <string name="ad_skipped_toast">विज्ञापन छोड़ दिया गया या अधूरा था। पोस्ट प्रकाशित नहीं हुई।</string>
+    <string name="failed_load_members">सदस्यों को लोड करने में विफल</string>
+    <string name="failed_load_announcements">घोषणाओं को लोड करने में विफल</string>
+    <string name="announcement_posted_toast">घोषणा पोस्ट कर दी गई!</string>
+    <string name="failed_post_announcement">घोषणा पोस्ट करने में विफल</string>
+    <string name="post_owner">पोस्ट मालिक</string>
+    <string name="community_post">कम्युनिटी पोस्ट</string>
+    <string name="nearby_venue">पास का स्थान</string>
+    <string name="scheduled">निर्धारित</string>
+    <string name="no_additional_details">कोई अतिरिक्त विवरण नहीं।</string>
+    <string name="preferred_audience_prefix">🎯 पसंदीदा दर्शक: </string>
+    <string name="replace_post_btn">पोस्ट बदलें</string>
+    <string name="replace_event_btn">ईवेंट बदलें</string>
+    <string name="community_host">कम्युनिटी होस्ट</string>
+    <string name="community_member">कम्युनिटी सदस्य</string>
+    <string name="community_meet">कम्युनिटी मीट</string>
+    <string name="post_real_meet_dialog_title">📍 रियल मीट पोस्ट करें</string>
+    <string name="post_real_meet_dialog_subtitle">आज आस-पास मिलने में रुचि रखने वाले लोगों को खोजें</string>
+    <string name="purpose_of_meet_label">मुलाकात का उद्देश्य</string>
+    <string name="hint_realmeet_purpose">जैसे: कॉफ़ी और कैज़ुअल बातचीत, ड्राइव, सिनेमा...</string>
+    <string name="location_landmark_label">स्थान / लैंडमार्क</string>
+    <string name="hint_realmeet_location">जैसे: इंदिरा नगर के पास थर्ड वेव कॉफ़ी</string>
+    <string name="meeting_time_label">मीटिंग का समय</string>
+    <string name="description_label">विवरण (अधिकतम 200 अक्षर)</string>
+    <string name="hint_realmeet_description">वर्णन करें कि आप क्यों मिलना चाहते हैं...</string>
+    <string name="publish_post_btn">पोस्ट प्रकाशित करें</string>
+    <string name="full_details_description_upper">पूर्ण विवरण और जानकारी</string>
+    <string name="send_request_btn">⚡ अनुरोध भेजें</string>
+    <string name="btn_video_call">🎥 वीडियो कॉल</string>
+    <string name="btn_chat_now">💬 अभी चैट करें</string>
+    <string name="select_date_title">मुलाकात की तिथि चुनें</string>
+    <string name="select_date_time_hint">📅 तिथि और समय चुनें</string>
+    <string name="select_party_date_time_hint">📅 पार्टी की तिथि और समय चुनें</string>
+    <string name="select_future_date_time">कृपया भविष्य की तिथि और समय चुनें</string>
+    <string name="target_audience_everyone">सभी (Everyone)</string>
+    <string name="target_audience_female">केवल महिलाएं (Female Only)</string>
+    <string name="target_audience_male">केवल पुरुष (Male Only)</string>
+    <string name="status_single">अविवाहित (Single)</string>
+    <string name="status_married">विवाहित (Married)</string>
+    <string name="status_divorced">तलाकशुदा (Divorced)</string>
+    <string name="status_widowed">विधवा/विधुर (Widowed)</string>
+    <string name="send_meet_request_title">📩 मुलाकात अनुरोध भेजें</string>
+    <string name="connecting_with_user">%1$s से कनेक्ट कर रहे हैं</string>
+    <string name="quick_icebreakers_upper">आइसब्रेकर संदेश</string>
+    <string name="icebreaker_coffee">☕ नमस्ते! मैं कॉफी के लिए मिलना पसंद करूंगा/करूंगी</string>
+    <string name="icebreaker_count_me_in">🎉 मुझे भी शामिल करें! आइए कनेक्ट करें!</string>
+    <string name="icebreaker_talk_privately">🔒 आपकी पोस्ट पसंद आई, आइए व्यक्तिगत रूप से बात करें!</string>
+    <string name="your_message_note_upper">आपका संदेश / नोट</string>
+    <string name="hint_request_message">अपना संदेश या कस्टम आइसब्रेकर लिखें...</string>
+    <string name="preferred_contact_mode_upper">पसंदीदा संपर्क का तरीका</string>
+    <string name="pref_video_call">🎥 वीडियो कॉल</string>
+    <string name="pref_direct_chat">💬 सीधा चैट</string>
+    <string name="filter_in_city_param">🏙️ %1$s में</string>
+    <string name="no_posts_in_city">%1$s में अभी तक कोई पोस्ट नहीं है।</string>
+    <string name="no_parties_matching">खोज से मेल खाती कोई पार्टी उपलब्ध नहीं है।</string>
+    <string name="no_fantasies_matching">खोज से मेल खाती कोई फैंटेसी पोस्ट नहीं है।</string>
+    <string name="post_expired">यह पोस्ट समाप्त (Expired) हो चुकी है।</string>
+    <string name="default_request_msg">नमस्ते! मुझे आपकी मुलाकात पोस्ट में रुचि है।</string>
+</resources>

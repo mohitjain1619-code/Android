@@ -91,7 +91,7 @@ public class ChatActivity extends BaseActivity {
         ImageView videoCallBtn = findViewById(R.id.video_call_button);
         ImageView voiceCallBtn = findViewById(R.id.voice_call_button);
 
-        toolbarUsername.setText(receiverName != null && !receiverName.isEmpty() ? receiverName : "Chat");
+        toolbarUsername.setText(receiverName != null && !receiverName.isEmpty() ? receiverName : getString(R.string.chat_title));
         AvatarHelper.loadAvatar(this, receiverPhotoUrl, receiverAvatar, receiverName, toolbarAvatar);
 
         if (receiverId != null && !receiverId.isEmpty()) {
@@ -161,11 +161,11 @@ public class ChatActivity extends BaseActivity {
 
         sendButton.setOnClickListener(v -> {
             if (isBlocked) {
-                showBlockedDialog("You have blocked this user. Unblock them to send messages.");
+                showBlockedDialog(getString(R.string.blocked_user_send_msg_error));
                 return;
             }
             if (isBlockedByOther) {
-                showBlockedDialog("You cannot send messages because this user has blocked you.");
+                showBlockedDialog(getString(R.string.blocked_by_other_send_msg_error));
                 return;
             }
             
@@ -274,11 +274,11 @@ public class ChatActivity extends BaseActivity {
     
     private void initiateCall(boolean isVideo) {
         if (isBlocked) {
-            showBlockedDialog("You have blocked this user. Unblock them to make calls.");
+            showBlockedDialog(getString(R.string.blocked_user_call_error));
             return;
         }
         if (isBlockedByOther) {
-            showBlockedDialog("You cannot call this user because they have blocked you.");
+            showBlockedDialog(getString(R.string.blocked_by_other_call_error));
             return;
         }
     
@@ -307,13 +307,13 @@ public class ChatActivity extends BaseActivity {
                         }
                         loadMessages(); // reload to show sent message
                     } else {
-                        Toast.makeText(ChatActivity.this, "Failed to send", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ChatActivity.this, getString(R.string.failed_to_send), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(ChatActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -44,7 +44,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Comments"
+                android:text="@string/comments_title"
                 android:textColor="@color/text_primary"
                 android:textSize="20sp"
                 android:textStyle="bold"
@@ -121,7 +121,7 @@
                 android:layout_toStartOf="@+id/send_comment_button"
                 android:layout_marginEnd="10dp"
                 android:background="@drawable/bg_glass_input"
-                android:hint="Write a comment..."
+                android:hint="@string/write_a_comment"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp"
                 android:textColor="@color/text_primary"

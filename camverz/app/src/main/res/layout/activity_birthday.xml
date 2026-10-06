@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Step 3 of 4"
+            android:text="@string/step_3_of_4"
             android:textColor="#00FFFF"
             android:textSize="12sp"
             android:textStyle="bold" />
@@ -49,7 +49,7 @@
             android:id="@+id/titleBirthday"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="When's your birthday?"
+            android:text="@string/when_birthday"
             android:textColor="#FFFFFF"
             android:textSize="28sp"
             android:textStyle="bold" />
@@ -59,7 +59,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="You must be at least 18 years old to use Camverz."
+            android:text="@string/birthday_subtext"
             android:textColor="#E2E8F0"
             android:textSize="15sp"
             android:lineSpacingMultiplier="1.2" />
@@ -84,7 +84,7 @@
             android:paddingEnd="14dp"
             android:paddingTop="6dp"
             android:paddingBottom="6dp"
-            android:text="🛡️ 18+ Age Restricted"
+            android:text="@string/age_restricted"
             android:textColor="#FFFFFF"
             android:textSize="13sp"
             android:textStyle="bold"
@@ -97,7 +97,7 @@
             android:background="@drawable/bg_glass_input"
             android:clickable="true"
             android:focusable="false"
-            android:hint="DD / MM / YYYY"
+            android:hint="@string/date_format_hint"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:textColor="#FFFFFF"
@@ -115,7 +115,7 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/bg_btn_primary_gradient"
         android:stateListAnimator="@null"
-        android:text="Continue"
+        android:text="@string/continue_text"
         android:textAllCaps="false"
         android:textColor="#FFFFFF"
         android:textSize="16sp"

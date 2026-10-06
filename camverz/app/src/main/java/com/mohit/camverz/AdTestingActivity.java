@@ -150,7 +150,7 @@ public class AdTestingActivity extends AppCompatActivity {
     // ==========================================
     private void testMetaInterstitial() {
         showToast("Loading Meta Interstitial...");
-        metaInterstitialAd = new InterstitialAd(this, "1679167109809598_1679167723142870");
+        metaInterstitialAd = new InterstitialAd(this, "1045884118260179_1063416116506979");
         metaInterstitialAd.loadAd(metaInterstitialAd.buildLoadAdConfig().withAdListener(new InterstitialAdListener() {
             @Override public void onInterstitialDisplayed(Ad ad) { showToast("Meta Interstitial Displayed"); }
             @Override public void onInterstitialDismissed(Ad ad) { showToast("Meta Interstitial Dismissed"); }
@@ -162,8 +162,23 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void testMetaRewarded() {
-        showToast("Loading Meta Rewarded...");
-        metaRewardedVideoAd = new RewardedVideoAd(this, "1679167109809598_1679167723142870");
+        showToast("Loading Meta Rewarded Interstitial...");
+        com.facebook.ads.RewardedInterstitialAd rewardedInterstitialAd = new com.facebook.ads.RewardedInterstitialAd(this, "1045884118260179_1063416119840312");
+        rewardedInterstitialAd.loadAd(rewardedInterstitialAd.buildLoadAdConfig().withAdListener(new com.facebook.ads.RewardedInterstitialAdListener() {
+            @Override public void onRewardedInterstitialCompleted() { showToast("Meta Rewarded Completed"); }
+            @Override public void onRewardedInterstitialClosed() { showToast("Meta Rewarded Closed"); }
+            @Override public void onError(Ad ad, AdError adError) { 
+                showToast("Meta Rewarded Interstitial Error: " + adError.getErrorMessage() + ". Retrying as Rewarded Video..."); 
+                testMetaRewardedVideoFallback();
+            }
+            @Override public void onAdLoaded(Ad ad) { showToast("Meta Rewarded Loaded"); rewardedInterstitialAd.show(); }
+            @Override public void onAdClicked(Ad ad) {}
+            @Override public void onLoggingImpression(Ad ad) {}
+        }).build());
+    }
+
+    private void testMetaRewardedVideoFallback() {
+        metaRewardedVideoAd = new RewardedVideoAd(this, "1045884118260179_1063416119840312");
         metaRewardedVideoAd.loadAd(metaRewardedVideoAd.buildLoadAdConfig().withAdListener(new RewardedVideoAdListener() {
             @Override public void onRewardedVideoCompleted() { showToast("Meta Rewarded Completed"); }
             @Override public void onLoggingImpression(Ad ad) {}
@@ -176,7 +191,7 @@ public class AdTestingActivity extends AppCompatActivity {
 
     private void testMetaNative() {
         showToast("Loading Meta Native...");
-        metaNativeAd = new NativeAd(this, "1679167109809598_1679167733142869");
+        metaNativeAd = new NativeAd(this, "1045884118260179_1063416113173646");
         metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig().withAdListener(new NativeAdListener() {
             @Override public void onMediaDownloaded(Ad ad) {}
             @Override public void onError(Ad ad, AdError adError) { showToast("Meta Native Error: " + adError.getErrorMessage()); }
