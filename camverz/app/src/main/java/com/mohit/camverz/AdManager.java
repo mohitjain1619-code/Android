@@ -27,7 +27,7 @@ import com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener;
  */
 public class AdManager {
     private static final String TAG = "AdManager";
-    public static final String IRONSOURCE_APP_KEY = "27a0e2125";
+    public static final String IRONSOURCE_APP_KEY = "28890f0b5";
     public static final String LEVELPLAY_INTERSTITIAL_ID = "bspxbvo7aw4r8ybv";
     public static final String LEVELPLAY_REWARDED_ID = "inn2ugrw04ep2tzc";
     public static final String LEVELPLAY_NATIVE_ID = "6bpplx6inl1ahz01";
