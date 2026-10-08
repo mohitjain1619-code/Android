@@ -6,13 +6,9 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# ==============================================================================
-# R8 Optimization & Repackaging for Maximum DEX Shrinking & Obfuscation (>45%)
-# ==============================================================================
--repackageclasses 'a'
--allowaccessmodification
+# Enable optimization passes and access modification for high DEX optimization score
 -optimizationpasses 5
--overloadaggressively
+-allowaccessmodification
 
 # ==============================================================================
 # General Attributes & Annotations
@@ -32,12 +28,77 @@
 }
 
 # ==============================================================================
+# AndroidX App Startup, WorkManager & Room Database
+# ==============================================================================
+-dontwarn androidx.startup.**
+-keepnames class androidx.startup.**
+-keepnames class * implements androidx.startup.Initializer
+-keepclassmembers class * implements androidx.startup.Initializer {
+    <init>();
+}
+
+-dontwarn androidx.work.**
+-keepnames class androidx.work.impl.WorkDatabase**
+-keepclassmembers class androidx.work.impl.WorkDatabase** {
+    <init>();
+}
+-keepnames class * extends androidx.room.RoomDatabase
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    <init>();
+}
+-keepclassmembers class * extends androidx.work.ListenableWorker {
+    <init>(...);
+}
+
+# ==============================================================================
+# Google ML Kit & Component Discovery / Registrars
+# ==============================================================================
+-dontwarn com.google.mlkit.**
+-keepnames class * implements com.google.mlkit.common.sdkinternal.ComponentRegistrar
+-keepnames class * implements com.google.firebase.components.ComponentRegistrar
+-keepnames class com.google.mlkit.vision.face.internal.FaceRegistrar
+-keepnames class com.google.mlkit.common.internal.CommonComponentRegistrar
+-keepnames class com.google.mlkit.vision.common.internal.VisionCommonRegistrar
+-keepclassmembers class com.google.mlkit.vision.face.internal.FaceRegistrar {
+    <init>();
+}
+-keepclassmembers class com.google.mlkit.common.internal.CommonComponentRegistrar {
+    <init>();
+}
+-keepclassmembers class com.google.mlkit.vision.common.internal.VisionCommonRegistrar {
+    <init>();
+}
+
+# ==============================================================================
+# Google Play Services & Auth & Google Sign-In
+# ==============================================================================
+-dontwarn com.google.android.gms.**
+-keep class com.google.android.gms.auth.api.signin.** { *; }
+-keep class com.google.android.gms.auth.api.signin.internal.** { *; }
+-keep class com.google.android.gms.auth.api.** { *; }
+-keep class com.google.android.gms.common.api.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+-keep class com.google.android.gms.common.annotation.KeepName
+-keepnames class * implements com.google.android.gms.common.annotation.KeepName
+-keepclassmembers class * {
+    @com.google.android.gms.common.annotation.KeepName *;
+}
+-keepclassmembers class com.google.android.gms.auth.api.signin.GoogleSignInOptions { *; }
+-keepclassmembers class com.google.android.gms.auth.api.signin.GoogleSignInAccount { *; }
+-keepclassmembers class com.google.android.gms.auth.api.signin.GoogleSignInClient { *; }
+
+# Prevent R8 / ProGuard from conflicting org.json against Android framework org.json
+-dontwarn org.json.**
+-keep class org.json.** { *; }
+-keepclassmembers class org.json.** { *; }
+
+# ==============================================================================
 # Retrofit 2 & OkHttp 3 & Okio
 # ==============================================================================
 -dontwarn retrofit2.**
 -dontwarn okhttp3.**
 -dontwarn okio.**
--keepclasseswithmembers class * {
+-keepclassmembers class * {
     @retrofit2.http.* <methods>;
 }
 
@@ -66,6 +127,7 @@
 -keepclassmembers class com.mohit.camverz.StoryItem { <fields>; }
 -keepclassmembers class com.mohit.camverz.UserStories { <fields>; }
 -keepclassmembers class com.mohit.camverz.CommunityNotification { <fields>; }
+-keepclassmembers class com.mohit.camverz.LanguageModel { <fields>; }
 -keepclassmembers class com.mohit.camverz.api.** { <fields>; }
 
 # ==============================================================================
@@ -110,17 +172,6 @@
 }
 
 # ==============================================================================
-# Google Play Services & Ads (AdMob) & ML Kit
-# ==============================================================================
--dontwarn com.google.android.gms.**
--dontwarn com.google.mlkit.**
--keep class com.google.android.gms.common.annotation.KeepName
--keepnames class * implements com.google.android.gms.common.annotation.KeepName
--keepclassmembers class * {
-    @com.google.android.gms.common.annotation.KeepName *;
-}
-
-# ==============================================================================
 # ironSource / LevelPlay SDK & Mediation Adapters
 # ==============================================================================
 -dontwarn com.ironsource.**
@@ -128,15 +179,12 @@
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.RewardedVideoAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.InterstitialAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.BannerAdapterApi { *; }
--keep class com.ironsource.adapters.**
 
 # ==============================================================================
-# Meta Audience Network (Facebook Ads) - Optimized
+# Meta Audience Network (Facebook Ads)
 # ==============================================================================
 -dontwarn com.facebook.ads.**
 -dontwarn com.facebook.infer.annotation.**
--keep class com.facebook.ads.AudienceNetworkActivity { *; }
--keep class com.facebook.ads.internal.NetworkSettings { *; }
 
 # ==============================================================================
 # Unity Ads SDK & InMobi
@@ -154,4 +202,4 @@
 -dontwarn org.joda.time.**
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**
--dontwarn com.google.j2objc.annotations.****
+-dontwarn com.google.j2objc.annotations.**

@@ -105,82 +105,85 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="10dp"
                 android:text="@string/quick_actions"
                 android:textColor="#FFFFFF"
                 android:textSize="17sp"
                 android:textStyle="bold" />
 
-            <HorizontalScrollView
+            <!-- Quick Action Buttons (Side-by-Side) -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                android:clipToPadding="false"
-                android:scrollbars="none">
+                android:layout_marginBottom="20dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
+                <!-- Real, Party Host, Fantasy Button -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:id="@+id/chip_community_hub"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_community_hot_gradient"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minHeight="46dp"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="8dp">
 
-                    <!-- Combined Community, Real Meet, Fantasy Quick Chip -->
-                    <LinearLayout
-                         android:id="@+id/chip_community_hub"
-                         android:layout_width="wrap_content"
-                         android:layout_height="wrap_content"
-                         android:layout_marginEnd="10dp"
-                         android:background="@drawable/bg_community_hot_gradient"
-                         android:clickable="true"
-                         android:focusable="true"
-                         android:gravity="center_vertical"
-                         android:orientation="horizontal"
-                         android:paddingHorizontal="16dp"
-                         android:paddingVertical="12dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="💬 Real, Party Host, Fantasy"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold" />
 
-                         <TextView
-                             android:layout_width="wrap_content"
-                             android:layout_height="wrap_content"
-                             android:text="@string/community_hub_title"
-                             android:textColor="#FFFFFF"
-                             android:textSize="14sp"
-                             android:textStyle="bold" />
-
-                         <TextView
-                             android:layout_width="wrap_content"
-                             android:layout_height="wrap_content"
-                             android:background="@drawable/bg_btn_primary_gradient"
-                             android:paddingHorizontal="8dp"
-                             android:paddingVertical="3dp"
-                             android:text="@string/hot_chip"
-                             android:textColor="#FFFFFF"
-                             android:textSize="10sp"
-                             android:textStyle="bold" />
-                      </LinearLayout>
-
-                    <!-- Friends Quick Chip -->
-                    <LinearLayout
-                        android:id="@+id/chip_friends"
+                    <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="10dp"
-                        android:background="@drawable/bg_floating_glass"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
-                        android:paddingHorizontal="16dp"
-                        android:paddingVertical="12dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/friends_chats_chip"
-                            android:textColor="#FFFFFF"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
+                        android:layout_marginStart="3dp"
+                        android:background="@drawable/bg_btn_primary_gradient"
+                        android:paddingHorizontal="4dp"
+                        android:paddingVertical="2dp"
+                        android:text="HOT🔥"
+                        android:textColor="#FFFFFF"
+                        android:textSize="7.5sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </HorizontalScrollView>
+
+                <!-- Website / Learn More Button -->
+                <LinearLayout
+                    android:id="@+id/chip_website_hub"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_website_gradient"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:minHeight="46dp"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="🌐 Learn More About Website"
+                        android:textColor="#FFFFFF"
+                        android:textSize="10.5sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
 
             <!-- Interests Section Header -->
             <TextView

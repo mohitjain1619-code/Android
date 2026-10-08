@@ -30,7 +30,7 @@ import com.android.installreferrer.api.InstallReferrerClient;
 import com.android.installreferrer.api.InstallReferrerStateListener;
 import com.android.installreferrer.api.ReferrerDetails;
 
-public class LoginActivity extends AppCompatActivity {
+public class LoginActivity extends BaseActivity {
 
     private static final String TAG = "LoginActivity";
     private static final int RC_SIGN_IN = 9001;
@@ -255,8 +255,22 @@ public class LoginActivity extends AppCompatActivity {
         }
         isSigningIn = true;
         showLoadingState();
-        Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
+        try {
+            if (mGoogleSignInClient == null) {
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build();
+                mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+            }
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting Google Sign-In intent", e);
+            isSigningIn = false;
+            hideLoadingState();
+            Toast.makeText(this, "Google Sign-In initialization error. Please try again.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -273,6 +287,7 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         if (requestCode == RC_SIGN_IN) {
+            isSigningIn = false;
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
@@ -291,7 +306,7 @@ public class LoginActivity extends AppCompatActivity {
                 } else if (e.getStatusCode() == 7) {
                     Toast.makeText(LoginActivity.this, "Network error. Please check your internet connection.", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Sign in cancelled or unavailable.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Sign in cancelled or unavailable (Error " + e.getStatusCode() + ").", Toast.LENGTH_SHORT).show();
                 }
             }
         }

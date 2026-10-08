@@ -51,7 +51,7 @@ public class MainScreenActivity extends BaseActivity {
     private ApiService api;
 
     private LinearLayout cardGay, cardLesbian, cardStraight;
-    private LinearLayout chipCommunityHub, chipFriends;
+    private LinearLayout chipCommunityHub, chipWebsiteHub;
     private TextView tvUserName, tvLiveCount;
     private ImageView menuIcon;
     private AppUpdateHelper appUpdateHelper;
@@ -212,7 +212,7 @@ public class MainScreenActivity extends BaseActivity {
         }
 
         chipCommunityHub = findViewById(R.id.chip_community_hub);
-        chipFriends = findViewById(R.id.chip_friends);
+        chipWebsiteHub = findViewById(R.id.chip_website_hub);
 
         if (tvUserName != null && tokenManager.getUserName() != null && !tokenManager.getUserName().isEmpty()) {
             String name = tokenManager.getUserName();
@@ -262,11 +262,14 @@ public class MainScreenActivity extends BaseActivity {
             });
         }
 
-        if (chipFriends != null) {
-            chipFriends.setOnClickListener(v -> {
-                Intent intent = new Intent(this, InboxActivity.class);
-                startActivity(intent);
-                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        if (chipWebsiteHub != null) {
+            chipWebsiteHub.setOnClickListener(v -> {
+                try {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com"));
+                    startActivity(browserIntent);
+                } catch (Exception e) {
+                    Toast.makeText(MainScreenActivity.this, "Could not open website", Toast.LENGTH_SHORT).show();
+                }
             });
         }
 
@@ -319,7 +322,7 @@ public class MainScreenActivity extends BaseActivity {
 
         menuIcon.setOnClickListener(this::showPopupMenu);
 
-        addTouchScaleFeedback(cardStraight, cardGay, cardLesbian, chipCommunityHub, chipFriends, videoNav, profileNav, imageNav, messageNav);
+        addTouchScaleFeedback(cardStraight, cardGay, cardLesbian, chipCommunityHub, chipWebsiteHub, videoNav, profileNav, imageNav, messageNav);
 
         cardGay.setOnClickListener(v -> {
             if (!"male".equalsIgnoreCase(tokenManager.getUserGender())) {

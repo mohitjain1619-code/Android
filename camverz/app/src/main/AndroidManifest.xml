@@ -2,9 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Package queries for AdMob Service visibility on Android 11+ -->
+    <!-- Package queries for AdMob & Meta Audience Network visibility on Android 11+ -->
     <queries>
         <package android:name="com.google.android.gms" />
+        <package android:name="com.facebook.katana" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
     </queries>
 
     <!-- Network permissions -->
@@ -151,7 +157,8 @@
         <!-- Profile Activity -->
         <activity
             android:name=".ProfileActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
             
         <!-- Blocked Users Activity -->
         <activity

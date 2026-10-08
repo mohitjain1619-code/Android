@@ -13,6 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -153,6 +154,33 @@ public class ProfileActivity extends BaseActivity {
         subscriptionCardLayout = findViewById(R.id.subscription_card_layout);
         tvCardPlanName = findViewById(R.id.tv_card_plan_name);
         tvCardPlanExpiry = findViewById(R.id.tv_card_plan_expiry);
+
+        ScrollView profileScrollView = findViewById(R.id.profileScrollView);
+        if (bio != null && profileScrollView != null) {
+            bio.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    profileScrollView.postDelayed(() -> {
+                        int yScroll = Math.max(0, bio.getTop() - 100);
+                        profileScrollView.smoothScrollTo(0, yScroll);
+                    }, 200);
+                }
+            });
+            bio.setOnClickListener(v -> {
+                profileScrollView.postDelayed(() -> {
+                    int yScroll = Math.max(0, bio.getTop() - 100);
+                    profileScrollView.smoothScrollTo(0, yScroll);
+                }, 200);
+            });
+        }
+        if (editBioIcon != null && bio != null && profileScrollView != null) {
+            editBioIcon.setOnClickListener(v -> {
+                bio.requestFocus();
+                profileScrollView.postDelayed(() -> {
+                    int yScroll = Math.max(0, bio.getTop() - 100);
+                    profileScrollView.smoothScrollTo(0, yScroll);
+                }, 200);
+            });
+        }
 
         if (sexPreferenceLayout != null) {
             sexPreferenceLayout.setOnClickListener(v -> {

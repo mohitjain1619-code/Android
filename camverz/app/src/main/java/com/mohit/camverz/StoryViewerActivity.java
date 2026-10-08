@@ -132,6 +132,8 @@ public class StoryViewerActivity extends BaseActivity {
         tvViewerName.setText(userStories.getUserName());
         AvatarHelper.loadAvatar(this, null, userStories.getUserAvatar(), userStories.getUserName(), ivViewerAvatar);
 
+        applyWindowInsets(findViewById(R.id.topHeaderLayout), findViewById(R.id.storyBottomLayout));
+
         View.OnClickListener openProfileListener = v -> {
             if (userStories != null && userStories.getUserId() != null) {
                 isPaused = true;
@@ -280,6 +282,26 @@ public class StoryViewerActivity extends BaseActivity {
             vvStoryVideo.setOnPreparedListener(mp -> {
                 isVideoPrepared = true;
                 storyDurationMs = mp.getDuration() > 0 ? mp.getDuration() : 5000;
+                int videoWidth = mp.getVideoWidth();
+                int videoHeight = mp.getVideoHeight();
+                if (videoWidth > 0 && videoHeight > 0) {
+                    float videoAspect = (float) videoWidth / videoHeight;
+                    int containerWidth = storyViewerCanvas.getWidth();
+                    int containerHeight = storyViewerCanvas.getHeight();
+                    if (containerWidth > 0 && containerHeight > 0) {
+                        float containerAspect = (float) containerWidth / containerHeight;
+                        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) vvStoryVideo.getLayoutParams();
+                        if (videoAspect > containerAspect) {
+                            lp.width = containerWidth;
+                            lp.height = (int) (containerWidth / videoAspect);
+                        } else {
+                            lp.height = containerHeight;
+                            lp.width = (int) (containerHeight * videoAspect);
+                        }
+                        lp.gravity = android.view.Gravity.CENTER;
+                        vvStoryVideo.setLayoutParams(lp);
+                    }
+                }
                 vvStoryVideo.start();
             });
 

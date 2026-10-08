@@ -5,6 +5,7 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import java.text.SimpleDateFormat;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -59,7 +60,10 @@ public class RealMeetActivity extends BaseActivity {
     private static final String PREFS_AD_TIMER = "realmeet_ad_timer";
     private static final String KEY_LAST_INTERSTITIAL_TIME = "last_realmeet_interstitial_time";
     private static final String KEY_AD_WATCH_PENDING = "ad_watch_pending";
-    private static final long INTERSTITIAL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+    private static final String KEY_REALMEET_ACCUMULATED_TIME = "realmeet_accumulated_time_ms";
+    private static final long INTERSTITIAL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes (300,000 ms)
+
+    private long realMeetSessionStartTime = 0;
 
     private enum Tab {
         REAL_MEET, FANTASY, PARTY, REQUESTS, PROFILE
@@ -78,6 +82,7 @@ public class RealMeetActivity extends BaseActivity {
 
     // Header & Search
     private LinearLayout btnReturnToVideo;
+    private TextView tvReturnToVideoText;
     private View btnHeaderRequests, btnHeaderInbox;
     private LinearLayout cityFilterContainer;
     private TextView chipFilterGlobal, chipFilterCity;
@@ -141,6 +146,7 @@ public class RealMeetActivity extends BaseActivity {
         currentUserCity = tokenManager.getUserCity();
 
         btnReturnToVideo = findViewById(R.id.btnReturnToVideo);
+        tvReturnToVideoText = findViewById(R.id.tvReturnToVideoText);
         btnHeaderRequests = findViewById(R.id.btnHeaderRequests);
         btnHeaderInbox = findViewById(R.id.btnHeaderInbox);
         etSearch = findViewById(R.id.etSearch);
@@ -238,8 +244,14 @@ public class RealMeetActivity extends BaseActivity {
             myHostedPartiesRecyclerView.setAdapter(myHostedPartiesAdapter);
         }
 
-        // Return to Random Video Calling listener
-        btnReturnToVideo.setOnClickListener(v -> finish());
+        // Return button listener: Return to Real Meet home if in sub-tab, or finish to video calling
+        btnReturnToVideo.setOnClickListener(v -> {
+            if (currentTab != Tab.REAL_MEET) {
+                switchTab(Tab.REAL_MEET);
+            } else {
+                finish();
+            }
+        });
         if (btnHeaderRequests != null)
             btnHeaderRequests.setOnClickListener(v -> switchTab(Tab.REQUESTS));
         if (btnHeaderInbox != null)
@@ -320,10 +332,9 @@ public class RealMeetActivity extends BaseActivity {
         // FAB listener
         fabCreate.setOnClickListener(v -> onFabClicked());
 
-        // Initialize ironSource LevelPlay SDK & Preload Interstitial via AdManager
+        // Initialize ironSource LevelPlay SDK via AdManager
         if (!tokenManager.isCommunityAdFree()) {
             AdManager.getInstance().init(this);
-            AdManager.getInstance().preloadInterstitial(this);
         }
 
         setupSocketListeners();
@@ -337,10 +348,13 @@ public class RealMeetActivity extends BaseActivity {
         super.onResume();
         startAutoRefreshLoop();
 
-        android.content.SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
-        boolean adPending = prefs.getBoolean(KEY_AD_WATCH_PENDING, false);
-        if (adPending) {
-            Log.w(TAG, "⚠️ Ad watch was pending (app killed during ad). Showing ad immediately.");
+        if (tokenManager.isCommunityAdFree())
+            return;
+
+        realMeetSessionStartTime = System.currentTimeMillis();
+
+        if (isRealMeetAdPending()) {
+            Log.w(TAG, "⚠️ Ad watch was pending (app killed or ad bypassed). Showing ad immediately.");
             showScheduledInterstitialAd();
         } else {
             scheduleInterstitialAd();
@@ -351,6 +365,20 @@ public class RealMeetActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         stopAutoRefreshLoop();
+
+        if (!tokenManager.isCommunityAdFree() && realMeetSessionStartTime > 0) {
+            long sessionDuration = System.currentTimeMillis() - realMeetSessionStartTime;
+            long totalAccumulated = getAccumulatedTime() + sessionDuration;
+
+            if (totalAccumulated >= INTERSTITIAL_INTERVAL_MS) {
+                setRealMeetAdPending(true);
+                saveAccumulatedTime(INTERSTITIAL_INTERVAL_MS);
+            } else {
+                saveAccumulatedTime(totalAccumulated);
+            }
+            realMeetSessionStartTime = 0;
+        }
+
         cancelInterstitialAdSchedule();
     }
 
@@ -549,6 +577,14 @@ public class RealMeetActivity extends BaseActivity {
 
     private void switchTab(Tab tab) {
         currentTab = tab;
+
+        if (tvReturnToVideoText != null) {
+            if (tab == Tab.REAL_MEET) {
+                tvReturnToVideoText.setText(R.string.return_to_video_calling);
+            } else {
+                tvReturnToVideoText.setText("Real Meet");
+            }
+        }
 
         if (tvHeaderTitle != null && tvHeaderSubtitle != null) {
             if (tab == Tab.REAL_MEET) {
@@ -1325,6 +1361,7 @@ public class RealMeetActivity extends BaseActivity {
                                 false
                         );
                         timePickerDialog.setTitle(getString(R.string.select_meeting_time_title));
+                        stylePickerDialog(timePickerDialog);
                         timePickerDialog.show();
                     },
                     nowCal.get(Calendar.YEAR),
@@ -1333,6 +1370,7 @@ public class RealMeetActivity extends BaseActivity {
             );
             datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
             datePickerDialog.setTitle(getString(R.string.select_date_title));
+            stylePickerDialog(datePickerDialog);
             datePickerDialog.show();
         });
 
@@ -1504,6 +1542,7 @@ public class RealMeetActivity extends BaseActivity {
                                 false
                         );
                         timePickerDialog.setTitle(getString(R.string.select_party_time_title));
+                        stylePickerDialog(timePickerDialog);
                         timePickerDialog.show();
                     },
                     nowCal.get(Calendar.YEAR),
@@ -1512,6 +1551,7 @@ public class RealMeetActivity extends BaseActivity {
             );
             datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis() - 1000);
             datePickerDialog.setTitle(getString(R.string.select_date_title));
+            stylePickerDialog(datePickerDialog);
             datePickerDialog.show();
         });
 
@@ -1751,11 +1791,30 @@ public class RealMeetActivity extends BaseActivity {
         AdManager.getInstance().preloadInterstitial(this);
     }
 
+    private long getAccumulatedTime() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        return prefs.getLong(KEY_REALMEET_ACCUMULATED_TIME, 0);
+    }
+
+    private void saveAccumulatedTime(long timeMs) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        prefs.edit().putLong(KEY_REALMEET_ACCUMULATED_TIME, Math.max(0, timeMs)).apply();
+    }
+
+    private boolean isRealMeetAdPending() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        return prefs.getBoolean(KEY_AD_WATCH_PENDING, false) || AdManager.getInstance().isAdWatchPending(this);
+    }
+
+    private void setRealMeetAdPending(boolean pending) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, pending).apply();
+        AdManager.getInstance().setAdWatchPending(pending);
+    }
+
     /**
-     * Schedule the next interstitial ad based on last shown time.
-     * Uses SharedPreferences for persistence across app kills.
-     * If 5+ minutes have elapsed since last interstitial, show immediately.
-     * Otherwise, schedule for the remaining time.
+     * Schedule the next interstitial ad based on total accumulated active time in Real Meet.
+     * Accrues active session time so 3 mins in first session + 2 mins in second session triggers ad.
      */
     private void scheduleInterstitialAd() {
         if (tokenManager.isCommunityAdFree())
@@ -1763,23 +1822,35 @@ public class RealMeetActivity extends BaseActivity {
 
         cancelInterstitialAdSchedule();
 
-        long lastShownTime = AdManager.getInstance().getLastInterstitialTime(this);
-        long now = System.currentTimeMillis();
-        long elapsed = now - lastShownTime;
+        long accumulated = getAccumulatedTime();
+        long currentSessionTime = (realMeetSessionStartTime > 0) ? (System.currentTimeMillis() - realMeetSessionStartTime) : 0;
+        long totalActive = accumulated + currentSessionTime;
+        long remaining = INTERSTITIAL_INTERVAL_MS - totalActive;
 
-        long delay;
-        if (lastShownTime == 0 || elapsed >= INTERSTITIAL_INTERVAL_MS) {
-            delay = 3000;
-        } else {
-            delay = INTERSTITIAL_INTERVAL_MS - elapsed;
-        }
-
-        Log.d(TAG, "Interstitial scheduled in " + (delay / 1000) + " seconds.");
-
-        interstitialAdRunnable = () -> {
+        if (remaining <= 0) {
+            Log.d(TAG, "5 minutes active Real Meet time reached! Triggering ad.");
+            setRealMeetAdPending(true);
             showScheduledInterstitialAd();
-        };
-        interstitialAdHandler.postDelayed(interstitialAdRunnable, delay);
+        } else {
+            Log.d(TAG, "Interstitial scheduled in " + (remaining / 1000) + "s (Active time accrued: " + (totalActive / 1000) + "s).");
+
+            // Just-In-Time Preloading: Preload ad 25 seconds before 5-minute display time!
+            if (remaining > 25000) {
+                long preloadDelay = remaining - 25000;
+                interstitialAdHandler.postDelayed(() -> {
+                    Log.d(TAG, "⏳ Just-In-Time Preloading Interstitial ad (25s before display)...");
+                    preloadInterstitialAd();
+                }, preloadDelay);
+            } else {
+                preloadInterstitialAd();
+            }
+
+            interstitialAdRunnable = () -> {
+                setRealMeetAdPending(true);
+                showScheduledInterstitialAd();
+            };
+            interstitialAdHandler.postDelayed(interstitialAdRunnable, remaining);
+        }
     }
 
     /**
@@ -1793,7 +1864,7 @@ public class RealMeetActivity extends BaseActivity {
     }
 
     /**
-     * Show the preloaded interstitial ad with fallback and schedule next cycle.
+     * Show the preloaded interstitial ad with fallback and reset active timer.
      */
     private void showScheduledInterstitialAd() {
         if (tokenManager.isCommunityAdFree())
@@ -1801,8 +1872,13 @@ public class RealMeetActivity extends BaseActivity {
         if (isFinishing() || isDestroyed())
             return;
 
+        setRealMeetAdPending(true); // Persist pending state in case app is killed during ad
+
         AdManager.getInstance().showInterstitialWithFallback(this, "realmeet_timer", tokenManager.isCommunityAdFree(), success -> {
-            scheduleInterstitialAd();
+            setRealMeetAdPending(false); // Clear pending state
+            saveAccumulatedTime(0);      // Reset accumulated time to 0
+            realMeetSessionStartTime = System.currentTimeMillis(); // Reset session timer
+            scheduleInterstitialAd();     // Start fresh 5-minute countdown
         });
     }
 
@@ -1823,5 +1899,30 @@ public class RealMeetActivity extends BaseActivity {
             }
         }
         return 0;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (currentTab != Tab.REAL_MEET) {
+            switchTab(Tab.REAL_MEET);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private void stylePickerDialog(android.app.AlertDialog dialog) {
+        if (dialog == null) return;
+        dialog.setOnShowListener(d -> {
+            android.widget.Button pos = dialog.getButton(android.content.DialogInterface.BUTTON_POSITIVE);
+            if (pos != null) {
+                pos.setTextColor(android.graphics.Color.parseColor("#00F0FF"));
+                pos.setTypeface(null, android.graphics.Typeface.BOLD);
+            }
+            android.widget.Button neg = dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE);
+            if (neg != null) {
+                neg.setTextColor(android.graphics.Color.parseColor("#FF5252"));
+                neg.setTypeface(null, android.graphics.Typeface.BOLD);
+            }
+        });
     }
 }

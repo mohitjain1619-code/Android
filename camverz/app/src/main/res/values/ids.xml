@@ -3,4 +3,5 @@
     <item name="tag_initial_padding_top" type="id" />
     <item name="tag_initial_margin_bottom" type="id" />
     <item name="tag_initial_padding_bottom" type="id" />
+    <item name="tag_initial_margin_top" type="id" />
 </resources>

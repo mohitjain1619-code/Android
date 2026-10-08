@@ -251,7 +251,8 @@ export default function Navbar() {
             )}
 
             <Link href={isRealMeet ? "/pricing?tab=realmeet" : "/pricing?category=video-call"} className={styles.pricingPill}>
-              💎 Pricing
+              <span>💎 PRICING</span>
+              <span className={styles.pricingBadge}>HOT🔥</span>
             </Link>
 
             {user ? (

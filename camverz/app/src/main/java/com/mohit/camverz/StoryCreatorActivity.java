@@ -59,6 +59,20 @@ public class StoryCreatorActivity extends BaseActivity {
 
     private static final int RC_PICK_FILE = 1001;
 
+    private TextView btnToggleScale;
+    private boolean isCropFill = true;
+
+    // Gesture Matrix fields for Image Preview
+    private android.graphics.Matrix imageMatrix = new android.graphics.Matrix();
+    private android.graphics.Matrix savedImageMatrix = new android.graphics.Matrix();
+    private static final int GESTURE_NONE = 0;
+    private static final int GESTURE_DRAG = 1;
+    private static final int GESTURE_ZOOM = 2;
+    private int gestureMode = GESTURE_NONE;
+    private android.graphics.PointF startTouchPoint = new android.graphics.PointF();
+    private android.graphics.PointF midTouchPoint = new android.graphics.PointF();
+    private float oldTouchDist = 1f;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +86,7 @@ public class StoryCreatorActivity extends BaseActivity {
         ivMediaPreview = findViewById(R.id.ivMediaPreview);
         vvMediaPreview = findViewById(R.id.vvMediaPreview);
         etStoryText = findViewById(R.id.etStoryText);
+        btnToggleScale = findViewById(R.id.btnToggleScale);
 
         btnTypeText = findViewById(R.id.btnTypeText);
         btnTypeImage = findViewById(R.id.btnTypeImage);
@@ -91,6 +106,7 @@ public class StoryCreatorActivity extends BaseActivity {
         btnTypeVideo.setOnClickListener(v -> switchType("VIDEO"));
 
         btnSelectFile.setOnClickListener(v -> selectFileFromGallery());
+        btnToggleScale.setOnClickListener(v -> toggleScaleMode());
 
         // Setup theme selectors for text backgrounds
         themePurple.setOnClickListener(v -> setCanvasTheme("bg_community_hot_gradient"));
@@ -98,10 +114,157 @@ public class StoryCreatorActivity extends BaseActivity {
         themeCyan.setOnClickListener(v -> setCanvasTheme("cyan"));
         themeDark.setOnClickListener(v -> setCanvasTheme("dark"));
 
+        btnPosTop = findViewById(R.id.btnPosTop);
+        btnPosCenter = findViewById(R.id.btnPosCenter);
+        btnPosBottom = findViewById(R.id.btnPosBottom);
+
+        if (btnPosTop != null) btnPosTop.setOnClickListener(v -> snapTextPosition("TOP"));
+        if (btnPosCenter != null) btnPosCenter.setOnClickListener(v -> snapTextPosition("CENTER"));
+        if (btnPosBottom != null) btnPosBottom.setOnClickListener(v -> snapTextPosition("BOTTOM"));
+
         btnPublish.setOnClickListener(v -> publishStory());
+
+        applyWindowInsets(findViewById(R.id.headerBar), findViewById(R.id.controlsLayout));
+
+        setupTouchGesture();
+        setupDraggableText();
 
         // Initialize state
         switchType("TEXT");
+    }
+
+    private TextView btnPosTop, btnPosCenter, btnPosBottom;
+    private float textDX, textDY;
+
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private void setupDraggableText() {
+        etStoryText.setOnTouchListener((v, event) -> {
+            switch (event.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    textDX = v.getX() - event.getRawX();
+                    textDY = v.getY() - event.getRawY();
+                    break;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    float newX = event.getRawX() + textDX;
+                    float newY = event.getRawY() + textDY;
+                    float maxX = Math.max(0, creatorCanvas.getWidth() - v.getWidth());
+                    float maxY = Math.max(0, creatorCanvas.getHeight() - v.getHeight());
+                    newX = Math.max(0, Math.min(newX, maxX));
+                    newY = Math.max(0, Math.min(newY, maxY));
+                    v.setX(newX);
+                    v.setY(newY);
+                    break;
+            }
+            return false;
+        });
+    }
+
+    private void snapTextPosition(String position) {
+        if (etStoryText == null || creatorCanvas == null) return;
+        creatorCanvas.post(() -> {
+            float canvasWidth = creatorCanvas.getWidth();
+            float canvasHeight = creatorCanvas.getHeight();
+            float textWidth = etStoryText.getWidth();
+            float textHeight = etStoryText.getHeight();
+            float centerX = Math.max(0, (canvasWidth - textWidth) / 2f);
+
+            if ("TOP".equals(position)) {
+                etStoryText.setX(centerX);
+                etStoryText.setY(30f);
+            } else if ("CENTER".equals(position)) {
+                etStoryText.setX(centerX);
+                etStoryText.setY(Math.max(0, (canvasHeight - textHeight) / 2f));
+            } else if ("BOTTOM".equals(position)) {
+                etStoryText.setX(centerX);
+                etStoryText.setY(Math.max(0, canvasHeight - textHeight - 40f));
+            }
+        });
+    }
+
+    private void toggleScaleMode() {
+        isCropFill = !isCropFill;
+        if (currentType.equals("IMAGE")) {
+            if (isCropFill) {
+                ivMediaPreview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                btnToggleScale.setText("↕️ Fill (Crop)");
+            } else {
+                ivMediaPreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                btnToggleScale.setText("↔️ Fit (Full)");
+            }
+        } else if (currentType.equals("VIDEO")) {
+            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) vvMediaPreview.getLayoutParams();
+            if (isCropFill) {
+                lp.width = FrameLayout.LayoutParams.MATCH_PARENT;
+                lp.height = FrameLayout.LayoutParams.MATCH_PARENT;
+                btnToggleScale.setText("↕️ Fill (Crop)");
+            } else {
+                lp.width = FrameLayout.LayoutParams.WRAP_CONTENT;
+                lp.height = FrameLayout.LayoutParams.WRAP_CONTENT;
+                lp.gravity = android.view.Gravity.CENTER;
+                btnToggleScale.setText("↔️ Fit (Full)");
+            }
+            vvMediaPreview.setLayoutParams(lp);
+        }
+    }
+
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private void setupTouchGesture() {
+        ivMediaPreview.setOnTouchListener((v, event) -> {
+            ImageView view = (ImageView) v;
+            if (!isCropFill && view.getScaleType() != ImageView.ScaleType.MATRIX) {
+                view.setScaleType(ImageView.ScaleType.MATRIX);
+                imageMatrix.set(view.getImageMatrix());
+            }
+            if (view.getScaleType() != ImageView.ScaleType.MATRIX) {
+                return false;
+            }
+            switch (event.getAction() & android.view.MotionEvent.ACTION_MASK) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    savedImageMatrix.set(imageMatrix);
+                    startTouchPoint.set(event.getX(), event.getY());
+                    gestureMode = GESTURE_DRAG;
+                    break;
+                case android.view.MotionEvent.ACTION_POINTER_DOWN:
+                    oldTouchDist = calculateDistance(event);
+                    if (oldTouchDist > 10f) {
+                        savedImageMatrix.set(imageMatrix);
+                        calculateMidPoint(midTouchPoint, event);
+                        gestureMode = GESTURE_ZOOM;
+                    }
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_POINTER_UP:
+                    gestureMode = GESTURE_NONE;
+                    break;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    if (gestureMode == GESTURE_DRAG) {
+                        imageMatrix.set(savedImageMatrix);
+                        imageMatrix.postTranslate(event.getX() - startTouchPoint.x, event.getY() - startTouchPoint.y);
+                    } else if (gestureMode == GESTURE_ZOOM) {
+                        float newDist = calculateDistance(event);
+                        if (newDist > 10f) {
+                            imageMatrix.set(savedImageMatrix);
+                            float scale = newDist / oldTouchDist;
+                            imageMatrix.postScale(scale, scale, midTouchPoint.x, midTouchPoint.y);
+                        }
+                    }
+                    break;
+            }
+            view.setImageMatrix(imageMatrix);
+            return true;
+        });
+    }
+
+    private float calculateDistance(android.view.MotionEvent event) {
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float) Math.sqrt(x * x + y * y);
+    }
+
+    private void calculateMidPoint(android.graphics.PointF point, android.view.MotionEvent event) {
+        float x = event.getX(0) + event.getX(1);
+        float y = event.getY(0) + event.getY(1);
+        point.set(x / 2, y / 2);
     }
 
     private void switchType(String type) {
@@ -109,6 +272,7 @@ public class StoryCreatorActivity extends BaseActivity {
         selectedFileUri = null;
         ivMediaPreview.setVisibility(View.GONE);
         vvMediaPreview.setVisibility(View.GONE);
+        btnToggleScale.setVisibility(View.GONE);
         etStoryText.setText("");
 
         // Highlight selected selector chip
@@ -166,16 +330,42 @@ public class StoryCreatorActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RC_PICK_FILE && resultCode == RESULT_OK && data != null && data.getData() != null) {
             selectedFileUri = data.getData();
+            btnToggleScale.setVisibility(View.VISIBLE);
             if (currentType.equals("IMAGE")) {
                 ivMediaPreview.setVisibility(View.VISIBLE);
                 vvMediaPreview.setVisibility(View.GONE);
+                ivMediaPreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                isCropFill = false;
+                btnToggleScale.setText("↔️ Fit (Full)");
                 Glide.with(this).load(selectedFileUri).into(ivMediaPreview);
             } else {
                 ivMediaPreview.setVisibility(View.GONE);
                 vvMediaPreview.setVisibility(View.VISIBLE);
+                isCropFill = false;
+                btnToggleScale.setText("↔️ Fit (Full)");
                 vvMediaPreview.setVideoURI(selectedFileUri);
                 vvMediaPreview.setOnPreparedListener(mp -> {
                     mp.setLooping(true);
+                    int videoWidth = mp.getVideoWidth();
+                    int videoHeight = mp.getVideoHeight();
+                    if (videoWidth > 0 && videoHeight > 0) {
+                        float videoAspect = (float) videoWidth / videoHeight;
+                        int containerWidth = creatorCanvas.getWidth();
+                        int containerHeight = creatorCanvas.getHeight();
+                        if (containerWidth > 0 && containerHeight > 0) {
+                            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) vvMediaPreview.getLayoutParams();
+                            float containerAspect = (float) containerWidth / containerHeight;
+                            if (videoAspect > containerAspect) {
+                                lp.width = containerWidth;
+                                lp.height = (int) (containerWidth / videoAspect);
+                            } else {
+                                lp.height = containerHeight;
+                                lp.width = (int) (containerHeight * videoAspect);
+                            }
+                            lp.gravity = android.view.Gravity.CENTER;
+                            vvMediaPreview.setLayoutParams(lp);
+                        }
+                    }
                     vvMediaPreview.start();
                 });
             }

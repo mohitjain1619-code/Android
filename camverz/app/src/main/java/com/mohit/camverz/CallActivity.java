@@ -67,7 +67,7 @@ import org.webrtc.VideoTrack;
 
 import io.socket.client.Socket;
 
-public class CallActivity extends AppCompatActivity {
+public class CallActivity extends BaseActivity {
 
     private static final String TAG = "CALL_ACTIVITY";
     private static final int PERMISSION_REQ = 101;

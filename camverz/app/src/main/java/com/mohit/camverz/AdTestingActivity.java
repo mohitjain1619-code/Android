@@ -36,7 +36,7 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdTestingActivity extends AppCompatActivity {
+public class AdTestingActivity extends BaseActivity {
     private static final String TAG = "AdTestingActivity";
 
     // Meta Ads

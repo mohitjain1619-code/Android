@@ -84,22 +84,20 @@ public class AdManager {
 
         if (isInitialized) return;
 
-        // 1. Initialize Google Mobile Ads SDK so AdMob bidding adapter can participate in auctions
+        // 1. Initialize Google Mobile Ads SDK for AdMob bidding signals
         try {
-            com.google.android.gms.ads.MobileAds.initialize(appContext, initializationStatus -> {
-                Log.d(TAG, "✅ Google Mobile Ads (AdMob) Initialized for LevelPlay Mediation");
-            });
+            com.google.android.gms.ads.MobileAds.initialize(appContext);
         } catch (Exception e) {
-            Log.e(TAG, "Error initializing MobileAds for LevelPlay", e);
+            Log.e(TAG, "Error initializing MobileAds", e);
         }
 
-        // 2. Initialize ironSource LevelPlay SDK
+        // 2. Initialize ironSource LevelPlay Mediation SDK
         try {
             IronSource.init(activity, IRONSOURCE_APP_KEY);
             IronSource.setLevelPlayInterstitialListener(interstitialListener);
             IronSource.setLevelPlayRewardedVideoListener(rewardedVideoListener);
             isInitialized = true;
-            Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK & Listeners Initialized Globally");
+            Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK Initialized Successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error initializing IronSource SDK", e);
         }
@@ -502,8 +500,7 @@ public class AdManager {
                 currentInterstitialCallback = null;
                 if (cb != null) cb.onAdDismissed(false);
             }
-
-            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 2000);
+            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 3000);
         }
 
         @Override
@@ -538,8 +535,7 @@ public class AdManager {
                 currentInterstitialCallback = null;
                 if (cb != null) cb.onAdDismissed(true);
             }
-
-            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 2000);
+            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 3000);
         }
     };
 
@@ -585,8 +581,7 @@ public class AdManager {
                 currentRewardedCallback = null;
                 rCb.onAdFailed(errMsg);
             }
-
-            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 2000);
+            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 3000);
         }
 
         @Override
@@ -631,8 +626,7 @@ public class AdManager {
                 currentRewardedCallback = null;
                 rCb.onAdDismissed(rewardGrantedInCurrentSession);
             }
-
-            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 2000);
+            mainHandler.postDelayed(() -> preloadInterstitial(appContext), 3000);
         }
     };
 

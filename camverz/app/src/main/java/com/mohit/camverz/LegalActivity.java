@@ -9,7 +9,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
-public class LegalActivity extends AppCompatActivity {
+public class LegalActivity extends BaseActivity {
 
     private RadioGroup rgPolicySelector;
     private TextView tvPolicyContent;

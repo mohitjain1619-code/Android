@@ -184,15 +184,68 @@ public class BaseActivity extends AppCompatActivity {
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override
+    public void setContentView(int layoutResID) {
+        super.setContentView(layoutResID);
+        setupAutomaticWindowInsets();
+    }
+
+    @Override
+    public void setContentView(View view) {
+        super.setContentView(view);
+        setupAutomaticWindowInsets();
+    }
+
+    @Override
+    public void setContentView(View view, ViewGroup.LayoutParams params) {
+        super.setContentView(view, params);
+        setupAutomaticWindowInsets();
+    }
+
+    protected void setupAutomaticWindowInsets() {
+        try {
+            View contentRoot = findViewById(android.R.id.content);
+            if (contentRoot instanceof ViewGroup) {
+                ViewGroup rootGroup = (ViewGroup) contentRoot;
+                if (rootGroup.getChildCount() > 0) {
+                    View firstChild = rootGroup.getChildAt(0);
+                    if (firstChild instanceof ViewGroup) {
+                        ViewGroup container = (ViewGroup) firstChild;
+                        int childCount = container.getChildCount();
+                        if (childCount > 0) {
+                            View topChild = container.getChildAt(0);
+                            View bottomChild = container.getChildAt(childCount - 1);
+                            applyWindowInsets(topChild, bottomChild);
+                        } else {
+                            applyWindowInsets(firstChild, firstChild);
+                        }
+                    } else {
+                        applyWindowInsets(firstChild, firstChild);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting automatic window insets", e);
+        }
+    }
+
     public void applyWindowInsets(final View topView, final View bottomView) {
         View contentRoot = findViewById(android.R.id.content);
         if (contentRoot == null) {
             contentRoot = getWindow().getDecorView();
         }
 
-        // Store initial top padding and bottom margin/padding so insets scale predictably on all devices
-        if (topView != null && topView.getTag(R.id.tag_initial_padding_top) == null) {
-            topView.setTag(R.id.tag_initial_padding_top, topView.getPaddingTop());
+        if (topView != null) {
+            ViewGroup.LayoutParams lp = topView.getLayoutParams();
+            if (lp instanceof ViewGroup.MarginLayoutParams) {
+                if (topView.getTag(R.id.tag_initial_margin_top) == null) {
+                    topView.setTag(R.id.tag_initial_margin_top, ((ViewGroup.MarginLayoutParams) lp).topMargin);
+                }
+            } else {
+                if (topView.getTag(R.id.tag_initial_padding_top) == null) {
+                    topView.setTag(R.id.tag_initial_padding_top, topView.getPaddingTop());
+                }
+            }
         }
         if (bottomView != null) {
             ViewGroup.LayoutParams lp = bottomView.getLayoutParams();
@@ -222,14 +275,23 @@ public class BaseActivity extends AppCompatActivity {
             int navBarInset = Math.max(systemBars.bottom, ime.bottom);
 
             if (topView != null) {
-                Object initialTag = topView.getTag(R.id.tag_initial_padding_top);
-                int initialTopPadding = initialTag instanceof Integer ? (Integer) initialTag : 0;
-                topView.setPadding(
-                    topView.getPaddingLeft(),
-                    statusBarInset + initialTopPadding,
-                    topView.getPaddingRight(),
-                    topView.getPaddingBottom()
-                );
+                ViewGroup.LayoutParams lp = topView.getLayoutParams();
+                if (lp instanceof ViewGroup.MarginLayoutParams) {
+                    ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) lp;
+                    Object initialTag = topView.getTag(R.id.tag_initial_margin_top);
+                    int initialMarginTop = initialTag instanceof Integer ? (Integer) initialTag : 0;
+                    mlp.topMargin = statusBarInset + initialMarginTop;
+                    topView.setLayoutParams(mlp);
+                } else {
+                    Object initialTag = topView.getTag(R.id.tag_initial_padding_top);
+                    int initialTopPadding = initialTag instanceof Integer ? (Integer) initialTag : 0;
+                    topView.setPadding(
+                        topView.getPaddingLeft(),
+                        statusBarInset + initialTopPadding,
+                        topView.getPaddingRight(),
+                        topView.getPaddingBottom()
+                    );
+                }
             }
 
             if (bottomView != null) {
