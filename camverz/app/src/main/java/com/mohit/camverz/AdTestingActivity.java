@@ -58,7 +58,7 @@ public class AdTestingActivity extends BaseActivity {
         BaseActivity.initializeIronSource(this);
 
         if (com.mohit.camverz.BuildConfig.DEBUG) {
-            AdSettings.setTestMode(true);
+            // Test mode disabled so real Meta ads can be tested on real devices
             com.ironsource.mediationsdk.integration.IntegrationHelper.validateIntegration(this);
         }
 

@@ -91,13 +91,22 @@ public class AdManager {
             Log.e(TAG, "Error initializing MobileAds", e);
         }
 
-        // 2. Initialize ironSource LevelPlay Mediation SDK
+        // 2. Initialize Meta Audience Network SDK for LevelPlay bidding signals
+        try {
+            com.facebook.ads.AudienceNetworkAds.initialize(appContext);
+            Log.d(TAG, "✅ Meta Audience Network SDK Initialized for bidding");
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing AudienceNetworkAds", e);
+        }
+
+        // 3. Initialize ironSource LevelPlay Mediation SDK
         try {
             IronSource.init(activity, IRONSOURCE_APP_KEY);
             IronSource.setLevelPlayInterstitialListener(interstitialListener);
             IronSource.setLevelPlayRewardedVideoListener(rewardedVideoListener);
             isInitialized = true;
             Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK Initialized Successfully");
+            preloadInterstitial(activity);
         } catch (Exception e) {
             Log.e(TAG, "Error initializing IronSource SDK", e);
         }

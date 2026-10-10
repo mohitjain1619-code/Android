@@ -143,6 +143,9 @@
 -dontwarn org.webrtc.**
 -dontwarn org.jni_zero.**
 
+-keep class org.webrtc.** { *; }
+-keepclassmembers class org.webrtc.** { *; }
+
 -keepclasseswithmembers class * {
     native <methods>;
 }

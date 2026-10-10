@@ -38,10 +38,12 @@ public class AvatarSelectionAdapter extends RecyclerView.Adapter<AvatarSelection
     @Override
     public void onBindViewHolder(@NonNull AvatarViewHolder holder, int position) {
         String avatarName = avatars[position];
-        int avatarResId = context.getResources().getIdentifier(avatarName, "drawable", context.getPackageName());
+        int avatarResId = AvatarHelper.resolveAvatarResId(context, avatarName);
         
         if (avatarResId != 0) {
             Glide.with(context).load(avatarResId).into(holder.avatarImage);
+        } else {
+            Glide.with(context).load(R.drawable.av1).into(holder.avatarImage);
         }
 
         holder.itemView.setOnClickListener(v -> listener.onAvatarSelected(avatarName));

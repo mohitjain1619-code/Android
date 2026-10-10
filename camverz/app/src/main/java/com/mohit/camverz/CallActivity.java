@@ -172,6 +172,8 @@ public class CallActivity extends BaseActivity {
 
     private VideoTrack localVideoTrack;
     private AudioTrack localAudioTrack;
+    private VideoTrack remoteVideoTrack;
+    private AudioTrack remoteAudioTrack;
 
     private String peerId, myUid, roomName;
     private String peerNameValue, peerAvatarUrl;
@@ -296,6 +298,12 @@ public class CallActivity extends BaseActivity {
         
 
     }
+ 
+    @Override
+    protected void setupAutomaticWindowInsets() {
+        // Do NOT apply window inset margins to remoteView (SurfaceViewRenderer).
+        // RemoteView must remain fullscreen without layout margin shifts.
+    }
 
     @Override
     protected void onPause() {
@@ -353,6 +361,8 @@ public class CallActivity extends BaseActivity {
 
         isSpeakerOn = isVideoCall;
         updateSpeakerButtonUI();
+        updateMuteButtonUI();
+        updateVideoButtonUI();
 
         btnMute.setOnClickListener(v -> toggleMute());
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
@@ -514,7 +524,11 @@ public class CallActivity extends BaseActivity {
         remoteView.init(eglBase.getEglBaseContext(), null);
         localView.setZOrderMediaOverlay(true);
         localView.setMirror(true);
-        remoteView.setMirror(false);
+        remoteView.setMirror(true);
+        localView.setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+        remoteView.setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+        localView.setEnableHardwareScaler(true);
+        remoteView.setEnableHardwareScaler(true);
     }
 
     private void initWebRTC() {
@@ -566,12 +580,67 @@ public class CallActivity extends BaseActivity {
         return enumerator.createCapturer(enumerator.getDeviceNames()[0], null);
     }
 
+    private synchronized void attachRemoteVideoTrack(VideoTrack track) {
+        if (track == null) return;
+        if (remoteVideoTrack == track) {
+            Log.d(TAG, "attachRemoteVideoTrack: already attached same track");
+            return;
+        }
+        Log.d(TAG, "attachRemoteVideoTrack: attaching remote video track " + track.id());
+        if (remoteVideoTrack != null) {
+            try {
+                remoteVideoTrack.removeSink(remoteView);
+            } catch (Exception e) {
+                Log.e(TAG, "Error removing previous remote video sink", e);
+            }
+        }
+        remoteVideoTrack = track;
+        remoteVideoTrack.setEnabled(true);
+        runOnUiThread(() -> {
+            if (remoteView != null && remoteVideoTrack != null) {
+                try {
+                    remoteVideoTrack.addSink(remoteView);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error adding sink to remoteView", e);
+                }
+            }
+            markConnected();
+        });
+    }
+
+    private synchronized void attachRemoteAudioTrack(AudioTrack track) {
+        if (track == null) return;
+        if (remoteAudioTrack == track) {
+            Log.d(TAG, "attachRemoteAudioTrack: already attached same track");
+            return;
+        }
+        Log.d(TAG, "attachRemoteAudioTrack: attaching remote audio track " + track.id());
+        remoteAudioTrack = track;
+        remoteAudioTrack.setEnabled(true);
+        remoteAudioTrack.setVolume(1.0);
+        runOnUiThread(CallActivity.this::markConnected);
+    }
+
     private void initPeerConnection() {
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
         iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer());
         iceServers.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
         iceServers.add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer());
         iceServers.add(PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer());
+
+        // OpenRelay TURN Servers for NAT Traversal on Mobile Networks
+        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
+                .setUsername("openrelayproject")
+                .setPassword("openrelayproject")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443")
+                .setUsername("openrelayproject")
+                .setPassword("openrelayproject")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443?transport=tcp")
+                .setUsername("openrelayproject")
+                .setPassword("openrelayproject")
+                .createIceServer());
 
         PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(iceServers);
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
@@ -593,17 +662,13 @@ public class CallActivity extends BaseActivity {
             @Override
             public void onTrack(RtpTransceiver transceiver) {
                 Log.d(TAG, "onTrack: Remote track received");
-                if (transceiver.getReceiver().track() instanceof VideoTrack) {
-                    VideoTrack remoteVideoTrack = (VideoTrack) transceiver.getReceiver().track();
-                    runOnUiThread(() -> {
-                        remoteVideoTrack.addSink(remoteView);
-                        markConnected();
-                    });
-                } else if (transceiver.getReceiver().track() instanceof AudioTrack) {
-                    AudioTrack remoteAudioTrack = (AudioTrack) transceiver.getReceiver().track();
-                    remoteAudioTrack.setEnabled(true);
-                    remoteAudioTrack.setVolume(1.0);
-                    runOnUiThread(CallActivity.this::markConnected);
+                if (transceiver != null && transceiver.getReceiver() != null && transceiver.getReceiver().track() != null) {
+                    org.webrtc.MediaStreamTrack track = transceiver.getReceiver().track();
+                    if (track instanceof VideoTrack) {
+                        attachRemoteVideoTrack((VideoTrack) track);
+                    } else if (track instanceof AudioTrack) {
+                        attachRemoteAudioTrack((AudioTrack) track);
+                    }
                 }
             }
             
@@ -644,18 +709,41 @@ public class CallActivity extends BaseActivity {
             @Override public void onIceConnectionReceivingChange(boolean b) {}
             @Override public void onIceGatheringChange(PeerConnection.IceGatheringState s) {}
             @Override public void onIceCandidatesRemoved(IceCandidate[] i) {}
-            @Override public void onAddStream(MediaStream s) {}
+            @Override
+            public void onAddStream(MediaStream s) {
+                Log.d(TAG, "onAddStream: Remote stream received");
+                if (s != null) {
+                    if (!s.videoTracks.isEmpty()) {
+                        attachRemoteVideoTrack(s.videoTracks.get(0));
+                    }
+                    if (!s.audioTracks.isEmpty()) {
+                        attachRemoteAudioTrack(s.audioTracks.get(0));
+                    }
+                }
+            }
             @Override public void onRemoveStream(MediaStream s) {}
             @Override public void onDataChannel(DataChannel d) {}
             @Override public void onRenegotiationNeeded() {}
-            @Override public void onAddTrack(RtpReceiver r, MediaStream[] s) {}
+            @Override
+            public void onAddTrack(RtpReceiver r, MediaStream[] s) {
+                Log.d(TAG, "onAddTrack: Remote track received");
+                if (r != null && r.track() != null) {
+                    org.webrtc.MediaStreamTrack track = r.track();
+                    if (track instanceof VideoTrack) {
+                        attachRemoteVideoTrack((VideoTrack) track);
+                    } else if (track instanceof AudioTrack) {
+                        attachRemoteAudioTrack((AudioTrack) track);
+                    }
+                }
+            }
         });
 
+        List<String> streamIds = java.util.Collections.singletonList("ARDAMS");
         if (localVideoTrack != null && peerConnection != null) {
-            peerConnection.addTrack(localVideoTrack);
+            peerConnection.addTrack(localVideoTrack, streamIds);
         }
         if (localAudioTrack != null && peerConnection != null) {
-            peerConnection.addTrack(localAudioTrack);
+            peerConnection.addTrack(localAudioTrack, streamIds);
         }
     }
 
@@ -781,17 +869,13 @@ public class CallActivity extends BaseActivity {
 
             @Override
             public void onTrack(RtpTransceiver transceiver) {
-                if (transceiver.getReceiver().track() instanceof VideoTrack) {
-                    VideoTrack remoteVideoTrack = (VideoTrack) transceiver.getReceiver().track();
-                    runOnUiThread(() -> {
-                        remoteVideoTrack.addSink(remoteView);
-                        markConnected();
-                    });
-                } else if (transceiver.getReceiver().track() instanceof AudioTrack) {
-                    AudioTrack remoteAudioTrack = (AudioTrack) transceiver.getReceiver().track();
-                    remoteAudioTrack.setEnabled(true);
-                    remoteAudioTrack.setVolume(1.0);
-                    runOnUiThread(CallActivity.this::markConnected);
+                if (transceiver != null && transceiver.getReceiver() != null && transceiver.getReceiver().track() != null) {
+                    org.webrtc.MediaStreamTrack track = transceiver.getReceiver().track();
+                    if (track instanceof VideoTrack) {
+                        attachRemoteVideoTrack((VideoTrack) track);
+                    } else if (track instanceof AudioTrack) {
+                        attachRemoteAudioTrack((AudioTrack) track);
+                    }
                 }
             }
             
@@ -803,22 +887,54 @@ public class CallActivity extends BaseActivity {
             }
 
             @Override public void onSignalingChange(PeerConnection.SignalingState s) {}
-            @Override public void onIceConnectionChange(PeerConnection.IceConnectionState s) {}
+            @Override public void onIceConnectionChange(PeerConnection.IceConnectionState s) {
+                Log.d(TAG, "reconnected onIceConnectionChange: " + s);
+                if (s == PeerConnection.IceConnectionState.CONNECTED || s == PeerConnection.IceConnectionState.COMPLETED) {
+                    timeoutHandler.removeCallbacks(timeoutRunnable);
+                    if (callConnectedTime == 0) {
+                        callConnectedTime = System.currentTimeMillis();
+                        startLimitCountdown();
+                    }
+                }
+            }
             @Override public void onIceConnectionReceivingChange(boolean b) {}
             @Override public void onIceGatheringChange(PeerConnection.IceGatheringState s) {}
             @Override public void onIceCandidatesRemoved(IceCandidate[] i) {}
-            @Override public void onAddStream(MediaStream s) {}
+            @Override
+            public void onAddStream(MediaStream s) {
+                Log.d(TAG, "onAddStream: Remote stream received");
+                if (s != null) {
+                    if (!s.videoTracks.isEmpty()) {
+                        attachRemoteVideoTrack(s.videoTracks.get(0));
+                    }
+                    if (!s.audioTracks.isEmpty()) {
+                        attachRemoteAudioTrack(s.audioTracks.get(0));
+                    }
+                }
+            }
             @Override public void onRemoveStream(MediaStream s) {}
             @Override public void onDataChannel(DataChannel d) {}
             @Override public void onRenegotiationNeeded() {}
-            @Override public void onAddTrack(RtpReceiver r, MediaStream[] s) {}
+            @Override
+            public void onAddTrack(RtpReceiver r, MediaStream[] s) {
+                Log.d(TAG, "onAddTrack: Remote track received");
+                if (r != null && r.track() != null) {
+                    org.webrtc.MediaStreamTrack track = r.track();
+                    if (track instanceof VideoTrack) {
+                        attachRemoteVideoTrack((VideoTrack) track);
+                    } else if (track instanceof AudioTrack) {
+                        attachRemoteAudioTrack((AudioTrack) track);
+                    }
+                }
+            }
         });
 
+        List<String> streamIds = java.util.Collections.singletonList("ARDAMS");
         if (localVideoTrack != null && peerConnection != null) {
-            peerConnection.addTrack(localVideoTrack);
+            peerConnection.addTrack(localVideoTrack, streamIds);
         }
         if (localAudioTrack != null && peerConnection != null) {
-            peerConnection.addTrack(localAudioTrack);
+            peerConnection.addTrack(localAudioTrack, streamIds);
         }
 
         try {
@@ -839,34 +955,35 @@ public class CallActivity extends BaseActivity {
         View.OnTouchListener buttonAnimator = (v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    v.animate().scaleX(0.85f).scaleY(0.85f).alpha(0.8f).setDuration(150).start();
+                    v.animate().scaleX(0.88f).scaleY(0.88f).alpha(0.85f).setDuration(100).start();
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    v.animate().scaleX(1f).scaleY(1f).alpha(1.0f).setDuration(150).start();
-                    v.performClick();
+                    v.animate().scaleX(1.0f).scaleY(1.0f).alpha(1.0f).setDuration(100).start();
                     break;
             }
-            return true;
+            return false;
         };
 
         btnMute.setOnTouchListener(buttonAnimator);
         btnSwitchCamera.setOnTouchListener(buttonAnimator);
         btnEnd.setOnTouchListener(buttonAnimator);
         btnToggleVideo.setOnTouchListener(buttonAnimator);
+        if (btnSpeaker != null) {
+            btnSpeaker.setOnTouchListener(buttonAnimator);
+        }
         
         followButton.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    followButtonCard.animate().scaleX(0.92f).scaleY(0.92f).setDuration(120).start();
+                    followButtonCard.animate().scaleX(0.92f).scaleY(0.92f).setDuration(100).start();
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    followButtonCard.animate().scaleX(1f).scaleY(1f).setDuration(120).start();
-                    v.performClick();
+                    followButtonCard.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
                     break;
             }
-            return true;
+            return false;
         });
     }
     
@@ -1209,6 +1326,10 @@ public class CallActivity extends BaseActivity {
 
     private void createOffer() {
         if (peerConnection == null) return;
+        MediaConstraints sdpMediaConstraints = new MediaConstraints();
+        sdpMediaConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+        sdpMediaConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", isVideoCall ? "true" : "false"));
+
         peerConnection.createOffer(new SimpleSdp("CreateOffer", false) {
             @Override
             public void onCreateSuccess(SessionDescription sdp) {
@@ -1218,11 +1339,15 @@ public class CallActivity extends BaseActivity {
                     sendOffer(sdp);
                 }
             }
-        }, new MediaConstraints());
+        }, sdpMediaConstraints);
     }
 
     private void createAnswer() {
         if (peerConnection == null) return;
+        MediaConstraints sdpMediaConstraints = new MediaConstraints();
+        sdpMediaConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+        sdpMediaConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", isVideoCall ? "true" : "false"));
+
         peerConnection.createAnswer(new SimpleSdp("CreateAnswer", false) {
             @Override
             public void onCreateSuccess(SessionDescription sdp) {
@@ -1232,7 +1357,7 @@ public class CallActivity extends BaseActivity {
                     sendAnswer(sdp);
                 }
             }
-        }, new MediaConstraints());
+        }, sdpMediaConstraints);
     }
 
     private void sendOffer(SessionDescription sdp) {
@@ -1324,36 +1449,53 @@ public class CallActivity extends BaseActivity {
 
     private void toggleMute() {
         isMuted = !isMuted;
-        if (localAudioTrack != null) localAudioTrack.setEnabled(!isMuted);
-        
-        btnMute.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
-            btnMute.setImageResource(isMuted ? R.drawable.ic_mic_off : R.drawable.ic_mic_on);
-            btnMute.setBackgroundResource(isMuted ? R.drawable.bg_call_btn_red : R.drawable.bg_call_btn_glass);
-            btnMute.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
-        }).start();
-        
+        if (localAudioTrack != null) {
+            try {
+                localAudioTrack.setEnabled(!isMuted);
+            } catch (Exception e) {
+                Log.e(TAG, "Error toggling local audio track", e);
+            }
+        }
+        updateMuteButtonUI();
         resetAutoHideTimer();
+    }
+
+    private void updateMuteButtonUI() {
+        if (btnMute != null) {
+            btnMute.setImageResource(isMuted ? R.drawable.ic_mic_off : R.drawable.ic_mic_on);
+            btnMute.setBackgroundResource(isMuted ? R.drawable.bg_call_btn_red : R.drawable.bg_round_white);
+            if (isMuted) {
+                btnMute.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+            } else {
+                btnMute.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#0F172A")));
+            }
+        }
     }
 
     private void toggleVideo() {
         isVideoOff = !isVideoOff;
-        if (localVideoTrack != null) localVideoTrack.setEnabled(!isVideoOff);
-        
-        btnToggleVideo.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
-            btnToggleVideo.setImageResource(isVideoOff ? R.drawable.ic_videocam_off : R.drawable.ic_videocam_on);
-            btnToggleVideo.setBackgroundResource(isVideoOff ? R.drawable.bg_call_btn_red : R.drawable.bg_call_btn_glass);
+        if (localVideoTrack != null) {
+            try {
+                localVideoTrack.setEnabled(!isVideoOff);
+            } catch (Exception e) {
+                Log.e(TAG, "Error toggling local video track", e);
+            }
+        }
+        updateVideoButtonUI();
+        if (localAvatarOverlay != null) {
             localAvatarOverlay.setVisibility(isVideoOff ? View.VISIBLE : View.GONE);
-            btnToggleVideo.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
-        }).start();
+        }
 
         // Emit call-control event to notify peer
         try {
-            JSONObject data = new JSONObject();
-            data.put("room", roomName);
-            data.put("type", "video");
-            data.put("enabled", !isVideoOff);
-            data.put("senderId", myUid);
-            socket.emit("call-control", data);
+            if (socket != null) {
+                JSONObject data = new JSONObject();
+                data.put("room", roomName);
+                data.put("type", "video");
+                data.put("enabled", !isVideoOff);
+                data.put("senderId", myUid);
+                socket.emit("call-control", data);
+            }
         } catch (JSONException e) {
             Log.e(TAG, "Error emitting video call-control event", e);
         }
@@ -1361,20 +1503,44 @@ public class CallActivity extends BaseActivity {
         resetAutoHideTimer();
     }
 
+    private void updateVideoButtonUI() {
+        if (btnToggleVideo != null) {
+            btnToggleVideo.setImageResource(isVideoOff ? R.drawable.ic_videocam_off : R.drawable.ic_videocam_on);
+            btnToggleVideo.setBackgroundResource(isVideoOff ? R.drawable.bg_call_btn_red : R.drawable.bg_round_white);
+            if (isVideoOff) {
+                btnToggleVideo.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
+            } else {
+                btnToggleVideo.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#0F172A")));
+            }
+        }
+    }
+
     private void switchCamera() {
         if (videoCapturer instanceof CameraVideoCapturer && !isCameraSwitching) {
             isCameraSwitching = true;
-            ((CameraVideoCapturer) videoCapturer).switchCamera(new CameraVideoCapturer.CameraSwitchHandler() {
-                @Override
-                public void onCameraSwitchDone(boolean isFront) {
-                    isCameraSwitching = false;
-                }
-                @Override
-                public void onCameraSwitchError(String s) {
-                    isCameraSwitching = false;
-                }
-            });
+            try {
+                ((CameraVideoCapturer) videoCapturer).switchCamera(new CameraVideoCapturer.CameraSwitchHandler() {
+                    @Override
+                    public void onCameraSwitchDone(boolean isFront) {
+                        isCameraSwitching = false;
+                        runOnUiThread(() -> {
+                            if (localView != null) {
+                                localView.setMirror(isFront);
+                            }
+                        });
+                    }
+                    @Override
+                    public void onCameraSwitchError(String s) {
+                        isCameraSwitching = false;
+                        Log.e(TAG, "Camera switch error: " + s);
+                    }
+                });
+            } catch (Exception e) {
+                isCameraSwitching = false;
+                Log.e(TAG, "Exception during switchCamera: " + e.getMessage());
+            }
         }
+        resetAutoHideTimer();
     }
 
     private void disconnect() {
@@ -1429,6 +1595,16 @@ public class CallActivity extends BaseActivity {
 
         // Release WebRTC on a background thread to prevent UI freezing / deadlock!
         new Thread(() -> {
+            if (remoteVideoTrack != null) {
+                try {
+                    remoteVideoTrack.removeSink(remoteView);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error removing remote video sink: " + e.getMessage());
+                }
+                remoteVideoTrack = null;
+            }
+            remoteAudioTrack = null;
+
             if (localVideoTrack != null) {
                 try {
                     localVideoTrack.removeSink(localView);
@@ -1716,28 +1892,24 @@ public class CallActivity extends BaseActivity {
 
     private void toggleSpeaker() {
         isSpeakerOn = !isSpeakerOn;
-        if (btnSpeaker != null) {
-            btnSpeaker.animate().scaleX(0.8f).scaleY(0.8f).setDuration(100).withEndAction(() -> {
-                updateSpeakerButtonUI();
-                btnSpeaker.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
-            }).start();
-        }
+        updateSpeakerButtonUI();
         updateAudioRouting();
+        resetAutoHideTimer();
     }
 
     private void updateAudioRouting() {
         if (audioManager == null) return;
         try {
             boolean isWiredHeadset = audioManager.isWiredHeadsetOn();
-            boolean isBluetoothConnected = false;
+            boolean isBluetoothSco = audioManager.isBluetoothScoOn();
             
-            // Check Bluetooth
+            boolean isBluetoothConnected = false;
             if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S || 
                 androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 try {
                     android.bluetooth.BluetoothAdapter btAdapter = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
                     if (btAdapter != null && btAdapter.isEnabled()) {
-                        isBluetoothConnected = audioManager.isBluetoothScoOn() || audioManager.isBluetoothA2dpOn();
+                        isBluetoothConnected = isBluetoothSco || audioManager.isBluetoothA2dpOn();
                     }
                 } catch (Exception btEx) {
                     Log.e(TAG, "Bluetooth check error: " + btEx.getMessage());
@@ -1747,26 +1919,58 @@ public class CallActivity extends BaseActivity {
             Log.d(TAG, "updateAudioRouting: wired=" + isWiredHeadset + ", bluetooth=" + isBluetoothConnected + ", isVideoCall=" + isVideoCall + ", isSpeakerOn=" + isSpeakerOn);
             
             if (isWiredHeadset) {
-                // Wired headset connected - audio goes through headset, mic should auto-route (ensure speakerphone is off)
-                audioManager.stopBluetoothSco();
-                audioManager.setBluetoothScoOn(false);
-                audioManager.setSpeakerphoneOn(false);
-            } else if (isBluetoothConnected) {
-                audioManager.startBluetoothSco();
-                audioManager.setBluetoothScoOn(true);
-                audioManager.setSpeakerphoneOn(false);
-            } else {
-                audioManager.stopBluetoothSco();
-                audioManager.setBluetoothScoOn(false);
-                if (isSpeakerOn) {
-                    audioManager.setSpeakerphoneOn(true);
-                } else {
-                    // For video calls, default to speakerphone. For audio-only calls, default to earpiece.
-                    audioManager.setSpeakerphoneOn(isVideoCall);
+                if (isBluetoothSco) {
+                    try {
+                        audioManager.stopBluetoothSco();
+                        audioManager.setBluetoothScoOn(false);
+                    } catch (Exception ignored) {}
                 }
+                setSpeakerphone(false);
+            } else if (isBluetoothConnected && !isSpeakerOn) {
+                if (!isBluetoothSco) {
+                    try {
+                        audioManager.startBluetoothSco();
+                        audioManager.setBluetoothScoOn(true);
+                    } catch (Exception ignored) {}
+                }
+                setSpeakerphone(false);
+            } else {
+                if (isBluetoothSco) {
+                    try {
+                        audioManager.stopBluetoothSco();
+                        audioManager.setBluetoothScoOn(false);
+                    } catch (Exception ignored) {}
+                }
+                setSpeakerphone(isSpeakerOn);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error updating audio routing: " + e.getMessage());
+        }
+    }
+
+    private void setSpeakerphone(boolean on) {
+        if (audioManager == null) return;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                if (on) {
+                    java.util.List<android.media.AudioDeviceInfo> devices = audioManager.getAvailableCommunicationDevices();
+                    for (android.media.AudioDeviceInfo device : devices) {
+                        if (device.getType() == android.media.AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+                            audioManager.setCommunicationDevice(device);
+                            break;
+                        }
+                    }
+                } else {
+                    audioManager.clearCommunicationDevice();
+                }
+            } else {
+                audioManager.setSpeakerphoneOn(on);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting speakerphone state: " + e.getMessage());
+            try {
+                audioManager.setSpeakerphoneOn(on);
+            } catch (Exception ignored) {}
         }
     }
 
