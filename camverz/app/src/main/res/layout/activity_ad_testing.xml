@@ -56,65 +56,11 @@
             android:backgroundTint="#1E293B"
             android:textColor="#FFFFFF" />
 
-        <!-- Unity Section -->
+        <!-- Mediation (LevelPlay Bidding) Section -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Unity (Direct)"
-            android:textColor="#38BDF8"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
-            
-        <Button
-            android:id="@+id/btn_unity_interstitial"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Interstitial"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_unity_rewarded"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Rewarded Video"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-
-        <!-- ironSource Direct Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ironSource (Direct)"
-            android:textColor="#38BDF8"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
-            
-        <Button
-            android:id="@+id/btn_is_interstitial"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Interstitial"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_is_rewarded"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Rewarded Video"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-
-        <!-- Mediation Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mediation (LevelPlay)"
+            android:text="Mediation (LevelPlay Bidding)"
             android:textColor="#38BDF8"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -145,11 +91,11 @@
             android:backgroundTint="#1E293B"
             android:textColor="#FFFFFF" />
 
-        <!-- AdMob Mediation Section -->
+        <!-- AdMob Direct / Waterfall Section -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="AdMob Mediation"
+            android:text="AdMob (Direct / Waterfall)"
             android:textColor="#38BDF8"
             android:textSize="18sp"
             android:textStyle="bold"
@@ -168,7 +114,7 @@
             android:id="@+id/btn_admob_rewarded"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Load &amp; Show Rewarded Interstitial"
+            android:text="Load &amp; Show Rewarded Video"
             android:backgroundTint="#1E293B"
             android:textColor="#FFFFFF" />
             

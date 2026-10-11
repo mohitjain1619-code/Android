@@ -124,6 +124,7 @@ public class RealMeetActivity extends BaseActivity {
     // Interstitial ad timer
     private final Handler interstitialAdHandler = new Handler(Looper.getMainLooper());
     private Runnable interstitialAdRunnable;
+    private boolean isCreationDialogOpen = false;
     // ironSource Interstitial uses static helper methods, no member variable needed
 
     @Override
@@ -332,9 +333,10 @@ public class RealMeetActivity extends BaseActivity {
         // FAB listener
         fabCreate.setOnClickListener(v -> onFabClicked());
 
-        // Initialize ironSource LevelPlay SDK via AdManager
+        // Initialize ironSource LevelPlay SDK via AdManager and warm up auction cache
         if (!tokenManager.isCommunityAdFree()) {
             AdManager.getInstance().init(this);
+            preloadInterstitialAd();
         }
 
         setupSocketListeners();
@@ -352,6 +354,7 @@ public class RealMeetActivity extends BaseActivity {
             return;
 
         realMeetSessionStartTime = System.currentTimeMillis();
+        preloadInterstitialAd();
 
         if (isRealMeetAdPending()) {
             Log.w(TAG, "⚠️ Ad watch was pending (app killed or ad bypassed). Showing ad immediately.");
@@ -577,6 +580,9 @@ public class RealMeetActivity extends BaseActivity {
 
     private void switchTab(Tab tab) {
         currentTab = tab;
+        if (!tokenManager.isCommunityAdFree()) {
+            preloadInterstitialAd();
+        }
 
         if (tvReturnToVideoText != null) {
             if (tab == Tab.REAL_MEET) {
@@ -880,6 +886,9 @@ public class RealMeetActivity extends BaseActivity {
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_send_meet_request, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        isCreationDialogOpen = true;
+        preloadInterstitialAd();
+        dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         TextView tvDialogSub = dialogView.findViewById(R.id.tvDialogSub);
         TextView chipIce1 = dialogView.findViewById(R.id.chipIce1);
@@ -890,6 +899,16 @@ public class RealMeetActivity extends BaseActivity {
         TextView btnPrefChat = dialogView.findViewById(R.id.btnPrefChat);
         TextView btnCancelReq = dialogView.findViewById(R.id.btnCancelReq);
         TextView btnSendReq = dialogView.findViewById(R.id.btnSendReq);
+
+        etRequestMessage.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 3) {
+                    preloadInterstitialAd();
+                }
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
 
         tvDialogSub.setText(getString(R.string.connecting_with_user, (posterName != null ? posterName : getString(R.string.post_owner))));
 
@@ -968,6 +987,8 @@ public class RealMeetActivity extends BaseActivity {
             String sexPreference, String targetGender, String relationshipStatus) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_view_full_post, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        isCreationDialogOpen = true;
+        dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         ImageView ivFullAvatar = dialogView.findViewById(R.id.ivFullAvatar);
         TextView tvFullNameAge = dialogView.findViewById(R.id.tvFullNameAge);
@@ -1267,6 +1288,9 @@ public class RealMeetActivity extends BaseActivity {
     }
 
     private void onFabClicked() {
+        if (!tokenManager.isCommunityAdFree()) {
+            preloadInterstitialAd();
+        }
         if (currentTab == Tab.REAL_MEET) {
             checkAndOpenRealMeetDialog();
         } else if (currentTab == Tab.PARTY) {
@@ -1309,6 +1333,9 @@ public class RealMeetActivity extends BaseActivity {
     private void openRealMeetDialog(RealMeetPost oldPostToReplace) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_real_meet, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        isCreationDialogOpen = true;
+        preloadInterstitialAd();
+        dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         EditText etPurpose = dialogView.findViewById(R.id.etPurpose);
         EditText etLocation = dialogView.findViewById(R.id.etLocation);
@@ -1382,6 +1409,9 @@ public class RealMeetActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tvCharCounter.setText(s.length() + " / 200");
+                if (s.length() == 3) {
+                    preloadInterstitialAd();
+                }
             }
 
             @Override
@@ -1449,7 +1479,7 @@ public class RealMeetActivity extends BaseActivity {
             btnPublish.setEnabled(false);
             btnCancel.setVisibility(View.GONE);
 
-            showRewardedAdBeforePost(() -> {
+            showRewardedAdBeforePost("realmeet_publish_post", () -> {
                 store.addRealMeetPost(newPost);
 
                 Map<String, Object> body = new HashMap<>();
@@ -1485,6 +1515,9 @@ public class RealMeetActivity extends BaseActivity {
     private void openPartyDialog(PartyPost oldPartyToReplace) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_party, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        isCreationDialogOpen = true;
+        preloadInterstitialAd();
+        dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         EditText etPartyPurpose = dialogView.findViewById(R.id.etPartyPurpose);
         EditText etPartyVenue = dialogView.findViewById(R.id.etPartyVenue);
@@ -1494,6 +1527,32 @@ public class RealMeetActivity extends BaseActivity {
         TextView tvSelectedPartyTime = dialogView.findViewById(R.id.tvSelectedPartyTime);
         TextView btnCancelParty = dialogView.findViewById(R.id.btnCancelParty);
         TextView btnPublishParty = dialogView.findViewById(R.id.btnPublishParty);
+
+        etPartyPurpose.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 3) {
+                    preloadInterstitialAd();
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        etPartyVenue.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 3) {
+                    preloadInterstitialAd();
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
 
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
                 new String[] { getString(R.string.target_audience_everyone), getString(R.string.target_audience_female), getString(R.string.target_audience_male) });
@@ -1536,6 +1595,7 @@ public class RealMeetActivity extends BaseActivity {
                                     SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
                                     selectedPartyTimeStr[0] = sdf.format(selectedPartyCal.getTime());
                                     tvSelectedPartyTime.setText("📅 " + selectedPartyTimeStr[0]);
+                                    preloadInterstitialAd();
                                 },
                                 nowCal.get(Calendar.HOUR_OF_DAY),
                                 nowCal.get(Calendar.MINUTE),
@@ -1606,7 +1666,7 @@ public class RealMeetActivity extends BaseActivity {
             btnPublishParty.setEnabled(false);
             btnCancelParty.setVisibility(View.GONE);
 
-            showRewardedAdBeforePost(() -> {
+            showRewardedAdBeforePost("party_host_publish_post", () -> {
                 store.addPartyPost(partyPost);
 
                 Map<String, Object> body = new HashMap<>();
@@ -1642,6 +1702,9 @@ public class RealMeetActivity extends BaseActivity {
     private void openFantasyDialog() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_create_fantasy, null);
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+        isCreationDialogOpen = true;
+        preloadInterstitialAd();
+        dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         Spinner spinnerStatus = dialogView.findViewById(R.id.spinnerStatus);
         EditText etInterests = dialogView.findViewById(R.id.etInterests);
@@ -1655,6 +1718,16 @@ public class RealMeetActivity extends BaseActivity {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerStatus.setAdapter(adapter);
 
+        etInterests.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 3) {
+                    preloadInterstitialAd();
+                }
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
         etFantasyDescription.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -1663,6 +1736,9 @@ public class RealMeetActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tvFantasyCharCounter.setText(s.length() + " / 200");
+                if (s.length() == 3) {
+                    preloadInterstitialAd();
+                }
             }
 
             @Override
@@ -1705,7 +1781,7 @@ public class RealMeetActivity extends BaseActivity {
             btnPublishFantasy.setEnabled(false);
             btnCancelFantasy.setVisibility(View.GONE);
 
-            showRewardedAdBeforePost(() -> {
+            showRewardedAdBeforePost("fantasy_publish_post", () -> {
                 store.addFantasyPost(fantasyPost);
 
                 Map<String, Object> body = new HashMap<>();
@@ -1743,18 +1819,20 @@ public class RealMeetActivity extends BaseActivity {
      * Show a rewarded ad BEFORE uploading any community post (RealMeet, Party, Fantasy).
      * ONLY if reward is earned will onAdCompleted be executed.
      */
-    private void showRewardedAdBeforePost(Runnable onAdCompleted) {
+    private void showRewardedAdBeforePost(String placement, Runnable onAdCompleted) {
         if (tokenManager.isCommunityAdFree()) {
             if (onAdCompleted != null) onAdCompleted.run();
             return;
         }
 
-        AdManager.getInstance().showRewardedAd(this, "realmeet_publish_post", new AdManager.RewardedAdCallback() {
+        String targetPlacement = (placement != null && !placement.isEmpty()) ? placement : "realmeet_publish_post";
+        AdManager.getInstance().showRewardedAd(this, targetPlacement, new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {}
 
             @Override
             public void onAdDismissed(boolean rewarded) {
+                preloadInterstitialAd();
                 if (rewarded) {
                     if (onAdCompleted != null) runOnUiThread(onAdCompleted);
                 } else {
@@ -1764,6 +1842,7 @@ public class RealMeetActivity extends BaseActivity {
 
             @Override
             public void onAdFailed(String reason) {
+                preloadInterstitialAd();
                 // If ad network has no fill or error, allow post creation directly so user is not blocked
                 if (onAdCompleted != null) runOnUiThread(onAdCompleted);
             }
@@ -1789,6 +1868,8 @@ public class RealMeetActivity extends BaseActivity {
         if (isFinishing() || isDestroyed()) return;
 
         AdManager.getInstance().preloadInterstitial(this);
+        AdManager.getInstance().preloadRewardedVideo();
+        AdManager.getInstance().preloadFallbackAds(this);
     }
 
     private long getAccumulatedTime() {
@@ -1829,6 +1910,11 @@ public class RealMeetActivity extends BaseActivity {
 
         if (remaining <= 0) {
             Log.d(TAG, "5 minutes active Real Meet time reached! Triggering ad.");
+            if (isCreationDialogOpen) {
+                Log.d(TAG, "User is currently creating a post dialog! Deferring timer interstitial by 30 seconds.");
+                interstitialAdHandler.postDelayed(this::scheduleInterstitialAd, 30000);
+                return;
+            }
             setRealMeetAdPending(true);
             showScheduledInterstitialAd();
         } else {
@@ -1846,6 +1932,11 @@ public class RealMeetActivity extends BaseActivity {
             }
 
             interstitialAdRunnable = () -> {
+                if (isCreationDialogOpen) {
+                    Log.d(TAG, "User is currently creating a post dialog! Deferring timer interstitial by 30 seconds.");
+                    interstitialAdHandler.postDelayed(this::scheduleInterstitialAd, 30000);
+                    return;
+                }
                 setRealMeetAdPending(true);
                 showScheduledInterstitialAd();
             };
@@ -1878,6 +1969,7 @@ public class RealMeetActivity extends BaseActivity {
             setRealMeetAdPending(false); // Clear pending state
             saveAccumulatedTime(0);      // Reset accumulated time to 0
             realMeetSessionStartTime = System.currentTimeMillis(); // Reset session timer
+            preloadInterstitialAd();     // Auto-preload RAM cache for next countdown cycle
             scheduleInterstitialAd();     // Start fresh 5-minute countdown
         });
     }

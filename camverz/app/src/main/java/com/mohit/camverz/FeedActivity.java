@@ -66,6 +66,11 @@ public class FeedActivity extends BaseActivity {
 
         // Create Post Button
         findViewById(R.id.fab_create_post).setOnClickListener(v -> {
+            if (!tokenManager.isCommunityAdFree()) {
+                AdManager.getInstance().preloadRewardedVideo();
+                AdManager.getInstance().preloadInterstitial(this);
+                AdManager.getInstance().preloadFallbackAds(this);
+            }
             startActivity(new Intent(this, CreatePostActivity.class));
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });

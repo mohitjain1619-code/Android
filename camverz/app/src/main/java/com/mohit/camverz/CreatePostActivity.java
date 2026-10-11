@@ -54,6 +54,30 @@ public class CreatePostActivity extends BaseActivity {
         postButton = findViewById(R.id.post_button);
         categoryGroup = findViewById(R.id.category_group);
 
+        // Master-level preloading: Start In-App Header Bidding auction immediately on screen open
+        if (!tokenManager.isCommunityAdFree()) {
+            AdManager.getInstance().preloadRewardedVideo();
+            AdManager.getInstance().preloadInterstitial(this);
+            AdManager.getInstance().preloadFallbackAds(this);
+        }
+
+        // Keep bidding auction primed while user is typing their message
+        postText.addTextChangedListener(new android.text.TextWatcher() {
+            private boolean isWarmed = false;
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {
+                if (!isWarmed && s != null && s.length() >= 5) {
+                    isWarmed = true;
+                    if (!tokenManager.isCommunityAdFree()) {
+                        AdManager.getInstance().preloadRewardedVideo();
+                        AdManager.getInstance().preloadFallbackAds(CreatePostActivity.this);
+                    }
+                }
+            }
+        });
+
         categoryGroup.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.category_female) {
                 boolean isVerifiedFemale = "female".equalsIgnoreCase(tokenManager.getUserGender()) && tokenManager.isVerified();
@@ -62,7 +86,6 @@ public class CreatePostActivity extends BaseActivity {
                         .setTitle("Premium Audience 👑")
                         .setMessage("Targeting the Female audience is a premium feature. Would you like to watch a video ad to unlock this selection?")
                         .setPositiveButton("Watch Ad", (dialog, which) -> {
-                            Toast.makeText(CreatePostActivity.this, "Loading ad...", Toast.LENGTH_SHORT).show();
                             loadAndShowRewardedAd(() -> {
                                 Toast.makeText(CreatePostActivity.this, "Unlocked Female Audience!", Toast.LENGTH_SHORT).show();
                             }, () -> {
@@ -147,7 +170,6 @@ public class CreatePostActivity extends BaseActivity {
         if (tokenManager.isCommunityAdFree()) {
             executePostUpload(text, category);
         } else {
-            Toast.makeText(this, "Preparing ad to upload post...", Toast.LENGTH_SHORT).show();
             loadAndShowRewardedAd(() -> {
                 // Success: Ad watched -> upload post
                 executePostUpload(text, category);
@@ -176,6 +198,9 @@ public class CreatePostActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         Toast.makeText(CreatePostActivity.this, "Post uploaded", Toast.LENGTH_SHORT).show();
+                        // Refill cache in background for next activity
+                        AdManager.getInstance().preloadRewardedVideo();
+                        AdManager.getInstance().preloadInterstitial(CreatePostActivity.this);
                         finish();
                         return;
                     }
@@ -208,7 +233,11 @@ public class CreatePostActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        AdManager.getInstance().preloadInterstitial(this);
+        if (tokenManager != null && !tokenManager.isCommunityAdFree()) {
+            AdManager.getInstance().preloadRewardedVideo();
+            AdManager.getInstance().preloadInterstitial(this);
+            AdManager.getInstance().preloadFallbackAds(this);
+        }
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onUserCancelled, Runnable onNoFill) {

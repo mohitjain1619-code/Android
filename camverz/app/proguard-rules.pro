@@ -182,6 +182,9 @@
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.RewardedVideoAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.InterstitialAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.BannerAdapterApi { *; }
+-keep class com.ironsource.adapters.** { *; }
+-keep class com.ironsource.mediationsdk.** { *; }
+-keep class com.ironsource.lifecycle.** { *; }
 
 # ==============================================================================
 # Meta Audience Network (Facebook Ads)

@@ -392,6 +392,7 @@ public class LoginActivity extends BaseActivity {
                                 user.has("avatar") ? user.get("avatar").getAsString() : "",
                                 user.has("verified") && user.get("verified").getAsBoolean()
                         );
+                        AdManager.getInstance().updateUserId(user.get("id").getAsString());
                         String sexPref = "";
                         if (user.has("sexPreference") && !user.get("sexPreference").isJsonNull()) {
                             sexPref = user.get("sexPreference").getAsString();

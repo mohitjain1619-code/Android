@@ -256,6 +256,11 @@ public class MainScreenActivity extends BaseActivity {
 
         if (chipCommunityHub != null) {
             chipCommunityHub.setOnClickListener(v -> {
+                if (!TokenManager.getInstance(this).isCommunityAdFree()) {
+                    AdManager.getInstance().preloadInterstitial(this);
+                    AdManager.getInstance().preloadRewardedVideo();
+                    AdManager.getInstance().preloadFallbackAds(this);
+                }
                 Intent intent = new Intent(MainScreenActivity.this, RealMeetActivity.class);
                 startActivity(intent);
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -735,7 +740,10 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void preloadRewardedAd() {
-        // ironSource handles rewarded video preloading automatically
+        if (!TokenManager.getInstance(this).isCommunityAdFree()) {
+            AdManager.getInstance().preloadRewardedVideo();
+            AdManager.getInstance().preloadFallbackAds(this);
+        }
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {

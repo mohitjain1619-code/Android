@@ -697,6 +697,7 @@ public class CallActivity extends BaseActivity {
                     if (callConnectedTime == 0) {
                         callConnectedTime = System.currentTimeMillis();
                         startLimitCountdown();
+                        preloadLevelPlayInterstitial();
                     }
                 } else if (s == PeerConnection.IceConnectionState.FAILED) {
                     if (!turnFallbackAttempted) {
@@ -1687,24 +1688,31 @@ public class CallActivity extends BaseActivity {
                 long durationSec = durationMs / 1000;
                 Log.d(TAG, "📞 Call finished. Duration: " + durationSec + " seconds.");
 
-                if (isPrivateCall && durationSec >= 30 && !tokenManager.isVideoCallAdFree()) {
+                if (tokenManager != null && tokenManager.isVideoCallAdFree()) {
+                    Log.d(TAG, "User has video call ad-free pass. Finishing immediately.");
+                    finish();
+                } else if (isPrivateCall && durationSec >= 30) {
+                    Log.d(TAG, "Private call >= 30s. Showing post-call ad.");
                     showInterstitialAndFinish();
                 } else {
                     boolean shouldShowAd = false;
                     if (durationSec >= 120) {
+                        Log.d(TAG, "Call lasted >= 2 min (120s). Triggering ad.");
                         shouldShowAd = true;
                     } else if (callConnectedTime > 0) {
-                        // Short call (< 2 min) — increment short call counter
+                        // Short call (< 2 min) — increment short call counter, show ad every 2 calls
                         android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
                         int shortCalls = statsPrefs.getInt("short_call_count", 0);
                         shortCalls++;
                         statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
+                        Log.d(TAG, "Short call count: " + shortCalls);
                         if (shortCalls % 2 == 0) {
+                            Log.d(TAG, "Short call threshold reached (every 2 calls). Triggering ad.");
                             shouldShowAd = true;
                         }
                     }
 
-                    if (shouldShowAd && !tokenManager.isVideoCallAdFree()) {
+                    if (shouldShowAd) {
                         showInterstitialAndFinish();
                     } else {
                         finish();
@@ -2005,6 +2013,7 @@ public class CallActivity extends BaseActivity {
         if (isFinishing() || isDestroyed()) return;
 
         AdManager.getInstance().preloadInterstitial(this);
+        AdManager.getInstance().preloadFallbackAds(this);
     }
 
     @Override

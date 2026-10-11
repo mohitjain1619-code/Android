@@ -77,6 +77,23 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
 
         sendButton.setOnClickListener(v -> postComment());
 
+        if (!tokenManager.isCommunityAdFree()) {
+            AdManager.getInstance().preloadRewardedVideo();
+            AdManager.getInstance().preloadInterstitial(this);
+            AdManager.getInstance().preloadFallbackAds(this);
+        }
+
+        commentEditText.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 3 && !tokenManager.isCommunityAdFree()) {
+                    AdManager.getInstance().preloadRewardedVideo();
+                    AdManager.getInstance().preloadFallbackAds(CommentsActivity.this);
+                }
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {
                 if (commentList != null && adapter != null) {
@@ -210,7 +227,6 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         if (tokenManager.isCommunityAdFree()) {
             executeCommentUpload(commentText);
         } else {
-            Toast.makeText(this, "Preparing ad to post comment...", Toast.LENGTH_SHORT).show();
             loadAndShowRewardedAd(() -> {
                 executeCommentUpload(commentText);
             }, () -> {
@@ -338,7 +354,11 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
     @Override
     protected void onResume() {
         super.onResume();
-        AdManager.getInstance().preloadInterstitial(this);
+        if (!tokenManager.isCommunityAdFree()) {
+            AdManager.getInstance().preloadRewardedVideo();
+            AdManager.getInstance().preloadInterstitial(this);
+            AdManager.getInstance().preloadFallbackAds(this);
+        }
     }
 
     private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
@@ -348,6 +368,10 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
 
             @Override
             public void onAdDismissed(boolean rewarded) {
+                if (!tokenManager.isCommunityAdFree()) {
+                    AdManager.getInstance().preloadRewardedVideo();
+                    AdManager.getInstance().preloadFallbackAds(CommentsActivity.this);
+                }
                 if (rewarded) {
                     if (onSuccess != null) runOnUiThread(onSuccess);
                 } else {
@@ -357,6 +381,10 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
 
             @Override
             public void onAdFailed(String reason) {
+                if (!tokenManager.isCommunityAdFree()) {
+                    AdManager.getInstance().preloadRewardedVideo();
+                    AdManager.getInstance().preloadFallbackAds(CommentsActivity.this);
+                }
                 if (onFailure != null) runOnUiThread(onFailure);
             }
         });

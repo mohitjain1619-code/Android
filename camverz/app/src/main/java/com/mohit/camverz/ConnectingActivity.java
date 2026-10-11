@@ -19,6 +19,10 @@ import android.widget.ImageView;
 import androidx.activity.OnBackPressedCallback;
 
 
+import android.graphics.Color;
+import android.widget.LinearLayout;
+import androidx.annotation.NonNull;
+
 public class ConnectingActivity extends BaseActivity {
 
     private static final String TAG = "ConnectingActivity";
@@ -42,8 +46,9 @@ public class ConnectingActivity extends BaseActivity {
     private Handler countdownHandler;
     private Runnable countdownRunnable;
 
-    // ironSource LevelPlay Native Ad
+    // ironSource LevelPlay Native Ad & Direct Fallback
     private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
+    private com.google.android.gms.ads.nativead.NativeAd admobNativeAd;
     private TextView waitingText;
 
     private long searchStartTime = 0;
@@ -79,9 +84,10 @@ public class ConnectingActivity extends BaseActivity {
         setupSocketListeners();
         loadUserDataAndJoinQueue();
 
-        // Load native ads asynchronously in background for non ad-free users so matching starts immediately
+        // Load native ads asynchronously and preload post-call interstitial early for 0ms wait on call exit
         if (!tokenManager.isVideoCallAdFree()) {
             new Handler(Looper.getMainLooper()).post(this::loadLevelPlayNativeAd);
+            AdManager.getInstance().preloadInterstitial(this);
         }
 
         findViewById(R.id.cancelButton).setOnClickListener(v -> {
@@ -315,6 +321,7 @@ public class ConnectingActivity extends BaseActivity {
                     public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
                         Log.w(TAG, "LevelPlay Native Ad load failed: " + error.getErrorMessage());
                         AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "FAILED", "native", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "NO_FILL", error != null ? error.getErrorMessage() : "Native ad load failed");
+                        runOnUiThread(ConnectingActivity.this::loadAdMobFallbackNativeAd);
                     }
 
                     @Override
@@ -369,6 +376,89 @@ public class ConnectingActivity extends BaseActivity {
         nativeAdLayout.registerNativeAdViews(ad);
 
         adContainer.addView(nativeAdLayout);
+    }
+
+    private void loadAdMobFallbackNativeAd() {
+        if (isFinishing() || isDestroyed() || matchAccepted) return;
+        try {
+            com.google.android.gms.ads.AdLoader adLoader = new com.google.android.gms.ads.AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
+                    .forNativeAd(ad -> {
+                        if (isFinishing() || isDestroyed() || matchAccepted) {
+                            ad.destroy();
+                            return;
+                        }
+                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "admob", "DELIVERED", "", "");
+                        admobNativeAd = ad;
+                        inflateAdMobNativeAd(ad);
+                    })
+                    .withAdListener(new com.google.android.gms.ads.AdListener() {
+                        @Override
+                        public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError adError) {
+                            Log.w(TAG, "AdMob Native fallback failed: " + adError.getMessage());
+                        }
+                    })
+                    .build();
+            adLoader.loadAd(new com.google.android.gms.ads.AdRequest.Builder().build());
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading AdMob fallback native ad", e);
+        }
+    }
+
+    private void inflateAdMobNativeAd(com.google.android.gms.ads.nativead.NativeAd ad) {
+        FrameLayout adContainer = findViewById(R.id.nativeAdContainer);
+        if (adContainer == null || ad == null) return;
+        adContainer.removeAllViews();
+        adContainer.setVisibility(View.VISIBLE);
+
+        com.google.android.gms.ads.nativead.NativeAdView adView = new com.google.android.gms.ads.nativead.NativeAdView(this);
+        adView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
+
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.VERTICAL);
+        inner.setBackgroundResource(R.drawable.bg_luxury_card);
+        int p = (int) (12 * getResources().getDisplayMetrics().density);
+        inner.setPadding(p, p, p, p);
+
+        TextView headline = new TextView(this);
+        headline.setText(ad.getHeadline());
+        headline.setTextColor(Color.WHITE);
+        headline.setTextSize(15);
+        headline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        inner.addView(headline);
+        adView.setHeadlineView(headline);
+
+        com.google.android.gms.ads.nativead.MediaView mediaView = new com.google.android.gms.ads.nativead.MediaView(this);
+        LinearLayout.LayoutParams mParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, (int) (140 * getResources().getDisplayMetrics().density));
+        mParams.setMargins(0, (int) (6 * getResources().getDisplayMetrics().density), 0, (int) (6 * getResources().getDisplayMetrics().density));
+        mediaView.setLayoutParams(mParams);
+        inner.addView(mediaView);
+        adView.setMediaView(mediaView);
+
+        if (ad.getBody() != null) {
+            TextView body = new TextView(this);
+            body.setText(ad.getBody());
+            body.setTextColor(Color.parseColor("#8E8E93"));
+            body.setTextSize(12);
+            inner.addView(body);
+            adView.setBodyView(body);
+        }
+
+        if (ad.getCallToAction() != null) {
+            Button cta = new Button(this);
+            cta.setText(ad.getCallToAction());
+            cta.setBackgroundResource(R.drawable.bg_luxury_chip);
+            cta.setTextColor(Color.WHITE);
+            LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (int) (40 * getResources().getDisplayMetrics().density));
+            ctaParams.topMargin = (int) (6 * getResources().getDisplayMetrics().density);
+            cta.setLayoutParams(ctaParams);
+            inner.addView(cta);
+            adView.setCallToActionView(cta);
+        }
+
+        adView.addView(inner);
+        adView.setNativeAd(ad);
+        adContainer.addView(adView);
     }
 
     private int dpToPx(int dp) {
@@ -429,9 +519,13 @@ public class ConnectingActivity extends BaseActivity {
         }
         removeSocketListeners();
 
-        // Clean up ironSource ad objects
+        // Clean up ironSource & AdMob native ad objects
         if (levelPlayNativeAd != null) {
             levelPlayNativeAd.destroyAd();
+        }
+        if (admobNativeAd != null) {
+            admobNativeAd.destroy();
+            admobNativeAd = null;
         }
     }
 
