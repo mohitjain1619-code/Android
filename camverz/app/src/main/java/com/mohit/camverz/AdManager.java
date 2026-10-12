@@ -1,7 +1,6 @@
 package com.mohit.camverz;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -12,7 +11,6 @@ import androidx.annotation.NonNull;
 
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
-import com.facebook.ads.AdSettings;
 import com.facebook.ads.AudienceNetworkAds;
 import com.facebook.ads.InterstitialAd;
 import com.facebook.ads.InterstitialAdListener;
@@ -23,7 +21,6 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
@@ -63,7 +60,6 @@ public class AdManager {
 
     public static final String META_INTERSTITIAL_PLACEMENT = "1045884118260179_1063416116506979";
     public static final String META_REWARDED_PLACEMENT = "1045884118260179_1063416119840312";
-    public static final String TEST_DEVICE_ID = "6FC7D2B1D7C9B618A6D9FDC8114FDEF5";
 
     public static final String PREFS_AD_TIMER = "camverz_ad_timer";
     public static final String KEY_LAST_INTERSTITIAL_TIME = "last_interstitial_time";
@@ -93,6 +89,11 @@ public class AdManager {
     private boolean isAdMobFallbackRewardedLoading = false;
     private RewardedVideoAd metaFallbackRewardedAd;
     private boolean isMetaFallbackRewardedLoading = false;
+
+    // Meta Audience Network rate limit protection (prevents error 1002: Ad was re-loaded too frequently)
+    private static final long META_MIN_RELOAD_INTERVAL_MS = 30000;
+    private long lastMetaInterstitialRequestTime = 0;
+    private long lastMetaRewardedRequestTime = 0;
 
     private boolean pendingInterstitialPreload = false;
 
@@ -136,15 +137,10 @@ public class AdManager {
 
         if (isInitialized) return;
 
-        // 1. Initialize Google Mobile Ads SDK for AdMob bidding signals & test whitelist
+        // 1. Initialize Google Mobile Ads SDK for AdMob
         try {
-            List<String> testDeviceIds = Arrays.asList(TEST_DEVICE_ID, AdRequest.DEVICE_ID_EMULATOR);
-            RequestConfiguration configuration = new RequestConfiguration.Builder()
-                    .setTestDeviceIds(testDeviceIds)
-                    .build();
-            MobileAds.setRequestConfiguration(configuration);
             MobileAds.initialize(appContext, initializationStatus -> {
-                Log.d(TAG, "✅ Google MobileAds Initialized Successfully (Test device whitelisted, 403 prevented)");
+                Log.d(TAG, "✅ Google MobileAds Initialized Successfully");
             });
         } catch (Exception e) {
             Log.e(TAG, "Error initializing MobileAds", e);
@@ -152,9 +148,8 @@ public class AdManager {
 
         // 2. Initialize Meta Audience Network SDK for bidding & direct fallback
         try {
-            AdSettings.setTestMode(false);
             AudienceNetworkAds.initialize(appContext);
-            Log.d(TAG, "✅ Meta Audience Network SDK Initialized for LevelPlay bidding & direct fallback");
+            Log.d(TAG, "✅ Meta Audience Network SDK Initialized");
         } catch (Exception e) {
             Log.e(TAG, "Error initializing Meta Audience Network", e);
         }
@@ -185,7 +180,7 @@ public class AdManager {
                     pendingInterstitialPreload = false;
                     preloadInterstitial(appContext);
                 }
-            }, IronSource.AD_UNIT.INTERSTITIAL, IronSource.AD_UNIT.REWARDED_VIDEO);
+            }, IronSource.AD_UNIT.INTERSTITIAL, IronSource.AD_UNIT.REWARDED_VIDEO, IronSource.AD_UNIT.NATIVE_AD, IronSource.AD_UNIT.BANNER);
 
             isInitialized = true;
             Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK Init dispatched");
@@ -270,7 +265,7 @@ public class AdManager {
         isInterstitialLoading = true;
         lastInterstitialRequestTime = now;
         Log.d(TAG, "🚀 Dispatching LevelPlay Interstitial load request (Running Header Bidding Auction)...");
-        AdAnalyticsTracker.trackEvent(appContext, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "");
+        AdAnalyticsTracker.trackEvent(appContext, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "", "app_start_preload");
         IronSource.loadInterstitial();
     }
 
@@ -279,8 +274,7 @@ public class AdManager {
      */
     public void preloadRewardedVideo() {
         if (appContext != null) {
-            preloadFallbackMetaRewardedAd(appContext);
-            preloadFallbackAdMobRewardedAd(appContext);
+            preloadFallbackRewardedAds(appContext);
         }
 
         if (!isLevelPlayReady) return;
@@ -315,11 +309,18 @@ public class AdManager {
     }
 
     /**
-     * Preloads direct fallback ads (Meta Audience Network & AdMob) for 100% fill rate guarantee.
+     * Preloads direct fallback interstitial ads (Meta Audience Network & AdMob) for 100% fill rate guarantee.
+     * Rewarded ads are excluded here to prevent hitting Meta's Error 1002 (Ad was re-loaded too frequently).
      */
     public void preloadFallbackAds(Context context) {
         preloadFallbackMetaAd(context);
         preloadFallbackAdMobAd(context);
+    }
+
+    /**
+     * Preloads direct fallback rewarded ads only when explicitly needed by rewarded ad flows.
+     */
+    public void preloadFallbackRewardedAds(Context context) {
         preloadFallbackMetaRewardedAd(context);
         preloadFallbackAdMobRewardedAd(context);
     }
@@ -329,6 +330,13 @@ public class AdManager {
         if (context == null) return;
         if (metaFallbackAd != null && metaFallbackAd.isAdLoaded()) return;
         if (isMetaFallbackLoading) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastMetaInterstitialRequestTime < META_MIN_RELOAD_INTERVAL_MS) {
+            Log.d(TAG, "Meta Interstitial load throttled (<30s). Preventing Error 1002.");
+            return;
+        }
+        lastMetaInterstitialRequestTime = now;
 
         isMetaFallbackLoading = true;
         final Context ctx = context.getApplicationContext();
@@ -356,7 +364,7 @@ public class AdManager {
                                 metaFallbackAd = null;
                                 Log.d(TAG, "⏹️ Meta Fallback Interstitial dismissed");
                                 if (appContext != null) {
-                                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "facebook", "DELIVERED", "", "");
+                                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "facebook", "DELIVERED", "", "", currentPlacement);
                                 }
                                 if (isRewardedFromInterstitial) {
                                     RewardedAdCallback rCb = currentRewardedCallback;
@@ -398,14 +406,14 @@ public class AdManager {
                             @Override
                             public void onAdClicked(Ad ad) {
                                 if (appContext != null) {
-                                    AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "interstitial", "facebook", "DELIVERED", "", "");
+                                    AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "interstitial", "facebook", "DELIVERED", "", "", currentPlacement);
                                 }
                             }
 
                             @Override
                             public void onLoggingImpression(Ad ad) {
                                 if (appContext != null) {
-                                    AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "");
+                                    AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "", currentPlacement);
                                 }
                             }
                         }).build());
@@ -421,6 +429,13 @@ public class AdManager {
         if (context == null) return;
         if (metaFallbackRewardedAd != null && metaFallbackRewardedAd.isAdLoaded()) return;
         if (isMetaFallbackRewardedLoading) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastMetaRewardedRequestTime < META_MIN_RELOAD_INTERVAL_MS) {
+            Log.d(TAG, "Meta Rewarded Video load throttled (<30s). Preventing Error 1002.");
+            return;
+        }
+        lastMetaRewardedRequestTime = now;
 
         isMetaFallbackRewardedLoading = true;
         final Context ctx = context.getApplicationContext();
@@ -450,7 +465,7 @@ public class AdManager {
                                 metaFallbackRewardedAd = null;
                                 Log.d(TAG, "⏹️ Meta Fallback Rewarded Video closed");
                                 if (appContext != null) {
-                                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "facebook", "DELIVERED", "", "");
+                                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "facebook", "DELIVERED", "", "", currentPlacement);
                                 }
                                 if (currentRewardedCallback != null) {
                                     RewardedAdCallback rCb = currentRewardedCallback;
@@ -478,14 +493,14 @@ public class AdManager {
                             @Override
                             public void onAdClicked(Ad ad) {
                                 if (appContext != null) {
-                                    AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "rewarded", "facebook", "DELIVERED", "", "");
+                                    AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "rewarded", "facebook", "DELIVERED", "", "", currentPlacement);
                                 }
                             }
 
                             @Override
                             public void onLoggingImpression(Ad ad) {
                                 if (appContext != null) {
-                                    AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "");
+                                    AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "", currentPlacement);
                                 }
                             }
                         }).build());
@@ -578,7 +593,7 @@ public class AdManager {
                 isAdMobFallbackRewardedLoading = false;
                 Log.d(TAG, "⏹️ AdMob Fallback Rewarded Ad dismissed");
                 if (appContext != null) {
-                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "admob", "DELIVERED", "", "");
+                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "admob", "DELIVERED", "", "", currentPlacement);
                 }
                 if (currentRewardedCallback != null) {
                     RewardedAdCallback rCb = currentRewardedCallback;
@@ -645,7 +660,6 @@ public class AdManager {
         }
 
         final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement : LEVELPLAY_INTERSTITIAL_ID;
-        AdAnalyticsTracker.trackEvent(activity, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "");
 
         // TIER 1: LevelPlay Interstitial (Header Bidding Auction Winner)
         if (IronSource.isInterstitialReady()) {
@@ -656,7 +670,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "", finalPlacement);
             showLevelPlayInterstitial(finalPlacement);
             return;
         }
@@ -670,7 +684,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "", finalPlacement);
             showLevelPlayRewardedVideo(finalPlacement);
             return;
         }
@@ -684,7 +698,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "", finalPlacement);
             metaFallbackAd.show();
             return;
         }
@@ -698,121 +712,18 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "", finalPlacement);
             showAdMobFallbackInterstitial(activity);
             return;
         }
 
-        // TIER 5: Buffer for up to 3.5 seconds with ProgressDialog to allow in-flight auction/load to finalize
-        Log.d(TAG, "Ads not cached yet. Starting 3.5s buffering for: " + finalPlacement);
+        // No ad cached right now: do NOT freeze or block user with a 3.5s ProgressDialog spinner!
+        // Proceed immediately and trigger preload for next time.
+        Log.d(TAG, "No interstitial ad ready at exit for " + finalPlacement + ". Proceeding immediately without blocking.");
         preloadInterstitial(activity);
-        preloadRewardedVideo();
-        preloadFallbackAds(activity);
-        BaseActivity.isAdShowing = true;
-        WindowBackBlocker.blockBack(activity);
-
-        ProgressDialog progressDialog = null;
-        try {
-            progressDialog = new ProgressDialog(activity);
-            progressDialog.setMessage("Loading ad...");
-            progressDialog.setCancelable(false);
-            if (progressDialog.getWindow() != null) {
-                WindowBackBlocker.blockBack(progressDialog.getWindow());
-            }
-            progressDialog.show();
-        } catch (Exception ignored) {}
-
-        final ProgressDialog finalDialog = progressDialog;
-        final long startTime = System.currentTimeMillis();
-        final Runnable[] bufferRunnable = new Runnable[1];
-
-        bufferRunnable[0] = new Runnable() {
-            @Override
-            public void run() {
-                if (activity.isFinishing() || activity.isDestroyed()) {
-                    safeDismiss(finalDialog);
-                    BaseActivity.isAdShowing = false;
-                    if (callback != null) callback.onAdDismissed(false);
-                    return;
-                }
-
-                // Check Tier 1
-                if (IronSource.isInterstitialReady()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🏆 Tier 1 loaded during buffer! Showing LevelPlay Interstitial.");
-                    currentInterstitialCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
-                    showLevelPlayInterstitial(finalPlacement);
-                    return;
-                }
-
-                // Check Tier 2
-                if (IronSource.isRewardedVideoAvailable()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🥈 Tier 2 loaded during buffer! Showing LevelPlay Rewarded Video.");
-                    currentInterstitialCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
-                    showLevelPlayRewardedVideo(finalPlacement);
-                    return;
-                }
-
-                // Check Tier 3
-                if (metaFallbackAd != null && metaFallbackAd.isAdLoaded()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🥉 Tier 3 loaded during buffer! Showing Meta Fallback Interstitial.");
-                    currentInterstitialCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "");
-                    metaFallbackAd.show();
-                    return;
-                }
-
-                // Check Tier 4
-                if (admobFallbackAd != null) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🏅 Tier 4 loaded during buffer! Showing AdMob Fallback Interstitial.");
-                    currentInterstitialCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "");
-                    showAdMobFallbackInterstitial(activity);
-                    return;
-                }
-
-                if (System.currentTimeMillis() - startTime < 3500) {
-                    mainHandler.postDelayed(bufferRunnable[0], 250);
-                } else {
-                    safeDismiss(finalDialog);
-                    BaseActivity.isAdShowing = false;
-                    Log.w(TAG, "Ad buffer timeout reached for: " + finalPlacement + " (Proceeding without ad)");
-                    setAdWatchPending(false);
-                    AdAnalyticsTracker.trackEvent(activity, "FAILED", "interstitial", "ironsource", "FAILED", "NO_FILL", "Ad unavailable after 3.5s buffer");
-                    if (callback != null) callback.onAdDismissed(false);
-                    preloadInterstitial(activity);
-                    preloadRewardedVideo();
-                    preloadFallbackAds(activity);
-                }
-            }
-        };
-
-        mainHandler.postDelayed(bufferRunnable[0], 250);
+        if (callback != null) {
+            callback.onAdDismissed(false);
+        }
     }
 
     private void showAdMobFallbackInterstitial(Activity activity) {
@@ -828,7 +739,7 @@ public class AdManager {
                 isAdMobFallbackLoading = false;
                 Log.d(TAG, "⏹️ AdMob Fallback Interstitial dismissed");
                 if (appContext != null) {
-                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "admob", "DELIVERED", "", "");
+                    AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "admob", "DELIVERED", "", "", currentPlacement);
                 }
                 if (isRewardedFromInterstitial) {
                     RewardedAdCallback rCb = currentRewardedCallback;
@@ -898,7 +809,7 @@ public class AdManager {
         }
 
         final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement : LEVELPLAY_REWARDED_ID;
-        AdAnalyticsTracker.trackEvent(activity, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "");
+        AdAnalyticsTracker.trackEvent(activity, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "", finalPlacement);
 
         // TIER 1: LevelPlay Rewarded Video (Header Bidding Auction Winner)
         if (IronSource.isRewardedVideoAvailable()) {
@@ -910,7 +821,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "", finalPlacement);
             showLevelPlayRewardedVideo(finalPlacement);
             return;
         }
@@ -925,7 +836,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "admob", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "admob", "DELIVERED", "", "", finalPlacement);
             showAdMobFallbackRewarded(activity);
             return;
         }
@@ -940,7 +851,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "", finalPlacement);
             metaFallbackRewardedAd.show();
             return;
         }
@@ -955,7 +866,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "", finalPlacement);
             showLevelPlayInterstitial(finalPlacement);
             return;
         }
@@ -970,7 +881,7 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "", finalPlacement);
             showAdMobFallbackInterstitial(activity);
             return;
         }
@@ -985,157 +896,17 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             WindowBackBlocker.blockBack(activity);
             setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "");
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "", finalPlacement);
             metaFallbackAd.show();
             return;
         }
 
-        // TIER 7: Buffer for up to 3.5 seconds with ProgressDialog while in-flight bidding auction clears
-        Log.d(TAG, "Ads not cached yet for rewarded action. Starting 3.5s buffering for: " + finalPlacement);
-        preloadInterstitial(activity);
+        // Rewarded ad not ready right now: do not freeze or block user with a 3.5s ProgressDialog spinner!
+        Log.w(TAG, "Rewarded ad not cached right now for: " + finalPlacement);
         preloadRewardedVideo();
-        preloadFallbackAds(activity);
-        BaseActivity.isAdShowing = true;
-        WindowBackBlocker.blockBack(activity);
-
-        ProgressDialog progressDialog = null;
-        try {
-            progressDialog = new ProgressDialog(activity);
-            progressDialog.setMessage("Loading reward...");
-            progressDialog.setCancelable(false);
-            if (progressDialog.getWindow() != null) {
-                WindowBackBlocker.blockBack(progressDialog.getWindow());
-            }
-            progressDialog.show();
-        } catch (Exception ignored) {}
-
-        final ProgressDialog finalDialog = progressDialog;
-        final long startTime = System.currentTimeMillis();
-        final Runnable[] bufferRunnable = new Runnable[1];
-
-        bufferRunnable[0] = new Runnable() {
-            @Override
-            public void run() {
-                if (activity.isFinishing() || activity.isDestroyed()) {
-                    safeDismiss(finalDialog);
-                    BaseActivity.isAdShowing = false;
-                    if (callback != null) callback.onAdFailed("ACTIVITY_DESTROYED");
-                    return;
-                }
-
-                // Check Tier 1
-                if (IronSource.isRewardedVideoAvailable()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🏆 Tier 1 loaded during buffer! Showing LevelPlay Rewarded Video.");
-                    currentRewardedCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    rewardGrantedInCurrentSession = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "");
-                    showLevelPlayRewardedVideo(finalPlacement);
-                    return;
-                }
-
-                // Check Tier 2
-                if (admobFallbackRewardedAd != null) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🥈 Tier 2 loaded during buffer! Showing AdMob Rewarded Video.");
-                    currentRewardedCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    rewardGrantedInCurrentSession = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "admob", "DELIVERED", "", "");
-                    showAdMobFallbackRewarded(activity);
-                    return;
-                }
-
-                // Check Tier 3
-                if (metaFallbackRewardedAd != null && metaFallbackRewardedAd.isAdLoaded()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🥉 Tier 3 loaded during buffer! Showing Meta Rewarded Video.");
-                    currentRewardedCallback = callback;
-                    isRewardedFromInterstitial = false;
-                    rewardGrantedInCurrentSession = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "");
-                    metaFallbackRewardedAd.show();
-                    return;
-                }
-
-                // Check Tier 4
-                if (IronSource.isInterstitialReady()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🎖️ Tier 4 loaded during buffer! Showing LevelPlay Interstitial for reward.");
-                    currentRewardedCallback = callback;
-                    isRewardedFromInterstitial = true;
-                    rewardGrantedInCurrentSession = false;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "");
-                    showLevelPlayInterstitial(finalPlacement);
-                    return;
-                }
-
-                // Check Tier 5
-                if (admobFallbackAd != null) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🏅 Tier 5 loaded during buffer! Showing AdMob Interstitial for reward.");
-                    currentRewardedCallback = callback;
-                    isRewardedFromInterstitial = true;
-                    rewardGrantedInCurrentSession = true;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "");
-                    showAdMobFallbackInterstitial(activity);
-                    return;
-                }
-
-                // Check Tier 6
-                if (metaFallbackAd != null && metaFallbackAd.isAdLoaded()) {
-                    safeDismiss(finalDialog);
-                    Log.d(TAG, "🎗️ Tier 6 loaded during buffer! Showing Meta Interstitial for reward.");
-                    currentRewardedCallback = callback;
-                    isRewardedFromInterstitial = true;
-                    rewardGrantedInCurrentSession = true;
-                    currentPlacement = finalPlacement;
-                    BaseActivity.isAdShowing = true;
-                    WindowBackBlocker.blockBack(activity);
-                    setAdWatchPending(true);
-                    AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "");
-                    metaFallbackAd.show();
-                    return;
-                }
-
-                if (System.currentTimeMillis() - startTime < 3500) {
-                    mainHandler.postDelayed(bufferRunnable[0], 250);
-                } else {
-                    safeDismiss(finalDialog);
-                    BaseActivity.isAdShowing = false;
-                    setAdWatchPending(false);
-                    Log.w(TAG, "Rewarded ad buffer timeout reached for: " + finalPlacement + " (Allowing fallback action)");
-                    AdAnalyticsTracker.trackEvent(activity, "FAILED", "rewarded", "ironsource", "FAILED", "NO_FILL", "Ad unavailable after 3.5s buffering timeout");
-                    if (callback != null) callback.onAdFailed("NO_FILL");
-                    preloadInterstitial(activity);
-                    preloadRewardedVideo();
-                    preloadFallbackAds(activity);
-                }
-            }
-        };
-
-        mainHandler.postDelayed(bufferRunnable[0], 250);
+        if (callback != null) {
+            callback.onAdFailed("NO_FILL");
+        }
     }
 
     private void showLevelPlayInterstitial(String placement) {
@@ -1212,14 +983,6 @@ public class AdManager {
         }
     }
 
-    private void safeDismiss(ProgressDialog dialog) {
-        if (dialog != null && dialog.isShowing()) {
-            try {
-                dialog.dismiss();
-            } catch (Exception ignored) {}
-        }
-    }
-
     // ==========================================
     // PERMANENT LEVELPLAY LISTENERS
     // ==========================================
@@ -1239,7 +1002,7 @@ public class AdManager {
             int errCode = error != null ? error.getErrorCode() : -1;
             Log.w(TAG, "❌ LevelPlay Interstitial load failed (" + errCode + "): " + errMsg);
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "FAILED", "interstitial", "ironsource", "FAILED", String.valueOf(errCode), errMsg);
+                AdAnalyticsTracker.trackEvent(appContext, "FAILED", "interstitial", "ironsource", "FAILED", String.valueOf(errCode), errMsg, currentPlacement);
             }
         }
 
@@ -1264,7 +1027,7 @@ public class AdManager {
             Log.e(TAG, "❌ LevelPlay Interstitial show failed (" + errCode + "): " + errMsg);
 
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "FAILED", "interstitial", "ironsource", "FAILED", String.valueOf(errCode), errMsg);
+                AdAnalyticsTracker.trackEvent(appContext, "FAILED", "interstitial", "ironsource", "FAILED", String.valueOf(errCode), errMsg, currentPlacement);
             }
 
             if (isRewardedFromInterstitial) {
@@ -1287,7 +1050,7 @@ public class AdManager {
         public void onAdClicked(AdInfo adInfo) {
             Log.d(TAG, "LevelPlay Interstitial clicked");
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "interstitial", "ironsource", "DELIVERED", "", "");
+                AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "interstitial", "ironsource", "DELIVERED", "", "", currentPlacement);
             }
         }
 
@@ -1299,7 +1062,7 @@ public class AdManager {
             Log.d(TAG, "⏹️ LevelPlay Interstitial closed");
 
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "ironsource", "DELIVERED", "", "");
+                AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "ironsource", "DELIVERED", "", "", currentPlacement);
             }
 
             if (isRewardedFromInterstitial) {
@@ -1353,7 +1116,7 @@ public class AdManager {
             Log.e(TAG, "❌ LevelPlay Rewarded Video show failed (" + errCode + "): " + errMsg);
 
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "FAILED", "rewarded", "ironsource", "FAILED", String.valueOf(errCode), errMsg);
+                AdAnalyticsTracker.trackEvent(appContext, "FAILED", "rewarded", "ironsource", "FAILED", String.valueOf(errCode), errMsg, currentPlacement);
             }
 
             if (currentInterstitialCallback != null) {
@@ -1377,7 +1140,7 @@ public class AdManager {
         public void onAdClicked(Placement placement, AdInfo adInfo) {
             Log.d(TAG, "LevelPlay Rewarded Video clicked");
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "rewarded", "ironsource", "DELIVERED", "", "");
+                AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "rewarded", "ironsource", "DELIVERED", "", "", currentPlacement);
             }
         }
 
@@ -1386,7 +1149,7 @@ public class AdManager {
             rewardGrantedInCurrentSession = true;
             Log.d(TAG, "🎁 LevelPlay Rewarded Video completed (reward granted)");
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "COMPLETED", "rewarded", "ironsource", "DELIVERED", "", "");
+                AdAnalyticsTracker.trackEvent(appContext, "COMPLETED", "rewarded", "ironsource", "DELIVERED", "", "", currentPlacement);
             }
             if (currentRewardedCallback != null) {
                 currentRewardedCallback.onRewardEarned();
@@ -1401,7 +1164,7 @@ public class AdManager {
             Log.d(TAG, "⏹️ LevelPlay Rewarded Video closed");
 
             if (appContext != null) {
-                AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "ironsource", "DELIVERED", "", "");
+                AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "ironsource", "DELIVERED", "", "", currentPlacement);
             }
 
             if (currentInterstitialCallback != null) {
@@ -1421,6 +1184,55 @@ public class AdManager {
             }, 3000);
         }
     };
+
+    public boolean isMetaFallbackRewardedLoaded() {
+        return metaFallbackRewardedAd != null && metaFallbackRewardedAd.isAdLoaded();
+    }
+
+    public boolean isMetaFallbackRewardedLoading() {
+        return isMetaFallbackRewardedLoading;
+    }
+
+    public boolean isMetaFallbackInterstitialLoaded() {
+        return metaFallbackAd != null && metaFallbackAd.isAdLoaded();
+    }
+
+    public boolean isMetaFallbackInterstitialLoading() {
+        return isMetaFallbackLoading;
+    }
+
+    public void showFallbackMetaRewardedAd(Activity activity, RewardedAdCallback callback) {
+        if (metaFallbackRewardedAd != null && metaFallbackRewardedAd.isAdLoaded()) {
+            this.currentRewardedCallback = callback;
+            this.isRewardedFromInterstitial = false;
+            this.rewardGrantedInCurrentSession = false;
+            BaseActivity.isAdShowing = true;
+            WindowBackBlocker.blockBack(activity);
+            setAdWatchPending(true);
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "", currentPlacement);
+            metaFallbackRewardedAd.show();
+        } else if (callback != null) {
+            callback.onAdFailed("Meta Fallback Rewarded Video not loaded");
+        }
+    }
+
+    public void showFallbackMetaInterstitialAd(Activity activity, AdCallback callback) {
+        if (metaFallbackAd != null && metaFallbackAd.isAdLoaded()) {
+            this.currentInterstitialCallback = callback;
+            this.isRewardedFromInterstitial = false;
+            BaseActivity.isAdShowing = true;
+            WindowBackBlocker.blockBack(activity);
+            setAdWatchPending(true);
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "", currentPlacement);
+            metaFallbackAd.show();
+        } else if (callback != null) {
+            callback.onAdDismissed(false);
+        }
+    }
+
+    public boolean isLevelPlayReady() {
+        return isLevelPlayReady;
+    }
 
     public boolean isAdShowing() {
         return BaseActivity.isAdShowing;

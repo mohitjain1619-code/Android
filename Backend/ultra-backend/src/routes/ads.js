@@ -111,8 +111,8 @@ router.get("/verify-reward", async (req, res) => {
 
     // Also record in ad_analytics_logs
     await query(
-      `INSERT INTO ad_analytics_logs (user_id, event_type, ad_type, ad_network, status, platform)
-       VALUES ($1, 'COMPLETED', 'rewarded', 'admob', 'DELIVERED', 'android')`,
+      `INSERT INTO ad_analytics_logs (user_id, event_type, ad_type, ad_network, status, platform, placement)
+       VALUES ($1, 'COMPLETED', 'rewarded', 'admob', 'DELIVERED', 'android', 'rewarded_ssv')`,
       [userId]
     ).catch(e => console.error("Error logging rewarded completion to ad_analytics_logs:", e));
 
@@ -128,7 +128,7 @@ router.get("/verify-reward", async (req, res) => {
 // Track Ad Lifecycle Event (REQUEST, IMPRESSION, COMPLETED, FAILED)
 router.post("/track", async (req, res) => {
   try {
-    const { userId, user_id, eventType, adType, adNetwork, status, errorCode, errorMessage, platform } = req.body;
+    const { userId, user_id, eventType, adType, adNetwork, status, errorCode, errorMessage, platform, placement } = req.body;
     
     if (!eventType) {
       return res.status(400).json({ error: "eventType is required" });
@@ -143,11 +143,12 @@ router.post("/track", async (req, res) => {
     const finalAdType = adType || 'rewarded';
     const finalNetwork = adNetwork || 'admob';
     const finalPlatform = platform || 'android';
+    const finalPlacement = placement ? String(placement).trim() : 'general';
 
     await query(
       `INSERT INTO ad_analytics_logs 
-       (user_id, event_type, ad_type, ad_network, status, error_code, error_message, platform)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       (user_id, event_type, ad_type, ad_network, status, error_code, error_message, platform, placement)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         userUUID || null,
         String(eventType).toUpperCase(),
@@ -156,7 +157,8 @@ router.post("/track", async (req, res) => {
         String(finalStatus).toUpperCase(),
         errorCode ? String(errorCode) : '',
         errorMessage ? String(errorMessage) : '',
-        String(finalPlatform).toLowerCase()
+        String(finalPlatform).toLowerCase(),
+        finalPlacement
       ]
     );
 

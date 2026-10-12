@@ -144,10 +144,13 @@ async function runMigrations() {
         error_code TEXT DEFAULT '',
         error_message TEXT DEFAULT '',
         platform TEXT DEFAULT 'android',
+        placement TEXT DEFAULT 'general',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      ALTER TABLE ad_analytics_logs ADD COLUMN IF NOT EXISTS placement TEXT DEFAULT 'general';
       CREATE INDEX IF NOT EXISTS idx_ad_analytics_user_id ON ad_analytics_logs(user_id);
       CREATE INDEX IF NOT EXISTS idx_ad_analytics_created_at ON ad_analytics_logs(created_at);
+      CREATE INDEX IF NOT EXISTS idx_ad_analytics_placement ON ad_analytics_logs(placement);
     `);
 
     // 7. Add subscription fields to users

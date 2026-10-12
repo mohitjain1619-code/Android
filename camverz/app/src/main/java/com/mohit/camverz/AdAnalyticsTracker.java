@@ -17,7 +17,7 @@ import retrofit2.Response;
 public class AdAnalyticsTracker {
     private static final String TAG = "AdAnalyticsTracker";
 
-    public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage) {
+    public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage, String placement) {
         if (context == null) return;
         try {
             String userId = TokenManager.getInstance(context).getUserId();
@@ -30,12 +30,13 @@ public class AdAnalyticsTracker {
             body.put("errorCode", errorCode != null ? errorCode : "");
             body.put("errorMessage", errorMessage != null ? errorMessage : "");
             body.put("platform", "android");
+            body.put("placement", placement != null ? placement : "general");
 
             ApiClient.getInstance(context).getApi().trackAdEvent(body).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     if (response.isSuccessful()) {
-                        Log.d(TAG, "Ad event tracked: " + eventType + " (" + status + ")");
+                        Log.d(TAG, "Ad event tracked: " + eventType + " (" + status + ") placement: " + placement);
                     } else {
                         Log.w(TAG, "Failed to track ad event: HTTP " + response.code());
                     }
@@ -49,5 +50,9 @@ public class AdAnalyticsTracker {
         } catch (Exception e) {
             Log.e(TAG, "Exception in trackEvent", e);
         }
+    }
+
+    public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage) {
+        trackEvent(context, eventType, adType, adNetwork, status, errorCode, errorMessage, "general");
     }
 }

@@ -18,7 +18,7 @@ import androidx.annotation.NonNull;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
 import com.facebook.ads.AdOptionsView;
-import com.facebook.ads.AdSettings;
+
 import com.facebook.ads.InterstitialAd;
 import com.facebook.ads.InterstitialAdListener;
 import com.facebook.ads.MediaView;
@@ -89,22 +89,7 @@ public class AdTestingActivity extends BaseActivity {
         // Ensure LevelPlay and mediation adapters are initialized
         BaseActivity.initializeIronSource(this);
 
-        // Ensure AdMob test device configuration is active so direct testing works without HTTP 403
-        try {
-            com.google.android.gms.ads.RequestConfiguration config = new com.google.android.gms.ads.RequestConfiguration.Builder()
-                    .setTestDeviceIds(java.util.Arrays.asList(AdManager.TEST_DEVICE_ID, com.google.android.gms.ads.AdRequest.DEVICE_ID_EMULATOR))
-                    .build();
-            com.google.android.gms.ads.MobileAds.setRequestConfiguration(config);
-        } catch (Exception e) {
-            Log.e(TAG, "Error configuring MobileAds test devices", e);
-        }
 
-        // Ensure Meta client test mode is disabled for real ad verification
-        try {
-            AdSettings.setTestMode(false);
-        } catch (Exception e) {
-            Log.e(TAG, "Error setting AdSettings", e);
-        }
 
         if (BuildConfig.DEBUG) {
             com.ironsource.mediationsdk.integration.IntegrationHelper.validateIntegration(this);
@@ -132,10 +117,44 @@ public class AdTestingActivity extends BaseActivity {
         findViewById(R.id.btn_meta_native).setOnClickListener(v -> testMetaNative());
     }
 
+    // State flags for anti-flood protection
+    private long lastMetaRewardedRequestTime = 0;
+    private long lastMetaInterstitialRequestTime = 0;
+    private boolean isMetaRewardedLoading = false;
+    private boolean isMetaInterstitialLoading = false;
+
     private void testMetaInterstitial() {
+        if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
+            showToast("Meta Interstitial already loaded! Showing now...");
+            metaInterstitialAd.show();
+            return;
+        }
+
+        if (AdManager.getInstance().isMetaFallbackInterstitialLoaded()) {
+            showToast("Showing cached Meta Interstitial from AdManager...");
+            AdManager.getInstance().showFallbackMetaInterstitialAd(this, success -> {
+                showToast("Meta Interstitial Dismissed (success=" + success + ")");
+            });
+            return;
+        }
+
+        if (isMetaInterstitialLoading || AdManager.getInstance().isMetaFallbackInterstitialLoading()) {
+            showToast("Meta Interstitial is already loading in background. Please wait...");
+            return;
+        }
+
+        long timeSinceLast = System.currentTimeMillis() - lastMetaInterstitialRequestTime;
+        if (timeSinceLast < 30000 && lastMetaInterstitialRequestTime > 0) {
+            long remaining = (30000 - timeSinceLast) / 1000;
+            showToast("Meta SDK requires 30s cooldown. Please wait " + remaining + "s (Prevents Error 1002)");
+            return;
+        }
+        lastMetaInterstitialRequestTime = System.currentTimeMillis();
+        isMetaInterstitialLoading = true;
+
         showToast("Loading Meta Interstitial (Direct)...");
         if (metaInterstitialAd != null) {
-            metaInterstitialAd.destroy();
+            try { metaInterstitialAd.destroy(); } catch (Exception ignored) {}
         }
         metaInterstitialAd = new InterstitialAd(this, META_INTERSTITIAL_PLACEMENT);
         metaInterstitialAd.loadAd(metaInterstitialAd.buildLoadAdConfig().withAdListener(new InterstitialAdListener() {
@@ -147,15 +166,19 @@ public class AdTestingActivity extends BaseActivity {
             @Override
             public void onInterstitialDismissed(Ad ad) {
                 showToast("Meta Interstitial Dismissed");
+                isMetaInterstitialLoading = false;
+                metaInterstitialAd = null;
             }
 
             @Override
             public void onError(Ad ad, AdError adError) {
+                isMetaInterstitialLoading = false;
                 showToast("Meta Interstitial Error (" + adError.getErrorCode() + "): " + adError.getErrorMessage());
             }
 
             @Override
             public void onAdLoaded(Ad ad) {
+                isMetaInterstitialLoading = false;
                 showToast("Meta Interstitial Loaded! Showing...");
                 if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
                     metaInterstitialAd.show();
@@ -175,9 +198,39 @@ public class AdTestingActivity extends BaseActivity {
     }
 
     private void testMetaRewarded() {
+        if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
+            showToast("Meta Rewarded Video already loaded! Showing now...");
+            metaRewardedVideoAd.show();
+            return;
+        }
+
+        if (AdManager.getInstance().isMetaFallbackRewardedLoaded()) {
+            showToast("Showing cached Meta Rewarded Video from AdManager...");
+            AdManager.getInstance().showFallbackMetaRewardedAd(this, new AdManager.RewardedAdCallback() {
+                @Override public void onRewardEarned() { showToast("Meta Reward Earned!"); }
+                @Override public void onAdDismissed(boolean rewarded) { showToast("Meta Rewarded Dismissed (rewarded=" + rewarded + ")"); }
+                @Override public void onAdFailed(String error) { showToast("Meta Show Failed: " + error); }
+            });
+            return;
+        }
+
+        if (isMetaRewardedLoading || AdManager.getInstance().isMetaFallbackRewardedLoading()) {
+            showToast("Meta Rewarded Video is already loading in background. Please wait...");
+            return;
+        }
+
+        long timeSinceLast = System.currentTimeMillis() - lastMetaRewardedRequestTime;
+        if (timeSinceLast < 30000 && lastMetaRewardedRequestTime > 0) {
+            long remaining = (30000 - timeSinceLast) / 1000;
+            showToast("Meta SDK requires 30s cooldown. Please wait " + remaining + "s (Prevents Error 1002)");
+            return;
+        }
+        lastMetaRewardedRequestTime = System.currentTimeMillis();
+        isMetaRewardedLoading = true;
+
         showToast("Loading Meta Rewarded Video (Direct)...");
         if (metaRewardedVideoAd != null) {
-            metaRewardedVideoAd.destroy();
+            try { metaRewardedVideoAd.destroy(); } catch (Exception ignored) {}
         }
         metaRewardedVideoAd = new RewardedVideoAd(this, META_REWARDED_PLACEMENT);
         metaRewardedVideoAd.loadAd(metaRewardedVideoAd.buildLoadAdConfig().withAdListener(new RewardedVideoAdListener() {
@@ -194,10 +247,13 @@ public class AdTestingActivity extends BaseActivity {
             @Override
             public void onRewardedVideoClosed() {
                 showToast("Meta Rewarded Video Closed");
+                isMetaRewardedLoading = false;
+                metaRewardedVideoAd = null;
             }
 
             @Override
             public void onError(Ad ad, AdError adError) {
+                isMetaRewardedLoading = false;
                 String errMsg = adError.getErrorMessage();
                 int errCode = adError.getErrorCode();
                 Log.e(TAG, "Meta Rewarded Video Error (" + errCode + "): " + errMsg);
@@ -213,6 +269,7 @@ public class AdTestingActivity extends BaseActivity {
 
             @Override
             public void onAdLoaded(Ad ad) {
+                isMetaRewardedLoading = false;
                 showToast("Meta Rewarded Video Loaded! Showing...");
                 if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
                     metaRewardedVideoAd.show();

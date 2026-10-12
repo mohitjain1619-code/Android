@@ -46,9 +46,8 @@ public class ConnectingActivity extends BaseActivity {
     private Handler countdownHandler;
     private Runnable countdownRunnable;
 
-    // ironSource LevelPlay Native Ad & Direct Fallback
+    // ironSource LevelPlay Native Ad
     private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
-    private com.google.android.gms.ads.nativead.NativeAd admobNativeAd;
     private TextView waitingText;
 
     private long searchStartTime = 0;
@@ -301,39 +300,48 @@ public class ConnectingActivity extends BaseActivity {
     // --- ironSource LevelPlay Native Ad Integration ---
 
     private void loadLevelPlayNativeAd() {
-        if (isFinishing() || isDestroyed()) return;
+        if (isFinishing() || isDestroyed() || matchAccepted) return;
 
-        // Ensure LevelPlay is initialized as a fallback
+        // Ensure LevelPlay is initialized
         BaseActivity.initializeIronSource(this);
-        AdAnalyticsTracker.trackEvent(this, "REQUEST", "native", "ironsource", "REQUESTED", "", "");
 
-        levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
-                .withPlacementName("6bpplx6inl1ahz01")
-                .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
-                    @Override
-                    public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                        Log.d(TAG, "LevelPlay Native Ad loaded");
-                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "");
-                        runOnUiThread(() -> inflateLevelPlayNativeAd(ad));
-                    }
+        if (!AdManager.getInstance().isLevelPlayReady()) {
+            Log.d(TAG, "LevelPlay not initialized yet. Skipping native ad.");
+            return;
+        }
 
-                    @Override
-                    public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
-                        Log.w(TAG, "LevelPlay Native Ad load failed: " + error.getErrorMessage());
-                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "FAILED", "native", "ironsource", "FAILED", error != null ? String.valueOf(error.getErrorCode()) : "NO_FILL", error != null ? error.getErrorMessage() : "Native ad load failed");
-                        runOnUiThread(ConnectingActivity.this::loadAdMobFallbackNativeAd);
-                    }
+        try {
+            AdAnalyticsTracker.trackEvent(this, "REQUEST", "native", "ironsource", "REQUESTED", "", "", "connecting_native");
 
-                    @Override
-                    public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+            levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
+                    .withPlacementName(AdManager.LEVELPLAY_NATIVE_ID)
+                    .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
+                        @Override
+                        public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                            Log.d(TAG, "LevelPlay Native Ad loaded successfully");
+                            AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "", "connecting_native");
+                            runOnUiThread(() -> inflateLevelPlayNativeAd(ad));
+                        }
 
-                    @Override
-                    public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "");
-                    }
-                })
-                .build();
-        levelPlayNativeAd.loadAd();
+                        @Override
+                        public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
+                            Log.w(TAG, "LevelPlay Native Ad load failed: " + (error != null ? error.getErrorMessage() : "unknown"));
+                            // Native ad load nahi hua to koi baat nahi (no delay, no fallback, continue matchmaking)
+                        }
+
+                        @Override
+                        public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
+
+                        @Override
+                        public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                            AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "", "connecting_native");
+                        }
+                    })
+                    .build();
+            levelPlayNativeAd.loadAd();
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading LevelPlay native ad: " + e.getMessage());
+        }
     }
 
     private void inflateLevelPlayNativeAd(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad) {
@@ -376,89 +384,6 @@ public class ConnectingActivity extends BaseActivity {
         nativeAdLayout.registerNativeAdViews(ad);
 
         adContainer.addView(nativeAdLayout);
-    }
-
-    private void loadAdMobFallbackNativeAd() {
-        if (isFinishing() || isDestroyed() || matchAccepted) return;
-        try {
-            com.google.android.gms.ads.AdLoader adLoader = new com.google.android.gms.ads.AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
-                    .forNativeAd(ad -> {
-                        if (isFinishing() || isDestroyed() || matchAccepted) {
-                            ad.destroy();
-                            return;
-                        }
-                        AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "admob", "DELIVERED", "", "");
-                        admobNativeAd = ad;
-                        inflateAdMobNativeAd(ad);
-                    })
-                    .withAdListener(new com.google.android.gms.ads.AdListener() {
-                        @Override
-                        public void onAdFailedToLoad(@NonNull com.google.android.gms.ads.LoadAdError adError) {
-                            Log.w(TAG, "AdMob Native fallback failed: " + adError.getMessage());
-                        }
-                    })
-                    .build();
-            adLoader.loadAd(new com.google.android.gms.ads.AdRequest.Builder().build());
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading AdMob fallback native ad", e);
-        }
-    }
-
-    private void inflateAdMobNativeAd(com.google.android.gms.ads.nativead.NativeAd ad) {
-        FrameLayout adContainer = findViewById(R.id.nativeAdContainer);
-        if (adContainer == null || ad == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(View.VISIBLE);
-
-        com.google.android.gms.ads.nativead.NativeAdView adView = new com.google.android.gms.ads.nativead.NativeAdView(this);
-        adView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
-
-        LinearLayout inner = new LinearLayout(this);
-        inner.setOrientation(LinearLayout.VERTICAL);
-        inner.setBackgroundResource(R.drawable.bg_luxury_card);
-        int p = (int) (12 * getResources().getDisplayMetrics().density);
-        inner.setPadding(p, p, p, p);
-
-        TextView headline = new TextView(this);
-        headline.setText(ad.getHeadline());
-        headline.setTextColor(Color.WHITE);
-        headline.setTextSize(15);
-        headline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        inner.addView(headline);
-        adView.setHeadlineView(headline);
-
-        com.google.android.gms.ads.nativead.MediaView mediaView = new com.google.android.gms.ads.nativead.MediaView(this);
-        LinearLayout.LayoutParams mParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, (int) (140 * getResources().getDisplayMetrics().density));
-        mParams.setMargins(0, (int) (6 * getResources().getDisplayMetrics().density), 0, (int) (6 * getResources().getDisplayMetrics().density));
-        mediaView.setLayoutParams(mParams);
-        inner.addView(mediaView);
-        adView.setMediaView(mediaView);
-
-        if (ad.getBody() != null) {
-            TextView body = new TextView(this);
-            body.setText(ad.getBody());
-            body.setTextColor(Color.parseColor("#8E8E93"));
-            body.setTextSize(12);
-            inner.addView(body);
-            adView.setBodyView(body);
-        }
-
-        if (ad.getCallToAction() != null) {
-            Button cta = new Button(this);
-            cta.setText(ad.getCallToAction());
-            cta.setBackgroundResource(R.drawable.bg_luxury_chip);
-            cta.setTextColor(Color.WHITE);
-            LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (int) (40 * getResources().getDisplayMetrics().density));
-            ctaParams.topMargin = (int) (6 * getResources().getDisplayMetrics().density);
-            cta.setLayoutParams(ctaParams);
-            inner.addView(cta);
-            adView.setCallToActionView(cta);
-        }
-
-        adView.addView(inner);
-        adView.setNativeAd(ad);
-        adContainer.addView(adView);
     }
 
     private int dpToPx(int dp) {
@@ -519,13 +444,12 @@ public class ConnectingActivity extends BaseActivity {
         }
         removeSocketListeners();
 
-        // Clean up ironSource & AdMob native ad objects
+        // Clean up ironSource native ad object
         if (levelPlayNativeAd != null) {
-            levelPlayNativeAd.destroyAd();
-        }
-        if (admobNativeAd != null) {
-            admobNativeAd.destroy();
-            admobNativeAd = null;
+            try {
+                levelPlayNativeAd.destroyAd();
+            } catch (Exception ignored) {}
+            levelPlayNativeAd = null;
         }
     }
 

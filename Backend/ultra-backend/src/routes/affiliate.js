@@ -1052,7 +1052,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
     );
 
     // 2. Safe stats aggregation (decoupled to prevent 500 error if subquery tables are missing)
-    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {}, platformMap = {}, adStatsMap = {};
+    let clicksMap = {}, signupsMap = {}, salesMap = {}, paidMap = {}, platformMap = {}, adStatsMap = {}, dailyAdStatsMap = {};
     try {
       const adLogs = await queryMany(`
         SELECT user_id,
@@ -1073,6 +1073,28 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         }
       });
 
+      // Daily Breakdown Query (grouped by user_id and IST date)
+      const dailyLogs = await queryMany(`
+        SELECT user_id,
+               (created_at AT TIME ZONE 'Asia/Kolkata')::date::text as log_date,
+               COUNT(*) FILTER (WHERE event_type = 'REQUEST')::int as requests,
+               COUNT(*) FILTER (WHERE event_type IN ('IMPRESSION', 'COMPLETED') OR status = 'DELIVERED')::int as delivered,
+               COUNT(*) FILTER (WHERE event_type = 'FAILED' OR status = 'FAILED')::int as failed
+        FROM ad_analytics_logs
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id, (created_at AT TIME ZONE 'Asia/Kolkata')::date
+      `).catch(() => []);
+      dailyLogs.forEach(d => {
+        if (d.user_id && d.log_date) {
+          if (!dailyAdStatsMap[d.user_id]) dailyAdStatsMap[d.user_id] = {};
+          dailyAdStatsMap[d.user_id][d.log_date] = {
+            requests: d.requests || 0,
+            delivered: d.delivered || 0,
+            failed: d.failed || 0
+          };
+        }
+      });
+
       // Also merge historical completed ads from old rewarded_ad_logs table
       const oldLogs = await queryMany(`
         SELECT user_id, COUNT(*)::int as count
@@ -1088,6 +1110,27 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
             adStatsMap[old.user_id].delivered += old.count;
             if (adStatsMap[old.user_id].requests < adStatsMap[old.user_id].delivered) {
               adStatsMap[old.user_id].requests = adStatsMap[old.user_id].delivered;
+            }
+          }
+        }
+      });
+
+      // Old historical logs daily breakdown
+      const oldDaily = await queryMany(`
+        SELECT user_id, (created_at AT TIME ZONE 'Asia/Kolkata')::date::text as log_date, COUNT(*)::int as count
+        FROM rewarded_ad_logs
+        WHERE user_id IS NOT NULL
+        GROUP BY user_id, (created_at AT TIME ZONE 'Asia/Kolkata')::date
+      `).catch(() => []);
+      oldDaily.forEach(od => {
+        if (od.user_id && od.log_date) {
+          if (!dailyAdStatsMap[od.user_id]) dailyAdStatsMap[od.user_id] = {};
+          if (!dailyAdStatsMap[od.user_id][od.log_date]) {
+            dailyAdStatsMap[od.user_id][od.log_date] = { requests: od.count, delivered: od.count, failed: 0 };
+          } else {
+            dailyAdStatsMap[od.user_id][od.log_date].delivered += od.count;
+            if (dailyAdStatsMap[od.user_id][od.log_date].requests < dailyAdStatsMap[od.user_id][od.log_date].delivered) {
+              dailyAdStatsMap[od.user_id][od.log_date].requests = dailyAdStatsMap[od.user_id][od.log_date].delivered;
             }
           }
         }
@@ -1312,6 +1355,7 @@ router.get("/admin/list", requireAuth, requireAdmin, async (req, res) => {
         sexPreference: a.user_sex_pref || "Straight",
         platform: userPlatform,
         adStats: adStatsMap[a.user_id] || { requests: 0, delivered: 0, failed: 0 },
+        dailyAdStats: dailyAdStatsMap[a.user_id] || {},
         postStats: postStatsMap[a.user_id] || { total: 0, feedPosts: 0, realMeetPosts: 0, partyPosts: 0, fantasyPosts: 0, videoCalls: 0, stories: 0, hasPosted: false },
         last_active_at: formattedLastActive,
         last_active_date: rawLastActiveDate,
@@ -1552,7 +1596,11 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
         COUNT(*) FILTER (WHERE event_type = 'FAILED' OR status = 'FAILED')::int as total_failed,
         COUNT(*) FILTER (WHERE ad_type = 'rewarded')::int as rewarded_count,
         COUNT(*) FILTER (WHERE ad_type = 'interstitial')::int as interstitial_count,
-        COUNT(*) FILTER (WHERE ad_type = 'banner')::int as banner_count
+        COUNT(*) FILTER (WHERE ad_type = 'native')::int as native_count,
+        COUNT(*) FILTER (WHERE ad_type = 'banner')::int as banner_count,
+        COUNT(*) FILTER (WHERE placement ILIKE '%call%')::int as call_ads_count,
+        COUNT(*) FILTER (WHERE placement ILIKE '%resume%' OR placement ILIKE '%start%')::int as app_start_ads_count,
+        COUNT(*) FILTER (WHERE placement ILIKE '%connecting%')::int as connecting_ads_count
       FROM ad_analytics_logs
       ${summaryWhere}
     `;
@@ -1571,13 +1619,13 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
 
     // 2. Recent Ad Logs (combining new ad_analytics_logs with historical rewarded_ad_logs)
     let logsQuery = `
-      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, l.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'India') as user_country
+      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, COALESCE(NULLIF(l.placement, ''), 'general') as placement, l.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'India') as user_country
       FROM ad_analytics_logs l
       LEFT JOIN users u ON l.user_id = u.id
 
       UNION ALL
 
-      SELECT r.id, r.user_id, 'COMPLETED' as event_type, 'rewarded' as ad_type, 'admob' as ad_network, 'DELIVERED' as status, '' as error_code, '' as error_message, 'android' as platform, r.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'India') as user_country
+      SELECT r.id, r.user_id, 'COMPLETED' as event_type, 'rewarded' as ad_type, 'admob' as ad_network, 'DELIVERED' as status, '' as error_code, '' as error_message, 'android' as platform, 'legacy_rewarded' as placement, r.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'India') as user_country
       FROM rewarded_ad_logs r
       LEFT JOIN users u ON r.user_id = u.id
     `;
@@ -1634,6 +1682,7 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
         ad_type: log.ad_type,
         ad_network: log.ad_network,
         status: log.status,
+        placement: log.placement || "general",
         error_code: log.error_code || "",
         error_message: log.error_message || (log.status === 'FAILED' ? 'NO_FILL / Failed to render' : ''),
         platform: log.platform || 'android',
@@ -1649,7 +1698,11 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
         fill_rate_percent: fillRate,
         rewarded_count: overallRes?.rewarded_count || 0,
         interstitial_count: overallRes?.interstitial_count || 0,
-        banner_count: overallRes?.banner_count || 0
+        native_count: overallRes?.native_count || 0,
+        banner_count: overallRes?.banner_count || 0,
+        call_ads_count: overallRes?.call_ads_count || 0,
+        app_start_ads_count: overallRes?.app_start_ads_count || 0,
+        connecting_ads_count: overallRes?.connecting_ads_count || 0
       },
       logs: formattedLogs
     });

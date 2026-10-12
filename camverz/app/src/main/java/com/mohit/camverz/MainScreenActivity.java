@@ -375,7 +375,7 @@ public class MainScreenActivity extends BaseActivity {
         PopupMenu popup = new PopupMenu(wrapper, view);
         popup.getMenuInflater().inflate(R.menu.top_menu, popup.getMenu());
 
-        // Dynamic developer check to prevent normal users from seeing debugging options
+        // Allow Ad Testing Dashboard for all users in production
         String userEmail = tokenManager.getUserEmail();
         boolean isAdmin = "neerajjain0220@gmail.com".equalsIgnoreCase(userEmail) || 
                           (userEmail != null && userEmail.contains("admin")) ||
@@ -383,7 +383,6 @@ public class MainScreenActivity extends BaseActivity {
 
         if (!isAdmin) {
             popup.getMenu().removeItem(R.id.action_mediation_debugger);
-            popup.getMenu().removeItem(R.id.action_ad_testing);
         }
 
         popup.setOnMenuItemClickListener(item -> {
