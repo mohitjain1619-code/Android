@@ -151,6 +151,45 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_ad_analytics_user_id ON ad_analytics_logs(user_id);
       CREATE INDEX IF NOT EXISTS idx_ad_analytics_created_at ON ad_analytics_logs(created_at);
       CREATE INDEX IF NOT EXISTS idx_ad_analytics_placement ON ad_analytics_logs(placement);
+
+      -- Retroactive smart placement backfill for historical logs
+      UPDATE ad_analytics_logs
+      SET placement = 'connecting_native'
+      WHERE (placement = 'general' OR placement IS NULL OR placement = '')
+        AND ad_type = 'native';
+
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'call_logs') THEN
+          UPDATE ad_analytics_logs l
+          SET placement = 'call_duration_120s'
+          FROM call_logs cl
+          WHERE (l.placement = 'general' OR l.placement IS NULL OR l.placement = '')
+            AND l.ad_type = 'interstitial'
+            AND (l.user_id = cl.caller_id OR l.user_id = cl.receiver_id)
+            AND cl.duration_seconds >= 120
+            AND ABS(EXTRACT(EPOCH FROM (l.created_at - cl.created_at))) <= 180;
+
+          UPDATE ad_analytics_logs l
+          SET placement = 'call_count_threshold'
+          FROM call_logs cl
+          WHERE (l.placement = 'general' OR l.placement IS NULL OR l.placement = '')
+            AND l.ad_type = 'interstitial'
+            AND (l.user_id = cl.caller_id OR l.user_id = cl.receiver_id)
+            AND cl.duration_seconds < 120
+            AND ABS(EXTRACT(EPOCH FROM (l.created_at - cl.created_at))) <= 180;
+        END IF;
+      END $$;
+
+      UPDATE ad_analytics_logs
+      SET placement = 'call_exit'
+      WHERE (placement = 'general' OR placement IS NULL OR placement = '')
+        AND ad_type = 'interstitial';
+
+      UPDATE ad_analytics_logs
+      SET placement = 'main_screen_reward'
+      WHERE (placement = 'general' OR placement IS NULL OR placement = '')
+        AND ad_type = 'rewarded';
     `);
 
     // 7. Add subscription fields to users

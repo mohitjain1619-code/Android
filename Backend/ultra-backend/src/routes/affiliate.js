@@ -1598,9 +1598,9 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
         COUNT(*) FILTER (WHERE ad_type = 'interstitial')::int as interstitial_count,
         COUNT(*) FILTER (WHERE ad_type = 'native')::int as native_count,
         COUNT(*) FILTER (WHERE ad_type = 'banner')::int as banner_count,
-        COUNT(*) FILTER (WHERE placement ILIKE '%call%')::int as call_ads_count,
+        COUNT(*) FILTER (WHERE placement ILIKE '%call%' OR (COALESCE(placement, 'general') = 'general' AND ad_type = 'interstitial'))::int as call_ads_count,
         COUNT(*) FILTER (WHERE placement ILIKE '%resume%' OR placement ILIKE '%start%')::int as app_start_ads_count,
-        COUNT(*) FILTER (WHERE placement ILIKE '%connecting%')::int as connecting_ads_count
+        COUNT(*) FILTER (WHERE placement ILIKE '%connecting%' OR (COALESCE(placement, 'general') = 'general' AND ad_type = 'native'))::int as connecting_ads_count
       FROM ad_analytics_logs
       ${summaryWhere}
     `;
@@ -1619,7 +1619,17 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
 
     // 2. Recent Ad Logs (combining new ad_analytics_logs with historical rewarded_ad_logs)
     let logsQuery = `
-      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, COALESCE(NULLIF(l.placement, ''), 'general') as placement, l.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'India') as user_country
+      SELECT l.id, l.user_id, l.event_type, l.ad_type, l.ad_network, l.status, l.error_code, l.error_message, l.platform, 
+             COALESCE(
+               NULLIF(NULLIF(l.placement, ''), 'general'),
+               CASE 
+                 WHEN l.ad_type = 'native' THEN 'connecting_native'
+                 WHEN l.ad_type = 'interstitial' THEN 'call_exit'
+                 WHEN l.ad_type = 'rewarded' THEN 'main_screen_reward'
+                 ELSE 'general'
+               END
+             ) as placement, 
+             l.created_at, u.name as user_name, u.email as user_email, COALESCE(NULLIF(u.country, ''), 'India') as user_country
       FROM ad_analytics_logs l
       LEFT JOIN users u ON l.user_id = u.id
 
