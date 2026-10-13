@@ -164,7 +164,7 @@ async function runMigrations() {
           UPDATE ad_analytics_logs l
           SET placement = 'call_duration_120s'
           FROM call_logs cl
-          WHERE (l.placement = 'general' OR l.placement IS NULL OR l.placement = '')
+          WHERE (l.placement = 'general' OR l.placement IS NULL OR l.placement = '' OR l.placement = 'call_exit')
             AND l.ad_type = 'interstitial'
             AND (l.user_id = cl.caller_id OR l.user_id = cl.receiver_id)
             AND cl.duration_seconds >= 120
@@ -173,18 +173,29 @@ async function runMigrations() {
           UPDATE ad_analytics_logs l
           SET placement = 'call_count_threshold'
           FROM call_logs cl
-          WHERE (l.placement = 'general' OR l.placement IS NULL OR l.placement = '')
+          WHERE (l.placement = 'general' OR l.placement IS NULL OR l.placement = '' OR l.placement = 'call_exit')
             AND l.ad_type = 'interstitial'
             AND (l.user_id = cl.caller_id OR l.user_id = cl.receiver_id)
             AND cl.duration_seconds < 120
             AND ABS(EXTRACT(EPOCH FROM (l.created_at - cl.created_at))) <= 180;
+
+          -- Interstitials with NO call log were preloaded on app start, NOT after a call
+          UPDATE ad_analytics_logs l
+          SET placement = 'app_start_preload'
+          WHERE l.ad_type = 'interstitial'
+            AND (l.placement = 'call_exit' OR l.placement = 'general' OR l.placement IS NULL OR l.placement = '')
+            AND NOT EXISTS (
+              SELECT 1 FROM call_logs cl
+              WHERE (l.user_id = cl.caller_id OR l.user_id = cl.receiver_id)
+                AND ABS(EXTRACT(EPOCH FROM (l.created_at - cl.created_at))) <= 180
+            );
+        ELSE
+          UPDATE ad_analytics_logs
+          SET placement = 'app_start_preload'
+          WHERE (placement = 'general' OR placement IS NULL OR placement = '' OR placement = 'call_exit')
+            AND ad_type = 'interstitial';
         END IF;
       END $$;
-
-      UPDATE ad_analytics_logs
-      SET placement = 'call_exit'
-      WHERE (placement = 'general' OR placement IS NULL OR placement = '')
-        AND ad_type = 'interstitial';
 
       UPDATE ad_analytics_logs
       SET placement = 'main_screen_reward'

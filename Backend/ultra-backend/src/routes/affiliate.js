@@ -1624,7 +1624,7 @@ router.get("/admin/ad-analytics", requireAuth, requireAdmin, async (req, res) =>
                NULLIF(NULLIF(l.placement, ''), 'general'),
                CASE 
                  WHEN l.ad_type = 'native' THEN 'connecting_native'
-                 WHEN l.ad_type = 'interstitial' THEN 'call_exit'
+                 WHEN l.ad_type = 'interstitial' THEN 'app_start_preload'
                  WHEN l.ad_type = 'rewarded' THEN 'main_screen_reward'
                  ELSE 'general'
                END
