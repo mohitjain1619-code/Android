@@ -31,8 +31,14 @@ import com.ironsource.mediationsdk.logger.IronSourceError;
 import com.ironsource.mediationsdk.model.Placement;
 import com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener;
+import com.unity3d.mediation.LevelPlay;
+import com.unity3d.mediation.LevelPlayInitRequest;
+import com.unity3d.mediation.LevelPlayInitListener;
+import com.unity3d.mediation.LevelPlayConfiguration;
+import com.unity3d.mediation.LevelPlayInitError;
 import com.mohit.camverz.api.TokenManager;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -72,6 +78,8 @@ public class AdManager {
 
     private boolean isInitialized = false;
     private volatile boolean isLevelPlayReady = false;
+    private volatile boolean isLevelPlayUnifiedReady = false;
+    private final List<Runnable> onLevelPlayReadyActions = new ArrayList<>();
     private boolean isInterstitialLoading = false;
     private boolean isRewardedVideoLoading = false;
     private long lastInterstitialRequestTime = 0;
@@ -184,6 +192,26 @@ public class AdManager {
                 }
             }, IronSource.AD_UNIT.INTERSTITIAL, IronSource.AD_UNIT.REWARDED_VIDEO, IronSource.AD_UNIT.NATIVE_AD, IronSource.AD_UNIT.BANNER);
 
+            // Initialize LevelPlay Unified Mediation in parallel
+            try {
+                LevelPlayInitRequest initRequest = new LevelPlayInitRequest.Builder(IRONSOURCE_APP_KEY).build();
+                LevelPlay.init(activity, initRequest, new LevelPlayInitListener() {
+                    @Override
+                    public void onInitSuccess(LevelPlayConfiguration configuration) {
+                        isLevelPlayUnifiedReady = true;
+                        Log.d(TAG, "✅ LevelPlay Unified Mediation Initialized Successfully");
+                        drainLevelPlayReadyActions();
+                    }
+
+                    @Override
+                    public void onInitFailed(LevelPlayInitError error) {
+                        Log.e(TAG, "❌ LevelPlay Unified Mediation Init Failed: " + (error != null ? error.getErrorMessage() : "Unknown"));
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing LevelPlay Unified SDK", e);
+            }
+
             isInitialized = true;
             Log.d(TAG, "✅ ironSource LevelPlay Mediation SDK Init dispatched");
         } catch (Exception e) {
@@ -192,6 +220,43 @@ public class AdManager {
 
         // Warm up fallback ads immediately
         preloadFallbackAds(appContext);
+    }
+
+    private void drainLevelPlayReadyActions() {
+        List<Runnable> pending;
+        synchronized (onLevelPlayReadyActions) {
+            pending = new ArrayList<>(onLevelPlayReadyActions);
+            onLevelPlayReadyActions.clear();
+        }
+        for (Runnable action : pending) {
+            try {
+                mainHandler.post(action);
+            } catch (Exception e) {
+                Log.e(TAG, "Error executing LevelPlay ready action", e);
+            }
+        }
+    }
+
+    public boolean isLevelPlayUnifiedReady() {
+        return isLevelPlayUnifiedReady;
+    }
+
+    public void runWhenLevelPlayReady(Activity activity, Runnable action) {
+        if (action == null) return;
+        if (isLevelPlayUnifiedReady) {
+            mainHandler.post(action);
+            return;
+        }
+        synchronized (onLevelPlayReadyActions) {
+            if (isLevelPlayUnifiedReady) {
+                mainHandler.post(action);
+                return;
+            }
+            onLevelPlayReadyActions.add(action);
+        }
+        if (activity != null) {
+            init(activity);
+        }
     }
 
     public void updateUserId(String userId) {

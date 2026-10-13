@@ -2,6 +2,7 @@ package com.mohit.camverz;
 
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.app.ProgressDialog;
 import android.app.TimePickerDialog;
 import java.text.SimpleDateFormat;
 import android.content.Intent;
@@ -26,6 +27,12 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.unity3d.mediation.LevelPlayAdError;
+import com.unity3d.mediation.LevelPlayAdInfo;
+import com.unity3d.mediation.rewarded.LevelPlayReward;
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAd;
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -123,6 +130,18 @@ public class RealMeetActivity extends BaseActivity {
 
     private boolean isCreationDialogOpen = false;
 
+    // LevelPlay Bidding Rewarded Ad state
+    private LevelPlayRewardedAd levelPlayRewardedAd;
+    private ProgressDialog adProgressDialog;
+    private final Handler adHandler = new Handler(Looper.getMainLooper());
+    private Runnable adTimeoutRunnable;
+    private boolean isAdLoading = false;
+    private boolean isWaitingForAd = false;
+    private boolean isRewardEarned = false;
+    private Runnable pendingAdSuccessAction;
+    private Runnable pendingAdCancelAction;
+    private String currentAdPlacement = "realmeet_publish_post";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -135,6 +154,9 @@ public class RealMeetActivity extends BaseActivity {
         store = RealMeetStore.getInstance(this);
         gson = new Gson();
         socket = SocketManager.getInstance();
+
+        // Preload LevelPlay Mediation In-App Bidding Rewarded Video ad
+        loadLevelPlayRewardedAd();
 
         currentUserId = tokenManager.getUserId();
         currentUserName = tokenManager.getUserName();
@@ -1325,6 +1347,7 @@ public class RealMeetActivity extends BaseActivity {
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
         isCreationDialogOpen = true;
         preloadInterstitialAd();
+        loadLevelPlayRewardedAd();
         dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         EditText etPurpose = dialogView.findViewById(R.id.etPurpose);
@@ -1401,6 +1424,7 @@ public class RealMeetActivity extends BaseActivity {
                 tvCharCounter.setText(s.length() + " / 200");
                 if (s.length() == 3) {
                     preloadInterstitialAd();
+                    loadLevelPlayRewardedAd();
                 }
             }
 
@@ -1427,19 +1451,6 @@ public class RealMeetActivity extends BaseActivity {
             if (description.isEmpty()) {
                 Toast.makeText(this, getString(R.string.write_description), Toast.LENGTH_SHORT).show();
                 return;
-            }
-
-            if (oldPostToReplace != null) {
-                store.deleteRealMeetPost(oldPostToReplace.getId());
-                api.deleteRealMeetServerPost(oldPostToReplace.getId()).enqueue(new Callback<JsonObject>() {
-                    @Override
-                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                    }
-
-                    @Override
-                    public void onFailure(Call<JsonObject> call, Throwable t) {
-                    }
-                });
             }
 
             RealMeetPost newPost = new RealMeetPost(
@@ -1469,13 +1480,22 @@ public class RealMeetActivity extends BaseActivity {
             btnPublish.setEnabled(false);
             btnCancel.setVisibility(View.GONE);
 
-            showRewardedAdBeforePost("realmeet_publish_post", () -> {
+            Runnable onAdSuccess = () -> {
+                if (oldPostToReplace != null) {
+                    store.deleteRealMeetPost(oldPostToReplace.getId());
+                    api.deleteRealMeetServerPost(oldPostToReplace.getId()).enqueue(new Callback<JsonObject>() {
+                        @Override
+                        public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                        @Override
+                        public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    });
+                }
                 store.addRealMeetPost(newPost);
 
                 Map<String, Object> body = new HashMap<>();
                 body.put("type", "REAL_MEET");
                 body.put("post", newPost);
-                Toast.makeText(this, getString(R.string.publishing_post), Toast.LENGTH_SHORT).show();
+                Toast.makeText(RealMeetActivity.this, getString(R.string.publishing_post), Toast.LENGTH_SHORT).show();
                 api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                     @Override
                     public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -1490,13 +1510,21 @@ public class RealMeetActivity extends BaseActivity {
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
-                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_publish_post), Toast.LENGTH_SHORT)
-                                    .show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_publish_post), Toast.LENGTH_SHORT).show();
                             fetchFeedFromServer();
                         });
                     }
                 });
-            });
+            };
+
+            Runnable onAdCancelledOrFailed = () -> {
+                dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(true);
+                btnPublish.setEnabled(true);
+                btnCancel.setVisibility(View.VISIBLE);
+            };
+
+            showRewardedAdBeforePost("realmeet_publish_post", onAdCancelledOrFailed, onAdSuccess);
         });
 
         dialog.show();
@@ -1507,6 +1535,7 @@ public class RealMeetActivity extends BaseActivity {
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
         isCreationDialogOpen = true;
         preloadInterstitialAd();
+        loadLevelPlayRewardedAd();
         dialog.setOnDismissListener(d -> isCreationDialogOpen = false);
 
         EditText etPartyPurpose = dialogView.findViewById(R.id.etPartyPurpose);
@@ -1525,6 +1554,7 @@ public class RealMeetActivity extends BaseActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() == 3) {
                     preloadInterstitialAd();
+                    loadLevelPlayRewardedAd();
                 }
             }
             @Override
@@ -1538,6 +1568,7 @@ public class RealMeetActivity extends BaseActivity {
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() == 3) {
                     preloadInterstitialAd();
+                    loadLevelPlayRewardedAd();
                 }
             }
             @Override
@@ -1586,6 +1617,7 @@ public class RealMeetActivity extends BaseActivity {
                                     selectedPartyTimeStr[0] = sdf.format(selectedPartyCal.getTime());
                                     tvSelectedPartyTime.setText("📅 " + selectedPartyTimeStr[0]);
                                     preloadInterstitialAd();
+                                    loadLevelPlayRewardedAd();
                                 },
                                 nowCal.get(Calendar.HOUR_OF_DAY),
                                 nowCal.get(Calendar.MINUTE),
@@ -1620,16 +1652,6 @@ public class RealMeetActivity extends BaseActivity {
 
             int capacity = Integer.parseInt(capStr);
 
-            if (oldPartyToReplace != null) {
-                store.deletePartyPost(oldPartyToReplace.getId());
-                api.deleteRealMeetServerPost(oldPartyToReplace.getId()).enqueue(new Callback<JsonObject>() {
-                    @Override
-                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-                    @Override
-                    public void onFailure(Call<JsonObject> call, Throwable t) {}
-                });
-            }
-
             PartyPost partyPost = new PartyPost(
                     UUID.randomUUID().toString(),
                     currentUserId,
@@ -1656,13 +1678,22 @@ public class RealMeetActivity extends BaseActivity {
             btnPublishParty.setEnabled(false);
             btnCancelParty.setVisibility(View.GONE);
 
-            showRewardedAdBeforePost("party_host_publish_post", () -> {
+            Runnable onAdSuccess = () -> {
+                if (oldPartyToReplace != null) {
+                    store.deletePartyPost(oldPartyToReplace.getId());
+                    api.deleteRealMeetServerPost(oldPartyToReplace.getId()).enqueue(new Callback<JsonObject>() {
+                        @Override
+                        public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                        @Override
+                        public void onFailure(Call<JsonObject> call, Throwable t) {}
+                    });
+                }
                 store.addPartyPost(partyPost);
 
                 Map<String, Object> body = new HashMap<>();
                 body.put("type", "PARTY");
                 body.put("post", partyPost);
-                Toast.makeText(this, getString(R.string.publishing_party), Toast.LENGTH_SHORT).show();
+                Toast.makeText(RealMeetActivity.this, getString(R.string.publishing_party), Toast.LENGTH_SHORT).show();
                 api.createRealMeetServerPost(body).enqueue(new Callback<JsonObject>() {
                     @Override
                     public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
@@ -1677,13 +1708,21 @@ public class RealMeetActivity extends BaseActivity {
                     public void onFailure(Call<JsonObject> call, Throwable t) {
                         runOnUiThread(() -> {
                             dialog.dismiss();
-                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_publish_party), Toast.LENGTH_SHORT)
-                                    .show();
+                            Toast.makeText(RealMeetActivity.this, getString(R.string.failed_publish_party), Toast.LENGTH_SHORT).show();
                             fetchFeedFromServer();
                         });
                     }
                 });
-            });
+            };
+
+            Runnable onAdCancelledOrFailed = () -> {
+                dialog.setCancelable(true);
+                dialog.setCanceledOnTouchOutside(true);
+                btnPublishParty.setEnabled(true);
+                btnCancelParty.setVisibility(View.VISIBLE);
+            };
+
+            showRewardedAdBeforePost("party_host_publish_post", onAdCancelledOrFailed, onAdSuccess);
         });
 
         dialog.show();

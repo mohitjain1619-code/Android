@@ -50,6 +50,25 @@ import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
+// Unity LevelPlay Mediation Imports
+import com.unity3d.mediation.LevelPlay;
+import com.unity3d.mediation.LevelPlayInitRequest;
+import com.unity3d.mediation.LevelPlayInitListener;
+import com.unity3d.mediation.LevelPlayInitError;
+import com.unity3d.mediation.LevelPlayConfiguration;
+import com.unity3d.mediation.LevelPlayAdInfo;
+import com.unity3d.mediation.LevelPlayAdError;
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAd;
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener;
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAd;
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener;
+import com.unity3d.mediation.rewarded.LevelPlayReward;
+import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd;
+import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener;
+import com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView;
+import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
+import com.ironsource.mediationsdk.logger.IronSourceError;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,9 +96,16 @@ public class AdTestingActivity extends AppCompatActivity {
     public static final String ADMOB_SAMPLE_REWARDED = "ca-app-pub-3940256099942544/5224354917";
     public static final String ADMOB_SAMPLE_NATIVE = "ca-app-pub-3940256099942544/2247696110";
 
+    // LevelPlay Configuration (ironSource Multi-Network Bidding)
+    public static final String LEVELPLAY_APP_KEY = "28890f0b5";
+    public static final String LEVELPLAY_AD_UNIT_INTERSTITIAL = "bspxbvo7aw4r8ybv";
+    public static final String LEVELPLAY_AD_UNIT_REWARDED = "inn2ugrw04ep2tzc";
+    public static final String LEVELPLAY_AD_UNIT_NATIVE = "6bpplx6inl1ahz01";
+
     public enum AdNetwork {
         META,
-        ADMOB
+        ADMOB,
+        LEVELPLAY
     }
 
     public enum AdType {
@@ -94,8 +120,10 @@ public class AdTestingActivity extends AppCompatActivity {
     // Network Tabs
     private TextView tabNetworkMeta;
     private TextView tabNetworkAdMob;
+    private TextView tabNetworkLevelPlay;
 
-    // Format Tabs
+    // Format Tabs & Container
+    private View layoutFormatTabs;
     private TextView tabInterstitial;
     private TextView tabRewarded;
     private TextView tabNative;
@@ -131,6 +159,7 @@ public class AdTestingActivity extends AppCompatActivity {
     private View cardNativePreview;
     private NativeAdLayout nativeAdContainer;
     private FrameLayout admobNativeContainer;
+    private FrameLayout levelplayNativeContainer;
 
     // Meta Ad Instances
     private com.facebook.ads.InterstitialAd metaInterstitialAd;
@@ -142,6 +171,12 @@ public class AdTestingActivity extends AppCompatActivity {
     private com.google.android.gms.ads.interstitial.InterstitialAd admobInterstitialAd;
     private RewardedAd admobRewardedAd;
     private com.google.android.gms.ads.nativead.NativeAd admobNativeAd;
+    private NativeAdView currentAdMobNativeAdView;
+
+    // LevelPlay Ad Instances
+    private LevelPlayInterstitialAd levelPlayInterstitialAd;
+    private LevelPlayRewardedAd levelPlayRewardedAd;
+    private LevelPlayNativeAd levelPlayNativeAd;
 
     private boolean isAdLoading = false;
     private boolean isRewardEarned = false;
@@ -168,7 +203,9 @@ public class AdTestingActivity extends AppCompatActivity {
 
         tabNetworkMeta = findViewById(R.id.tabNetworkMeta);
         tabNetworkAdMob = findViewById(R.id.tabNetworkAdMob);
+        tabNetworkLevelPlay = findViewById(R.id.tabNetworkLevelPlay);
 
+        layoutFormatTabs = findViewById(R.id.layoutFormatTabs);
         tabInterstitial = findViewById(R.id.tabInterstitial);
         tabRewarded = findViewById(R.id.tabRewarded);
         tabNative = findViewById(R.id.tabNative);
@@ -199,6 +236,7 @@ public class AdTestingActivity extends AppCompatActivity {
         cardNativePreview = findViewById(R.id.cardNativePreview);
         nativeAdContainer = findViewById(R.id.nativeAdContainer);
         admobNativeContainer = findViewById(R.id.admobNativeContainer);
+        levelplayNativeContainer = findViewById(R.id.levelplayNativeContainer);
 
         TextView btnClearLogs = findViewById(R.id.btnClearLogs);
         TextView btnCopyLogs = findViewById(R.id.btnCopyLogs);
@@ -209,6 +247,7 @@ public class AdTestingActivity extends AppCompatActivity {
         // Network switcher
         tabNetworkMeta.setOnClickListener(v -> selectNetwork(AdNetwork.META));
         tabNetworkAdMob.setOnClickListener(v -> selectNetwork(AdNetwork.ADMOB));
+        tabNetworkLevelPlay.setOnClickListener(v -> selectNetwork(AdNetwork.LEVELPLAY));
 
         // Format switcher
         tabInterstitial.setOnClickListener(v -> selectAdType(AdType.INTERSTITIAL));
@@ -230,6 +269,7 @@ public class AdTestingActivity extends AppCompatActivity {
         // Initialize SDKs
         initializeMetaSdk();
         initializeAdMobSdk();
+        initializeLevelPlaySdk();
     }
 
     private void selectNetwork(AdNetwork network) {
@@ -240,7 +280,11 @@ public class AdTestingActivity extends AppCompatActivity {
         currentType = AdType.INTERSTITIAL;
 
         updateUiForCurrentSelection();
-        appendLog("🔄 [NETWORK SWITCH] Selected " + (network == AdNetwork.META ? "Meta Audience Network" : "Google AdMob"));
+        String netName;
+        if (network == AdNetwork.META) netName = "Meta Audience Network";
+        else if (network == AdNetwork.ADMOB) netName = "Google AdMob";
+        else netName = "Unity LevelPlay Mediation";
+        appendLog("🔄 [NETWORK SWITCH] Selected " + netName);
     }
 
     private void selectAdType(AdType type) {
@@ -270,8 +314,11 @@ public class AdTestingActivity extends AppCompatActivity {
             tabNetworkMeta.setTextColor(Color.WHITE);
             tabNetworkAdMob.setBackground(null);
             tabNetworkAdMob.setTextColor(Color.parseColor("#9CA3AF"));
+            tabNetworkLevelPlay.setBackground(null);
+            tabNetworkLevelPlay.setTextColor(Color.parseColor("#9CA3AF"));
 
             layoutSampleToggle.setVisibility(View.GONE);
+            if (layoutFormatTabs != null) layoutFormatTabs.setVisibility(View.VISIBLE);
 
             tvAppIdLabel.setText("Meta App ID:");
             tvAppId.setText(META_APP_ID);
@@ -281,13 +328,16 @@ public class AdTestingActivity extends AppCompatActivity {
             tvWhitelistDetails.setText("✓ Registered on Meta Monetization Manager:\n • r: b94e5118-43fc-4881-b07b-0ecf44bbb6ee\n • samsung: 1e278238-70d2-418a-acc3-10ca1ad1abe1");
             tvWhitelistNote.setText("Meta servers deliver test ads automatically to registered test devices.");
 
-        } else {
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             tabNetworkAdMob.setBackgroundResource(R.drawable.bg_button_primary);
             tabNetworkAdMob.setTextColor(Color.WHITE);
             tabNetworkMeta.setBackground(null);
             tabNetworkMeta.setTextColor(Color.parseColor("#9CA3AF"));
+            tabNetworkLevelPlay.setBackground(null);
+            tabNetworkLevelPlay.setTextColor(Color.parseColor("#9CA3AF"));
 
             layoutSampleToggle.setVisibility(View.VISIBLE);
+            if (layoutFormatTabs != null) layoutFormatTabs.setVisibility(View.VISIBLE);
 
             tvAppIdLabel.setText("AdMob App ID:");
             tvAppId.setText(ADMOB_APP_ID);
@@ -296,6 +346,25 @@ public class AdTestingActivity extends AppCompatActivity {
             tvWhitelistTitle.setText("GOOGLE ADMOB INTEGRATION");
             tvWhitelistDetails.setText("✓ Google Mobile Ads (GMA) SDK v23.6.0\n • Interstitial: " + (useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL) + "\n • Rewarded: " + (useSample ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED) + "\n • Native: " + (useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE));
             tvWhitelistNote.setText("Client Test Devices configured via RequestConfiguration. Use toggle above to test with Google's official sample units if live unit propagation returns 403.");
+        } else {
+            // LEVELPLAY MEDIATION
+            tabNetworkLevelPlay.setBackgroundResource(R.drawable.bg_button_primary);
+            tabNetworkLevelPlay.setTextColor(Color.WHITE);
+            tabNetworkMeta.setBackground(null);
+            tabNetworkMeta.setTextColor(Color.parseColor("#9CA3AF"));
+            tabNetworkAdMob.setBackground(null);
+            tabNetworkAdMob.setTextColor(Color.parseColor("#9CA3AF"));
+
+            layoutSampleToggle.setVisibility(View.GONE);
+            if (layoutFormatTabs != null) layoutFormatTabs.setVisibility(View.VISIBLE);
+
+            tvAppIdLabel.setText("LevelPlay App Key:");
+            tvAppId.setText(LEVELPLAY_APP_KEY);
+            tvPlacementIdLabel.setText("Ad Unit ID:");
+
+            tvWhitelistTitle.setText("LEVELPLAY MULTI-BIDDER MEDIATION");
+            tvWhitelistDetails.setText("✓ In-App Bidders Active:\n • Meta Audience Network (Bidding)\n • Google AdMob (Bidding)\n • Unity Ads (Bidding)\n • ironSource (Bidding)");
+            tvWhitelistNote.setText("Real-time header bidding auction runs client-side between all networks on load request.");
         }
 
         // 2. Update Format Tabs
@@ -310,7 +379,40 @@ public class AdTestingActivity extends AppCompatActivity {
         cardNativePreview.setVisibility(View.GONE);
         btnShowAd.setVisibility(View.VISIBLE);
 
-        if (currentNetwork == AdNetwork.ADMOB) {
+        if (currentNetwork == AdNetwork.LEVELPLAY) {
+            if (currentType == AdType.INTERSTITIAL) {
+                tabInterstitial.setBackgroundResource(R.drawable.bg_button_primary);
+                tabInterstitial.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(LEVELPLAY_AD_UNIT_INTERSTITIAL);
+                tvAdFormat.setText("Interstitial (Multi-Network Bidding)");
+
+                btnLoadAd.setText("Load LevelPlay Interstitial");
+                btnShowAd.setText("Show LevelPlay Interstitial");
+                btnShowAd.setEnabled(levelPlayInterstitialAd != null && levelPlayInterstitialAd.isAdReady());
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
+                tabRewarded.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(LEVELPLAY_AD_UNIT_REWARDED);
+                tvAdFormat.setText("Rewarded Video (LevelPlay Bidding)");
+                layoutRewardStatus.setVisibility(View.VISIBLE);
+                resetRewardBadge();
+
+                btnLoadAd.setText("Load LevelPlay Rewarded");
+                btnShowAd.setText("Show LevelPlay Rewarded");
+                btnShowAd.setEnabled(levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady());
+            } else if (currentType == AdType.NATIVE) {
+                tabNative.setBackgroundResource(R.drawable.bg_button_primary);
+                tabNative.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(LEVELPLAY_AD_UNIT_NATIVE);
+                tvAdFormat.setText("Native Ad (LevelPlay Mediation)");
+
+                btnLoadAd.setText("Load LevelPlay Native Ad");
+                btnShowAd.setVisibility(View.GONE);
+            }
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
                 tabInterstitial.setBackgroundResource(R.drawable.bg_button_primary);
                 tabInterstitial.setTextColor(Color.WHITE);
@@ -443,6 +545,49 @@ public class AdTestingActivity extends AppCompatActivity {
         });
     }
 
+    private void initializeLevelPlaySdk() {
+        try {
+            // LevelPlay Native Ad requires underlying IronSource engine initialization with NATIVE_AD
+            com.ironsource.mediationsdk.IronSource.init(
+                this,
+                LEVELPLAY_APP_KEY,
+                () -> {
+                    runOnUiThread(() -> {
+                        appendLog("🟢 [IRONSOURCE ENGINE] Initialized with Native, Interstitial & Rewarded.");
+                    });
+                },
+                com.ironsource.mediationsdk.IronSource.AD_UNIT.INTERSTITIAL,
+                com.ironsource.mediationsdk.IronSource.AD_UNIT.REWARDED_VIDEO,
+                com.ironsource.mediationsdk.IronSource.AD_UNIT.NATIVE_AD
+            );
+
+            LevelPlayInitRequest initRequest = new LevelPlayInitRequest.Builder(LEVELPLAY_APP_KEY).build();
+            LevelPlay.init(this, initRequest, new LevelPlayInitListener() {
+                @Override
+                public void onInitSuccess(LevelPlayConfiguration configuration) {
+                    runOnUiThread(() -> {
+                        if (currentNetwork == AdNetwork.LEVELPLAY) {
+                            tvSdkStatus.setText("Initialized (LevelPlay ✓)");
+                            tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+                        }
+                        appendLog("🟢 [LEVELPLAY INIT] Unity LevelPlay Mediation Initialized (App Key: " + LEVELPLAY_APP_KEY + ")");
+                    });
+                }
+
+                @Override
+                public void onInitFailed(LevelPlayInitError error) {
+                    runOnUiThread(() -> {
+                        String msg = error != null ? error.getErrorMessage() : "Unknown Error";
+                        int code = error != null ? error.getErrorCode() : -1;
+                        appendLog("🔴 [LEVELPLAY INIT FAILED] " + msg + " (Code: " + code + ")");
+                    });
+                }
+            });
+        } catch (Exception e) {
+            appendLog("⚠️ [LEVELPLAY INIT EXCEPTION] " + e.getMessage());
+        }
+    }
+
     // =========================================================================
     // DISPATCHER
     // =========================================================================
@@ -452,7 +597,15 @@ public class AdTestingActivity extends AppCompatActivity {
             return;
         }
 
-        if (currentNetwork == AdNetwork.ADMOB) {
+        if (currentNetwork == AdNetwork.LEVELPLAY) {
+            if (currentType == AdType.INTERSTITIAL) {
+                loadLevelPlayInterstitial();
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                loadLevelPlayRewarded();
+            } else if (currentType == AdType.NATIVE) {
+                loadLevelPlayNative();
+            }
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
                 loadAdMobInterstitial();
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
@@ -472,7 +625,13 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void showCurrentAd() {
-        if (currentNetwork == AdNetwork.ADMOB) {
+        if (currentNetwork == AdNetwork.LEVELPLAY) {
+            if (currentType == AdType.INTERSTITIAL) {
+                showLevelPlayInterstitial();
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                showLevelPlayRewarded();
+            }
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
                 showAdMobInterstitial();
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
@@ -495,6 +654,14 @@ public class AdTestingActivity extends AppCompatActivity {
         destroyMetaInterstitial();
         destroyMetaRewardedAds();
         destroyMetaNativeAd();
+
+        if (levelPlayInterstitialAd != null) {
+            levelPlayInterstitialAd = null;
+        }
+        if (levelPlayRewardedAd != null) {
+            levelPlayRewardedAd = null;
+        }
+        destroyLevelPlayNative();
 
         resetRewardBadge();
 
@@ -865,9 +1032,17 @@ public class AdTestingActivity extends AppCompatActivity {
             cardNativePreview.setVisibility(View.VISIBLE);
             nativeAdContainer.setVisibility(View.GONE);
             admobNativeContainer.setVisibility(View.VISIBLE);
+
+            if (currentAdMobNativeAdView != null) {
+                try {
+                    currentAdMobNativeAdView.destroy();
+                } catch (Exception ignored) {}
+                currentAdMobNativeAdView = null;
+            }
             admobNativeContainer.removeAllViews();
 
             NativeAdView adView = (NativeAdView) LayoutInflater.from(this).inflate(R.layout.layout_admob_native_ad, admobNativeContainer, false);
+            currentAdMobNativeAdView = adView;
 
             // Bind views to NativeAdView
             adView.setHeadlineView(adView.findViewById(R.id.ad_headline));
@@ -876,6 +1051,11 @@ public class AdTestingActivity extends AppCompatActivity {
             adView.setIconView(adView.findViewById(R.id.ad_app_icon));
             adView.setAdvertiserView(adView.findViewById(R.id.ad_advertiser));
             adView.setMediaView(adView.findViewById(R.id.ad_media));
+
+            com.google.android.gms.ads.nativead.AdChoicesView adChoicesView = adView.findViewById(R.id.ad_choices_view);
+            if (adChoicesView != null) {
+                adView.setAdChoicesView(adChoicesView);
+            }
 
             // Populate text & content
             ((TextView) adView.getHeadlineView()).setText(nativeAd.getHeadline());
@@ -920,6 +1100,12 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void destroyAdMobNative() {
+        if (currentAdMobNativeAdView != null) {
+            try {
+                currentAdMobNativeAdView.destroy();
+            } catch (Exception ignored) {}
+            currentAdMobNativeAdView = null;
+        }
         if (admobNativeAd != null) {
             try {
                 admobNativeAd.destroy();
@@ -927,10 +1113,18 @@ public class AdTestingActivity extends AppCompatActivity {
             admobNativeAd = null;
         }
         if (admobNativeContainer != null) {
+            try {
+                for (int i = 0; i < admobNativeContainer.getChildCount(); i++) {
+                    View child = admobNativeContainer.getChildAt(i);
+                    if (child instanceof NativeAdView) {
+                        ((NativeAdView) child).destroy();
+                    }
+                }
+            } catch (Exception ignored) {}
             admobNativeContainer.removeAllViews();
             admobNativeContainer.setVisibility(View.GONE);
         }
-        if (cardNativePreview != null && (metaNativeAd == null)) {
+        if (cardNativePreview != null && (metaNativeAd == null && levelPlayNativeAd == null)) {
             cardNativePreview.setVisibility(View.GONE);
         }
     }
@@ -1412,6 +1606,388 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
+    // 3. UNITY LEVELPLAY INTERSTITIAL (MULTI-NETWORK BIDDING)
+    // =========================================================================
+    private void loadLevelPlayInterstitial() {
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("BIDDING AUCTION...", "#FBBF24");
+
+        appendLog("🚀 [LEVELPLAY LOAD] Requesting Interstitial Ad Unit: " + LEVELPLAY_AD_UNIT_INTERSTITIAL);
+        appendLog("📡 [AUCTION DISPATCHED] Sending real-time bid requests to Meta, Google AdMob, UnityAds, and ironSource...");
+
+        try {
+            if (levelPlayInterstitialAd == null) {
+                levelPlayInterstitialAd = new LevelPlayInterstitialAd(LEVELPLAY_AD_UNIT_INTERSTITIAL);
+            }
+
+            levelPlayInterstitialAd.setListener(new LevelPlayInterstitialAdListener() {
+                @Override
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(true);
+                        updateAdState("READY (AUCTION WON)", "#34D399");
+
+                        String winnerNetwork = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                        String auctionId = (adInfo != null && adInfo.getAuctionId() != null) ? adInfo.getAuctionId() : "N/A";
+                        appendLog("🟢 [LEVELPLAY LOADED] Interstitial Ad loaded successfully!");
+                        appendLog("🏆 [AUCTION WINNER] " + winnerNetwork + " won the real-time bidding auction!");
+                        appendLog("ℹ️ [AUCTION DETAILS] Auction ID: " + auctionId);
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Ready! (Won by " + winnerNetwork + ")", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdLoadFailed(LevelPlayAdError error) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+                        updateAdState("NO FILL / FAILED", "#EF4444");
+
+                        String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
+                        int errorCode = (error != null) ? error.getErrorCode() : -1;
+                        appendLog("🔴 [LEVELPLAY LOAD FAILED] " + errorMsg + " (Code: " + errorCode + ")");
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay failed: " + errorMsg, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("DISPLAYED", "#818CF8");
+                        String network = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                        appendLog("📺 [LEVELPLAY DISPLAYED] Fullscreen Interstitial shown from: " + network);
+                    });
+                }
+
+                @Override
+                public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("DISPLAY FAILED", "#EF4444");
+                        String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
+                        appendLog("❌ [LEVELPLAY DISPLAY FAILED] " + errorMsg);
+                        Toast.makeText(AdTestingActivity.this, "Display failed: " + errorMsg, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdClicked(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        appendLog("🟡 [LEVELPLAY CLICKED] User clicked the Interstitial ad.");
+                    });
+                }
+
+                @Override
+                public void onAdClosed(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("CLOSED (IDLE)", "#34D399");
+                        btnShowAd.setEnabled(false);
+                        appendLog("🚪 [LEVELPLAY CLOSED] Interstitial closed by user. Ready to load next auction.");
+                    });
+                }
+
+                @Override
+                public void onAdInfoChanged(LevelPlayAdInfo adInfo) {
+                    // Optional info updates
+                }
+            });
+
+            levelPlayInterstitialAd.loadAd();
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [LEVELPLAY EXCEPTION] " + e.getMessage());
+        }
+    }
+
+    private void showLevelPlayInterstitial() {
+        if (levelPlayInterstitialAd != null && levelPlayInterstitialAd.isAdReady()) {
+            appendLog("🚀 [LEVELPLAY SHOW] Displaying Interstitial on screen...");
+            levelPlayInterstitialAd.showAd(this);
+        } else {
+            Toast.makeText(this, "Please load LevelPlay Interstitial first", Toast.LENGTH_SHORT).show();
+            appendLog("⚠️ [LEVELPLAY NOT READY] Interstitial is not loaded yet. Tap 'Load' first.");
+        }
+    }
+
+    // =========================================================================
+    // 4. UNITY LEVELPLAY REWARDED VIDEO (MULTI-NETWORK BIDDING)
+    // =========================================================================
+    private void loadLevelPlayRewarded() {
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("BIDDING AUCTION...", "#FBBF24");
+
+        appendLog("🚀 [LEVELPLAY REWARDED LOAD] Requesting Rewarded Video Unit: " + LEVELPLAY_AD_UNIT_REWARDED);
+        appendLog("📡 [AUCTION DISPATCHED] Sending real-time bid requests to Meta, Google AdMob, UnityAds, and ironSource...");
+
+        try {
+            if (levelPlayRewardedAd == null) {
+                levelPlayRewardedAd = new LevelPlayRewardedAd(LEVELPLAY_AD_UNIT_REWARDED);
+            }
+
+            levelPlayRewardedAd.setListener(new LevelPlayRewardedAdListener() {
+                @Override
+                public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(true);
+                        updateAdState("READY (AUCTION WON)", "#34D399");
+
+                        String winnerNetwork = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                        String auctionId = (adInfo != null && adInfo.getAuctionId() != null) ? adInfo.getAuctionId() : "N/A";
+                        appendLog("🟢 [LEVELPLAY REWARDED LOADED] Rewarded Video ready to show!");
+                        appendLog("🏆 [AUCTION WINNER] " + winnerNetwork + " won the real-time bidding auction!");
+                        appendLog("ℹ️ [AUCTION DETAILS] Auction ID: " + auctionId);
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Rewarded Ready! (" + winnerNetwork + ")", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdLoadFailed(LevelPlayAdError error) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+                        updateAdState("NO FILL / FAILED", "#EF4444");
+
+                        String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
+                        int errorCode = (error != null) ? error.getErrorCode() : -1;
+                        appendLog("🔴 [LEVELPLAY REWARDED FAILED] " + errorMsg + " (Code: " + errorCode + ")");
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Rewarded failed: " + errorMsg, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("PLAYING VIDEO", "#818CF8");
+                        String network = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                        appendLog("📺 [LEVELPLAY REWARDED DISPLAYED] Fullscreen video playing from: " + network);
+                    });
+                }
+
+                @Override
+                public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("DISPLAY FAILED", "#EF4444");
+                        String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
+                        appendLog("❌ [LEVELPLAY REWARDED DISPLAY FAILED] " + errorMsg);
+                        Toast.makeText(AdTestingActivity.this, "Display failed: " + errorMsg, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdClicked(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        appendLog("🟡 [LEVELPLAY REWARDED CLICKED] User clicked the rewarded ad.");
+                    });
+                }
+
+                @Override
+                public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        isRewardEarned = true;
+                        if (tvRewardBadge != null) {
+                            tvRewardBadge.setText("REWARD EARNED ✓");
+                            tvRewardBadge.setTextColor(Color.parseColor("#34D399"));
+                            tvRewardBadge.setBackgroundColor(Color.parseColor("#2634D399"));
+                        }
+                        String name = (reward != null && reward.getName() != null) ? reward.getName() : "Reward";
+                        int amount = (reward != null) ? reward.getAmount() : 1;
+                        appendLog("🎁 [LEVELPLAY REWARD EARNED] User watched full video! Reward: " + amount + " " + name);
+                        Toast.makeText(AdTestingActivity.this, "🎁 Reward Earned! (" + amount + " " + name + ")", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdClosed(LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("CLOSED (IDLE)", "#34D399");
+                        btnShowAd.setEnabled(false);
+                        appendLog("🚪 [LEVELPLAY REWARDED CLOSED] Video ad closed. Reward granted: " + isRewardEarned);
+                    });
+                }
+
+                @Override
+                public void onAdInfoChanged(LevelPlayAdInfo adInfo) {
+                }
+            });
+
+            levelPlayRewardedAd.loadAd();
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [LEVELPLAY REWARDED EXCEPTION] " + e.getMessage());
+        }
+    }
+
+    private void showLevelPlayRewarded() {
+        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
+            appendLog("🚀 [LEVELPLAY SHOW REWARDED] Playing Rewarded Video...");
+            levelPlayRewardedAd.showAd(this);
+        } else {
+            Toast.makeText(this, "Please load LevelPlay Rewarded Video first", Toast.LENGTH_SHORT).show();
+            appendLog("⚠️ [LEVELPLAY NOT READY] Rewarded Video is not loaded yet.");
+        }
+    }
+
+    // =========================================================================
+    // 5. UNITY LEVELPLAY NATIVE AD (MULTI-NETWORK MEDIATION)
+    // =========================================================================
+    private void loadLevelPlayNative() {
+        destroyLevelPlayNative();
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        updateAdState("BIDDING AUCTION...", "#FBBF24");
+
+        appendLog("🚀 [LEVELPLAY NATIVE LOAD] Requesting Native Ad Unit: " + LEVELPLAY_AD_UNIT_NATIVE);
+        appendLog("📡 [AUCTION DISPATCHED] Sending real-time Native auction requests...");
+
+        try {
+            LevelPlayNativeAd.Builder builder = new LevelPlayNativeAd.Builder()
+                    .withActivity(this)
+                    .withPlacementName(LEVELPLAY_AD_UNIT_NATIVE);
+
+            builder.withListener(new LevelPlayNativeAdListener() {
+                @Override
+                public void onAdLoaded(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        levelPlayNativeAd = nativeAd;
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("READY & RENDERED", "#34D399");
+
+                        String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                        appendLog("🟢 [LEVELPLAY NATIVE LOADED] Native Ad loaded successfully!");
+                        appendLog("🏆 [AUCTION WINNER] " + winner + " won the Native bidding auction!");
+
+                        renderLevelPlayNativeAd(nativeAd);
+                    });
+                }
+
+                @Override
+                public void onAdLoadFailed(LevelPlayNativeAd nativeAd, IronSourceError error) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("NO FILL / FAILED", "#EF4444");
+
+                        String msg = error != null ? error.getErrorMessage() : "Unknown Error";
+                        int code = error != null ? error.getErrorCode() : -1;
+                        appendLog("🔴 [LEVELPLAY NATIVE FAILED] " + msg + " (Code: " + code + ")");
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Native failed: " + msg, Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdImpression(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        appendLog("👁️ [LEVELPLAY NATIVE IMPRESSION] Impression logged on screen.");
+                    });
+                }
+
+                @Override
+                public void onAdClicked(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        appendLog("🟡 [LEVELPLAY NATIVE CLICKED] User clicked the native ad.");
+                    });
+                }
+            });
+
+            levelPlayNativeAd = builder.build();
+            levelPlayNativeAd.loadAd();
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [LEVELPLAY NATIVE EXCEPTION] " + e.getMessage());
+        }
+    }
+
+    private void renderLevelPlayNativeAd(LevelPlayNativeAd nativeAd) {
+        if (nativeAd == null || levelplayNativeContainer == null) return;
+
+        try {
+            levelplayNativeContainer.removeAllViews();
+            com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout = 
+                    (com.ironsource.mediationsdk.ads.nativead.NativeAdLayout) LayoutInflater.from(this).inflate(R.layout.layout_levelplay_native_ad, levelplayNativeContainer, false);
+
+            TextView tvTitle = nativeAdLayout.findViewById(R.id.lp_native_title);
+            TextView tvAdvertiser = nativeAdLayout.findViewById(R.id.lp_native_advertiser);
+            TextView tvBody = nativeAdLayout.findViewById(R.id.lp_native_body);
+            ImageView ivIcon = nativeAdLayout.findViewById(R.id.lp_native_icon);
+            Button btnCta = nativeAdLayout.findViewById(R.id.lp_native_cta);
+            LevelPlayMediaView mediaView = nativeAdLayout.findViewById(R.id.lp_native_media_view);
+
+            if (tvTitle != null && nativeAd.getTitle() != null) {
+                tvTitle.setText(nativeAd.getTitle());
+            }
+            if (tvAdvertiser != null && nativeAd.getAdvertiser() != null) {
+                tvAdvertiser.setText(nativeAd.getAdvertiser());
+            }
+            if (tvBody != null && nativeAd.getBody() != null) {
+                tvBody.setText(nativeAd.getBody());
+            }
+            if (btnCta != null && nativeAd.getCallToAction() != null) {
+                btnCta.setText(nativeAd.getCallToAction());
+            }
+            if (ivIcon != null && nativeAd.getIcon() != null && nativeAd.getIcon().getDrawable() != null) {
+                ivIcon.setImageDrawable(nativeAd.getIcon().getDrawable());
+            }
+
+            // Register asset views with NativeAdLayout
+            if (tvTitle != null) nativeAdLayout.setTitleView(tvTitle);
+            if (tvAdvertiser != null) nativeAdLayout.setAdvertiserView(tvAdvertiser);
+            if (tvBody != null) nativeAdLayout.setBodyView(tvBody);
+            if (ivIcon != null) nativeAdLayout.setIconView(ivIcon);
+            if (btnCta != null) nativeAdLayout.setCallToActionView(btnCta);
+            if (mediaView != null) nativeAdLayout.setMediaView(mediaView);
+
+            // LevelPlay handles wrapping inside AdMob/Meta native ad views internally
+            nativeAdLayout.registerNativeAdViews(nativeAd);
+
+            levelplayNativeContainer.addView(nativeAdLayout);
+            levelplayNativeContainer.setVisibility(View.VISIBLE);
+
+            if (nativeAdContainer != null) nativeAdContainer.setVisibility(View.GONE);
+            if (admobNativeContainer != null) admobNativeContainer.setVisibility(View.GONE);
+            if (cardNativePreview != null) cardNativePreview.setVisibility(View.VISIBLE);
+
+            appendLog("🖼️ [NATIVE RENDERED] LevelPlay Native Ad views bound & rendered successfully.");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error rendering LevelPlay native ad", e);
+            appendLog("❌ [NATIVE RENDER ERROR] " + e.getMessage());
+        }
+    }
+
+    private void destroyLevelPlayNative() {
+        if (levelPlayNativeAd != null) {
+            try {
+                levelPlayNativeAd.destroyAd();
+            } catch (Exception ignored) {}
+            levelPlayNativeAd = null;
+        }
+        if (levelplayNativeContainer != null) {
+            levelplayNativeContainer.removeAllViews();
+            levelplayNativeContainer.setVisibility(View.GONE);
+        }
+    }
+
+    // =========================================================================
     // UTILITIES & LOGGING
     // =========================================================================
     private void updateAdState(String state, String hexColor) {
@@ -1490,14 +2066,32 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        if (isFinishing()) {
+            destroyAdMobNative();
+            destroyLevelPlayNative();
+            destroyMetaNativeAd();
+        }
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
+        destroyAdMobNative();
         destroyAdMobInterstitial();
         destroyAdMobRewarded();
-        destroyAdMobNative();
 
+        destroyMetaNativeAd();
         destroyMetaInterstitial();
         destroyMetaRewardedAds();
-        destroyMetaNativeAd();
+
+        destroyLevelPlayNative();
+        if (levelPlayInterstitialAd != null) {
+            levelPlayInterstitialAd = null;
+        }
+        if (levelPlayRewardedAd != null) {
+            levelPlayRewardedAd = null;
+        }
 
         super.onDestroy();
     }

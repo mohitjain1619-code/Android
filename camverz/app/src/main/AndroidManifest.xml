@@ -169,7 +169,9 @@
         <!-- Create Post Activity -->
         <activity
             android:name=".CreatePostActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize" />
 
         <!-- Feed Activity -->
         <activity
