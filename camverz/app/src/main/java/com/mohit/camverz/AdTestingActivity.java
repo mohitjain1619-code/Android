@@ -262,7 +262,7 @@ public class AdTestingActivity extends AppCompatActivity {
             }
         });
 
-        btnLoadAd.setOnClickListener(v -> runCurrentAdNow());
+        btnLoadAd.setOnClickListener(v -> loadCurrentAd());
         btnShowAd.setOnClickListener(v -> showCurrentAd());
         btnResetAd.setOnClickListener(v -> resetCurrentAd());
 
@@ -407,8 +407,8 @@ public class AdTestingActivity extends AppCompatActivity {
             tvPlacementId.setText(LEVELPLAY_PLACEMENT_INTERSTITIAL);
             tvAdFormat.setText("Interstitial (LevelPlay Multi-Bidding)");
 
-            btnLoadAd.setText("⚡ RUN LEVELPLAY AD (1-Click)");
-            btnShowAd.setText("Show Cached Interstitial");
+            btnLoadAd.setText("Load LevelPlay Interstitial");
+            btnShowAd.setText("Show LevelPlay Interstitial");
 
         } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
@@ -418,8 +418,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 tvPlacementId.setText(useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL);
                 tvAdFormat.setText("Interstitial (AdMob Fullscreen)");
 
-                btnLoadAd.setText("⚡ RUN ADMOB AD (1-Click)");
-                btnShowAd.setText("Show Cached Interstitial");
+                btnLoadAd.setText("Load AdMob Interstitial");
+                btnShowAd.setText("Show AdMob Interstitial");
 
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
                 tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
@@ -430,8 +430,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 layoutRewardStatus.setVisibility(View.VISIBLE);
                 resetRewardBadge();
 
-                btnLoadAd.setText("⚡ RUN ADMOB REWARDED (1-Click)");
-                btnShowAd.setText("Show Cached Rewarded");
+                btnLoadAd.setText("Load AdMob Rewarded");
+                btnShowAd.setText("Show AdMob Rewarded");
 
             } else if (currentType == AdType.NATIVE) {
                 tabNative.setBackgroundResource(R.drawable.bg_button_primary);
@@ -440,7 +440,7 @@ public class AdTestingActivity extends AppCompatActivity {
                 tvPlacementId.setText(useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE);
                 tvAdFormat.setText("Native (AdMob Custom Layout)");
 
-                btnLoadAd.setText("⚡ LOAD & RENDER ADMOB NATIVE");
+                btnLoadAd.setText("Load AdMob Native Ad");
                 btnShowAd.setVisibility(View.GONE);
             }
         } else {
@@ -451,8 +451,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 tvPlacementId.setText(META_PLACEMENT_INTERSTITIAL);
                 tvAdFormat.setText("Interstitial (Meta Fullscreen)");
 
-                btnLoadAd.setText("⚡ RUN META AD (1-Click)");
-                btnShowAd.setText("Show Cached Interstitial");
+                btnLoadAd.setText("Load Meta Interstitial");
+                btnShowAd.setText("Show Meta Interstitial");
 
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
                 tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
@@ -463,8 +463,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 layoutRewardStatus.setVisibility(View.VISIBLE);
                 resetRewardBadge();
 
-                btnLoadAd.setText("⚡ RUN META REWARDED (1-Click)");
-                btnShowAd.setText("Show Cached Rewarded");
+                btnLoadAd.setText("Load Rewarded Interstitial");
+                btnShowAd.setText("Show Rewarded Interstitial");
 
             } else if (currentType == AdType.NATIVE) {
                 tabNative.setBackgroundResource(R.drawable.bg_button_primary);
@@ -646,89 +646,33 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 1-CLICK INSTANT RUNNER & DISPATCHER
+    // DISPATCHER
     // =========================================================================
-    private void runCurrentAdNow() {
+    private void loadCurrentAd() {
         if (isAdLoading) {
-            Toast.makeText(this, "Ad request is already in progress... Please wait.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ad request is already in progress...", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (currentNetwork == AdNetwork.LEVELPLAY) {
-            if (IronSource.isInterstitialReady()) {
-                appendLog("🟢 [LEVELPLAY READY] Interstitial is in cache! Showing immediately...");
-                IronSource.showInterstitial(LEVELPLAY_PLACEMENT_INTERSTITIAL);
-                return;
-            }
-
-            // Not ready yet: 1-Click Auto-load & auto-show!
-            isAutoShowPending = true;
-            isAdLoading = true;
-            updateAdState("LOADING & SHOWING...", "#FBBF24");
-            appendLog("⏳ [LEVELPLAY 1-CLICK] Interstitial loading... will auto-show the instant it arrives!");
-            Toast.makeText(this, "Loading LevelPlay Interstitial... Showing automatically.", Toast.LENGTH_SHORT).show();
-
-            IronSource.loadInterstitial();
             loadLevelPlayInterstitial();
-
         } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
-                if (admobInterstitialAd != null) {
-                    appendLog("🟢 [ADMOB READY] Cached! Showing immediately...");
-                    admobInterstitialAd.show(this);
-                    return;
-                }
-                isAutoShowPending = true;
-                isAdLoading = true;
-                updateAdState("LOADING & SHOWING...", "#FBBF24");
-                appendLog("⏳ [ADMOB 1-CLICK] Requesting Interstitial... will show automatically!");
-                Toast.makeText(this, "Loading AdMob Interstitial... Will show automatically.", Toast.LENGTH_SHORT).show();
                 loadAdMobInterstitial();
-
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
-                if (admobRewardedAd != null) {
-                    showAdMobRewarded();
-                    return;
-                }
-                isAutoShowPending = true;
-                isAdLoading = true;
-                updateAdState("LOADING & SHOWING...", "#FBBF24");
                 loadAdMobRewarded();
-            } else {
+            } else if (currentType == AdType.NATIVE) {
                 loadAdMobNative();
             }
         } else {
-            // META
             if (currentType == AdType.INTERSTITIAL) {
-                if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
-                    appendLog("🟢 [META READY] Cached! Showing immediately...");
-                    metaInterstitialAd.show();
-                    return;
-                }
-                isAutoShowPending = true;
-                isAdLoading = true;
-                updateAdState("LOADING & SHOWING...", "#FBBF24");
-                appendLog("⏳ [META 1-CLICK] Requesting Interstitial... will show automatically!");
-                Toast.makeText(this, "Loading Meta Interstitial... Will show automatically.", Toast.LENGTH_SHORT).show();
                 loadMetaInterstitial();
-
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
-                if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
-                    showMetaRewardedInterstitial();
-                    return;
-                }
-                isAutoShowPending = true;
-                isAdLoading = true;
-                updateAdState("LOADING & SHOWING...", "#FBBF24");
                 loadMetaRewardedInterstitial();
-            } else {
+            } else if (currentType == AdType.NATIVE) {
                 loadMetaNativeAd();
             }
         }
-    }
-
-    private void loadCurrentAd() {
-        runCurrentAdNow();
     }
 
     private void showCurrentAd() {
@@ -736,20 +680,20 @@ public class AdTestingActivity extends AppCompatActivity {
             if (IronSource.isInterstitialReady()) {
                 IronSource.showInterstitial(LEVELPLAY_PLACEMENT_INTERSTITIAL);
             } else {
-                runCurrentAdNow();
+                Toast.makeText(this, "Please load LevelPlay Interstitial first", Toast.LENGTH_SHORT).show();
             }
         } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
                 if (admobInterstitialAd != null) {
                     admobInterstitialAd.show(this);
                 } else {
-                    runCurrentAdNow();
+                    Toast.makeText(this, "Please load AdMob Interstitial first", Toast.LENGTH_SHORT).show();
                 }
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
                 if (admobRewardedAd != null) {
                     showAdMobRewarded();
                 } else {
-                    runCurrentAdNow();
+                    Toast.makeText(this, "Please load AdMob Rewarded ad first", Toast.LENGTH_SHORT).show();
                 }
             }
         } else {
@@ -757,13 +701,13 @@ public class AdTestingActivity extends AppCompatActivity {
                 if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
                     metaInterstitialAd.show();
                 } else {
-                    runCurrentAdNow();
+                    Toast.makeText(this, "Please load Meta Interstitial first", Toast.LENGTH_SHORT).show();
                 }
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
                 if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
                     showMetaRewardedInterstitial();
                 } else {
-                    runCurrentAdNow();
+                    Toast.makeText(this, "Please load Rewarded Interstitial first", Toast.LENGTH_SHORT).show();
                 }
             }
         }
