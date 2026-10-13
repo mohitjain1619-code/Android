@@ -54,56 +54,6 @@ public class CreatePostActivity extends BaseActivity {
         postButton = findViewById(R.id.post_button);
         categoryGroup = findViewById(R.id.category_group);
 
-        // Master-level preloading: Start In-App Header Bidding auction immediately on screen open
-        if (!tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().preloadRewardedVideo();
-            AdManager.getInstance().preloadInterstitial(this);
-            AdManager.getInstance().preloadFallbackAds(this);
-        }
-
-        // Keep bidding auction primed while user is typing their message
-        postText.addTextChangedListener(new android.text.TextWatcher() {
-            private boolean isWarmed = false;
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override
-            public void afterTextChanged(android.text.Editable s) {
-                if (!isWarmed && s != null && s.length() >= 5) {
-                    isWarmed = true;
-                    if (!tokenManager.isCommunityAdFree()) {
-                        AdManager.getInstance().preloadRewardedVideo();
-                        AdManager.getInstance().preloadFallbackAds(CreatePostActivity.this);
-                    }
-                }
-            }
-        });
-
-        categoryGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.category_female) {
-                boolean isVerifiedFemale = "female".equalsIgnoreCase(tokenManager.getUserGender()) && tokenManager.isVerified();
-                if (!isVerifiedFemale) {
-                    new AlertDialog.Builder(CreatePostActivity.this)
-                        .setTitle("Premium Audience 👑")
-                        .setMessage("Targeting the Female audience is a premium feature. Would you like to watch a video ad to unlock this selection?")
-                        .setPositiveButton("Watch Ad", (dialog, which) -> {
-                            loadAndShowRewardedAd(() -> {
-                                Toast.makeText(CreatePostActivity.this, "Unlocked Female Audience!", Toast.LENGTH_SHORT).show();
-                            }, () -> {
-                                categoryGroup.check(R.id.category_all);
-                                Toast.makeText(CreatePostActivity.this, "Ad skipped. Resetting selection.", Toast.LENGTH_SHORT).show();
-                            }, () -> {
-                                Toast.makeText(CreatePostActivity.this, "Unlocked Female Audience!", Toast.LENGTH_SHORT).show();
-                            });
-                        })
-                        .setNegativeButton("Cancel", (dialog, which) -> {
-                            categoryGroup.check(R.id.category_all);
-                        })
-                        .setCancelable(false)
-                        .show();
-                }
-            }
-        });
-
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -166,24 +116,7 @@ public class CreatePostActivity extends BaseActivity {
     private void proceedToUpload(final String text, final String category) {
         isPosting = true;
         postButton.setEnabled(false);
-
-        if (tokenManager.isCommunityAdFree()) {
-            executePostUpload(text, category);
-        } else {
-            loadAndShowRewardedAd(() -> {
-                // Success: Ad watched -> upload post
-                executePostUpload(text, category);
-            }, () -> {
-                // User cancelled / skipped ad -> block post
-                isPosting = false;
-                postButton.setEnabled(true);
-                Toast.makeText(CreatePostActivity.this, "Ad skipped or incomplete. Post was not published.", Toast.LENGTH_SHORT).show();
-            }, () -> {
-                // No Fill / Ad Load Error -> ALLOW post creation directly without blocking
-                Toast.makeText(CreatePostActivity.this, "Ad unavailable. Publishing post...", Toast.LENGTH_SHORT).show();
-                executePostUpload(text, category);
-            });
-        }
+        executePostUpload(text, category);
     }
 
     private void executePostUpload(String text, String category) {
@@ -198,9 +131,6 @@ public class CreatePostActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         Toast.makeText(CreatePostActivity.this, "Post uploaded", Toast.LENGTH_SHORT).show();
-                        // Refill cache in background for next activity
-                        AdManager.getInstance().preloadRewardedVideo();
-                        AdManager.getInstance().preloadInterstitial(CreatePostActivity.this);
                         finish();
                         return;
                     }
@@ -226,37 +156,6 @@ public class CreatePostActivity extends BaseActivity {
                 Toast.makeText(CreatePostActivity.this, "Network error", Toast.LENGTH_SHORT).show();
                 isPosting = false;
                 postButton.setEnabled(true);
-            }
-        });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (tokenManager != null && !tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().preloadRewardedVideo();
-            AdManager.getInstance().preloadInterstitial(this);
-            AdManager.getInstance().preloadFallbackAds(this);
-        }
-    }
-
-    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onUserCancelled, Runnable onNoFill) {
-        AdManager.getInstance().showRewardedAd(this, "create_post_reward", new AdManager.RewardedAdCallback() {
-            @Override
-            public void onRewardEarned() {}
-
-            @Override
-            public void onAdDismissed(boolean rewarded) {
-                if (rewarded) {
-                    if (onSuccess != null) runOnUiThread(onSuccess);
-                } else {
-                    if (onUserCancelled != null) runOnUiThread(onUserCancelled);
-                }
-            }
-
-            @Override
-            public void onAdFailed(String reason) {
-                if (onNoFill != null) runOnUiThread(onNoFill);
             }
         });
     }

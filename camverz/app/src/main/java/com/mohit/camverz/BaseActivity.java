@@ -24,7 +24,6 @@ public class BaseActivity extends AppCompatActivity {
 
     private static final boolean ENABLE_SCREENSHOT_PROTECTION = false;
     private static final String TAG = "BaseActivity";
-    private static boolean isIronSourceInitialized = false;
 
     private final BroadcastReceiver unreadCountReceiver = new BroadcastReceiver() {
         @Override
@@ -35,10 +34,6 @@ public class BaseActivity extends AppCompatActivity {
             }
         }
     };
-
-    public static void initializeIronSource(android.app.Activity activity) {
-        AdManager.getInstance().init(activity);
-    }
 
     @Override
     protected void attachBaseContext(Context newBase) {
@@ -113,14 +108,12 @@ public class BaseActivity extends AppCompatActivity {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
 
-        // Initialize AdManager globally across all activities
-        initializeIronSource(this);
+        // Ads removed globally
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        AdManager.getInstance().onResume(this);
         try {
             IntentFilter filter = new IntentFilter(UnreadManager.ACTION_UNREAD_COUNT_CHANGED);
             LocalBroadcastManager.getInstance(this).registerReceiver(unreadCountReceiver, filter);
@@ -134,7 +127,6 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        AdManager.getInstance().onPause(this);
         try {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(unreadCountReceiver);
         } catch (Exception e) {

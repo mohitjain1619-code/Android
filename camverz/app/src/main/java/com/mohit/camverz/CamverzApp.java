@@ -29,27 +29,16 @@ public class CamverzApp extends Application {
             @Override
             public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
                 currentActivity = activity;
-                if (WindowBackBlocker.isAdActivity(activity) || BaseActivity.isAdShowing) {
-                    Log.d(TAG, "🔒 Blocking back press on newly created ad activity: " + activity.getClass().getName());
-                    WindowBackBlocker.blockBack(activity);
-                }
             }
 
             @Override
             public void onActivityStarted(@NonNull Activity activity) {
                 currentActivity = activity;
-                if (WindowBackBlocker.isAdActivity(activity) || BaseActivity.isAdShowing) {
-                    WindowBackBlocker.blockBack(activity);
-                }
             }
 
             @Override
             public void onActivityResumed(@NonNull Activity activity) {
                 currentActivity = activity;
-                if (WindowBackBlocker.isAdActivity(activity) || BaseActivity.isAdShowing) {
-                    Log.d(TAG, "🔒 Blocking back press on resumed ad activity: " + activity.getClass().getName());
-                    WindowBackBlocker.blockBack(activity);
-                }
             }
 
             @Override

@@ -1,170 +1,535 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F172A"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:background="@drawable/bg_page_ambient_gradient">
 
-    <LinearLayout
+    <!-- Top Action Bar -->
+    <RelativeLayout
+        android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:layout_height="56dp"
+        android:paddingHorizontal="16dp">
+
+        <ImageView
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Back"
+            android:padding="8dp"
+            android:src="@drawable/ic_back"
+            app:tint="@color/text_primary" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="12dp"
+            android:layout_toEndOf="@id/btnBack"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ad Testing Dashboard"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHeaderSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Meta Audience Network &amp; Google AdMob"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
         android:padding="16dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ad Testing Dashboard"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="24dp" />
+            android:orientation="vertical">
 
-        <!-- Meta Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Meta (Direct)"
-            android:textColor="#38BDF8"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="8dp" />
-            
-        <Button
-            android:id="@+id/btn_meta_interstitial"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Interstitial"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_meta_rewarded"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Rewarded Video"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_meta_native"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Native Ad"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-
-        <!-- Mediation (LevelPlay Bidding) Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mediation (LevelPlay Bidding)"
-            android:textColor="#38BDF8"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
-            
-        <Button
-            android:id="@+id/btn_lp_interstitial"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Interstitial"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_lp_rewarded"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Rewarded Video"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_lp_native"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Native Ad"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-
-        <!-- AdMob Direct / Waterfall Section -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="AdMob (Direct / Waterfall)"
-            android:textColor="#38BDF8"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
-            
-        <Button
-            android:id="@+id/btn_admob_interstitial"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Interstitial"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_admob_rewarded"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Rewarded Video"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-            
-        <Button
-            android:id="@+id/btn_admob_native"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Load &amp; Show Native Ad"
-            android:backgroundTint="#1E293B"
-            android:textColor="#FFFFFF" />
-
-        <!-- Ad Containers for Native Ads -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Native Ad Preview"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="8dp" />
-
-        <!-- LevelPlay Native Container -->
-        <FrameLayout
-            android:id="@+id/ad_testing_lp_native_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone">
-            <FrameLayout
-                android:id="@+id/ad_testing_lp_native_layout"
+            <!-- 1. Network Selector Switcher (Meta vs AdMob) -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </FrameLayout>
+                android:layout_height="46dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:padding="4dp"
+                android:orientation="horizontal">
 
-        <!-- Meta Native Container -->
-        <FrameLayout
-            android:id="@+id/ad_testing_meta_native_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone" />
+                <TextView
+                    android:id="@+id/tabNetworkMeta"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_primary"
+                    android:gravity="center"
+                    android:text="🌐 Meta Audience"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
-        <!-- AdMob Native Container -->
-        <FrameLayout
-            android:id="@+id/ad_testing_admob_native_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone" />
+                <TextView
+                    android:id="@+id/tabNetworkAdMob"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="🔴 Google AdMob"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-    </LinearLayout>
-</ScrollView>
+            <!-- 2. Format Selector Segment (Tab Switcher) -->
+            <LinearLayout
+                android:id="@+id/layoutFormatTabs"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:padding="4dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/tabInterstitial"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_button_primary"
+                    android:gravity="center"
+                    android:text="🎯 Interstitial"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tabRewarded"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.2"
+                    android:gravity="center"
+                    android:text="🎁 Rewarded"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tabNative"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:text="🖼️ Native"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Card 1: Placement & Configuration Info -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvConfigCardTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PLACEMENT CONFIGURATION"
+                    android:textColor="@color/accent_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvAppIdLabel"
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="Meta App ID:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvAppId"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1045884118260179"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvPlacementIdLabel"
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="Placement ID:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvPlacementId"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="1045884118260179_1063416116506979"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="Ad Format:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvAdFormat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Interstitial (Fullscreen)"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:text="SDK Init Status:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvSdkStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Initializing..."
+                        android:textColor="@color/accent_primary"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Use Google Sample Test Units Toggle (AdMob Only) -->
+                <LinearLayout
+                    android:id="@+id/layoutSampleToggle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <CheckBox
+                        android:id="@+id/cbUseSampleAdUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/accent_primary"
+                        android:text="Use Google Sample Test IDs (Bypass 403)"
+                        android:textColor="@color/text_primary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Card 2: Server-side Test Whitelist Status -->
+            <LinearLayout
+                android:id="@+id/cardWhitelistInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvWhitelistTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="META CONSOLE TEST DEVICES"
+                    android:textColor="@color/accent_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvWhitelistDetails"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="✓ Registered on Meta Monetization Manager:\n • r: b94e5118-43fc-4881-b07b-0ecf44bbb6ee\n • samsung: 1e278238-70d2-418a-acc3-10ca1ad1abe1"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvWhitelistNote"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="No client-side test device overrides needed. Meta servers deliver test ads automatically."
+                    android:textColor="#34D399"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Card 3: Ad Actions & Status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AD CONTROLS"
+                    android:textColor="@color/accent_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <!-- Current Ad State Pill -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Current State:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvAdStateBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="#2634D399"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="IDLE"
+                        android:textColor="#34D399"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Reward Status Pill (Visible for Rewarded Ads) -->
+                <LinearLayout
+                    android:id="@+id/layoutRewardStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Reward Earned:"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvRewardBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="#269CA3AF"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:text="NOT WATCHED"
+                        android:textColor="#9CA3AF"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- Action Buttons -->
+                <Button
+                    android:id="@+id/btnLoadAd"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_button_primary"
+                    android:text="Load Interstitial Ad"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnShowAd"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_button_primary"
+                    android:enabled="false"
+                    android:text="Show Interstitial Ad"
+                    android:textAllCaps="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnResetAd"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_glass_card_premium"
+                    android:text="Reset / Destroy Ad"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Card: Live Native Ad Render View -->
+            <LinearLayout
+                android:id="@+id/cardNativePreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LIVE NATIVE AD DISPLAY"
+                    android:textColor="@color/accent_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <com.facebook.ads.NativeAdLayout
+                    android:id="@+id/nativeAdContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+
+                <FrameLayout
+                    android:id="@+id/admobNativeContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Card 4: Live Event Console -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/bg_glass_card_premium"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="LIVE EVENT CONSOLE"
+                        android:textColor="@color/accent_primary"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/btnClearLogs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:padding="6dp"
+                            android:text="Clear"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/btnCopyLogs"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:padding="6dp"
+                            android:text="Copy"
+                            android:textColor="@color/accent_primary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <ScrollView
+                    android:id="@+id/consoleScrollView"
+                    android:layout_width="match_parent"
+                    android:layout_height="220dp"
+                    android:layout_marginTop="10dp"
+                    android:background="#0D1117"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/tvConsoleLogs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:text="[Ready] Ad Testing Console Initialized.\nSelect Network &amp; Format, then click 'Load Ad'."
+                        android:textColor="#E6EDF3"
+                        android:textSize="11sp" />
+                </ScrollView>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

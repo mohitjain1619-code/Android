@@ -79,7 +79,6 @@ public class ProfileActivity extends BaseActivity {
     
     private ApiService api;
     private TokenManager tokenManager;
-    private android.widget.FrameLayout nativeAdContainer;
     private String activePlanDetails = "";
     private LinearLayout subscriptionCardLayout;
     private TextView tvCardPlanName, tvCardPlanExpiry;
@@ -278,9 +277,6 @@ public class ProfileActivity extends BaseActivity {
 
         checkBlockStatusAndLoad();
         setupUI();
-
-        // Initialize native ad layout (AdMob/Meta)
-        nativeAdContainer = findViewById(R.id.ironsource_native_container);
     }
 
     private void checkBlockStatusAndLoad() {

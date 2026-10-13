@@ -62,10 +62,7 @@ public class MainScreenActivity extends BaseActivity {
     private FrameLayout notificationLayout;
     private TextView notificationBadge;
 
-    private com.google.android.gms.ads.AdView adView;
-    private boolean isRewardedVideoAvailable = false;
     private String pendingCategory = "straight";
-    private boolean isAdLoading = false;
     private RecyclerView storiesRecyclerView;
     private StoriesAdapter storiesAdapter;
     private List<UserStories> userStoriesList = new java.util.ArrayList<>();
@@ -183,7 +180,6 @@ public class MainScreenActivity extends BaseActivity {
                             }
                             checkPreferenceSelection();
                         });
-                        preloadRewardedAd();
                     }
                 } else if (response.code() == 401) {
                     Log.w(TAG, "Sync failed: 401 Unauthorized. Redirecting to LoginActivity...");
@@ -221,7 +217,6 @@ public class MainScreenActivity extends BaseActivity {
             }
             tvUserName.setText(name);
         }
-        preloadRewardedAd();
 
         storiesRecyclerView = findViewById(R.id.storiesRecyclerView);
         if (storiesRecyclerView != null) {
@@ -243,24 +238,8 @@ public class MainScreenActivity extends BaseActivity {
             storiesRecyclerView.setAdapter(storiesAdapter);
         }
 
-        if (tvUserName != null) {
-            tvUserName.setOnLongClickListener(v -> {
-                com.google.android.gms.ads.MobileAds.openAdInspector(this, error -> {
-                    if (error != null) {
-                        android.widget.Toast.makeText(this, "Ad Inspector error: " + error.getMessage(), android.widget.Toast.LENGTH_SHORT).show();
-                    }
-                });
-                return true;
-            });
-        }
-
         if (chipCommunityHub != null) {
             chipCommunityHub.setOnClickListener(v -> {
-                if (!TokenManager.getInstance(this).isCommunityAdFree()) {
-                    AdManager.getInstance().preloadInterstitial(this);
-                    AdManager.getInstance().preloadRewardedVideo();
-                    AdManager.getInstance().preloadFallbackAds(this);
-                }
                 Intent intent = new Intent(MainScreenActivity.this, RealMeetActivity.class);
                 startActivity(intent);
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
@@ -344,10 +323,6 @@ public class MainScreenActivity extends BaseActivity {
             goToConnecting("lesbian");
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
-
-        // Initialize ironSource LevelPlay SDK & Preload Interstitial via AdManager
-        AdManager.getInstance().init(this);
-        AdManager.getInstance().preloadInterstitial(this);
     }
 
 
@@ -375,16 +350,6 @@ public class MainScreenActivity extends BaseActivity {
         PopupMenu popup = new PopupMenu(wrapper, view);
         popup.getMenuInflater().inflate(R.menu.top_menu, popup.getMenu());
 
-        // Allow Ad Testing Dashboard for all users in production
-        String userEmail = tokenManager.getUserEmail();
-        boolean isAdmin = "neerajjain0220@gmail.com".equalsIgnoreCase(userEmail) || 
-                          (userEmail != null && userEmail.contains("admin")) ||
-                          (userEmail != null && userEmail.contains("mohitjain1619"));
-
-        if (!isAdmin) {
-            popup.getMenu().removeItem(R.id.action_mediation_debugger);
-        }
-
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
             if (itemId == R.id.action_logout) {
@@ -395,17 +360,14 @@ public class MainScreenActivity extends BaseActivity {
                 intent.putExtra("is_from_settings", true);
                 startActivity(intent);
                 return true;
-            } else if (itemId == R.id.action_mediation_debugger) {
-                Toast.makeText(this, "Mediation debugger is disabled", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (itemId == R.id.action_ad_testing) {
-                startActivity(new Intent(this, AdTestingActivity.class));
-                return true;
             } else if (itemId == R.id.action_share_app) {
                 shareApp();
                 return true;
             } else if (itemId == R.id.action_rate_app) {
                 openPlayStoreForRating();
+                return true;
+            } else if (itemId == R.id.action_ad_testing) {
+                startActivity(new Intent(this, AdTestingActivity.class));
                 return true;
             }
             return false;
@@ -448,10 +410,6 @@ public class MainScreenActivity extends BaseActivity {
         iconProfile.setColorFilter(Color.parseColor("#9CA3AF"));
         iconImage.setColorFilter(Color.parseColor("#9CA3AF"));
         iconMessage.setColorFilter(Color.parseColor("#9CA3AF"));
-
-        if (AdManager.getInstance().isAdWatchPending(this)) {
-            showForceAdDialog();
-        }
 
         if (tokenManager.isLoggedIn()) {
             try {
@@ -672,13 +630,8 @@ public class MainScreenActivity extends BaseActivity {
 
         long secondsLeft = CallLimitManager.getFreeSecondsLeft(this);
         if (secondsLeft <= 0) {
-            int tier = CallLimitManager.getRewardedTier(this);
-            if (tier == 1 || tier == 2 || tier == 3) {
-                showWatchAdsDialog(onPassed);
-            } else {
-                CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
-                showExceededBlockDialog();
-            }
+            CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
+            showExceededBlockDialog();
             return;
         }
 
@@ -698,91 +651,6 @@ public class MainScreenActivity extends BaseActivity {
                 startActivity(browserIntent);
             })
             .show();
-    }
-
-    private void showWatchAdsDialog(Runnable onPassed) {
-        int watched = CallLimitManager.getRewardedAdsWatched(this);
-        int currentTier = CallLimitManager.getRewardedTier(this);
-        String message;
-        if (currentTier == 1) {
-            message = "Daily free call limit reached.\n\nWatch 3 short video ads to get +5 minutes call time!\n\nAds Watched: " + watched + "/3";
-        } else if (currentTier == 2) {
-            message = "Second call limit reached.\n\nWatch 3 more video ads to get +5 minutes call time!\n\nAds Watched: " + watched + "/3";
-        } else {
-            message = "Third call limit reached.\n\nWatch 3 final video ads to get +5 minutes call time!\n\nAds Watched: " + watched + "/3";
-        }
-
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Call Limit Reached")
-            .setMessage(message)
-            .setCancelable(false)
-            .setPositiveButton("Watch Ad", (dialog, which) -> {
-                loadAndShowRewardedAd(() -> {
-                    CallLimitManager.incrementRewardedAdsWatched(this);
-                    int newWatched = CallLimitManager.getRewardedAdsWatched(this);
-                    if (newWatched >= 3) {
-                        int nextTier = currentTier + 1; // Tier 1 -> 2, Tier 2 -> 3, Tier 3 -> 4
-                        CallLimitManager.setRewardedTier(this, nextTier);
-                        CallLimitManager.addFreeSeconds(this, 300);
-                        CallLimitManager.resetRewardedAdsWatched(this);
-                        Toast.makeText(this, "Success! +5 minutes call time added.", Toast.LENGTH_LONG).show();
-                        onPassed.run();
-                    } else {
-                        showWatchAdsDialog(onPassed);
-                    }
-                }, () -> {
-                    Toast.makeText(this, "Failed to load ad. Please try again.", Toast.LENGTH_SHORT).show();
-                });
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-
-    private void preloadRewardedAd() {
-        if (!TokenManager.getInstance(this).isCommunityAdFree()) {
-            AdManager.getInstance().preloadRewardedVideo();
-            AdManager.getInstance().preloadFallbackAds(this);
-        }
-    }
-
-    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
-        AdManager.getInstance().showRewardedAd(this, "main_screen_reward", new AdManager.RewardedAdCallback() {
-            @Override
-            public void onRewardEarned() {
-                if (onSuccess != null) runOnUiThread(onSuccess);
-            }
-
-            @Override
-            public void onAdDismissed(boolean rewarded) {
-                if (!rewarded && onFailure != null) {
-                    runOnUiThread(onFailure);
-                }
-            }
-
-            @Override
-            public void onAdFailed(String reason) {
-                if (onFailure != null) runOnUiThread(onFailure);
-            }
-        });
-    }
-
-    private void showForceAdDialog() {
-        AdManager.getInstance().showRewardedAd(this, "force_ad_resume", new AdManager.RewardedAdCallback() {
-            @Override
-            public void onRewardEarned() {
-                AdManager.getInstance().setAdWatchPending(false);
-            }
-
-            @Override
-            public void onAdDismissed(boolean rewarded) {
-                AdManager.getInstance().setAdWatchPending(false);
-            }
-
-            @Override
-            public void onAdFailed(String reason) {
-                AdManager.getInstance().setAdWatchPending(false);
-            }
-        });
     }
 
     private void fetchActiveStories() {
@@ -846,10 +714,6 @@ public class MainScreenActivity extends BaseActivity {
         super.onDestroy();
         if (profileUpdateListener != null) {
             ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
-        }
-        if (adView != null) {
-            adView.destroy();
-            adView = null;
         }
         if (socket != null) {
             if (connectListener != null) socket.off(Socket.EVENT_CONNECT, connectListener);

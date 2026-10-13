@@ -1,25 +1,32 @@
 package com.mohit.camverz;
 
-import android.app.ProgressDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
+// Meta Audience Network Imports
 import com.facebook.ads.Ad;
-import com.facebook.ads.AdError;
 import com.facebook.ads.AdOptionsView;
-
-import com.facebook.ads.InterstitialAd;
+import com.facebook.ads.AudienceNetworkAds;
+import com.facebook.ads.BidderTokenProvider;
 import com.facebook.ads.InterstitialAdListener;
 import com.facebook.ads.MediaView;
 import com.facebook.ads.NativeAd;
@@ -30,45 +37,105 @@ import com.facebook.ads.RewardedInterstitialAdListener;
 import com.facebook.ads.RewardedVideoAd;
 import com.facebook.ads.RewardedVideoAdListener;
 
+// Google Mobile Ads (AdMob) Imports
+import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.OnUserEarnedRewardListener;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.nativead.NativeAdView;
-import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
-import com.ironsource.mediationsdk.IronSource;
-import com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView;
-import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd;
-import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener;
-import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
-import com.ironsource.mediationsdk.logger.IronSourceError;
-
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
-/**
- * Production-ready Ad Testing Dashboard for administrators.
- * Provides isolated testing for:
- * 1. Meta Audience Network Direct (Interstitial, Rewarded Video, Native)
- * 2. Mediation via ironSource LevelPlay (Meta, AdMob, Unity Bidding auction)
- * 3. AdMob Direct / Waterfall (Interstitial, Rewarded Video, Native)
- */
-public class AdTestingActivity extends BaseActivity {
+public class AdTestingActivity extends AppCompatActivity {
     private static final String TAG = "AdTestingActivity";
 
-    // Meta Placement IDs
-    public static final String META_INTERSTITIAL_PLACEMENT = "1045884118260179_1063416116506979";
-    public static final String META_REWARDED_PLACEMENT = "1045884118260179_1063416119840312";
-    public static final String META_NATIVE_PLACEMENT = "1045884118260179_1063416113173646";
+    // Meta Configuration
+    public static final String META_APP_ID = "1045884118260179";
+    public static final String META_PLACEMENT_INTERSTITIAL = "1045884118260179_1063416116506979";
+    public static final String META_PLACEMENT_REWARDED_INTERSTITIAL = "1045884118260179_1063416119840312";
+    public static final String META_PLACEMENT_NATIVE = "1045884118260179_1063416113173646";
+
+    // Google AdMob Configuration (Live User Units)
+    public static final String ADMOB_APP_ID = "ca-app-pub-6992986179206821~2715651414";
+    public static final String ADMOB_PLACEMENT_INTERSTITIAL = "ca-app-pub-6992986179206821/9362140189";
+    public static final String ADMOB_PLACEMENT_REWARDED = "ca-app-pub-6992986179206821/2063439948";
+    public static final String ADMOB_PLACEMENT_NATIVE = "ca-app-pub-6992986179206821/9014655823";
+
+    // Google AdMob Universal Sample Test Units (for instant verification if live units are propagating / 403)
+    public static final String ADMOB_SAMPLE_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712";
+    public static final String ADMOB_SAMPLE_REWARDED = "ca-app-pub-3940256099942544/5224354917";
+    public static final String ADMOB_SAMPLE_NATIVE = "ca-app-pub-3940256099942544/2247696110";
+
+    public enum AdNetwork {
+        META,
+        ADMOB
+    }
+
+    public enum AdType {
+        INTERSTITIAL,
+        REWARDED_INTERSTITIAL,
+        NATIVE
+    }
+
+    private AdNetwork currentNetwork = AdNetwork.META;
+    private AdType currentType = AdType.INTERSTITIAL;
+
+    // Network Tabs
+    private TextView tabNetworkMeta;
+    private TextView tabNetworkAdMob;
+
+    // Format Tabs
+    private TextView tabInterstitial;
+    private TextView tabRewarded;
+    private TextView tabNative;
+
+    // Placement info Views
+    private TextView tvAppIdLabel;
+    private TextView tvAppId;
+    private TextView tvPlacementIdLabel;
+    private TextView tvPlacementId;
+    private TextView tvAdFormat;
+    private TextView tvSdkStatus;
+    private TextView tvAdStateBadge;
+    private View layoutRewardStatus;
+    private TextView tvRewardBadge;
+
+    // Sample Test Toggle (AdMob only)
+    private View layoutSampleToggle;
+    private CheckBox cbUseSampleAdUnit;
+
+    // Whitelist / Integration Info Views
+    private TextView tvWhitelistTitle;
+    private TextView tvWhitelistDetails;
+    private TextView tvWhitelistNote;
+
+    // Buttons & Console
+    private Button btnLoadAd;
+    private Button btnShowAd;
+    private Button btnResetAd;
+    private TextView tvConsoleLogs;
+    private ScrollView consoleScrollView;
+
+    // Native Ad Preview Containers
+    private View cardNativePreview;
+    private NativeAdLayout nativeAdContainer;
+    private FrameLayout admobNativeContainer;
 
     // Meta Ad Instances
-    private InterstitialAd metaInterstitialAd;
-    private RewardedVideoAd metaRewardedVideoAd;
+    private com.facebook.ads.InterstitialAd metaInterstitialAd;
     private RewardedInterstitialAd metaRewardedInterstitialAd;
+    private RewardedVideoAd metaRewardedVideoAd;
     private NativeAd metaNativeAd;
 
     // AdMob Ad Instances
@@ -76,746 +143,1362 @@ public class AdTestingActivity extends BaseActivity {
     private RewardedAd admobRewardedAd;
     private com.google.android.gms.ads.nativead.NativeAd admobNativeAd;
 
-    // LevelPlay Native Instance
-    private LevelPlayNativeAd levelPlayNativeAd;
+    private boolean isAdLoading = false;
+    private boolean isRewardEarned = false;
 
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ad_testing);
 
-        // Ensure LevelPlay and mediation adapters are initialized
-        BaseActivity.initializeIronSource(this);
-
-
-
-        if (BuildConfig.DEBUG) {
-            com.ironsource.mediationsdk.integration.IntegrationHelper.validateIntegration(this);
+        // Apply edge-to-edge window insets
+        View topBar = findViewById(R.id.topBar);
+        if (topBar != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, windowInsets) -> {
+                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(v.getPaddingLeft(), insets.top, v.getPaddingRight(), v.getPaddingBottom());
+                return windowInsets;
+            });
         }
 
-        setupMetaButtons();
-        setupLevelPlayMediationButtons();
-        setupAdMobButtons();
+        // Initialize UI components
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+
+        tabNetworkMeta = findViewById(R.id.tabNetworkMeta);
+        tabNetworkAdMob = findViewById(R.id.tabNetworkAdMob);
+
+        tabInterstitial = findViewById(R.id.tabInterstitial);
+        tabRewarded = findViewById(R.id.tabRewarded);
+        tabNative = findViewById(R.id.tabNative);
+
+        tvAppIdLabel = findViewById(R.id.tvAppIdLabel);
+        tvAppId = findViewById(R.id.tvAppId);
+        tvPlacementIdLabel = findViewById(R.id.tvPlacementIdLabel);
+        tvPlacementId = findViewById(R.id.tvPlacementId);
+        tvAdFormat = findViewById(R.id.tvAdFormat);
+        tvSdkStatus = findViewById(R.id.tvSdkStatus);
+        tvAdStateBadge = findViewById(R.id.tvAdStateBadge);
+        layoutRewardStatus = findViewById(R.id.layoutRewardStatus);
+        tvRewardBadge = findViewById(R.id.tvRewardBadge);
+
+        layoutSampleToggle = findViewById(R.id.layoutSampleToggle);
+        cbUseSampleAdUnit = findViewById(R.id.cbUseSampleAdUnit);
+
+        tvWhitelistTitle = findViewById(R.id.tvWhitelistTitle);
+        tvWhitelistDetails = findViewById(R.id.tvWhitelistDetails);
+        tvWhitelistNote = findViewById(R.id.tvWhitelistNote);
+
+        btnLoadAd = findViewById(R.id.btnLoadAd);
+        btnShowAd = findViewById(R.id.btnShowAd);
+        btnResetAd = findViewById(R.id.btnResetAd);
+        tvConsoleLogs = findViewById(R.id.tvConsoleLogs);
+        consoleScrollView = findViewById(R.id.consoleScrollView);
+
+        cardNativePreview = findViewById(R.id.cardNativePreview);
+        nativeAdContainer = findViewById(R.id.nativeAdContainer);
+        admobNativeContainer = findViewById(R.id.admobNativeContainer);
+
+        TextView btnClearLogs = findViewById(R.id.btnClearLogs);
+        TextView btnCopyLogs = findViewById(R.id.btnCopyLogs);
+
+        btnClearLogs.setOnClickListener(v -> tvConsoleLogs.setText(""));
+        btnCopyLogs.setOnClickListener(v -> copyLogsToClipboard());
+
+        // Network switcher
+        tabNetworkMeta.setOnClickListener(v -> selectNetwork(AdNetwork.META));
+        tabNetworkAdMob.setOnClickListener(v -> selectNetwork(AdNetwork.ADMOB));
+
+        // Format switcher
+        tabInterstitial.setOnClickListener(v -> selectAdType(AdType.INTERSTITIAL));
+        tabRewarded.setOnClickListener(v -> selectAdType(AdType.REWARDED_INTERSTITIAL));
+        tabNative.setOnClickListener(v -> selectAdType(AdType.NATIVE));
+
+        cbUseSampleAdUnit.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            updateUiForCurrentSelection();
+            appendLog("ℹ️ [SAMPLE TOGGLE] Sample Test IDs " + (isChecked ? "ENABLED" : "DISABLED"));
+        });
+
+        btnLoadAd.setOnClickListener(v -> loadCurrentAd());
+        btnShowAd.setOnClickListener(v -> showCurrentAd());
+        btnResetAd.setOnClickListener(v -> resetCurrentAd());
+
+        // Initial setup
+        updateUiForCurrentSelection();
+
+        // Initialize SDKs
+        initializeMetaSdk();
+        initializeAdMobSdk();
     }
 
-    private void showToast(String msg) {
-        runOnUiThread(() -> {
-            Toast.makeText(AdTestingActivity.this, msg, Toast.LENGTH_SHORT).show();
-            Log.d(TAG, msg);
+    private void selectNetwork(AdNetwork network) {
+        if (currentNetwork == network) return;
+
+        resetCurrentAd();
+        currentNetwork = network;
+        currentType = AdType.INTERSTITIAL;
+
+        updateUiForCurrentSelection();
+        appendLog("🔄 [NETWORK SWITCH] Selected " + (network == AdNetwork.META ? "Meta Audience Network" : "Google AdMob"));
+    }
+
+    private void selectAdType(AdType type) {
+        if (currentType == type) return;
+
+        resetCurrentAd();
+        currentType = type;
+        updateUiForCurrentSelection();
+        appendLog("🔄 [FORMAT SWITCH] Selected " + getFormatName(type));
+    }
+
+    private String getFormatName(AdType type) {
+        switch (type) {
+            case INTERSTITIAL: return "Interstitial";
+            case REWARDED_INTERSTITIAL: return "Rewarded";
+            case NATIVE: return "Native Ad";
+            default: return "Unknown";
+        }
+    }
+
+    private void updateUiForCurrentSelection() {
+        boolean useSample = cbUseSampleAdUnit.isChecked();
+
+        // 1. Update Network Switcher Tabs
+        if (currentNetwork == AdNetwork.META) {
+            tabNetworkMeta.setBackgroundResource(R.drawable.bg_button_primary);
+            tabNetworkMeta.setTextColor(Color.WHITE);
+            tabNetworkAdMob.setBackground(null);
+            tabNetworkAdMob.setTextColor(Color.parseColor("#9CA3AF"));
+
+            layoutSampleToggle.setVisibility(View.GONE);
+
+            tvAppIdLabel.setText("Meta App ID:");
+            tvAppId.setText(META_APP_ID);
+            tvPlacementIdLabel.setText("Placement ID:");
+
+            tvWhitelistTitle.setText("META CONSOLE TEST DEVICES");
+            tvWhitelistDetails.setText("✓ Registered on Meta Monetization Manager:\n • r: b94e5118-43fc-4881-b07b-0ecf44bbb6ee\n • samsung: 1e278238-70d2-418a-acc3-10ca1ad1abe1");
+            tvWhitelistNote.setText("Meta servers deliver test ads automatically to registered test devices.");
+
+        } else {
+            tabNetworkAdMob.setBackgroundResource(R.drawable.bg_button_primary);
+            tabNetworkAdMob.setTextColor(Color.WHITE);
+            tabNetworkMeta.setBackground(null);
+            tabNetworkMeta.setTextColor(Color.parseColor("#9CA3AF"));
+
+            layoutSampleToggle.setVisibility(View.VISIBLE);
+
+            tvAppIdLabel.setText("AdMob App ID:");
+            tvAppId.setText(ADMOB_APP_ID);
+            tvPlacementIdLabel.setText(useSample ? "Sample Test ID:" : "Live Ad Unit ID:");
+
+            tvWhitelistTitle.setText("GOOGLE ADMOB INTEGRATION");
+            tvWhitelistDetails.setText("✓ Google Mobile Ads (GMA) SDK v23.6.0\n • Interstitial: " + (useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL) + "\n • Rewarded: " + (useSample ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED) + "\n • Native: " + (useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE));
+            tvWhitelistNote.setText("Client Test Devices configured via RequestConfiguration. Use toggle above to test with Google's official sample units if live unit propagation returns 403.");
+        }
+
+        // 2. Update Format Tabs
+        tabInterstitial.setBackground(null);
+        tabInterstitial.setTextColor(Color.parseColor("#9CA3AF"));
+        tabRewarded.setBackground(null);
+        tabRewarded.setTextColor(Color.parseColor("#9CA3AF"));
+        tabNative.setBackground(null);
+        tabNative.setTextColor(Color.parseColor("#9CA3AF"));
+
+        layoutRewardStatus.setVisibility(View.GONE);
+        cardNativePreview.setVisibility(View.GONE);
+        btnShowAd.setVisibility(View.VISIBLE);
+
+        if (currentNetwork == AdNetwork.ADMOB) {
+            if (currentType == AdType.INTERSTITIAL) {
+                tabInterstitial.setBackgroundResource(R.drawable.bg_button_primary);
+                tabInterstitial.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL);
+                tvAdFormat.setText("Interstitial (AdMob Fullscreen)");
+
+                btnLoadAd.setText("Load AdMob Interstitial");
+                btnShowAd.setText("Show AdMob Interstitial");
+
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
+                tabRewarded.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(useSample ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED);
+                tvAdFormat.setText("Rewarded Video (AdMob)");
+                layoutRewardStatus.setVisibility(View.VISIBLE);
+                resetRewardBadge();
+
+                btnLoadAd.setText("Load AdMob Rewarded");
+                btnShowAd.setText("Show AdMob Rewarded");
+
+            } else if (currentType == AdType.NATIVE) {
+                tabNative.setBackgroundResource(R.drawable.bg_button_primary);
+                tabNative.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE);
+                tvAdFormat.setText("Native (AdMob Custom Layout)");
+
+                btnLoadAd.setText("Load AdMob Native Ad");
+                btnShowAd.setVisibility(View.GONE);
+            }
+        } else {
+            if (currentType == AdType.INTERSTITIAL) {
+                tabInterstitial.setBackgroundResource(R.drawable.bg_button_primary);
+                tabInterstitial.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(META_PLACEMENT_INTERSTITIAL);
+                tvAdFormat.setText("Interstitial (Meta Fullscreen)");
+
+                btnLoadAd.setText("Load Meta Interstitial");
+                btnShowAd.setText("Show Meta Interstitial");
+
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
+                tabRewarded.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(META_PLACEMENT_REWARDED_INTERSTITIAL);
+                tvAdFormat.setText("Rewarded Interstitial (Meta Video + Reward)");
+                layoutRewardStatus.setVisibility(View.VISIBLE);
+                resetRewardBadge();
+
+                btnLoadAd.setText("Load Rewarded Interstitial");
+                btnShowAd.setText("Show Rewarded Interstitial");
+
+            } else if (currentType == AdType.NATIVE) {
+                tabNative.setBackgroundResource(R.drawable.bg_button_primary);
+                tabNative.setTextColor(Color.WHITE);
+
+                tvPlacementId.setText(META_PLACEMENT_NATIVE);
+                tvAdFormat.setText("Native (Meta Custom Layout)");
+
+                btnLoadAd.setText("Load Meta Native Ad");
+                btnShowAd.setVisibility(View.GONE);
+            }
+        }
+
+        updateAdState("IDLE", "#34D399");
+    }
+
+    private void resetRewardBadge() {
+        isRewardEarned = false;
+        if (tvRewardBadge != null) {
+            tvRewardBadge.setText("NOT WATCHED");
+            tvRewardBadge.setTextColor(Color.parseColor("#9CA3AF"));
+            tvRewardBadge.setBackgroundColor(Color.parseColor("#269CA3AF"));
+        }
+    }
+
+    private void setRewardEarnedBadge() {
+        isRewardEarned = true;
+        if (tvRewardBadge != null) {
+            tvRewardBadge.setText("🎁 REWARD EARNED ✓");
+            tvRewardBadge.setTextColor(Color.parseColor("#34D399"));
+            tvRewardBadge.setBackgroundColor(Color.parseColor("#2634D399"));
+        }
+    }
+
+    // =========================================================================
+    // SDK INITIALIZATION
+    // =========================================================================
+    private void initializeMetaSdk() {
+        AudienceNetworkAds.buildInitSettings(this)
+            .withInitListener(initResult -> {
+                runOnUiThread(() -> {
+                    if (initResult.isSuccess()) {
+                        if (currentNetwork == AdNetwork.META) {
+                            tvSdkStatus.setText("Initialized (Meta ✓)");
+                            tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+                        }
+                        appendLog("🟢 [META INIT] Meta Audience Network SDK Initialized successfully.");
+                    } else {
+                        appendLog("🔴 [META INIT FAILED] " + initResult.getMessage());
+                    }
+                });
+            })
+            .initialize();
+    }
+
+    private void initializeAdMobSdk() {
+        // Configure Test Devices in RequestConfiguration
+        List<String> testDeviceIds = Arrays.asList(
+            "1e278238-70d2-418a-acc3-10ca1ad1abe1",
+            "b94e5118-43fc-4881-b07b-0ecf44bbb6ee",
+            AdRequest.DEVICE_ID_EMULATOR
+        );
+        RequestConfiguration configuration = new RequestConfiguration.Builder()
+            .setTestDeviceIds(testDeviceIds)
+            .build();
+        MobileAds.setRequestConfiguration(configuration);
+
+        MobileAds.initialize(this, initializationStatus -> {
+            runOnUiThread(() -> {
+                if (currentNetwork == AdNetwork.ADMOB) {
+                    tvSdkStatus.setText("Initialized (AdMob ✓)");
+                    tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+                }
+                appendLog("🟢 [ADMOB INIT] Google Mobile Ads SDK Initialized successfully.");
+            });
         });
     }
 
     // =========================================================================
-    // 1. META AUDIENCE NETWORK (DIRECT)
+    // DISPATCHER
     // =========================================================================
+    private void loadCurrentAd() {
+        if (isAdLoading) {
+            Toast.makeText(this, "Ad request is already in progress...", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-    private void setupMetaButtons() {
-        findViewById(R.id.btn_meta_interstitial).setOnClickListener(v -> testMetaInterstitial());
-        findViewById(R.id.btn_meta_rewarded).setOnClickListener(v -> testMetaRewarded());
-        findViewById(R.id.btn_meta_native).setOnClickListener(v -> testMetaNative());
+        if (currentNetwork == AdNetwork.ADMOB) {
+            if (currentType == AdType.INTERSTITIAL) {
+                loadAdMobInterstitial();
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                loadAdMobRewarded();
+            } else if (currentType == AdType.NATIVE) {
+                loadAdMobNative();
+            }
+        } else {
+            if (currentType == AdType.INTERSTITIAL) {
+                loadMetaInterstitial();
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                loadMetaRewardedInterstitial();
+            } else if (currentType == AdType.NATIVE) {
+                loadMetaNativeAd();
+            }
+        }
     }
 
-    // State flags for anti-flood protection
-    private long lastMetaRewardedRequestTime = 0;
-    private long lastMetaInterstitialRequestTime = 0;
-    private boolean isMetaRewardedLoading = false;
-    private boolean isMetaInterstitialLoading = false;
-
-    private void testMetaInterstitial() {
-        if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
-            showToast("Meta Interstitial already loaded! Showing now...");
-            metaInterstitialAd.show();
-            return;
+    private void showCurrentAd() {
+        if (currentNetwork == AdNetwork.ADMOB) {
+            if (currentType == AdType.INTERSTITIAL) {
+                showAdMobInterstitial();
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                showAdMobRewarded();
+            }
+        } else {
+            if (currentType == AdType.INTERSTITIAL) {
+                showMetaInterstitial();
+            } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                showMetaRewardedInterstitial();
+            }
         }
-
-        if (AdManager.getInstance().isMetaFallbackInterstitialLoaded()) {
-            showToast("Showing cached Meta Interstitial from AdManager...");
-            AdManager.getInstance().showFallbackMetaInterstitialAd(this, success -> {
-                showToast("Meta Interstitial Dismissed (success=" + success + ")");
-            });
-            return;
-        }
-
-        if (isMetaInterstitialLoading || AdManager.getInstance().isMetaFallbackInterstitialLoading()) {
-            showToast("Meta Interstitial is already loading in background. Please wait...");
-            return;
-        }
-
-        long timeSinceLast = System.currentTimeMillis() - lastMetaInterstitialRequestTime;
-        if (timeSinceLast < 30000 && lastMetaInterstitialRequestTime > 0) {
-            long remaining = (30000 - timeSinceLast) / 1000;
-            showToast("Meta SDK requires 30s cooldown. Please wait " + remaining + "s (Prevents Error 1002)");
-            return;
-        }
-        lastMetaInterstitialRequestTime = System.currentTimeMillis();
-        isMetaInterstitialLoading = true;
-
-        showToast("Loading Meta Interstitial (Direct)...");
-        if (metaInterstitialAd != null) {
-            try { metaInterstitialAd.destroy(); } catch (Exception ignored) {}
-        }
-        metaInterstitialAd = new InterstitialAd(this, META_INTERSTITIAL_PLACEMENT);
-        metaInterstitialAd.loadAd(metaInterstitialAd.buildLoadAdConfig().withAdListener(new InterstitialAdListener() {
-            @Override
-            public void onInterstitialDisplayed(Ad ad) {
-                showToast("Meta Interstitial Displayed");
-            }
-
-            @Override
-            public void onInterstitialDismissed(Ad ad) {
-                showToast("Meta Interstitial Dismissed");
-                isMetaInterstitialLoading = false;
-                metaInterstitialAd = null;
-            }
-
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                isMetaInterstitialLoading = false;
-                showToast("Meta Interstitial Error (" + adError.getErrorCode() + "): " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                isMetaInterstitialLoading = false;
-                showToast("Meta Interstitial Loaded! Showing...");
-                if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
-                    metaInterstitialAd.show();
-                }
-            }
-
-            @Override
-            public void onAdClicked(Ad ad) {
-                showToast("Meta Interstitial Clicked");
-            }
-
-            @Override
-            public void onLoggingImpression(Ad ad) {
-                Log.d(TAG, "Meta Interstitial Impression Logged");
-            }
-        }).build());
     }
 
-    private void testMetaRewarded() {
-        if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
-            showToast("Meta Rewarded Video already loaded! Showing now...");
-            metaRewardedVideoAd.show();
-            return;
-        }
+    private void resetCurrentAd() {
+        destroyAdMobInterstitial();
+        destroyAdMobRewarded();
+        destroyAdMobNative();
 
-        if (AdManager.getInstance().isMetaFallbackRewardedLoaded()) {
-            showToast("Showing cached Meta Rewarded Video from AdManager...");
-            AdManager.getInstance().showFallbackMetaRewardedAd(this, new AdManager.RewardedAdCallback() {
-                @Override public void onRewardEarned() { showToast("Meta Reward Earned!"); }
-                @Override public void onAdDismissed(boolean rewarded) { showToast("Meta Rewarded Dismissed (rewarded=" + rewarded + ")"); }
-                @Override public void onAdFailed(String error) { showToast("Meta Show Failed: " + error); }
-            });
-            return;
-        }
+        destroyMetaInterstitial();
+        destroyMetaRewardedAds();
+        destroyMetaNativeAd();
 
-        if (isMetaRewardedLoading || AdManager.getInstance().isMetaFallbackRewardedLoading()) {
-            showToast("Meta Rewarded Video is already loading in background. Please wait...");
-            return;
-        }
+        resetRewardBadge();
 
-        long timeSinceLast = System.currentTimeMillis() - lastMetaRewardedRequestTime;
-        if (timeSinceLast < 30000 && lastMetaRewardedRequestTime > 0) {
-            long remaining = (30000 - timeSinceLast) / 1000;
-            showToast("Meta SDK requires 30s cooldown. Please wait " + remaining + "s (Prevents Error 1002)");
-            return;
-        }
-        lastMetaRewardedRequestTime = System.currentTimeMillis();
-        isMetaRewardedLoading = true;
-
-        showToast("Loading Meta Rewarded Video (Direct)...");
-        if (metaRewardedVideoAd != null) {
-            try { metaRewardedVideoAd.destroy(); } catch (Exception ignored) {}
-        }
-        metaRewardedVideoAd = new RewardedVideoAd(this, META_REWARDED_PLACEMENT);
-        metaRewardedVideoAd.loadAd(metaRewardedVideoAd.buildLoadAdConfig().withAdListener(new RewardedVideoAdListener() {
-            @Override
-            public void onRewardedVideoCompleted() {
-                showToast("Meta Rewarded Video Completed! Reward earned.");
-            }
-
-            @Override
-            public void onLoggingImpression(Ad ad) {
-                Log.d(TAG, "Meta Rewarded Video Impression Logged");
-            }
-
-            @Override
-            public void onRewardedVideoClosed() {
-                showToast("Meta Rewarded Video Closed");
-                isMetaRewardedLoading = false;
-                metaRewardedVideoAd = null;
-            }
-
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                isMetaRewardedLoading = false;
-                String errMsg = adError.getErrorMessage();
-                int errCode = adError.getErrorCode();
-                Log.e(TAG, "Meta Rewarded Video Error (" + errCode + "): " + errMsg);
-
-                // If placement format in console is Rewarded Interstitial rather than Rewarded Video
-                if (errMsg != null && (errMsg.contains("format") || errMsg.contains("display format"))) {
-                    showToast("Format mismatch detected. Testing as Rewarded Interstitial...");
-                    testMetaRewardedInterstitialFallback();
-                } else {
-                    showToast("Meta Rewarded Error (" + errCode + "): " + errMsg);
-                }
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                isMetaRewardedLoading = false;
-                showToast("Meta Rewarded Video Loaded! Showing...");
-                if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
-                    metaRewardedVideoAd.show();
-                }
-            }
-
-            @Override
-            public void onAdClicked(Ad ad) {
-                showToast("Meta Rewarded Video Clicked");
-            }
-        }).build());
-    }
-
-    private void testMetaRewardedInterstitialFallback() {
-        if (metaRewardedInterstitialAd != null) {
-            metaRewardedInterstitialAd.destroy();
-        }
-        metaRewardedInterstitialAd = new RewardedInterstitialAd(this, META_REWARDED_PLACEMENT);
-        metaRewardedInterstitialAd.loadAd(metaRewardedInterstitialAd.buildLoadAdConfig().withAdListener(new RewardedInterstitialAdListener() {
-            @Override
-            public void onRewardedInterstitialCompleted() {
-                showToast("Meta Rewarded Interstitial Completed!");
-            }
-
-            @Override
-            public void onRewardedInterstitialClosed() {
-                showToast("Meta Rewarded Interstitial Closed");
-            }
-
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                showToast("Meta Rewarded Interstitial Error (" + adError.getErrorCode() + "): " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                showToast("Meta Rewarded Interstitial Loaded! Showing...");
-                if (metaRewardedInterstitialAd != null && metaRewardedInterstitialAd.isAdLoaded()) {
-                    metaRewardedInterstitialAd.show();
-                }
-            }
-
-            @Override
-            public void onAdClicked(Ad ad) {
-                showToast("Meta Rewarded Interstitial Clicked");
-            }
-
-            @Override
-            public void onLoggingImpression(Ad ad) {
-                Log.d(TAG, "Meta Rewarded Interstitial Impression Logged");
-            }
-        }).build());
-    }
-
-    private void testMetaNative() {
-        showToast("Loading Meta Native Ad (Direct)...");
-        if (metaNativeAd != null) {
-            metaNativeAd.destroy();
-        }
-        metaNativeAd = new NativeAd(this, META_NATIVE_PLACEMENT);
-        metaNativeAd.loadAd(metaNativeAd.buildLoadAdConfig().withAdListener(new NativeAdListener() {
-            @Override
-            public void onMediaDownloaded(Ad ad) {
-                Log.d(TAG, "Meta Native media downloaded");
-            }
-
-            @Override
-            public void onError(Ad ad, AdError adError) {
-                showToast("Meta Native Error (" + adError.getErrorCode() + "): " + adError.getErrorMessage());
-            }
-
-            @Override
-            public void onAdLoaded(Ad ad) {
-                showToast("Meta Native Loaded! Rendering preview...");
-                inflateMetaNativeAd(metaNativeAd);
-            }
-
-            @Override
-            public void onAdClicked(Ad ad) {
-                showToast("Meta Native Clicked");
-            }
-
-            @Override
-            public void onLoggingImpression(Ad ad) {
-                Log.d(TAG, "Meta Native Impression Logged");
-            }
-        }).build());
-    }
-
-    private void inflateMetaNativeAd(NativeAd ad) {
-        FrameLayout adContainer = findViewById(R.id.ad_testing_meta_native_container);
-        if (adContainer == null || ad == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(View.VISIBLE);
-
-        NativeAdLayout adLayout = new NativeAdLayout(this);
-        adLayout.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
-
-        LinearLayout innerContainer = new LinearLayout(this);
-        innerContainer.setOrientation(LinearLayout.VERTICAL);
-        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        int p = (int) (12 * getResources().getDisplayMetrics().density);
-        innerContainer.setPadding(p, p, p, p);
-
-        // Header with AdChoices icon
-        LinearLayout headerRow = new LinearLayout(this);
-        headerRow.setOrientation(LinearLayout.HORIZONTAL);
-        headerRow.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        MediaView adIconView = new MediaView(this);
-        int iconSize = (int) (40 * getResources().getDisplayMetrics().density);
-        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
-        iconParams.setMarginEnd((int) (8 * getResources().getDisplayMetrics().density));
-        adIconView.setLayoutParams(iconParams);
-        headerRow.addView(adIconView);
-
-        LinearLayout textCol = new LinearLayout(this);
-        textCol.setOrientation(LinearLayout.VERTICAL);
-        textCol.setLayoutParams(new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
-
-        TextView adHeadline = new TextView(this);
-        adHeadline.setText(ad.getAdHeadline());
-        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
-        adHeadline.setTextSize(16);
-        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        textCol.addView(adHeadline);
-
-        TextView adAdvertiser = new TextView(this);
-        adAdvertiser.setText(ad.getAdvertiserName() != null ? ad.getAdvertiserName() : "Sponsored");
-        adAdvertiser.setTextColor(getResources().getColor(R.color.text_secondary));
-        adAdvertiser.setTextSize(12);
-        textCol.addView(adAdvertiser);
-
-        headerRow.addView(textCol);
-
-        AdOptionsView adOptionsView = new AdOptionsView(this, ad, adLayout);
-        headerRow.addView(adOptionsView);
-        innerContainer.addView(headerRow);
-
-        // Media creative
-        MediaView mediaView = new MediaView(this);
-        LinearLayout.LayoutParams mediaParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, (int) (180 * getResources().getDisplayMetrics().density));
-        mediaParams.setMargins(0, (int) (8 * getResources().getDisplayMetrics().density), 0, (int) (8 * getResources().getDisplayMetrics().density));
-        mediaView.setLayoutParams(mediaParams);
-        innerContainer.addView(mediaView);
-
-        // Body text
-        TextView adBody = new TextView(this);
-        adBody.setText(ad.getAdBodyText());
-        adBody.setTextColor(getResources().getColor(R.color.text_secondary));
-        adBody.setTextSize(13);
-        innerContainer.addView(adBody);
-
-        // Call to action button
-        Button callToAction = new Button(this);
-        callToAction.setText(ad.getAdCallToAction() != null ? ad.getAdCallToAction() : "Learn More");
-        callToAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF38BDF8));
-        callToAction.setTextColor(0xFF0F172A);
-        LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        ctaParams.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
-        callToAction.setLayoutParams(ctaParams);
-        innerContainer.addView(callToAction);
-
-        adLayout.addView(innerContainer);
-
-        List<View> clickableViews = new ArrayList<>();
-        clickableViews.add(adHeadline);
-        clickableViews.add(callToAction);
-        clickableViews.add(mediaView);
-
-        ad.registerViewForInteraction(adLayout, mediaView, adIconView, clickableViews);
-        adContainer.addView(adLayout);
+        isAdLoading = false;
+        btnLoadAd.setEnabled(true);
+        btnShowAd.setEnabled(false);
+        updateAdState("IDLE", "#34D399");
+        appendLog("🔄 [RESET] Ad instances cleared and state reset.");
     }
 
     // =========================================================================
-    // 2. LEVELPLAY MEDIATION (META + ADMOB + UNITY BIDDING AUCTION)
+    // 1. GOOGLE ADMOB INTERSTITIAL
     // =========================================================================
+    private void loadAdMobInterstitial() {
+        destroyAdMobInterstitial();
 
-    private void setupLevelPlayMediationButtons() {
-        findViewById(R.id.btn_lp_interstitial).setOnClickListener(v -> testLevelPlayInterstitial());
-        findViewById(R.id.btn_lp_rewarded).setOnClickListener(v -> testLevelPlayRewarded());
-        findViewById(R.id.btn_lp_native).setOnClickListener(v -> testLevelPlayNative());
-    }
+        String adUnitId = cbUseSampleAdUnit.isChecked() ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL;
 
-    private void testLevelPlayInterstitial() {
-        showToast("Requesting LevelPlay Interstitial (Meta/AdMob/Unity Auction)...");
-        if (IronSource.isInterstitialReady()) {
-            showToast("LevelPlay Interstitial ready! Showing...");
-            IronSource.showInterstitial();
-            return;
-        }
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("LOADING (ADMOB)...", "#FBBF24");
 
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Loading LevelPlay Interstitial (Running header bidding)...");
-        progressDialog.setCancelable(true);
-        progressDialog.show();
+        appendLog("📡 [ADMOB REQUEST] Requesting Google AdMob Interstitial Ad...");
+        appendLog("   Ad Unit ID: " + adUnitId);
 
-        AdManager.getInstance().preloadInterstitial(this);
+        try {
+            AdRequest adRequest = new AdRequest.Builder().build();
 
-        final long startTime = System.currentTimeMillis();
-        final Runnable[] checker = new Runnable[1];
-        checker[0] = new Runnable() {
-            @Override
-            public void run() {
-                if (isFinishing() || isDestroyed()) {
-                    safeDismiss(progressDialog);
-                    return;
-                }
-
-                if (IronSource.isInterstitialReady()) {
-                    safeDismiss(progressDialog);
-                    showToast("LevelPlay Interstitial loaded! Showing...");
-                    IronSource.showInterstitial();
-                } else if (System.currentTimeMillis() - startTime < 8000) {
-                    mainHandler.postDelayed(checker[0], 500);
-                } else {
-                    safeDismiss(progressDialog);
-                    showToast("LevelPlay Interstitial load timed out (No Fill from bidding networks)");
-                }
-            }
-        };
-        mainHandler.postDelayed(checker[0], 500);
-    }
-
-    private void testLevelPlayRewarded() {
-        showToast("Requesting LevelPlay Rewarded Video (Meta/AdMob/Unity Auction)...");
-        if (IronSource.isRewardedVideoAvailable()) {
-            showToast("LevelPlay Rewarded Video ready! Showing...");
-            IronSource.showRewardedVideo();
-            return;
-        }
-
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Loading LevelPlay Rewarded Video (Running header bidding)...");
-        progressDialog.setCancelable(true);
-        progressDialog.show();
-
-        AdManager.getInstance().preloadRewardedVideo();
-
-        final long startTime = System.currentTimeMillis();
-        final Runnable[] checker = new Runnable[1];
-        checker[0] = new Runnable() {
-            @Override
-            public void run() {
-                if (isFinishing() || isDestroyed()) {
-                    safeDismiss(progressDialog);
-                    return;
-                }
-
-                if (IronSource.isRewardedVideoAvailable()) {
-                    safeDismiss(progressDialog);
-                    showToast("LevelPlay Rewarded Video loaded! Showing...");
-                    IronSource.showRewardedVideo();
-                } else if (System.currentTimeMillis() - startTime < 8000) {
-                    mainHandler.postDelayed(checker[0], 500);
-                } else {
-                    safeDismiss(progressDialog);
-                    showToast("LevelPlay Rewarded Video load timed out (No Fill from bidding networks)");
-                }
-            }
-        };
-        mainHandler.postDelayed(checker[0], 500);
-    }
-
-    private void testLevelPlayNative() {
-        showToast("Loading LevelPlay Native Ad (Mediation)...");
-        if (levelPlayNativeAd != null) {
-            levelPlayNativeAd.destroyAd();
-        }
-
-        levelPlayNativeAd = new LevelPlayNativeAd.Builder()
-                .withPlacementName("default")
-                .withListener(new LevelPlayNativeAdListener() {
-                    @Override
-                    public void onAdLoaded(LevelPlayNativeAd ad, AdInfo adInfo) {
-                        String network = adInfo != null ? adInfo.getAdNetwork() : "unknown";
-                        showToast("LevelPlay Native Ad Loaded (Winning Network: " + network + ")");
-                        inflateLevelPlayNativeAd(ad);
-                    }
-
-                    @Override
-                    public void onAdLoadFailed(LevelPlayNativeAd ad, IronSourceError error) {
-                        String errMsg = error != null ? error.getErrorMessage() : "Unknown error";
-                        int errCode = error != null ? error.getErrorCode() : -1;
-                        showToast("LevelPlay Native Load Failed (" + errCode + "): " + errMsg);
-                    }
-
-                    @Override
-                    public void onAdClicked(LevelPlayNativeAd ad, AdInfo adInfo) {
-                        showToast("LevelPlay Native Ad Clicked");
-                    }
-
-                    @Override
-                    public void onAdImpression(LevelPlayNativeAd ad, AdInfo adInfo) {
-                        Log.d(TAG, "LevelPlay Native Ad Impression Logged");
-                    }
-                })
-                .build();
-        levelPlayNativeAd.loadAd();
-    }
-
-    private void inflateLevelPlayNativeAd(LevelPlayNativeAd ad) {
-        FrameLayout adContainer = findViewById(R.id.ad_testing_lp_native_container);
-        if (adContainer == null || ad == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(View.VISIBLE);
-
-        com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout = new com.ironsource.mediationsdk.ads.nativead.NativeAdLayout(this);
-        View adView = android.view.LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, nativeAdLayout, true);
-
-        ImageView adIcon = adView.findViewById(R.id.ad_icon);
-        TextView adTitle = adView.findViewById(R.id.ad_title);
-        TextView adAdvertiser = adView.findViewById(R.id.ad_advertiser);
-        TextView adBody = adView.findViewById(R.id.ad_body);
-        LevelPlayMediaView mediaView = adView.findViewById(R.id.ad_media);
-        Button adCta = adView.findViewById(R.id.ad_cta);
-
-        if (ad.getIcon() != null && adIcon != null) {
-            adIcon.setImageDrawable(ad.getIcon().getDrawable());
-        }
-        if (ad.getTitle() != null && adTitle != null) {
-            adTitle.setText(ad.getTitle());
-        }
-        if (ad.getAdvertiser() != null && adAdvertiser != null) {
-            adAdvertiser.setText(ad.getAdvertiser());
-        }
-        if (ad.getBody() != null && adBody != null) {
-            adBody.setText(ad.getBody());
-        }
-        if (ad.getCallToAction() != null && adCta != null) {
-            adCta.setText(ad.getCallToAction());
-        }
-
-        nativeAdLayout.setTitleView(adTitle);
-        nativeAdLayout.setIconView(adIcon);
-        nativeAdLayout.setMediaView(mediaView);
-        nativeAdLayout.setCallToActionView(adCta);
-
-        nativeAdLayout.registerNativeAdViews(ad);
-        adContainer.addView(nativeAdLayout);
-    }
-
-    // =========================================================================
-    // 3. ADMOB DIRECT (WATERFALL)
-    // =========================================================================
-
-    private void setupAdMobButtons() {
-        findViewById(R.id.btn_admob_interstitial).setOnClickListener(v -> testAdMobInterstitial());
-        findViewById(R.id.btn_admob_rewarded).setOnClickListener(v -> testAdMobRewarded());
-        findViewById(R.id.btn_admob_native).setOnClickListener(v -> testAdMobNative());
-    }
-
-    private void testAdMobInterstitial() {
-        showToast("Loading AdMob Interstitial (Direct)...");
-        AdRequest adRequest = new AdRequest.Builder().build();
-        com.google.android.gms.ads.interstitial.InterstitialAd.load(this,
-                getString(R.string.admob_interstitial_ad_unit_id), adRequest,
-                new com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
+            com.google.android.gms.ads.interstitial.InterstitialAd.load(
+                this,
+                adUnitId,
+                adRequest,
+                new InterstitialAdLoadCallback() {
                     @Override
                     public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd) {
-                        showToast("AdMob Interstitial Loaded! Showing...");
-                        admobInterstitialAd = interstitialAd;
-                        admobInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                showToast("AdMob Interstitial Dismissed");
-                            }
+                        runOnUiThread(() -> {
+                            isAdLoading = false;
+                            admobInterstitialAd = interstitialAd;
+                            btnLoadAd.setEnabled(true);
+                            btnShowAd.setEnabled(true);
+                            updateAdState("LOADED (ADMOB READY)", "#34D399");
 
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
-                                showToast("AdMob Show Failed: " + adError.getMessage());
-                            }
+                            appendLog("🟢 [ADMOB LOADED] InterstitialAd.load() successful!");
+                            appendLog("   Ad is ready to display. Click 'Show AdMob Interstitial'.");
+                            Toast.makeText(AdTestingActivity.this, "AdMob Interstitial Loaded!", Toast.LENGTH_SHORT).show();
 
-                            @Override
-                            public void onAdShowedFullScreenContent() {
-                                showToast("AdMob Interstitial Displayed");
-                            }
+                            setupAdMobInterstitialCallbacks();
                         });
-                        admobInterstitialAd.show(AdTestingActivity.this);
                     }
 
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        showToast("AdMob Interstitial Load Failed (" + loadAdError.getCode() + "): " + loadAdError.getMessage());
-                        admobInterstitialAd = null;
+                        runOnUiThread(() -> {
+                            isAdLoading = false;
+                            admobInterstitialAd = null;
+                            btnLoadAd.setEnabled(true);
+                            btnShowAd.setEnabled(false);
+
+                            int code = loadAdError.getCode();
+                            String message = loadAdError.getMessage();
+                            String explanation = getAdMobErrorExplanation(code);
+
+                            updateAdState("FAILED (CODE " + code + ")", "#EF4444");
+                            appendLog("🔴 [ADMOB ERROR] onAdFailedToLoad() received:");
+                            appendLog("   Code: " + code + " (" + explanation + ")");
+                            appendLog("   Message: " + message);
+
+                            Toast.makeText(AdTestingActivity.this, "AdMob Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
+                        });
                     }
-                });
+                }
+            );
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            btnShowAd.setEnabled(false);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [ADMOB EXCEPTION] " + e.getMessage());
+            Log.e(TAG, "Error loading AdMob interstitial", e);
+        }
     }
 
-    private void testAdMobRewarded() {
-        showToast("Loading AdMob Rewarded Video (Direct)...");
-        AdRequest adRequest = new AdRequest.Builder().build();
-        RewardedAd.load(this, getString(R.string.admob_rewarded_ad_unit_id), adRequest,
+    private void setupAdMobInterstitialCallbacks() {
+        if (admobInterstitialAd == null) return;
+
+        admobInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdShowedFullScreenContent() {
+                runOnUiThread(() -> {
+                    updateAdState("DISPLAYING (ADMOB)", "#60A5FA");
+                    appendLog("🔵 [ADMOB DISPLAYED] Interstitial presented fullscreen.");
+                });
+            }
+
+            @Override
+            public void onAdImpression() {
+                runOnUiThread(() -> {
+                    appendLog("🟣 [ADMOB IMPRESSION] Verified impression recorded by Google AdMob servers.");
+                });
+            }
+
+            @Override
+            public void onAdClicked() {
+                runOnUiThread(() -> {
+                    appendLog("🟡 [ADMOB CLICKED] User clicked on AdMob Interstitial.");
+                });
+            }
+
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                runOnUiThread(() -> {
+                    btnShowAd.setEnabled(false);
+                    btnLoadAd.setEnabled(true);
+                    updateAdState("DISMISSED / IDLE", "#9CA3AF");
+
+                    appendLog("⚪ [ADMOB DISMISSED] User closed AdMob Interstitial.");
+                    Toast.makeText(AdTestingActivity.this, "AdMob Ad Closed.", Toast.LENGTH_SHORT).show();
+                    destroyAdMobInterstitial();
+                });
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                runOnUiThread(() -> {
+                    btnShowAd.setEnabled(false);
+                    btnLoadAd.setEnabled(true);
+                    updateAdState("SHOW FAILED", "#EF4444");
+
+                    appendLog("🔴 [ADMOB SHOW FAILED] " + adError.getMessage() + " (Code: " + adError.getCode() + ")");
+                    destroyAdMobInterstitial();
+                });
+            }
+        });
+    }
+
+    private void showAdMobInterstitial() {
+        if (admobInterstitialAd != null) {
+            appendLog("▶️ [ADMOB SHOW] Presenting Google AdMob Interstitial...");
+            admobInterstitialAd.show(this);
+        } else {
+            Toast.makeText(this, "AdMob ad is not ready. Please click Load first.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void destroyAdMobInterstitial() {
+        admobInterstitialAd = null;
+    }
+
+    // =========================================================================
+    // 2. GOOGLE ADMOB REWARDED
+    // =========================================================================
+    private void loadAdMobRewarded() {
+        destroyAdMobRewarded();
+        resetRewardBadge();
+
+        String adUnitId = cbUseSampleAdUnit.isChecked() ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED;
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("LOADING REWARDED...", "#FBBF24");
+
+        appendLog("📡 [ADMOB REQUEST] Requesting Google AdMob Rewarded Ad...");
+        appendLog("   Ad Unit ID: " + adUnitId);
+
+        try {
+            AdRequest adRequest = new AdRequest.Builder().build();
+
+            RewardedAd.load(
+                this,
+                adUnitId,
+                adRequest,
                 new RewardedAdLoadCallback() {
                     @Override
-                    public void onAdLoaded(@NonNull RewardedAd ad) {
-                        showToast("AdMob Rewarded Video Loaded! Showing...");
-                        admobRewardedAd = ad;
-                        admobRewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                            @Override
-                            public void onAdDismissedFullScreenContent() {
-                                showToast("AdMob Rewarded Dismissed");
-                            }
+                    public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
+                        runOnUiThread(() -> {
+                            isAdLoading = false;
+                            admobRewardedAd = rewardedAd;
+                            btnLoadAd.setEnabled(true);
+                            btnShowAd.setEnabled(true);
+                            updateAdState("LOADED (REWARDED READY)", "#34D399");
 
-                            @Override
-                            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
-                                showToast("AdMob Rewarded Show Failed: " + adError.getMessage());
-                            }
+                            appendLog("🟢 [ADMOB REWARDED LOADED] RewardedAd.load() successful!");
+                            Toast.makeText(AdTestingActivity.this, "AdMob Rewarded Loaded!", Toast.LENGTH_SHORT).show();
 
-                            @Override
-                            public void onAdShowedFullScreenContent() {
-                                showToast("AdMob Rewarded Displayed");
-                            }
-                        });
-                        admobRewardedAd.show(AdTestingActivity.this, new OnUserEarnedRewardListener() {
-                            @Override
-                            public void onUserEarnedReward(@NonNull RewardItem rewardItem) {
-                                showToast("AdMob Reward Earned: " + rewardItem.getAmount() + " " + rewardItem.getType());
-                            }
+                            setupAdMobRewardedCallbacks();
                         });
                     }
 
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        showToast("AdMob Rewarded Load Failed (" + loadAdError.getCode() + "): " + loadAdError.getMessage());
-                        admobRewardedAd = null;
+                        runOnUiThread(() -> {
+                            isAdLoading = false;
+                            admobRewardedAd = null;
+                            btnLoadAd.setEnabled(true);
+                            btnShowAd.setEnabled(false);
+
+                            int code = loadAdError.getCode();
+                            String message = loadAdError.getMessage();
+                            String explanation = getAdMobErrorExplanation(code);
+
+                            updateAdState("FAILED (CODE " + code + ")", "#EF4444");
+                            appendLog("🔴 [ADMOB ERROR] onAdFailedToLoad() received:");
+                            appendLog("   Code: " + code + " (" + explanation + ")");
+                            appendLog("   Message: " + message);
+
+                            Toast.makeText(AdTestingActivity.this, "AdMob Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
+                        });
                     }
-                });
+                }
+            );
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            btnShowAd.setEnabled(false);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [ADMOB EXCEPTION] " + e.getMessage());
+        }
     }
 
-    private void testAdMobNative() {
-        showToast("Loading AdMob Native Ad (Direct)...");
-        AdLoader adLoader = new AdLoader.Builder(this, getString(R.string.admob_native_ad_unit_id))
-                .forNativeAd(new com.google.android.gms.ads.nativead.NativeAd.OnNativeAdLoadedListener() {
-                    @Override
-                    public void onNativeAdLoaded(@NonNull com.google.android.gms.ads.nativead.NativeAd ad) {
-                        if (isFinishing() || isDestroyed()) {
-                            ad.destroy();
-                            return;
-                        }
-                        showToast("AdMob Native Loaded! Rendering preview...");
-                        admobNativeAd = ad;
-                        inflateAdMobNativeAd(ad);
-                    }
+    private void setupAdMobRewardedCallbacks() {
+        if (admobRewardedAd == null) return;
+
+        admobRewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdShowedFullScreenContent() {
+                runOnUiThread(() -> {
+                    updateAdState("DISPLAYING (REWARDED)", "#60A5FA");
+                    appendLog("🔵 [ADMOB DISPLAYED] Rewarded video presented fullscreen.");
+                });
+            }
+
+            @Override
+            public void onAdImpression() {
+                runOnUiThread(() -> {
+                    appendLog("🟣 [ADMOB IMPRESSION] Rewarded Ad verified impression logged.");
+                });
+            }
+
+            @Override
+            public void onAdClicked() {
+                runOnUiThread(() -> {
+                    appendLog("🟡 [ADMOB CLICKED] User clicked on Rewarded Ad.");
+                });
+            }
+
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                runOnUiThread(() -> {
+                    btnShowAd.setEnabled(false);
+                    btnLoadAd.setEnabled(true);
+                    updateAdState("DISMISSED / IDLE", "#9CA3AF");
+
+                    appendLog("⚪ [ADMOB DISMISSED] Rewarded ad dismissed by user.");
+                    destroyAdMobRewarded();
+                });
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                runOnUiThread(() -> {
+                    btnShowAd.setEnabled(false);
+                    btnLoadAd.setEnabled(true);
+                    updateAdState("SHOW FAILED", "#EF4444");
+                    appendLog("🔴 [ADMOB SHOW FAILED] " + adError.getMessage());
+                    destroyAdMobRewarded();
+                });
+            }
+        });
+    }
+
+    private void showAdMobRewarded() {
+        if (admobRewardedAd != null) {
+            appendLog("▶️ [ADMOB SHOW] Presenting Google AdMob Rewarded Video...");
+            admobRewardedAd.show(this, rewardItem -> {
+                runOnUiThread(() -> {
+                    setRewardEarnedBadge();
+                    appendLog("🎁 [ADMOB REWARD EARNED] User successfully watched ad!");
+                    appendLog("   Reward Amount: " + rewardItem.getAmount() + " Type: " + rewardItem.getType());
+                    Toast.makeText(AdTestingActivity.this, "🎁 Reward Earned: " + rewardItem.getAmount() + " " + rewardItem.getType(), Toast.LENGTH_LONG).show();
+                });
+            });
+        } else {
+            Toast.makeText(this, "AdMob Rewarded ad is not ready. Please click Load first.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void destroyAdMobRewarded() {
+        admobRewardedAd = null;
+    }
+
+    // =========================================================================
+    // 3. GOOGLE ADMOB NATIVE
+    // =========================================================================
+    private void loadAdMobNative() {
+        destroyAdMobNative();
+
+        String adUnitId = cbUseSampleAdUnit.isChecked() ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE;
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        updateAdState("LOADING ADMOB NATIVE...", "#FBBF24");
+
+        appendLog("📡 [ADMOB REQUEST] Requesting Google AdMob Native Ad...");
+        appendLog("   Ad Unit ID: " + adUnitId);
+
+        try {
+            AdLoader adLoader = new AdLoader.Builder(this, adUnitId)
+                .forNativeAd(nativeAd -> {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        admobNativeAd = nativeAd;
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("LOADED & DISPLAYED", "#34D399");
+
+                        appendLog("🟢 [ADMOB NATIVE LOADED] NativeAd returned successfully!");
+                        renderAdMobNativeAd(nativeAd);
+                        Toast.makeText(AdTestingActivity.this, "AdMob Native Ad Rendered!", Toast.LENGTH_SHORT).show();
+                    });
                 })
-                .withAdListener(new com.google.android.gms.ads.AdListener() {
+                .withAdListener(new AdListener() {
                     @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError adError) {
-                        showToast("AdMob Native Failed to Load (" + adError.getCode() + "): " + adError.getMessage());
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        runOnUiThread(() -> {
+                            isAdLoading = false;
+                            btnLoadAd.setEnabled(true);
+                            updateAdState("FAILED (CODE " + loadAdError.getCode() + ")", "#EF4444");
+
+                            int code = loadAdError.getCode();
+                            String message = loadAdError.getMessage();
+                            String explanation = getAdMobErrorExplanation(code);
+
+                            appendLog("🔴 [ADMOB NATIVE ERROR] onAdFailedToLoad() received:");
+                            appendLog("   Code: " + code + " (" + explanation + ")");
+                            appendLog("   Message: " + message);
+
+                            Toast.makeText(AdTestingActivity.this, "AdMob Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
+                        });
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        runOnUiThread(() -> appendLog("🟣 [ADMOB NATIVE IMPRESSION] Impression recorded by Google servers."));
+                    }
+
+                    @Override
+                    public void onAdClicked() {
+                        runOnUiThread(() -> appendLog("🟡 [ADMOB NATIVE CLICKED] User clicked on Native Ad."));
                     }
                 })
                 .build();
-        adLoader.loadAd(new AdRequest.Builder().build());
+
+            adLoader.loadAd(new AdRequest.Builder().build());
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [ADMOB NATIVE EXCEPTION] " + e.getMessage());
+        }
     }
 
-    private void inflateAdMobNativeAd(com.google.android.gms.ads.nativead.NativeAd ad) {
-        FrameLayout adContainer = findViewById(R.id.ad_testing_admob_native_container);
-        if (adContainer == null || ad == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(View.VISIBLE);
+    private void renderAdMobNativeAd(com.google.android.gms.ads.nativead.NativeAd nativeAd) {
+        try {
+            cardNativePreview.setVisibility(View.VISIBLE);
+            nativeAdContainer.setVisibility(View.GONE);
+            admobNativeContainer.setVisibility(View.VISIBLE);
+            admobNativeContainer.removeAllViews();
 
-        NativeAdView adView = new NativeAdView(this);
-        adView.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
+            NativeAdView adView = (NativeAdView) LayoutInflater.from(this).inflate(R.layout.layout_admob_native_ad, admobNativeContainer, false);
 
-        LinearLayout innerContainer = new LinearLayout(this);
-        innerContainer.setOrientation(LinearLayout.VERTICAL);
-        innerContainer.setBackgroundResource(R.drawable.bg_glass_card_premium);
-        int p = (int) (12 * getResources().getDisplayMetrics().density);
-        innerContainer.setPadding(p, p, p, p);
+            // Bind views to NativeAdView
+            adView.setHeadlineView(adView.findViewById(R.id.ad_headline));
+            adView.setBodyView(adView.findViewById(R.id.ad_body));
+            adView.setCallToActionView(adView.findViewById(R.id.ad_call_to_action));
+            adView.setIconView(adView.findViewById(R.id.ad_app_icon));
+            adView.setAdvertiserView(adView.findViewById(R.id.ad_advertiser));
+            adView.setMediaView(adView.findViewById(R.id.ad_media));
 
-        // Headline
-        TextView adHeadline = new TextView(this);
-        adHeadline.setText(ad.getHeadline());
-        adHeadline.setTextColor(getResources().getColor(R.color.text_primary));
-        adHeadline.setTextSize(16);
-        adHeadline.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        innerContainer.addView(adHeadline);
-        adView.setHeadlineView(adHeadline);
+            // Populate text & content
+            ((TextView) adView.getHeadlineView()).setText(nativeAd.getHeadline());
 
-        // MediaView
-        com.google.android.gms.ads.nativead.MediaView mediaView = new com.google.android.gms.ads.nativead.MediaView(this);
-        LinearLayout.LayoutParams mediaParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, (int) (180 * getResources().getDisplayMetrics().density));
-        mediaParams.setMargins(0, (int) (8 * getResources().getDisplayMetrics().density), 0, (int) (8 * getResources().getDisplayMetrics().density));
-        mediaView.setLayoutParams(mediaParams);
-        innerContainer.addView(mediaView);
-        adView.setMediaView(mediaView);
+            if (nativeAd.getBody() != null) {
+                ((TextView) adView.getBodyView()).setText(nativeAd.getBody());
+                adView.getBodyView().setVisibility(View.VISIBLE);
+            } else {
+                adView.getBodyView().setVisibility(View.GONE);
+            }
 
-        // Body text
-        if (ad.getBody() != null) {
-            TextView adBody = new TextView(this);
-            adBody.setText(ad.getBody());
-            adBody.setTextColor(getResources().getColor(R.color.text_secondary));
-            adBody.setTextSize(13);
-            innerContainer.addView(adBody);
-            adView.setBodyView(adBody);
+            if (nativeAd.getCallToAction() != null) {
+                ((Button) adView.getCallToActionView()).setText(nativeAd.getCallToAction());
+                adView.getCallToActionView().setVisibility(View.VISIBLE);
+            } else {
+                adView.getCallToActionView().setVisibility(View.GONE);
+            }
+
+            if (nativeAd.getIcon() != null && nativeAd.getIcon().getDrawable() != null) {
+                ((ImageView) adView.getIconView()).setImageDrawable(nativeAd.getIcon().getDrawable());
+                adView.getIconView().setVisibility(View.VISIBLE);
+            } else {
+                adView.getIconView().setVisibility(View.GONE);
+            }
+
+            if (nativeAd.getAdvertiser() != null) {
+                ((TextView) adView.getAdvertiserView()).setText(nativeAd.getAdvertiser());
+                adView.getAdvertiserView().setVisibility(View.VISIBLE);
+            } else {
+                adView.getAdvertiserView().setVisibility(View.GONE);
+            }
+
+            // Register native ad with view
+            adView.setNativeAd(nativeAd);
+
+            admobNativeContainer.addView(adView);
+            appendLog("🖼️ [ADMOB NATIVE RENDERED] Native Ad assets bound and operationalized.");
+
+        } catch (Exception e) {
+            appendLog("❌ [ADMOB RENDER EXCEPTION] " + e.getMessage());
         }
-
-        // Call to action
-        if (ad.getCallToAction() != null) {
-            Button callToAction = new Button(this);
-            callToAction.setText(ad.getCallToAction());
-            callToAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF38BDF8));
-            callToAction.setTextColor(0xFF0F172A);
-            LinearLayout.LayoutParams ctaParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            ctaParams.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
-            callToAction.setLayoutParams(ctaParams);
-            innerContainer.addView(callToAction);
-            adView.setCallToActionView(callToAction);
-        }
-
-        adView.addView(innerContainer);
-        adView.setNativeAd(ad);
-
-        adContainer.addView(adView);
     }
 
-    private void safeDismiss(ProgressDialog dialog) {
-        if (dialog != null && dialog.isShowing() && !isFinishing() && !isDestroyed()) {
+    private void destroyAdMobNative() {
+        if (admobNativeAd != null) {
             try {
-                dialog.dismiss();
+                admobNativeAd.destroy();
             } catch (Exception ignored) {}
+            admobNativeAd = null;
+        }
+        if (admobNativeContainer != null) {
+            admobNativeContainer.removeAllViews();
+            admobNativeContainer.setVisibility(View.GONE);
+        }
+        if (cardNativePreview != null && (metaNativeAd == null)) {
+            cardNativePreview.setVisibility(View.GONE);
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        IronSource.onResume(this);
+    // =========================================================================
+    // 4. META INTERSTITIAL
+    // =========================================================================
+    private void loadMetaInterstitial() {
+        destroyMetaInterstitial();
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("LOADING...", "#FBBF24");
+
+        appendLog("📡 [META REQUEST] Requesting Meta Interstitial Ad...");
+        appendLog("   Placement ID: " + META_PLACEMENT_INTERSTITIAL);
+
+        try {
+            metaInterstitialAd = new com.facebook.ads.InterstitialAd(this, META_PLACEMENT_INTERSTITIAL);
+
+            InterstitialAdListener listener = new InterstitialAdListener() {
+                @Override
+                public void onAdLoaded(Ad ad) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(true);
+                        updateAdState("LOADED (READY)", "#34D399");
+
+                        appendLog("🟢 [META LOADED] onAdLoaded() received!");
+                        Toast.makeText(AdTestingActivity.this, "Meta Interstitial Loaded!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onError(Ad ad, com.facebook.ads.AdError adError) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+                        updateAdState("FAILED (" + adError.getErrorCode() + ")", "#EF4444");
+
+                        int code = adError.getErrorCode();
+                        String message = adError.getErrorMessage();
+                        String explanation = getMetaErrorExplanation(code);
+
+                        appendLog("🔴 [META ERROR] onError() received:");
+                        appendLog("   Code: " + code + " (" + explanation + ")");
+                        appendLog("   Message: " + message);
+
+                        Toast.makeText(AdTestingActivity.this, "Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onInterstitialDisplayed(Ad ad) {
+                    runOnUiThread(() -> {
+                        updateAdState("DISPLAYING", "#60A5FA");
+                        appendLog("🔵 [META DISPLAYED] Interstitial ad presented fullscreen.");
+                    });
+                }
+
+                @Override
+                public void onLoggingImpression(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟣 [META IMPRESSION] Verified impression recorded."));
+                }
+
+                @Override
+                public void onAdClicked(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟡 [META CLICKED] User clicked on the interstitial ad."));
+                }
+
+                @Override
+                public void onInterstitialDismissed(Ad ad) {
+                    runOnUiThread(() -> {
+                        btnShowAd.setEnabled(false);
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("DISMISSED / IDLE", "#9CA3AF");
+
+                        appendLog("⚪ [META DISMISSED] User closed the ad.");
+                        Toast.makeText(AdTestingActivity.this, "Ad closed.", Toast.LENGTH_SHORT).show();
+                        destroyMetaInterstitial();
+                    });
+                }
+            };
+
+            metaInterstitialAd.loadAd(
+                metaInterstitialAd.buildLoadAdConfig()
+                    .withAdListener(listener)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            btnShowAd.setEnabled(false);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [META EXCEPTION] " + e.getMessage());
+        }
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        IronSource.onPause(this);
+    private void showMetaInterstitial() {
+        if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded() && !metaInterstitialAd.isAdInvalidated()) {
+            appendLog("▶️ [META SHOW] Presenting Meta Interstitial Ad...");
+            metaInterstitialAd.show();
+        } else {
+            Toast.makeText(this, "Meta ad is not ready. Please click Load first.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void destroyMetaInterstitial() {
+        if (metaInterstitialAd != null) {
+            try {
+                metaInterstitialAd.destroy();
+            } catch (Exception ignored) {}
+            metaInterstitialAd = null;
+        }
+    }
+
+    // =========================================================================
+    // 5. META REWARDED INTERSTITIAL
+    // =========================================================================
+    private void loadMetaRewardedInterstitial() {
+        destroyMetaRewardedAds();
+        resetRewardBadge();
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("LOADING...", "#FBBF24");
+
+        appendLog("📡 [META REQUEST] Requesting Meta Rewarded Interstitial Ad...");
+        appendLog("   Placement ID: " + META_PLACEMENT_REWARDED_INTERSTITIAL);
+
+        try {
+            metaRewardedInterstitialAd = new RewardedInterstitialAd(this, META_PLACEMENT_REWARDED_INTERSTITIAL);
+
+            RewardedInterstitialAdListener listener = new RewardedInterstitialAdListener() {
+                @Override
+                public void onAdLoaded(Ad ad) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(true);
+                        updateAdState("LOADED (READY)", "#34D399");
+
+                        appendLog("🟢 [META LOADED] Rewarded Interstitial loaded and ready.");
+                        Toast.makeText(AdTestingActivity.this, "Rewarded Ad Loaded Successfully!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onError(Ad ad, com.facebook.ads.AdError adError) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+
+                        int code = adError.getErrorCode();
+                        String message = adError.getErrorMessage();
+                        String explanation = getMetaErrorExplanation(code);
+
+                        if (code == 1011) {
+                            appendLog("⚠️ [FORMAT MISMATCH 1011] Attempting RewardedVideoAd loader fallback...");
+                            loadMetaRewardedVideoFallback();
+                            return;
+                        }
+
+                        updateAdState("FAILED (" + code + ")", "#EF4444");
+                        appendLog("🔴 [META ERROR] Code: " + code + " (" + explanation + ") - " + message);
+                        Toast.makeText(AdTestingActivity.this, "Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onLoggingImpression(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟣 [META IMPRESSION] Verified impression recorded."));
+                }
+
+                @Override
+                public void onAdClicked(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟡 [META CLICKED] User clicked on rewarded ad."));
+                }
+
+                @Override
+                public void onRewardedInterstitialCompleted() {
+                    runOnUiThread(() -> {
+                        setRewardEarnedBadge();
+                        appendLog("🎁 [REWARD EARNED] User successfully completed video! Reward verified.");
+                        Toast.makeText(AdTestingActivity.this, "🎁 Reward Earned!", Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onRewardedInterstitialClosed() {
+                    runOnUiThread(() -> {
+                        btnShowAd.setEnabled(false);
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("CLOSED / IDLE", "#9CA3AF");
+
+                        appendLog("⚪ [META CLOSED] Rewarded ad closed by user.");
+                        destroyMetaRewardedAds();
+                    });
+                }
+            };
+
+            metaRewardedInterstitialAd.loadAd(
+                metaRewardedInterstitialAd.buildLoadAdConfig()
+                    .withAdListener(listener)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            btnShowAd.setEnabled(false);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [META EXCEPTION] " + e.getMessage());
+        }
+    }
+
+    private void loadMetaRewardedVideoFallback() {
+        destroyMetaRewardedAds();
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("LOADING (RV)...", "#FBBF24");
+
+        try {
+            metaRewardedVideoAd = new RewardedVideoAd(this, META_PLACEMENT_REWARDED_INTERSTITIAL);
+
+            RewardedVideoAdListener rvListener = new RewardedVideoAdListener() {
+                @Override
+                public void onAdLoaded(Ad ad) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(true);
+                        updateAdState("LOADED (RV)", "#34D399");
+                        appendLog("🟢 [META LOADED] Loaded via RewardedVideoAd!");
+                    });
+                }
+
+                @Override
+                public void onError(Ad ad, com.facebook.ads.AdError adError) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+                        updateAdState("FAILED (" + adError.getErrorCode() + ")", "#EF4444");
+                        appendLog("🔴 [RV ERROR] " + adError.getErrorCode() + ": " + adError.getErrorMessage());
+                    });
+                }
+
+                @Override
+                public void onLoggingImpression(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟣 [IMPRESSION] Rewarded Video impression logged."));
+                }
+
+                @Override
+                public void onAdClicked(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟡 [CLICKED] Rewarded Video clicked."));
+                }
+
+                @Override
+                public void onRewardedVideoCompleted() {
+                    runOnUiThread(() -> {
+                        setRewardEarnedBadge();
+                        appendLog("🎁 [REWARD EARNED] Rewarded Video completed!");
+                    });
+                }
+
+                @Override
+                public void onRewardedVideoClosed() {
+                    runOnUiThread(() -> {
+                        btnShowAd.setEnabled(false);
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("CLOSED / IDLE", "#9CA3AF");
+                        destroyMetaRewardedAds();
+                    });
+                }
+            };
+
+            metaRewardedVideoAd.loadAd(
+                metaRewardedVideoAd.buildLoadAdConfig()
+                    .withAdListener(rvListener)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            btnShowAd.setEnabled(false);
+            updateAdState("EXCEPTION", "#EF4444");
+        }
+    }
+
+    private void showMetaRewardedInterstitial() {
+        if (metaRewardedInterstitialAd != null && metaRewardedInterstitialAd.isAdLoaded() && !metaRewardedInterstitialAd.isAdInvalidated()) {
+            appendLog("▶️ [META SHOW] Presenting Meta Rewarded Interstitial Ad...");
+            metaRewardedInterstitialAd.show();
+        } else if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded() && !metaRewardedVideoAd.isAdInvalidated()) {
+            appendLog("▶️ [META SHOW] Presenting Meta Rewarded Video Ad...");
+            metaRewardedVideoAd.show();
+        } else {
+            Toast.makeText(this, "Rewarded ad is not ready. Please click Load first.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void destroyMetaRewardedAds() {
+        if (metaRewardedInterstitialAd != null) {
+            try {
+                metaRewardedInterstitialAd.destroy();
+            } catch (Exception ignored) {}
+            metaRewardedInterstitialAd = null;
+        }
+        if (metaRewardedVideoAd != null) {
+            try {
+                metaRewardedVideoAd.destroy();
+            } catch (Exception ignored) {}
+            metaRewardedVideoAd = null;
+        }
+    }
+
+    // =========================================================================
+    // 6. META NATIVE ADS
+    // =========================================================================
+    private void loadMetaNativeAd() {
+        destroyMetaNativeAd();
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        updateAdState("LOADING NATIVE...", "#FBBF24");
+
+        appendLog("📡 [META REQUEST] Requesting Meta Native Ad...");
+        appendLog("   Placement ID: " + META_PLACEMENT_NATIVE);
+
+        try {
+            metaNativeAd = new NativeAd(this, META_PLACEMENT_NATIVE);
+
+            NativeAdListener listener = new NativeAdListener() {
+                @Override
+                public void onAdLoaded(Ad ad) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("LOADED & DISPLAYED", "#34D399");
+
+                        appendLog("🟢 [META LOADED] Native Ad downloaded successfully!");
+                        renderMetaNativeAd();
+                        Toast.makeText(AdTestingActivity.this, "Native Ad Rendered Successfully!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onError(Ad ad, com.facebook.ads.AdError adError) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("FAILED (" + adError.getErrorCode() + ")", "#EF4444");
+
+                        int code = adError.getErrorCode();
+                        String message = adError.getErrorMessage();
+                        String explanation = getMetaErrorExplanation(code);
+
+                        appendLog("🔴 [NATIVE ERROR] onError() received:");
+                        appendLog("   Code: " + code + " (" + explanation + ")");
+                        appendLog("   Message: " + message);
+
+                        Toast.makeText(AdTestingActivity.this, "Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onLoggingImpression(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟣 [META IMPRESSION] Verified impression recorded for Native Ad."));
+                }
+
+                @Override
+                public void onAdClicked(Ad ad) {
+                    runOnUiThread(() -> appendLog("🟡 [META CLICKED] User clicked on Native Ad component."));
+                }
+
+                @Override
+                public void onMediaDownloaded(Ad ad) {
+                    runOnUiThread(() -> appendLog("🖼️ [META MEDIA DOWNLOADED] Main media assets cached."));
+                }
+            };
+
+            metaNativeAd.loadAd(
+                metaNativeAd.buildLoadAdConfig()
+                    .withAdListener(listener)
+                    .build()
+            );
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            updateAdState("EXCEPTION", "#EF4444");
+        }
+    }
+
+    private void renderMetaNativeAd() {
+        if (metaNativeAd == null || !metaNativeAd.isAdLoaded() || metaNativeAd.isAdInvalidated()) {
+            return;
+        }
+
+        try {
+            metaNativeAd.unregisterView();
+
+            cardNativePreview.setVisibility(View.VISIBLE);
+            admobNativeContainer.setVisibility(View.GONE);
+            nativeAdContainer.setVisibility(View.VISIBLE);
+            nativeAdContainer.removeAllViews();
+
+            View adView = LayoutInflater.from(this).inflate(R.layout.layout_meta_native_ad, nativeAdContainer, false);
+            nativeAdContainer.addView(adView);
+
+            TextView nativeAdTitle = adView.findViewById(R.id.native_ad_title);
+            TextView nativeAdBody = adView.findViewById(R.id.native_ad_body);
+            TextView nativeAdSocial = adView.findViewById(R.id.native_ad_social_context);
+            Button nativeAdCallToAction = adView.findViewById(R.id.native_ad_call_to_action);
+            MediaView nativeAdMedia = adView.findViewById(R.id.native_ad_media);
+            MediaView nativeAdIcon = adView.findViewById(R.id.native_ad_icon);
+            FrameLayout adChoicesContainer = adView.findViewById(R.id.ad_choices_container);
+
+            nativeAdTitle.setText(metaNativeAd.getAdvertiserName());
+            nativeAdBody.setText(metaNativeAd.getAdBodyText());
+            nativeAdCallToAction.setText(metaNativeAd.getAdCallToAction());
+            nativeAdCallToAction.setVisibility(metaNativeAd.hasCallToAction() ? View.VISIBLE : View.GONE);
+
+            if (metaNativeAd.getAdSocialContext() != null && !metaNativeAd.getAdSocialContext().isEmpty()) {
+                nativeAdSocial.setText(metaNativeAd.getAdSocialContext());
+                nativeAdSocial.setVisibility(View.VISIBLE);
+            } else {
+                nativeAdSocial.setVisibility(View.GONE);
+            }
+
+            AdOptionsView adOptionsView = new AdOptionsView(this, metaNativeAd, nativeAdContainer);
+            adChoicesContainer.removeAllViews();
+            adChoicesContainer.addView(adOptionsView);
+
+            List<View> clickableViews = new ArrayList<>();
+            clickableViews.add(nativeAdTitle);
+            clickableViews.add(nativeAdCallToAction);
+            clickableViews.add(nativeAdMedia);
+            clickableViews.add(nativeAdIcon);
+
+            metaNativeAd.registerViewForInteraction(
+                nativeAdContainer,
+                nativeAdMedia,
+                nativeAdIcon,
+                clickableViews
+            );
+
+            appendLog("🖼️ [RENDERED] Native Ad views bound and registered for user interaction.");
+
+        } catch (Exception e) {
+            appendLog("❌ [RENDER EXCEPTION] " + e.getMessage());
+        }
+    }
+
+    private void destroyMetaNativeAd() {
+        if (metaNativeAd != null) {
+            try {
+                metaNativeAd.unregisterView();
+                metaNativeAd.destroy();
+            } catch (Exception ignored) {}
+            metaNativeAd = null;
+        }
+        if (nativeAdContainer != null) {
+            nativeAdContainer.removeAllViews();
+            nativeAdContainer.setVisibility(View.GONE);
+        }
+        if (cardNativePreview != null && (admobNativeAd == null)) {
+            cardNativePreview.setVisibility(View.GONE);
+        }
+    }
+
+    // =========================================================================
+    // UTILITIES & LOGGING
+    // =========================================================================
+    private void updateAdState(String state, String hexColor) {
+        if (tvAdStateBadge != null) {
+            tvAdStateBadge.setText(state);
+            tvAdStateBadge.setTextColor(Color.parseColor(hexColor));
+            tvAdStateBadge.setBackgroundColor(Color.parseColor("#22" + hexColor.substring(1)));
+        }
+    }
+
+    private void appendLog(String message) {
+        String timestamp = timeFormat.format(new Date());
+        String logLine = "[" + timestamp + "] " + message;
+        Log.d(TAG, logLine);
+
+        runOnUiThread(() -> {
+            if (tvConsoleLogs != null) {
+                String current = tvConsoleLogs.getText().toString();
+                if (current.isEmpty()) {
+                    tvConsoleLogs.setText(logLine);
+                } else {
+                    tvConsoleLogs.setText(current + "\n" + logLine);
+                }
+
+                if (consoleScrollView != null) {
+                    consoleScrollView.post(() -> consoleScrollView.fullScroll(View.FOCUS_DOWN));
+                }
+            }
+        });
+    }
+
+    private void copyLogsToClipboard() {
+        if (tvConsoleLogs != null) {
+            String logs = tvConsoleLogs.getText().toString();
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Ad Logs", logs);
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "Logs copied to clipboard", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private String getMetaErrorExplanation(int errorCode) {
+        switch (errorCode) {
+            case 1000:
+                return "NETWORK_ERROR (Check internet connection)";
+            case 1001:
+                return "NO_FILL (No ad inventory. Ensure Facebook App is logged in on test device)";
+            case 1002:
+                return "LOAD_TOO_FREQUENTLY (Wait a few seconds between requests)";
+            case 1011:
+                return "DISPLAY_FORMAT_MISMATCH (Check placement format in Monetization Manager)";
+            case 1012:
+                return "CLEARTEXT_HTTP_BLOCKED (Secure HTTPS connection required)";
+            case 2000:
+                return "SERVER_ERROR (Internal Meta server error)";
+            case 2001:
+                return "INTERNAL_ERROR (Cache or SDK error)";
+            default:
+                return "UNKNOWN_META_ERROR";
+        }
+    }
+
+    private String getAdMobErrorExplanation(int errorCode) {
+        switch (errorCode) {
+            case com.google.android.gms.ads.AdRequest.ERROR_CODE_INTERNAL_ERROR:
+                return "INTERNAL_ERROR (Code 0: Internal ad server error)";
+            case com.google.android.gms.ads.AdRequest.ERROR_CODE_INVALID_REQUEST:
+                return "INVALID_REQUEST (Code 1: Invalid Ad Unit ID or account pending)";
+            case com.google.android.gms.ads.AdRequest.ERROR_CODE_NETWORK_ERROR:
+                return "NETWORK_ERROR (Code 2: Network connectivity issue)";
+            case com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL:
+                return "NO_FILL (Code 3: No ad inventory available from Google. Note: HTTP 403 means Google ad servers are still propagating newly created ad units, which takes a few hours to 24-48 hours. Try using the sample test toggle above to verify)";
+            default:
+                return "UNKNOWN_ADMOB_ERROR";
+        }
     }
 
     @Override
     protected void onDestroy() {
+        destroyAdMobInterstitial();
+        destroyAdMobRewarded();
+        destroyAdMobNative();
+
+        destroyMetaInterstitial();
+        destroyMetaRewardedAds();
+        destroyMetaNativeAd();
+
         super.onDestroy();
-        if (metaInterstitialAd != null) metaInterstitialAd.destroy();
-        if (metaRewardedVideoAd != null) metaRewardedVideoAd.destroy();
-        if (metaRewardedInterstitialAd != null) metaRewardedInterstitialAd.destroy();
-        if (metaNativeAd != null) metaNativeAd.destroy();
-        if (admobNativeAd != null) admobNativeAd.destroy();
-        if (levelPlayNativeAd != null) levelPlayNativeAd.destroyAd();
     }
 }

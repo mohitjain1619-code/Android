@@ -260,9 +260,6 @@ public class CallActivity extends BaseActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
 
-        // Preload LevelPlay Interstitial Ad
-        preloadLevelPlayInterstitial();
-
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
 
@@ -308,7 +305,6 @@ public class CallActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        AdManager.getInstance().onPause(this);
         if (videoCapturer != null) {
             try {
                 videoCapturer.stopCapture();
@@ -321,7 +317,6 @@ public class CallActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        AdManager.getInstance().onResume(this);
         if (videoCapturer != null) {
             try {
                 videoCapturer.startCapture(720, 1280, 30);
@@ -697,7 +692,6 @@ public class CallActivity extends BaseActivity {
                     if (callConnectedTime == 0) {
                         callConnectedTime = System.currentTimeMillis();
                         startLimitCountdown();
-                        preloadLevelPlayInterstitial();
                     }
                 } else if (s == PeerConnection.IceConnectionState.FAILED) {
                     if (!turnFallbackAttempted) {
@@ -1683,52 +1677,8 @@ public class CallActivity extends BaseActivity {
                     prefs.edit().putInt("call_counter", currentCount).apply();
                 } catch (Exception e) {}
 
-                // Enforce post-call ads logic:
-                // 1. Call must actually connect/start (callConnectedTime > 0)
-                // 2. Duration >= 2 min (120s): show ad after 1 call
-                // 3. Duration < 2 min (including < 30s): show ad after 2 calls
-                long durationMs = callConnectedTime > 0 ? (System.currentTimeMillis() - callConnectedTime) : 0;
-                long durationSec = durationMs / 1000;
-                Log.d(TAG, "📞 Call finished. Duration: " + durationSec + " seconds, callConnected: " + (callConnectedTime > 0));
-
-                if (tokenManager != null && tokenManager.isVideoCallAdFree()) {
-                    Log.d(TAG, "User has video call ad-free pass. Finishing immediately.");
-                    finish();
-                } else if (callConnectedTime <= 0) {
-                    // Call never connected/started: finish immediately with no ad
-                    Log.d(TAG, "Call never connected. Finishing immediately without ad.");
-                    finish();
-                } else {
-                    boolean shouldShowAd = false;
-                    android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
-
-                    String adPlacementReason = "call_exit";
-                    if (durationSec >= 120) {
-                        // Call lasted >= 2 min: show ad after 1 call
-                        Log.d(TAG, "Call lasted >= 2 min (" + durationSec + "s). Triggering ad after 1 call.");
-                        shouldShowAd = true;
-                        adPlacementReason = "call_duration_120s";
-                        statsPrefs.edit().putInt("short_call_count", 0).apply();
-                    } else {
-                        // Call lasted < 2 min (including < 30s): show ad after 2 calls
-                        int shortCalls = statsPrefs.getInt("short_call_count", 0) + 1;
-                        Log.d(TAG, "Call count for < 2 min: " + shortCalls + " (duration: " + durationSec + "s)");
-                        if (shortCalls >= 2) {
-                            Log.d(TAG, "2 calls reached. Triggering ad.");
-                            shouldShowAd = true;
-                            adPlacementReason = "call_count_threshold";
-                            statsPrefs.edit().putInt("short_call_count", 0).apply();
-                        } else {
-                            statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
-                        }
-                    }
-
-                    if (shouldShowAd) {
-                        showInterstitialAndFinish(adPlacementReason);
-                    } else {
-                        finish();
-                    }
-                }
+                // Finish immediately without ads
+                finish();
             });
         }).start();
     }
@@ -2019,14 +1969,6 @@ public class CallActivity extends BaseActivity {
         privateCallCancelledListener = null;
     }
 
-    private void preloadLevelPlayInterstitial() {
-        if (tokenManager != null && tokenManager.isVideoCallAdFree()) return;
-        if (isFinishing() || isDestroyed()) return;
-
-        AdManager.getInstance().preloadInterstitial(this);
-        AdManager.getInstance().preloadFallbackAds(this);
-    }
-
     @Override
     protected void onDestroy() {
         disconnect();
@@ -2053,16 +1995,5 @@ public class CallActivity extends BaseActivity {
             }
         };
         limitCountdownHandler.postDelayed(limitCountdownRunnable, 1000);
-    }
-
-    private void showInterstitialAndFinish(String placementReason) {
-        String finalPlacement = (placementReason != null && !placementReason.isEmpty()) ? placementReason : "call_exit";
-        AdManager.getInstance().showInterstitialWithFallback(this, finalPlacement, tokenManager != null && tokenManager.isVideoCallAdFree(), success -> {
-            finish();
-        });
-    }
-
-    private void showInterstitialAndFinish() {
-        showInterstitialAndFinish("call_exit");
     }
 }

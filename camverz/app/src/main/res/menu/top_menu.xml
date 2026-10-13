@@ -7,11 +7,8 @@
         android:id="@+id/action_rate_app"
         android:title="@string/menu_rate_app" />
     <item
-        android:id="@+id/action_mediation_debugger"
-        android:title="Mediation Debugger" />
-    <item
         android:id="@+id/action_ad_testing"
-        android:title="Ad Testing Dashboard" />
+        android:title="Meta Ad Testing Dashboard" />
     <item
         android:id="@+id/action_change_language"
         android:title="@string/change_language" />

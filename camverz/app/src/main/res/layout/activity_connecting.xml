@@ -5,17 +5,6 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_page_ambient_gradient">
 
-    <!-- Container for Meta Native Ad -->
-    <FrameLayout
-        android:id="@+id/metaNativeAdContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="64dp"
-        android:padding="8dp"
-        android:visibility="gone" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,17 +41,6 @@
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
     </LinearLayout>
-
-    <!-- Container for AdMob Native Ad -->
-    <FrameLayout
-        android:id="@+id/nativeAdContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/cancelButton"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginBottom="16dp"
-        android:padding="8dp"
-        android:visibility="gone" />
 
     <Button
         android:id="@+id/cancelButton"

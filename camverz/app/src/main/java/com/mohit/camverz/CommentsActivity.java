@@ -77,23 +77,6 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
 
         sendButton.setOnClickListener(v -> postComment());
 
-        if (!tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().preloadRewardedVideo();
-            AdManager.getInstance().preloadInterstitial(this);
-            AdManager.getInstance().preloadFallbackAds(this);
-        }
-
-        commentEditText.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() == 3 && !tokenManager.isCommunityAdFree()) {
-                    AdManager.getInstance().preloadRewardedVideo();
-                    AdManager.getInstance().preloadFallbackAds(CommentsActivity.this);
-                }
-            }
-            @Override public void afterTextChanged(android.text.Editable s) {}
-        });
-
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {
                 if (commentList != null && adapter != null) {
@@ -224,16 +207,7 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
     }
 
     private void proceedToPostComment(final String commentText) {
-        if (tokenManager.isCommunityAdFree()) {
-            executeCommentUpload(commentText);
-        } else {
-            loadAndShowRewardedAd(() -> {
-                executeCommentUpload(commentText);
-            }, () -> {
-                // If ad fails to load, still proceed with the upload so user doesn't lose their data
-                executeCommentUpload(commentText);
-            });
-        }
+        executeCommentUpload(commentText);
     }
 
     private void executeCommentUpload(String commentText) {
@@ -349,45 +323,6 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
         Intent intent = new Intent(this, ProfileActivity.class);
         intent.putExtra("userId", userId);
         startActivity(intent);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (!tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().preloadRewardedVideo();
-            AdManager.getInstance().preloadInterstitial(this);
-            AdManager.getInstance().preloadFallbackAds(this);
-        }
-    }
-
-    private void loadAndShowRewardedAd(Runnable onSuccess, Runnable onFailure) {
-        AdManager.getInstance().showRewardedAd(this, "comment_reward", new AdManager.RewardedAdCallback() {
-            @Override
-            public void onRewardEarned() {}
-
-            @Override
-            public void onAdDismissed(boolean rewarded) {
-                if (!tokenManager.isCommunityAdFree()) {
-                    AdManager.getInstance().preloadRewardedVideo();
-                    AdManager.getInstance().preloadFallbackAds(CommentsActivity.this);
-                }
-                if (rewarded) {
-                    if (onSuccess != null) runOnUiThread(onSuccess);
-                } else {
-                    if (onFailure != null) runOnUiThread(onFailure);
-                }
-            }
-
-            @Override
-            public void onAdFailed(String reason) {
-                if (!tokenManager.isCommunityAdFree()) {
-                    AdManager.getInstance().preloadRewardedVideo();
-                    AdManager.getInstance().preloadFallbackAds(CommentsActivity.this);
-                }
-                if (onFailure != null) runOnUiThread(onFailure);
-            }
-        });
     }
 
     @Override

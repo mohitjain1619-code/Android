@@ -46,12 +46,8 @@ public class ConnectingActivity extends BaseActivity {
     private Handler countdownHandler;
     private Runnable countdownRunnable;
 
-    // ironSource LevelPlay Native Ad
-    private com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd levelPlayNativeAd;
     private TextView waitingText;
-
     private long searchStartTime = 0;
-    private static final long MIN_SEARCH_DURATION_MS = 5000; // 5 seconds minimum to show native ad
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,12 +78,6 @@ public class ConnectingActivity extends BaseActivity {
 
         setupSocketListeners();
         loadUserDataAndJoinQueue();
-
-        // Load native ads asynchronously and preload post-call interstitial early for 0ms wait on call exit
-        if (!tokenManager.isVideoCallAdFree()) {
-            new Handler(Looper.getMainLooper()).post(this::loadLevelPlayNativeAd);
-            AdManager.getInstance().preloadInterstitial(this);
-        }
 
         findViewById(R.id.cancelButton).setOnClickListener(v -> {
             leaveQueue();
@@ -297,101 +287,9 @@ public class ConnectingActivity extends BaseActivity {
         finish();
     }
 
-    // --- ironSource LevelPlay Native Ad Integration ---
-
-    private void loadLevelPlayNativeAd() {
-        if (isFinishing() || isDestroyed() || matchAccepted) return;
-
-        // Ensure LevelPlay is initialized
-        BaseActivity.initializeIronSource(this);
-
-        if (!AdManager.getInstance().isLevelPlayReady()) {
-            Log.d(TAG, "LevelPlay not initialized yet. Skipping native ad.");
-            return;
-        }
-
-        try {
-            AdAnalyticsTracker.trackEvent(this, "REQUEST", "native", "ironsource", "REQUESTED", "", "", "connecting_native");
-
-            levelPlayNativeAd = new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd.Builder()
-                    .withPlacementName(AdManager.LEVELPLAY_NATIVE_ID)
-                    .withListener(new com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener() {
-                        @Override
-                        public void onAdLoaded(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                            Log.d(TAG, "LevelPlay Native Ad loaded successfully");
-                            AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "", "connecting_native");
-                            runOnUiThread(() -> inflateLevelPlayNativeAd(ad));
-                        }
-
-                        @Override
-                        public void onAdLoadFailed(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.logger.IronSourceError error) {
-                            Log.w(TAG, "LevelPlay Native Ad load failed: " + (error != null ? error.getErrorMessage() : "unknown"));
-                            // Native ad load nahi hua to koi baat nahi (no delay, no fallback, continue matchmaking)
-                        }
-
-                        @Override
-                        public void onAdClicked(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {}
-
-                        @Override
-                        public void onAdImpression(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
-                            AdAnalyticsTracker.trackEvent(ConnectingActivity.this, "IMPRESSION", "native", "ironsource", "DELIVERED", "", "", "connecting_native");
-                        }
-                    })
-                    .build();
-            levelPlayNativeAd.loadAd();
-        } catch (Exception e) {
-            Log.e(TAG, "Error loading LevelPlay native ad: " + e.getMessage());
-        }
-    }
-
-    private void inflateLevelPlayNativeAd(com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd ad) {
-        FrameLayout adContainer = findViewById(R.id.nativeAdContainer);
-        if (adContainer == null) return;
-        adContainer.removeAllViews();
-        adContainer.setVisibility(View.VISIBLE);
-
-        com.ironsource.mediationsdk.ads.nativead.NativeAdLayout nativeAdLayout = new com.ironsource.mediationsdk.ads.nativead.NativeAdLayout(this);
-        View adView = LayoutInflater.from(this).inflate(R.layout.layout_native_ad_levelplay, nativeAdLayout, true);
-
-        ImageView adIcon = adView.findViewById(R.id.ad_icon);
-        TextView adTitle = adView.findViewById(R.id.ad_title);
-        TextView adAdvertiser = adView.findViewById(R.id.ad_advertiser);
-        TextView adBody = adView.findViewById(R.id.ad_body);
-        com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView mediaView = adView.findViewById(R.id.ad_media);
-        Button adCta = adView.findViewById(R.id.ad_cta);
-
-        if (ad.getIcon() != null && adIcon != null) {
-            adIcon.setImageDrawable(ad.getIcon().getDrawable());
-        }
-        if (ad.getTitle() != null && adTitle != null) {
-            adTitle.setText(ad.getTitle());
-        }
-        if (ad.getAdvertiser() != null && adAdvertiser != null) {
-            adAdvertiser.setText(ad.getAdvertiser());
-        }
-        if (ad.getBody() != null && adBody != null) {
-            adBody.setText(ad.getBody());
-        }
-        if (ad.getCallToAction() != null && adCta != null) {
-            adCta.setText(ad.getCallToAction());
-        }
-
-        nativeAdLayout.setTitleView(adTitle);
-        nativeAdLayout.setIconView(adIcon);
-        nativeAdLayout.setMediaView(mediaView);
-        nativeAdLayout.setCallToActionView(adCta);
-
-        nativeAdLayout.registerNativeAdViews(ad);
-
-        adContainer.addView(nativeAdLayout);
-    }
-
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
-
-
-
 
     private void showRewardedAd() {
         Log.d(TAG, "🎉 User earned reward directly (ads disabled)!");
@@ -443,14 +341,6 @@ public class ConnectingActivity extends BaseActivity {
             leaveQueue();
         }
         removeSocketListeners();
-
-        // Clean up ironSource native ad object
-        if (levelPlayNativeAd != null) {
-            try {
-                levelPlayNativeAd.destroyAd();
-            } catch (Exception ignored) {}
-            levelPlayNativeAd = null;
-        }
     }
 
 

@@ -12,8 +12,6 @@ if (project.rootProject.file('local.properties').exists()) {
 
 def fallbackBaseUrl = '"https://android-9t8m.onrender.com"'
 def prodBaseUrl = properties.getProperty("production.base.url") ? '"' + properties.getProperty("production.base.url") + '"' : fallbackBaseUrl
-def admobAppId = properties.getProperty("admob.app.id", "ca-app-pub-6992986179206821~2715651414")
-def applovinSdkKey = properties.getProperty("applovin.sdk.key", "YOUR_APPLOVIN_SDK_KEY_HERE")
 
 android {
     namespace 'com.mohit.camverz'
@@ -34,12 +32,6 @@ android {
 
         // Define BASE_URL for all API calls
         buildConfigField "String", "BASE_URL", prodBaseUrl
-
-        // Inject variables into AndroidManifest.xml dynamically
-        manifestPlaceholders = [
-            admobAppId: admobAppId,
-            applovinSdkKey: applovinSdkKey
-        ]
     }
 
     buildFeatures {
@@ -149,21 +141,18 @@ dependencies {
     // For face detection - using Google Play Services ML Kit (16 KB page size compliant & unbundled)
     implementation libs.play.services.mlkit.face.detection
 
-    // Google Mobile Ads (AdMob) & LevelPlay SDK
-    implementation libs.play.services.ads
-    implementation libs.facebook.audience.network
-    implementation libs.unity.ads
-    implementation libs.ironsource.sdk
-
-    // LevelPlay adapters for bidding networks
-    implementation libs.ironsource.adapter.admob
-    implementation libs.ironsource.adapter.facebook
-    implementation libs.ironsource.adapter.unity
+    // Media & Browser
     implementation libs.media3.exoplayer
     implementation libs.androidx.browser
 
     // Google Play Install Referrer (for direct Play Store affiliate tracking)
     implementation libs.install.referrer
+
+    // Meta Audience Network SDK (standalone for Interstitial testing)
+    implementation libs.audience.network.sdk
+
+    // Google Mobile Ads (AdMob) SDK
+    implementation libs.play.services.ads
 
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit

@@ -90,26 +90,9 @@ public class PartyBoardActivity extends BaseActivity {
         announcementsAdapter = new AnnouncementsAdapter(this, annList);
         rvAnnouncements.setAdapter(announcementsAdapter);
 
-        if (!tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().init(this);
-            AdManager.getInstance().preloadInterstitial(this);
-            AdManager.getInstance().preloadRewardedVideo();
-            AdManager.getInstance().preloadFallbackAds(this);
-        }
-
         if (isHost) {
             layoutMembersSection.setVisibility(View.VISIBLE);
             layoutPostAnnouncement.setVisibility(View.VISIBLE);
-
-            etAnnouncement.addTextChangedListener(new android.text.TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    if (s.length() == 3 && !tokenManager.isCommunityAdFree()) {
-                        AdManager.getInstance().preloadInterstitial(PartyBoardActivity.this);
-                    }
-                }
-                @Override public void afterTextChanged(android.text.Editable s) {}
-            });
 
             rvMembers.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
             fetchPartyMembers();
@@ -119,14 +102,6 @@ public class PartyBoardActivity extends BaseActivity {
 
         fetchAnnouncements();
         setupRealtimeSocket();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (!tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().preloadInterstitial(this);
-        }
     }
 
     private void setupRealtimeSocket() {
@@ -244,11 +219,6 @@ public class PartyBoardActivity extends BaseActivity {
                 if (response.isSuccessful()) {
                     fetchAnnouncements();
                     Toast.makeText(PartyBoardActivity.this, getString(R.string.announcement_posted_toast), Toast.LENGTH_SHORT).show();
-                    if (!tokenManager.isCommunityAdFree()) {
-                        AdManager.getInstance().showInterstitialWithFallback(PartyBoardActivity.this, "party_host_announcement", false, success -> {
-                            AdManager.getInstance().preloadInterstitial(PartyBoardActivity.this);
-                        });
-                    }
                 } else {
                     Toast.makeText(PartyBoardActivity.this, getString(R.string.failed_post_announcement), Toast.LENGTH_SHORT).show();
                 }

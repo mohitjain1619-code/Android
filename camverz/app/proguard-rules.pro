@@ -191,6 +191,14 @@
 # ==============================================================================
 -dontwarn com.facebook.ads.**
 -dontwarn com.facebook.infer.annotation.**
+-keep public class com.facebook.ads.** { public protected *; }
+-keeppackagenames com.facebook.*
+
+# ==============================================================================
+# Google Mobile Ads (AdMob)
+# ==============================================================================
+-dontwarn com.google.android.gms.ads.**
+-keep public class com.google.android.gms.ads.** { public protected *; }
 
 # ==============================================================================
 # Unity Ads SDK & InMobi

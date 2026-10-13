@@ -43,7 +43,6 @@ public class FeedActivity extends BaseActivity {
 
     private ApiService api;
     private TokenManager tokenManager;
-    private com.google.android.gms.ads.AdView adView;
 
     private View emptyView;
     private TextView tvEmptyMessage;
@@ -66,11 +65,6 @@ public class FeedActivity extends BaseActivity {
 
         // Create Post Button
         findViewById(R.id.fab_create_post).setOnClickListener(v -> {
-            if (!tokenManager.isCommunityAdFree()) {
-                AdManager.getInstance().preloadRewardedVideo();
-                AdManager.getInstance().preloadInterstitial(this);
-                AdManager.getInstance().preloadFallbackAds(this);
-            }
             startActivity(new Intent(this, CreatePostActivity.class));
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
@@ -269,19 +263,11 @@ public class FeedActivity extends BaseActivity {
         }
     }
 
-    private void loadBannerAd() {
-        // Ads disabled in main app
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (profileUpdateListener != null) {
             ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
-        }
-        if (adView != null) {
-            adView.destroy();
-            adView = null;
         }
     }
 }

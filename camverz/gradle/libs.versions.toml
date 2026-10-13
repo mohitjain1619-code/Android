@@ -12,9 +12,9 @@ googleServices = "4.4.3"
 # Upgraded Libraries
 camerax = "1.6.2"
 playServicesAuth = "21.3.0"
-playServicesAds = "23.6.0"
 playServicesLocation = "21.3.0"
 playServicesMlkitFace = "17.1.0"
+playServicesAds = "23.6.0"
 appUpdate = "2.1.0"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
@@ -32,16 +32,11 @@ paging = "3.3.6"
 glide = "4.16.0"
 coil = "2.7.0"
 guava = "33.4.0-android"
-audienceNetwork = "6.22.0"
-unityAds = "4.13.0"
-ironsource = "8.7.0"
-ironsourceAdmobAdapter = "4.3.49"
-ironsourceFacebookAdapter = "4.3.47"
-ironsourceUnityAdapter = "4.3.38"
 localbroadcastmanager = "1.1.0"
 media3 = "1.5.1"
 browser = "1.8.0"
 installReferrer = "2.2"
+audienceNetwork = "6.18.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -60,9 +55,9 @@ camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "
 
 # Google Play Services
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
-play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-mlkit-face-detection = { group = "com.google.android.gms", name = "play-services-mlkit-face-detection", version.ref = "playServicesMlkitFace" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "appUpdate" }
 
 # Retrofit & OkHttp
@@ -89,17 +84,10 @@ paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.r
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
 coil = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
-
-# Ads & Mediation
-facebook-audience-network = { group = "com.facebook.android", name = "audience-network-sdk", version.ref = "audienceNetwork" }
-unity-ads = { group = "com.unity3d.ads", name = "unity-ads", version.ref = "unityAds" }
-ironsource-sdk = { group = "com.ironsource.sdk", name = "mediationsdk", version.ref = "ironsource" }
-ironsource-adapter-admob = { group = "com.ironsource.adapters", name = "admobadapter", version.ref = "ironsourceAdmobAdapter" }
-ironsource-adapter-facebook = { group = "com.ironsource.adapters", name = "facebookadapter", version.ref = "ironsourceFacebookAdapter" }
-ironsource-adapter-unity = { group = "com.ironsource.adapters", name = "unityadsadapter", version.ref = "ironsourceUnityAdapter" }
 media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 install-referrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "installReferrer" }
+audience-network-sdk = { group = "com.facebook.android", name = "audience-network-sdk", version.ref = "audienceNetwork" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

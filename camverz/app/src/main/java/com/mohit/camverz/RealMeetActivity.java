@@ -121,11 +121,7 @@ public class RealMeetActivity extends BaseActivity {
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private Runnable refreshRunnable;
 
-    // Interstitial ad timer
-    private final Handler interstitialAdHandler = new Handler(Looper.getMainLooper());
-    private Runnable interstitialAdRunnable;
     private boolean isCreationDialogOpen = false;
-    // ironSource Interstitial uses static helper methods, no member variable needed
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -332,12 +328,6 @@ public class RealMeetActivity extends BaseActivity {
 
         // FAB listener
         fabCreate.setOnClickListener(v -> onFabClicked());
-
-        // Initialize ironSource LevelPlay SDK via AdManager and warm up auction cache
-        if (!tokenManager.isCommunityAdFree()) {
-            AdManager.getInstance().init(this);
-            preloadInterstitialAd();
-        }
 
         setupSocketListeners();
         fetchUserProfileDetails();
@@ -1813,166 +1803,28 @@ public class RealMeetActivity extends BaseActivity {
         dialog.show();
     }
 
-    // ==================== AD METHODS ====================
-
-    /**
-     * Show a rewarded ad BEFORE uploading any community post (RealMeet, Party, Fantasy).
-     * ONLY if reward is earned will onAdCompleted be executed.
-     */
+    // ==================== AD METHODS (ADS REMOVED) ====================
     private void showRewardedAdBeforePost(String placement, Runnable onAdCompleted) {
-        if (tokenManager.isCommunityAdFree()) {
-            if (onAdCompleted != null) onAdCompleted.run();
-            return;
-        }
-
-        String targetPlacement = (placement != null && !placement.isEmpty()) ? placement : "realmeet_publish_post";
-        AdManager.getInstance().showRewardedAd(this, targetPlacement, new AdManager.RewardedAdCallback() {
-            @Override
-            public void onRewardEarned() {}
-
-            @Override
-            public void onAdDismissed(boolean rewarded) {
-                preloadInterstitialAd();
-                if (rewarded) {
-                    if (onAdCompleted != null) runOnUiThread(onAdCompleted);
-                } else {
-                    runOnUiThread(() -> Toast.makeText(RealMeetActivity.this, getString(R.string.ad_skipped_toast), Toast.LENGTH_SHORT).show());
-                }
-            }
-
-            @Override
-            public void onAdFailed(String reason) {
-                preloadInterstitialAd();
-                // If ad network has no fill or error, allow post creation directly so user is not blocked
-                if (onAdCompleted != null) runOnUiThread(onAdCompleted);
-            }
-        });
+        if (onAdCompleted != null) onAdCompleted.run();
     }
 
-    /**
-     * Show a rewarded interstitial ad after any post creation.
-     * Gated behind ad-free plan check. Fails silently if ad can't load.
-     */
-    private void showPostCreationRewardAd() {
-        if (tokenManager.isCommunityAdFree()) return;
-        if (isFinishing() || isDestroyed()) return;
+    private void showPostCreationRewardAd() {}
 
-        AdManager.getInstance().showInterstitialWithFallback(this, "realmeet_post_created", tokenManager.isCommunityAdFree(), success -> {});
-    }
+    private void preloadInterstitialAd() {}
 
-    /**
-     * Preload an interstitial ad so it's ready when the timer fires.
-     */
-    private void preloadInterstitialAd() {
-        if (tokenManager.isCommunityAdFree()) return;
-        if (isFinishing() || isDestroyed()) return;
+    private long getAccumulatedTime() { return 0; }
 
-        AdManager.getInstance().preloadInterstitial(this);
-        AdManager.getInstance().preloadRewardedVideo();
-        AdManager.getInstance().preloadFallbackAds(this);
-    }
+    private void saveAccumulatedTime(long timeMs) {}
 
-    private long getAccumulatedTime() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
-        return prefs.getLong(KEY_REALMEET_ACCUMULATED_TIME, 0);
-    }
+    private boolean isRealMeetAdPending() { return false; }
 
-    private void saveAccumulatedTime(long timeMs) {
-        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
-        prefs.edit().putLong(KEY_REALMEET_ACCUMULATED_TIME, Math.max(0, timeMs)).apply();
-    }
+    private void setRealMeetAdPending(boolean pending) {}
 
-    private boolean isRealMeetAdPending() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
-        return prefs.getBoolean(KEY_AD_WATCH_PENDING, false) || AdManager.getInstance().isAdWatchPending(this);
-    }
+    private void scheduleInterstitialAd() {}
 
-    private void setRealMeetAdPending(boolean pending) {
-        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
-        prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, pending).apply();
-        AdManager.getInstance().setAdWatchPending(pending);
-    }
+    private void cancelInterstitialAdSchedule() {}
 
-    /**
-     * Schedule the next interstitial ad based on total accumulated active time in Real Meet.
-     * Accrues active session time so 3 mins in first session + 2 mins in second session triggers ad.
-     */
-    private void scheduleInterstitialAd() {
-        if (tokenManager.isCommunityAdFree())
-            return;
-
-        cancelInterstitialAdSchedule();
-
-        long accumulated = getAccumulatedTime();
-        long currentSessionTime = (realMeetSessionStartTime > 0) ? (System.currentTimeMillis() - realMeetSessionStartTime) : 0;
-        long totalActive = accumulated + currentSessionTime;
-        long remaining = INTERSTITIAL_INTERVAL_MS - totalActive;
-
-        if (remaining <= 0) {
-            Log.d(TAG, "5 minutes active Real Meet time reached! Triggering ad.");
-            if (isCreationDialogOpen) {
-                Log.d(TAG, "User is currently creating a post dialog! Deferring timer interstitial by 30 seconds.");
-                interstitialAdHandler.postDelayed(this::scheduleInterstitialAd, 30000);
-                return;
-            }
-            setRealMeetAdPending(true);
-            showScheduledInterstitialAd();
-        } else {
-            Log.d(TAG, "Interstitial scheduled in " + (remaining / 1000) + "s (Active time accrued: " + (totalActive / 1000) + "s).");
-
-            // Just-In-Time Preloading: Preload ad 25 seconds before 5-minute display time!
-            if (remaining > 25000) {
-                long preloadDelay = remaining - 25000;
-                interstitialAdHandler.postDelayed(() -> {
-                    Log.d(TAG, "⏳ Just-In-Time Preloading Interstitial ad (25s before display)...");
-                    preloadInterstitialAd();
-                }, preloadDelay);
-            } else {
-                preloadInterstitialAd();
-            }
-
-            interstitialAdRunnable = () -> {
-                if (isCreationDialogOpen) {
-                    Log.d(TAG, "User is currently creating a post dialog! Deferring timer interstitial by 30 seconds.");
-                    interstitialAdHandler.postDelayed(this::scheduleInterstitialAd, 30000);
-                    return;
-                }
-                setRealMeetAdPending(true);
-                showScheduledInterstitialAd();
-            };
-            interstitialAdHandler.postDelayed(interstitialAdRunnable, remaining);
-        }
-    }
-
-    /**
-     * Cancel any pending interstitial ad schedule.
-     */
-    private void cancelInterstitialAdSchedule() {
-        if (interstitialAdRunnable != null) {
-            interstitialAdHandler.removeCallbacks(interstitialAdRunnable);
-            interstitialAdRunnable = null;
-        }
-    }
-
-    /**
-     * Show the preloaded interstitial ad with fallback and reset active timer.
-     */
-    private void showScheduledInterstitialAd() {
-        if (tokenManager.isCommunityAdFree())
-            return;
-        if (isFinishing() || isDestroyed())
-            return;
-
-        setRealMeetAdPending(true); // Persist pending state in case app is killed during ad
-
-        AdManager.getInstance().showInterstitialWithFallback(this, "realmeet_timer", tokenManager.isCommunityAdFree(), success -> {
-            setRealMeetAdPending(false); // Clear pending state
-            saveAccumulatedTime(0);      // Reset accumulated time to 0
-            realMeetSessionStartTime = System.currentTimeMillis(); // Reset session timer
-            preloadInterstitialAd();     // Auto-preload RAM cache for next countdown cycle
-            scheduleInterstitialAd();     // Start fresh 5-minute countdown
-        });
-    }
+    private void showScheduledInterstitialAd() {}
 
     private int parseStatsCount(JsonObject data, JsonObject userObj, String... keys) {
         for (JsonObject obj : new JsonObject[]{userObj, data}) {

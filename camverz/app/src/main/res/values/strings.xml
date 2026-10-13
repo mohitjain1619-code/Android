@@ -134,13 +134,8 @@
     <string name="block_user">Block User</string>
     <string name="report_user">Report User</string>
     <string name="delete_account">Delete Account</string>
-
-    <!-- AdMob Ad Unit IDs -->
-    <string name="admob_banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
-    <string name="admob_interstitial_ad_unit_id">ca-app-pub-6992986179206821/1637628605</string>
-    <string name="admob_native_ad_unit_id">ca-app-pub-6992986179206821/1341105975</string>
-    <string name="admob_rewarded_ad_unit_id">ca-app-pub-6992986179206821/2243124102</string>
     <string name="facebook_app_id">1045884118260179</string>
+    <string name="admob_app_id">ca-app-pub-6992986179206821~2715651414</string>
 
     <!-- Home Screen Additional -->
     <string name="greeting_evening">Good Evening 👋</string>
