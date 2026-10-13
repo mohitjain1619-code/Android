@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- 1. Network Selector Switcher (Meta vs AdMob vs LevelPlay) -->
+            <!-- 1. Network Selector Switcher (Meta vs AdMob) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
@@ -77,9 +77,9 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_button_primary"
                     android:gravity="center"
-                    android:text="🌐 Meta"
+                    android:text="🌐 Meta Audience"
                     android:textColor="@android:color/white"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -88,20 +88,9 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="🔴 AdMob"
+                    android:text="🔴 Google AdMob"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tabNetworkLevelPlay"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1.2"
-                    android:gravity="center"
-                    android:text="⚡ LevelPlay"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -319,20 +308,6 @@
                     android:text="No client-side test device overrides needed. Meta servers deliver test ads automatically."
                     android:textColor="#34D399"
                     android:textSize="11sp" />
-
-                <!-- LevelPlay Adapter Validation Action Button -->
-                <Button
-                    android:id="@+id/btnValidateAdapters"
-                    android:layout_width="match_parent"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_glass_card_premium"
-                    android:text="🔍 Validate Adapters in Logcat"
-                    android:textAllCaps="false"
-                    android:textColor="@color/accent_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:visibility="gone" />
             </LinearLayout>
 
             <!-- Card 3: Ad Actions & Status -->
