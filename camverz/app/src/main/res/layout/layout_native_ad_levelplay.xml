@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#1E1B4B"
+    android:padding="12dp">
+
+    <!-- Ad Icon -->
+    <ImageView
+        android:id="@+id/ad_icon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="centerCrop"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:contentDescription="Ad Icon" />
+
+    <!-- Ad Title -->
+    <TextView
+        android:id="@+id/ad_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/ad_icon"
+        android:layout_toStartOf="@id/ad_cta"
+        android:layout_marginStart="12dp"
+        android:layout_alignParentTop="true"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <!-- Advertiser Name -->
+    <TextView
+        android:id="@+id/ad_advertiser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/ad_icon"
+        android:layout_toStartOf="@id/ad_cta"
+        android:layout_marginStart="12dp"
+        android:layout_below="@id/ad_title"
+        android:textColor="#9CA3AF"
+        android:textSize="11sp"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <!-- Ad Body -->
+    <TextView
+        android:id="@+id/ad_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ad_icon"
+        android:layout_toStartOf="@id/ad_cta"
+        android:layout_marginTop="8dp"
+        android:textColor="#D1D5DB"
+        android:textSize="12sp"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+    <!-- Media View (Ad Image/Video) -->
+    <com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView
+        android:id="@+id/ad_media"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_below="@id/ad_body"
+        android:layout_marginTop="8dp"
+        android:background="#000000" />
+
+    <!-- Call to Action Button -->
+    <Button
+        android:id="@+id/ad_cta"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:background="@android:color/holo_blue_dark"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:paddingHorizontal="16dp"
+        android:text="Install" />
+
+</RelativeLayout>

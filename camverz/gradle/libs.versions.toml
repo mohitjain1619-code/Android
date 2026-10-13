@@ -15,6 +15,8 @@ playServicesAuth = "21.3.0"
 playServicesLocation = "21.3.0"
 playServicesMlkitFace = "17.1.0"
 playServicesAds = "23.6.0"
+playServicesAppset = "16.1.0"
+playServicesAdsIdentifier = "18.2.0"
 appUpdate = "2.1.0"
 retrofit = "2.11.0"
 okhttp = "4.12.0"
@@ -37,6 +39,11 @@ media3 = "1.5.1"
 browser = "1.8.0"
 installReferrer = "2.2"
 audienceNetwork = "6.18.0"
+levelplay = "8.7.0"
+levelplayFacebook = "4.3.47"
+levelplayAdmob = "4.3.45"
+levelplayUnity = "4.3.53"
+unityAds = "4.12.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -58,6 +65,8 @@ play-services-auth = { group = "com.google.android.gms", name = "play-services-a
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-mlkit-face-detection = { group = "com.google.android.gms", name = "play-services-mlkit-face-detection", version.ref = "playServicesMlkitFace" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+play-services-appset = { group = "com.google.android.gms", name = "play-services-appset", version.ref = "playServicesAppset" }
+play-services-ads-identifier = { group = "com.google.android.gms", name = "play-services-ads-identifier", version.ref = "playServicesAdsIdentifier" }
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "appUpdate" }
 
 # Retrofit & OkHttp
@@ -88,6 +97,11 @@ media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", versi
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 install-referrer = { group = "com.android.installreferrer", name = "installreferrer", version.ref = "installReferrer" }
 audience-network-sdk = { group = "com.facebook.android", name = "audience-network-sdk", version.ref = "audienceNetwork" }
+levelplay-sdk = { group = "com.unity3d.ads-mediation", name = "mediation-sdk", version.ref = "levelplay" }
+levelplay-adapter-facebook = { group = "com.unity3d.ads-mediation", name = "facebook-adapter", version.ref = "levelplayFacebook" }
+levelplay-adapter-admob = { group = "com.unity3d.ads-mediation", name = "admob-adapter", version.ref = "levelplayAdmob" }
+levelplay-adapter-unity = { group = "com.unity3d.ads-mediation", name = "unityads-adapter", version.ref = "levelplayUnity" }
+unity-ads = { group = "com.unity3d.ads", name = "unity-ads", version.ref = "unityAds" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

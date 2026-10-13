@@ -40,6 +40,10 @@ public class BaseActivity extends AppCompatActivity {
         super.attachBaseContext(LocaleHelper.applyLocale(newBase));
     }
 
+    public static void initializeIronSource(android.app.Activity activity) {
+        AdManager.getInstance().init(activity);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

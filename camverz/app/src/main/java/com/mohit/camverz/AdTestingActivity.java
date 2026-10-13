@@ -50,6 +50,19 @@ import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
+// Unity LevelPlay Mediation Imports
+import com.unity3d.mediation.LevelPlay;
+import com.unity3d.mediation.LevelPlayConfiguration;
+import com.unity3d.mediation.LevelPlayInitError;
+import com.unity3d.mediation.LevelPlayInitListener;
+import com.unity3d.mediation.LevelPlayInitRequest;
+import com.unity3d.mediation.LevelPlayAdInfo;
+import com.unity3d.mediation.LevelPlayAdError;
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAd;
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener;
+import com.ironsource.mediationsdk.IronSource;
+import com.ironsource.mediationsdk.integration.IntegrationHelper;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,26 +73,31 @@ import java.util.Locale;
 public class AdTestingActivity extends AppCompatActivity {
     private static final String TAG = "AdTestingActivity";
 
-    // Meta Configuration
+    // 1. Meta Audience Network Configuration
     public static final String META_APP_ID = "1045884118260179";
     public static final String META_PLACEMENT_INTERSTITIAL = "1045884118260179_1063416116506979";
     public static final String META_PLACEMENT_REWARDED_INTERSTITIAL = "1045884118260179_1063416119840312";
     public static final String META_PLACEMENT_NATIVE = "1045884118260179_1063416113173646";
 
-    // Google AdMob Configuration (Live User Units)
+    // 2. Google AdMob Configuration (Live User Units)
     public static final String ADMOB_APP_ID = "ca-app-pub-6992986179206821~2715651414";
     public static final String ADMOB_PLACEMENT_INTERSTITIAL = "ca-app-pub-6992986179206821/9362140189";
     public static final String ADMOB_PLACEMENT_REWARDED = "ca-app-pub-6992986179206821/2063439948";
     public static final String ADMOB_PLACEMENT_NATIVE = "ca-app-pub-6992986179206821/9014655823";
 
-    // Google AdMob Universal Sample Test Units (for instant verification if live units are propagating / 403)
+    // Google AdMob Universal Sample Test Units
     public static final String ADMOB_SAMPLE_INTERSTITIAL = "ca-app-pub-3940256099942544/1033173712";
     public static final String ADMOB_SAMPLE_REWARDED = "ca-app-pub-3940256099942544/5224354917";
     public static final String ADMOB_SAMPLE_NATIVE = "ca-app-pub-3940256099942544/2247696110";
 
+    // 3. Unity LevelPlay Mediation Configuration
+    public static final String LEVELPLAY_APP_KEY = "28890f0b5";
+    public static final String LEVELPLAY_PLACEMENT_INTERSTITIAL = "yw7j51u0q3eg5aai";
+
     public enum AdNetwork {
         META,
-        ADMOB
+        ADMOB,
+        LEVELPLAY
     }
 
     public enum AdType {
@@ -94,8 +112,10 @@ public class AdTestingActivity extends AppCompatActivity {
     // Network Tabs
     private TextView tabNetworkMeta;
     private TextView tabNetworkAdMob;
+    private TextView tabNetworkLevelPlay;
 
     // Format Tabs
+    private View layoutFormatTabs;
     private TextView tabInterstitial;
     private TextView tabRewarded;
     private TextView tabNative;
@@ -119,6 +139,7 @@ public class AdTestingActivity extends AppCompatActivity {
     private TextView tvWhitelistTitle;
     private TextView tvWhitelistDetails;
     private TextView tvWhitelistNote;
+    private Button btnValidateAdapters;
 
     // Buttons & Console
     private Button btnLoadAd;
@@ -142,6 +163,12 @@ public class AdTestingActivity extends AppCompatActivity {
     private com.google.android.gms.ads.interstitial.InterstitialAd admobInterstitialAd;
     private RewardedAd admobRewardedAd;
     private com.google.android.gms.ads.nativead.NativeAd admobNativeAd;
+
+    // LevelPlay Ad Instances
+    private LevelPlayInterstitialAd levelPlayInterstitialAd;
+    private boolean isLevelPlayInitialized = false;
+    private boolean isLevelPlayLoadPending = false;
+    private boolean isAutoShowPending = false;
 
     private boolean isAdLoading = false;
     private boolean isRewardEarned = false;
@@ -168,7 +195,9 @@ public class AdTestingActivity extends AppCompatActivity {
 
         tabNetworkMeta = findViewById(R.id.tabNetworkMeta);
         tabNetworkAdMob = findViewById(R.id.tabNetworkAdMob);
+        tabNetworkLevelPlay = findViewById(R.id.tabNetworkLevelPlay);
 
+        layoutFormatTabs = findViewById(R.id.layoutFormatTabs);
         tabInterstitial = findViewById(R.id.tabInterstitial);
         tabRewarded = findViewById(R.id.tabRewarded);
         tabNative = findViewById(R.id.tabNative);
@@ -189,6 +218,7 @@ public class AdTestingActivity extends AppCompatActivity {
         tvWhitelistTitle = findViewById(R.id.tvWhitelistTitle);
         tvWhitelistDetails = findViewById(R.id.tvWhitelistDetails);
         tvWhitelistNote = findViewById(R.id.tvWhitelistNote);
+        btnValidateAdapters = findViewById(R.id.btnValidateAdapters);
 
         btnLoadAd = findViewById(R.id.btnLoadAd);
         btnShowAd = findViewById(R.id.btnShowAd);
@@ -209,6 +239,7 @@ public class AdTestingActivity extends AppCompatActivity {
         // Network switcher
         tabNetworkMeta.setOnClickListener(v -> selectNetwork(AdNetwork.META));
         tabNetworkAdMob.setOnClickListener(v -> selectNetwork(AdNetwork.ADMOB));
+        tabNetworkLevelPlay.setOnClickListener(v -> selectNetwork(AdNetwork.LEVELPLAY));
 
         // Format switcher
         tabInterstitial.setOnClickListener(v -> selectAdType(AdType.INTERSTITIAL));
@@ -220,7 +251,18 @@ public class AdTestingActivity extends AppCompatActivity {
             appendLog("ℹ️ [SAMPLE TOGGLE] Sample Test IDs " + (isChecked ? "ENABLED" : "DISABLED"));
         });
 
-        btnLoadAd.setOnClickListener(v -> loadCurrentAd());
+        btnValidateAdapters.setOnClickListener(v -> {
+            appendLog("🔍 [VALIDATE] Running LevelPlay IntegrationHelper validation...");
+            try {
+                IntegrationHelper.validateIntegration(this);
+                appendLog("✓ Validation executed! Check Android Studio Logcat for the complete adapter compatibility matrix.");
+                Toast.makeText(this, "Adapter validation executed! Inspect Logcat for table.", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                appendLog("⚠️ [VALIDATE ERROR] " + e.getMessage());
+            }
+        });
+
+        btnLoadAd.setOnClickListener(v -> runCurrentAdNow());
         btnShowAd.setOnClickListener(v -> showCurrentAd());
         btnResetAd.setOnClickListener(v -> resetCurrentAd());
 
@@ -230,6 +272,7 @@ public class AdTestingActivity extends AppCompatActivity {
         // Initialize SDKs
         initializeMetaSdk();
         initializeAdMobSdk();
+        initializeLevelPlaySdk();
     }
 
     private void selectNetwork(AdNetwork network) {
@@ -240,7 +283,16 @@ public class AdTestingActivity extends AppCompatActivity {
         currentType = AdType.INTERSTITIAL;
 
         updateUiForCurrentSelection();
-        appendLog("🔄 [NETWORK SWITCH] Selected " + (network == AdNetwork.META ? "Meta Audience Network" : "Google AdMob"));
+        appendLog("🔄 [NETWORK SWITCH] Selected " + getNetworkName(network));
+    }
+
+    private String getNetworkName(AdNetwork network) {
+        switch (network) {
+            case META: return "Meta Audience Network";
+            case ADMOB: return "Google AdMob";
+            case LEVELPLAY: return "Unity LevelPlay Mediation";
+            default: return "Unknown";
+        }
     }
 
     private void selectAdType(AdType type) {
@@ -264,14 +316,24 @@ public class AdTestingActivity extends AppCompatActivity {
     private void updateUiForCurrentSelection() {
         boolean useSample = cbUseSampleAdUnit.isChecked();
 
-        // 1. Update Network Switcher Tabs
+        // Reset Network Switcher Tabs
+        tabNetworkMeta.setBackground(null);
+        tabNetworkMeta.setTextColor(Color.parseColor("#9CA3AF"));
+        tabNetworkAdMob.setBackground(null);
+        tabNetworkAdMob.setTextColor(Color.parseColor("#9CA3AF"));
+        tabNetworkLevelPlay.setBackground(null);
+        tabNetworkLevelPlay.setTextColor(Color.parseColor("#9CA3AF"));
+
+        layoutSampleToggle.setVisibility(View.GONE);
+        btnValidateAdapters.setVisibility(View.GONE);
+        layoutFormatTabs.setVisibility(View.VISIBLE);
+
         if (currentNetwork == AdNetwork.META) {
             tabNetworkMeta.setBackgroundResource(R.drawable.bg_button_primary);
             tabNetworkMeta.setTextColor(Color.WHITE);
-            tabNetworkAdMob.setBackground(null);
-            tabNetworkAdMob.setTextColor(Color.parseColor("#9CA3AF"));
 
-            layoutSampleToggle.setVisibility(View.GONE);
+            tabRewarded.setVisibility(View.VISIBLE);
+            tabNative.setVisibility(View.VISIBLE);
 
             tvAppIdLabel.setText("Meta App ID:");
             tvAppId.setText(META_APP_ID);
@@ -281,12 +343,12 @@ public class AdTestingActivity extends AppCompatActivity {
             tvWhitelistDetails.setText("✓ Registered on Meta Monetization Manager:\n • r: b94e5118-43fc-4881-b07b-0ecf44bbb6ee\n • samsung: 1e278238-70d2-418a-acc3-10ca1ad1abe1");
             tvWhitelistNote.setText("Meta servers deliver test ads automatically to registered test devices.");
 
-        } else {
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             tabNetworkAdMob.setBackgroundResource(R.drawable.bg_button_primary);
             tabNetworkAdMob.setTextColor(Color.WHITE);
-            tabNetworkMeta.setBackground(null);
-            tabNetworkMeta.setTextColor(Color.parseColor("#9CA3AF"));
 
+            tabRewarded.setVisibility(View.VISIBLE);
+            tabNative.setVisibility(View.VISIBLE);
             layoutSampleToggle.setVisibility(View.VISIBLE);
 
             tvAppIdLabel.setText("AdMob App ID:");
@@ -296,9 +358,37 @@ public class AdTestingActivity extends AppCompatActivity {
             tvWhitelistTitle.setText("GOOGLE ADMOB INTEGRATION");
             tvWhitelistDetails.setText("✓ Google Mobile Ads (GMA) SDK v23.6.0\n • Interstitial: " + (useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL) + "\n • Rewarded: " + (useSample ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED) + "\n • Native: " + (useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE));
             tvWhitelistNote.setText("Client Test Devices configured via RequestConfiguration. Use toggle above to test with Google's official sample units if live unit propagation returns 403.");
+
+        } else if (currentNetwork == AdNetwork.LEVELPLAY) {
+            tabNetworkLevelPlay.setBackgroundResource(R.drawable.bg_button_primary);
+            tabNetworkLevelPlay.setTextColor(Color.WHITE);
+
+            // Currently focusing specifically on Interstitial for LevelPlay
+            tabRewarded.setVisibility(View.GONE);
+            tabNative.setVisibility(View.GONE);
+            btnValidateAdapters.setVisibility(View.VISIBLE);
+
+            tvAppIdLabel.setText("LevelPlay App Key:");
+            tvAppId.setText(LEVELPLAY_APP_KEY);
+            tvPlacementIdLabel.setText("Ad Unit ID:");
+
+            tvWhitelistTitle.setText("LEVELPLAY BIDDING MEDIATION");
+            tvWhitelistDetails.setText("✓ Unity LevelPlay SDK v8.7.0 (Unified)\n • Meta Audience Network Bidding Adapter: Active\n • Google AdMob Bidding Adapter: Active\n • Unity Ads Bidding Network: Active (Built-in)\n • Ad Unit: " + LEVELPLAY_PLACEMENT_INTERSTITIAL);
+            tvWhitelistNote.setText("In-app bidding auction runs automatically across Meta, AdMob, and Unity Ads. Click 'Validate Adapters' below to inspect logs.");
+
+            if (IronSource.isInterstitialReady()) {
+                tvSdkStatus.setText("Initialized & Ready (Cached ✓)");
+                tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+            } else if (isLevelPlayInitialized) {
+                tvSdkStatus.setText("Initialized (LevelPlay ✓)");
+                tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+            } else {
+                tvSdkStatus.setText("Initializing (LevelPlay)...");
+                tvSdkStatus.setTextColor(Color.parseColor("#FBBF24"));
+            }
         }
 
-        // 2. Update Format Tabs
+        // Format Tabs Highlight
         tabInterstitial.setBackground(null);
         tabInterstitial.setTextColor(Color.parseColor("#9CA3AF"));
         tabRewarded.setBackground(null);
@@ -310,7 +400,17 @@ public class AdTestingActivity extends AppCompatActivity {
         cardNativePreview.setVisibility(View.GONE);
         btnShowAd.setVisibility(View.VISIBLE);
 
-        if (currentNetwork == AdNetwork.ADMOB) {
+        if (currentNetwork == AdNetwork.LEVELPLAY) {
+            tabInterstitial.setBackgroundResource(R.drawable.bg_button_primary);
+            tabInterstitial.setTextColor(Color.WHITE);
+
+            tvPlacementId.setText(LEVELPLAY_PLACEMENT_INTERSTITIAL);
+            tvAdFormat.setText("Interstitial (LevelPlay Multi-Bidding)");
+
+            btnLoadAd.setText("⚡ RUN LEVELPLAY AD (1-Click)");
+            btnShowAd.setText("Show Cached Interstitial");
+
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
                 tabInterstitial.setBackgroundResource(R.drawable.bg_button_primary);
                 tabInterstitial.setTextColor(Color.WHITE);
@@ -318,8 +418,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 tvPlacementId.setText(useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL);
                 tvAdFormat.setText("Interstitial (AdMob Fullscreen)");
 
-                btnLoadAd.setText("Load AdMob Interstitial");
-                btnShowAd.setText("Show AdMob Interstitial");
+                btnLoadAd.setText("⚡ RUN ADMOB AD (1-Click)");
+                btnShowAd.setText("Show Cached Interstitial");
 
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
                 tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
@@ -330,8 +430,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 layoutRewardStatus.setVisibility(View.VISIBLE);
                 resetRewardBadge();
 
-                btnLoadAd.setText("Load AdMob Rewarded");
-                btnShowAd.setText("Show AdMob Rewarded");
+                btnLoadAd.setText("⚡ RUN ADMOB REWARDED (1-Click)");
+                btnShowAd.setText("Show Cached Rewarded");
 
             } else if (currentType == AdType.NATIVE) {
                 tabNative.setBackgroundResource(R.drawable.bg_button_primary);
@@ -340,7 +440,7 @@ public class AdTestingActivity extends AppCompatActivity {
                 tvPlacementId.setText(useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE);
                 tvAdFormat.setText("Native (AdMob Custom Layout)");
 
-                btnLoadAd.setText("Load AdMob Native Ad");
+                btnLoadAd.setText("⚡ LOAD & RENDER ADMOB NATIVE");
                 btnShowAd.setVisibility(View.GONE);
             }
         } else {
@@ -351,8 +451,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 tvPlacementId.setText(META_PLACEMENT_INTERSTITIAL);
                 tvAdFormat.setText("Interstitial (Meta Fullscreen)");
 
-                btnLoadAd.setText("Load Meta Interstitial");
-                btnShowAd.setText("Show Meta Interstitial");
+                btnLoadAd.setText("⚡ RUN META AD (1-Click)");
+                btnShowAd.setText("Show Cached Interstitial");
 
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
                 tabRewarded.setBackgroundResource(R.drawable.bg_button_primary);
@@ -363,8 +463,8 @@ public class AdTestingActivity extends AppCompatActivity {
                 layoutRewardStatus.setVisibility(View.VISIBLE);
                 resetRewardBadge();
 
-                btnLoadAd.setText("Load Rewarded Interstitial");
-                btnShowAd.setText("Show Rewarded Interstitial");
+                btnLoadAd.setText("⚡ RUN META REWARDED (1-Click)");
+                btnShowAd.setText("Show Cached Rewarded");
 
             } else if (currentType == AdType.NATIVE) {
                 tabNative.setBackgroundResource(R.drawable.bg_button_primary);
@@ -421,7 +521,6 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void initializeAdMobSdk() {
-        // Configure Test Devices in RequestConfiguration
         List<String> testDeviceIds = Arrays.asList(
             "1e278238-70d2-418a-acc3-10ca1ad1abe1",
             "b94e5118-43fc-4881-b07b-0ecf44bbb6ee",
@@ -443,51 +542,235 @@ public class AdTestingActivity extends AppCompatActivity {
         });
     }
 
+    private void initializeLevelPlaySdk() {
+        appendLog("🚀 [LEVELPLAY INIT] Initializing via AdManager (IronSource LevelPlay Mediation)...");
+        try {
+            IronSource.setAdaptersDebug(true);
+
+            IronSource.setLevelPlayInterstitialListener(new com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener() {
+                @Override
+                public void onAdReady(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnShowAd.setEnabled(true);
+                        updateAdState("LOADED (READY)", "#34D399");
+                        String network = adInfo != null ? adInfo.getAdNetwork() : "Mediation Winner";
+                        appendLog("🟢 [LEVELPLAY READY] Auction won by " + network + "!");
+                        if (isAutoShowPending) {
+                            isAutoShowPending = false;
+                            appendLog("🚀 [1-CLICK AUTO-SHOW] Showing LevelPlay Interstitial now!");
+                            IronSource.showInterstitial(LEVELPLAY_PLACEMENT_INTERSTITIAL);
+                        } else {
+                            Toast.makeText(AdTestingActivity.this, "LevelPlay Interstitial Ready (" + network + ")!", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onAdLoadFailed(com.ironsource.mediationsdk.logger.IronSourceError error) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        isAutoShowPending = false;
+                        btnShowAd.setEnabled(false);
+                        updateAdState("FAILED (" + (error != null ? error.getErrorCode() : -1) + ")", "#EF4444");
+                        appendLog("🔴 [LEVELPLAY LOAD FAILED] " + (error != null ? error.getErrorMessage() : "Unknown"));
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Load Failed: " + (error != null ? error.getErrorMessage() : ""), Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onAdOpened(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("DISPLAYING", "#60A5FA");
+                        appendLog("🔵 [LEVELPLAY DISPLAYED] Presented by " + (adInfo != null ? adInfo.getAdNetwork() : "network"));
+                    });
+                }
+
+                @Override
+                public void onAdShowSucceeded(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    runOnUiThread(() -> appendLog("🟢 [LEVELPLAY SHOW SUCCEEDED] Interstitial presented."));
+                }
+
+                @Override
+                public void onAdShowFailed(com.ironsource.mediationsdk.logger.IronSourceError error, com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("SHOW FAILED", "#EF4444");
+                        appendLog("🔴 [LEVELPLAY SHOW FAILED] " + (error != null ? error.getErrorMessage() : "Unknown"));
+                    });
+                }
+
+                @Override
+                public void onAdClicked(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    runOnUiThread(() -> appendLog("🟡 [LEVELPLAY CLICKED] Clicked on " + (adInfo != null ? adInfo.getAdNetwork() : "ad")));
+                }
+
+                @Override
+                public void onAdClosed(com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("IDLE (CLOSED)", "#34D399");
+                        appendLog("⏹️ [LEVELPLAY CLOSED] Ad closed.");
+                        // Preload next ad in background
+                        IronSource.loadInterstitial();
+                    });
+                }
+            });
+
+            // Initialize IronSource with Interstitial & Rewarded Video
+            IronSource.init(this, LEVELPLAY_APP_KEY, () -> {
+                runOnUiThread(() -> {
+                    isLevelPlayInitialized = true;
+                    if (currentNetwork == AdNetwork.LEVELPLAY) {
+                        tvSdkStatus.setText("Initialized (LevelPlay ✓)");
+                        tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+                        btnLoadAd.setEnabled(true);
+                    }
+                    appendLog("🟢 [LEVELPLAY INIT SUCCESS] IronSource LevelPlay Mediation SDK initialized!");
+                    appendLog("   App Key: " + LEVELPLAY_APP_KEY);
+                    appendLog("   Bidding: Meta, AdMob, Unity Ads");
+
+                    // Preload immediately
+                    IronSource.loadInterstitial();
+                    appendLog("📡 [PRELOAD] Background Interstitial load dispatched!");
+                });
+            }, IronSource.AD_UNIT.INTERSTITIAL, IronSource.AD_UNIT.REWARDED_VIDEO);
+
+            isLevelPlayInitialized = true;
+            if (currentNetwork == AdNetwork.LEVELPLAY) {
+                tvSdkStatus.setText("Initialized (LevelPlay ✓)");
+                tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
+            }
+
+        } catch (Exception e) {
+            appendLog("❌ [LEVELPLAY INIT EXCEPTION] " + e.getMessage());
+        }
+    }
+
     // =========================================================================
-    // DISPATCHER
+    // 1-CLICK INSTANT RUNNER & DISPATCHER
     // =========================================================================
-    private void loadCurrentAd() {
+    private void runCurrentAdNow() {
         if (isAdLoading) {
-            Toast.makeText(this, "Ad request is already in progress...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ad request is already in progress... Please wait.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (currentNetwork == AdNetwork.ADMOB) {
+        if (currentNetwork == AdNetwork.LEVELPLAY) {
+            if (IronSource.isInterstitialReady()) {
+                appendLog("🟢 [LEVELPLAY READY] Interstitial is in cache! Showing immediately...");
+                IronSource.showInterstitial(LEVELPLAY_PLACEMENT_INTERSTITIAL);
+                return;
+            }
+
+            // Not ready yet: 1-Click Auto-load & auto-show!
+            isAutoShowPending = true;
+            isAdLoading = true;
+            updateAdState("LOADING & SHOWING...", "#FBBF24");
+            appendLog("⏳ [LEVELPLAY 1-CLICK] Interstitial loading... will auto-show the instant it arrives!");
+            Toast.makeText(this, "Loading LevelPlay Interstitial... Showing automatically.", Toast.LENGTH_SHORT).show();
+
+            IronSource.loadInterstitial();
+            loadLevelPlayInterstitial();
+
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
+                if (admobInterstitialAd != null) {
+                    appendLog("🟢 [ADMOB READY] Cached! Showing immediately...");
+                    admobInterstitialAd.show(this);
+                    return;
+                }
+                isAutoShowPending = true;
+                isAdLoading = true;
+                updateAdState("LOADING & SHOWING...", "#FBBF24");
+                appendLog("⏳ [ADMOB 1-CLICK] Requesting Interstitial... will show automatically!");
+                Toast.makeText(this, "Loading AdMob Interstitial... Will show automatically.", Toast.LENGTH_SHORT).show();
                 loadAdMobInterstitial();
+
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                if (admobRewardedAd != null) {
+                    showAdMobRewarded();
+                    return;
+                }
+                isAutoShowPending = true;
+                isAdLoading = true;
+                updateAdState("LOADING & SHOWING...", "#FBBF24");
                 loadAdMobRewarded();
-            } else if (currentType == AdType.NATIVE) {
+            } else {
                 loadAdMobNative();
             }
         } else {
+            // META
             if (currentType == AdType.INTERSTITIAL) {
+                if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
+                    appendLog("🟢 [META READY] Cached! Showing immediately...");
+                    metaInterstitialAd.show();
+                    return;
+                }
+                isAutoShowPending = true;
+                isAdLoading = true;
+                updateAdState("LOADING & SHOWING...", "#FBBF24");
+                appendLog("⏳ [META 1-CLICK] Requesting Interstitial... will show automatically!");
+                Toast.makeText(this, "Loading Meta Interstitial... Will show automatically.", Toast.LENGTH_SHORT).show();
                 loadMetaInterstitial();
+
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
+                if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
+                    showMetaRewardedInterstitial();
+                    return;
+                }
+                isAutoShowPending = true;
+                isAdLoading = true;
+                updateAdState("LOADING & SHOWING...", "#FBBF24");
                 loadMetaRewardedInterstitial();
-            } else if (currentType == AdType.NATIVE) {
+            } else {
                 loadMetaNativeAd();
             }
         }
     }
 
+    private void loadCurrentAd() {
+        runCurrentAdNow();
+    }
+
     private void showCurrentAd() {
-        if (currentNetwork == AdNetwork.ADMOB) {
+        if (currentNetwork == AdNetwork.LEVELPLAY) {
+            if (IronSource.isInterstitialReady()) {
+                IronSource.showInterstitial(LEVELPLAY_PLACEMENT_INTERSTITIAL);
+            } else {
+                runCurrentAdNow();
+            }
+        } else if (currentNetwork == AdNetwork.ADMOB) {
             if (currentType == AdType.INTERSTITIAL) {
-                showAdMobInterstitial();
+                if (admobInterstitialAd != null) {
+                    admobInterstitialAd.show(this);
+                } else {
+                    runCurrentAdNow();
+                }
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
-                showAdMobRewarded();
+                if (admobRewardedAd != null) {
+                    showAdMobRewarded();
+                } else {
+                    runCurrentAdNow();
+                }
             }
         } else {
             if (currentType == AdType.INTERSTITIAL) {
-                showMetaInterstitial();
+                if (metaInterstitialAd != null && metaInterstitialAd.isAdLoaded()) {
+                    metaInterstitialAd.show();
+                } else {
+                    runCurrentAdNow();
+                }
             } else if (currentType == AdType.REWARDED_INTERSTITIAL) {
-                showMetaRewardedInterstitial();
+                if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded()) {
+                    showMetaRewardedInterstitial();
+                } else {
+                    runCurrentAdNow();
+                }
             }
         }
     }
 
     private void resetCurrentAd() {
+        destroyLevelPlayInterstitial();
         destroyAdMobInterstitial();
         destroyAdMobRewarded();
         destroyAdMobNative();
@@ -506,7 +789,126 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 1. GOOGLE ADMOB INTERSTITIAL
+    // 1. UNITY LEVELPLAY INTERSTITIAL (BIDDING MEDIATION)
+    // =========================================================================
+    private void loadLevelPlayInterstitial() {
+        destroyLevelPlayInterstitial();
+
+        isAdLoading = true;
+        btnLoadAd.setEnabled(false);
+        btnShowAd.setEnabled(false);
+        updateAdState("LOADING (LEVELPLAY)...", "#FBBF24");
+
+        appendLog("📡 [LEVELPLAY REQUEST] Requesting LevelPlay Interstitial Ad...");
+        appendLog("   Ad Unit ID: " + LEVELPLAY_PLACEMENT_INTERSTITIAL);
+        appendLog("   Auction Pool: Meta Audience Network, Google AdMob, Unity Ads");
+
+        try {
+            levelPlayInterstitialAd = new LevelPlayInterstitialAd(LEVELPLAY_PLACEMENT_INTERSTITIAL);
+
+            levelPlayInterstitialAd.setListener(new LevelPlayInterstitialAdListener() {
+                @Override
+                public void onAdLoaded(@NonNull LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(true);
+                        updateAdState("LOADED (LEVELPLAY READY)", "#34D399");
+
+                        String winner = adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "Mediation Winner";
+                        appendLog("🟢 [LEVELPLAY LOADED] Interstitial auction won by " + winner + "!");
+                        appendLog("   Network: " + winner);
+                        appendLog("   Auction ID: " + adInfo.getAuctionId());
+                        if (adInfo.getRevenue() > 0) {
+                            appendLog("   Revenue: $" + adInfo.getRevenue());
+                        }
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Interstitial Ready (" + winner + ")!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onAdLoadFailed(@NonNull LevelPlayAdError adError) {
+                    runOnUiThread(() -> {
+                        isAdLoading = false;
+                        btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+                        updateAdState("FAILED (CODE " + adError.getErrorCode() + ")", "#EF4444");
+
+                        appendLog("🔴 [LEVELPLAY ERROR] onAdLoadFailed() received:");
+                        appendLog("   Code: " + adError.getErrorCode());
+                        appendLog("   Message: " + adError.getErrorMessage());
+
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Error " + adError.getErrorCode() + ": " + adError.getErrorMessage(), Toast.LENGTH_LONG).show();
+                    });
+                }
+
+                @Override
+                public void onAdDisplayed(@NonNull LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        updateAdState("DISPLAYING (LEVELPLAY)", "#60A5FA");
+                        appendLog("🔵 [LEVELPLAY DISPLAYED] Fullscreen interstitial presented by " + adInfo.getAdNetwork() + ".");
+                    });
+                }
+
+                @Override
+                public void onAdDisplayFailed(@NonNull LevelPlayAdError adError, @NonNull LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        btnShowAd.setEnabled(false);
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("DISPLAY FAILED", "#EF4444");
+                        appendLog("🔴 [LEVELPLAY DISPLAY FAILED] " + adError.getErrorMessage());
+                    });
+                }
+
+                @Override
+                public void onAdClicked(@NonNull LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        appendLog("🟡 [LEVELPLAY CLICKED] User clicked on ad from " + adInfo.getAdNetwork() + ".");
+                    });
+                }
+
+                @Override
+                public void onAdClosed(@NonNull LevelPlayAdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        btnShowAd.setEnabled(false);
+                        btnLoadAd.setEnabled(true);
+                        updateAdState("DISMISSED / IDLE", "#9CA3AF");
+
+                        appendLog("⚪ [LEVELPLAY CLOSED] Interstitial closed by user.");
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Ad Closed.", Toast.LENGTH_SHORT).show();
+                        destroyLevelPlayInterstitial();
+                    });
+                }
+            });
+
+            levelPlayInterstitialAd.loadAd();
+
+        } catch (Exception e) {
+            isAdLoading = false;
+            btnLoadAd.setEnabled(true);
+            btnShowAd.setEnabled(false);
+            updateAdState("EXCEPTION", "#EF4444");
+            appendLog("❌ [LEVELPLAY EXCEPTION] " + e.getMessage());
+            Log.e(TAG, "Error loading LevelPlay interstitial", e);
+        }
+    }
+
+    private void showLevelPlayInterstitial() {
+        if (levelPlayInterstitialAd != null && levelPlayInterstitialAd.isAdReady()) {
+            appendLog("▶️ [LEVELPLAY SHOW] Presenting LevelPlay Interstitial...");
+            levelPlayInterstitialAd.showAd(this);
+        } else {
+            Toast.makeText(this, "LevelPlay ad is not ready yet. Please click Load first.", Toast.LENGTH_SHORT).show();
+            appendLog("⚠️ [LEVELPLAY WARNING] Interstitial ad is not ready.");
+        }
+    }
+
+    private void destroyLevelPlayInterstitial() {
+        levelPlayInterstitialAd = null;
+    }
+
+    // =========================================================================
+    // 2. GOOGLE ADMOB INTERSTITIAL
     // =========================================================================
     private void loadAdMobInterstitial() {
         destroyAdMobInterstitial();
@@ -575,7 +977,6 @@ public class AdTestingActivity extends AppCompatActivity {
             btnShowAd.setEnabled(false);
             updateAdState("EXCEPTION", "#EF4444");
             appendLog("❌ [ADMOB EXCEPTION] " + e.getMessage());
-            Log.e(TAG, "Error loading AdMob interstitial", e);
         }
     }
 
@@ -593,16 +994,12 @@ public class AdTestingActivity extends AppCompatActivity {
 
             @Override
             public void onAdImpression() {
-                runOnUiThread(() -> {
-                    appendLog("🟣 [ADMOB IMPRESSION] Verified impression recorded by Google AdMob servers.");
-                });
+                runOnUiThread(() -> appendLog("🟣 [ADMOB IMPRESSION] Verified impression recorded by Google AdMob servers."));
             }
 
             @Override
             public void onAdClicked() {
-                runOnUiThread(() -> {
-                    appendLog("🟡 [ADMOB CLICKED] User clicked on AdMob Interstitial.");
-                });
+                runOnUiThread(() -> appendLog("🟡 [ADMOB CLICKED] User clicked on AdMob Interstitial."));
             }
 
             @Override
@@ -624,7 +1021,6 @@ public class AdTestingActivity extends AppCompatActivity {
                     btnShowAd.setEnabled(false);
                     btnLoadAd.setEnabled(true);
                     updateAdState("SHOW FAILED", "#EF4444");
-
                     appendLog("🔴 [ADMOB SHOW FAILED] " + adError.getMessage() + " (Code: " + adError.getCode() + ")");
                     destroyAdMobInterstitial();
                 });
@@ -646,7 +1042,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 2. GOOGLE ADMOB REWARDED
+    // 3. GOOGLE ADMOB REWARDED
     // =========================================================================
     private void loadAdMobRewarded() {
         destroyAdMobRewarded();
@@ -732,16 +1128,12 @@ public class AdTestingActivity extends AppCompatActivity {
 
             @Override
             public void onAdImpression() {
-                runOnUiThread(() -> {
-                    appendLog("🟣 [ADMOB IMPRESSION] Rewarded Ad verified impression logged.");
-                });
+                runOnUiThread(() -> appendLog("🟣 [ADMOB IMPRESSION] Rewarded Ad verified impression logged."));
             }
 
             @Override
             public void onAdClicked() {
-                runOnUiThread(() -> {
-                    appendLog("🟡 [ADMOB CLICKED] User clicked on Rewarded Ad.");
-                });
+                runOnUiThread(() -> appendLog("🟡 [ADMOB CLICKED] User clicked on Rewarded Ad."));
             }
 
             @Override
@@ -790,7 +1182,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 3. GOOGLE ADMOB NATIVE
+    // 4. GOOGLE ADMOB NATIVE
     // =========================================================================
     private void loadAdMobNative() {
         destroyAdMobNative();
@@ -869,7 +1261,6 @@ public class AdTestingActivity extends AppCompatActivity {
 
             NativeAdView adView = (NativeAdView) LayoutInflater.from(this).inflate(R.layout.layout_admob_native_ad, admobNativeContainer, false);
 
-            // Bind views to NativeAdView
             adView.setHeadlineView(adView.findViewById(R.id.ad_headline));
             adView.setBodyView(adView.findViewById(R.id.ad_body));
             adView.setCallToActionView(adView.findViewById(R.id.ad_call_to_action));
@@ -877,7 +1268,6 @@ public class AdTestingActivity extends AppCompatActivity {
             adView.setAdvertiserView(adView.findViewById(R.id.ad_advertiser));
             adView.setMediaView(adView.findViewById(R.id.ad_media));
 
-            // Populate text & content
             ((TextView) adView.getHeadlineView()).setText(nativeAd.getHeadline());
 
             if (nativeAd.getBody() != null) {
@@ -908,7 +1298,6 @@ public class AdTestingActivity extends AppCompatActivity {
                 adView.getAdvertiserView().setVisibility(View.GONE);
             }
 
-            // Register native ad with view
             adView.setNativeAd(nativeAd);
 
             admobNativeContainer.addView(adView);
@@ -936,7 +1325,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 4. META INTERSTITIAL
+    // 5. META INTERSTITIAL
     // =========================================================================
     private void loadMetaInterstitial() {
         destroyMetaInterstitial();
@@ -1052,7 +1441,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 5. META REWARDED INTERSTITIAL
+    // 6. META REWARDED INTERSTITIAL
     // =========================================================================
     private void loadMetaRewardedInterstitial() {
         destroyMetaRewardedAds();
@@ -1147,7 +1536,6 @@ public class AdTestingActivity extends AppCompatActivity {
         } catch (Exception e) {
             isAdLoading = false;
             btnLoadAd.setEnabled(true);
-            btnShowAd.setEnabled(false);
             updateAdState("EXCEPTION", "#EF4444");
             appendLog("❌ [META EXCEPTION] " + e.getMessage());
         }
@@ -1224,7 +1612,6 @@ public class AdTestingActivity extends AppCompatActivity {
         } catch (Exception e) {
             isAdLoading = false;
             btnLoadAd.setEnabled(true);
-            btnShowAd.setEnabled(false);
             updateAdState("EXCEPTION", "#EF4444");
         }
     }
@@ -1257,7 +1644,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 6. META NATIVE ADS
+    // 7. META NATIVE ADS
     // =========================================================================
     private void loadMetaNativeAd() {
         destroyMetaNativeAd();
@@ -1490,7 +1877,20 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        IronSource.onResume(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        IronSource.onPause(this);
+    }
+
+    @Override
     protected void onDestroy() {
+        destroyLevelPlayInterstitial();
         destroyAdMobInterstitial();
         destroyAdMobRewarded();
         destroyAdMobNative();

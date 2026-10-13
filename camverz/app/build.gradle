@@ -154,6 +154,17 @@ dependencies {
     // Google Mobile Ads (AdMob) SDK
     implementation libs.play.services.ads
 
+    // Google Play Services mandatory for Unity LevelPlay (GAID & AppSet ID)
+    implementation libs.play.services.appset
+    implementation libs.play.services.ads.identifier
+
+    // Unity LevelPlay Mediation Core SDK & Adapters (Meta, AdMob, Unity Ads)
+    implementation libs.levelplay.sdk
+    implementation libs.levelplay.adapter.facebook
+    implementation libs.levelplay.adapter.admob
+    implementation libs.levelplay.adapter.unity
+    implementation libs.unity.ads
+
     testImplementation libs.junit
     androidTestImplementation libs.androidx.junit
     androidTestImplementation libs.androidx.espresso.core
