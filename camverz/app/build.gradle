@@ -151,8 +151,9 @@ dependencies {
     // Meta Audience Network SDK (standalone for Interstitial testing)
     implementation libs.audience.network.sdk
 
-    // Google Mobile Ads (AdMob) SDK
+    // Google Mobile Ads (AdMob) SDK & Meta Mediation Bidding Adapter
     implementation libs.play.services.ads
+    implementation libs.admob.adapter.facebook
 
     // Google Play Services mandatory for Unity LevelPlay (GAID & AppSet ID)
     implementation libs.play.services.appset

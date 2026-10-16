@@ -39,6 +39,7 @@ media3 = "1.5.1"
 browser = "1.8.0"
 installReferrer = "2.2"
 audienceNetwork = "6.18.0"
+admobFacebookMediation = "6.18.0.0"
 levelplay = "8.7.0"
 levelplayFacebook = "4.3.47"
 levelplayAdmob = "4.3.45"
@@ -102,6 +103,7 @@ levelplay-adapter-facebook = { group = "com.unity3d.ads-mediation", name = "face
 levelplay-adapter-admob = { group = "com.unity3d.ads-mediation", name = "admob-adapter", version.ref = "levelplayAdmob" }
 levelplay-adapter-unity = { group = "com.unity3d.ads-mediation", name = "unityads-adapter", version.ref = "levelplayUnity" }
 unity-ads = { group = "com.unity3d.ads", name = "unity-ads", version.ref = "unityAds" }
+admob-adapter-facebook = { group = "com.google.ads.mediation", name = "facebook", version.ref = "admobFacebookMediation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

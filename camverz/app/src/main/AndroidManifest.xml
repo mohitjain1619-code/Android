@@ -57,6 +57,9 @@
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.ads.APPLICATION_ID"
+            android:value="@string/facebook_app_id" />
 
         <!-- Google Mobile Ads (AdMob) Application ID -->
         <meta-data

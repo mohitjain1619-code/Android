@@ -49,6 +49,10 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
+import com.google.android.gms.ads.ResponseInfo;
+import com.google.android.gms.ads.AdapterResponseInfo;
+import com.google.android.gms.ads.initialization.AdapterStatus;
+import java.util.Map;
 
 // Unity LevelPlay Mediation Imports
 import com.unity3d.mediation.LevelPlay;
@@ -281,8 +285,8 @@ public class AdTestingActivity extends AppCompatActivity {
 
         updateUiForCurrentSelection();
         String netName;
-        if (network == AdNetwork.META) netName = "Meta Audience Network";
-        else if (network == AdNetwork.ADMOB) netName = "Google AdMob";
+        if (network == AdNetwork.META) netName = "Meta Audience Network (Direct)";
+        else if (network == AdNetwork.ADMOB) netName = "Google AdMob Mediation (Meta Bidding)";
         else netName = "Unity LevelPlay Mediation";
         appendLog("🔄 [NETWORK SWITCH] Selected " + netName);
     }
@@ -341,11 +345,11 @@ public class AdTestingActivity extends AppCompatActivity {
 
             tvAppIdLabel.setText("AdMob App ID:");
             tvAppId.setText(ADMOB_APP_ID);
-            tvPlacementIdLabel.setText(useSample ? "Sample Test ID:" : "Live Ad Unit ID:");
+            tvPlacementIdLabel.setText(useSample ? "Sample Test ID:" : "AdMob Unit ID (Meta Mapped):");
 
-            tvWhitelistTitle.setText("GOOGLE ADMOB INTEGRATION");
-            tvWhitelistDetails.setText("✓ Google Mobile Ads (GMA) SDK v23.6.0\n • Interstitial: " + (useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL) + "\n • Rewarded: " + (useSample ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED) + "\n • Native: " + (useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE));
-            tvWhitelistNote.setText("Client Test Devices configured via RequestConfiguration. Use toggle above to test with Google's official sample units if live unit propagation returns 403.");
+            tvWhitelistTitle.setText("GOOGLE ADMOB MEDIATION (META BIDDING)");
+            tvWhitelistDetails.setText("✓ AdMob Unit Mapped to Meta Audience Network:\n • Interstitial: " + (useSample ? ADMOB_SAMPLE_INTERSTITIAL : ADMOB_PLACEMENT_INTERSTITIAL) + " ➔ Meta: " + META_PLACEMENT_INTERSTITIAL + "\n • Rewarded: " + (useSample ? ADMOB_SAMPLE_REWARDED : ADMOB_PLACEMENT_REWARDED) + " ➔ Meta: " + META_PLACEMENT_REWARDED_INTERSTITIAL + "\n • Native: " + (useSample ? ADMOB_SAMPLE_NATIVE : ADMOB_PLACEMENT_NATIVE) + " ➔ Meta: " + META_PLACEMENT_NATIVE + "\n • Bidding Adapter: com.google.ads.mediation.facebook.FacebookMediationAdapter");
+            tvWhitelistNote.setText("AdMob runs real-time in-app bidding with Meta Audience Network. When loaded, check console below to see which network won!");
         } else {
             // LEVELPLAY MEDIATION
             tabNetworkLevelPlay.setBackgroundResource(R.drawable.bg_button_primary);
@@ -505,6 +509,13 @@ public class AdTestingActivity extends AppCompatActivity {
     // SDK INITIALIZATION
     // =========================================================================
     private void initializeMetaSdk() {
+        try {
+            com.facebook.ads.AdSettings.setIntegrationErrorMode(com.facebook.ads.AdSettings.IntegrationErrorMode.INTEGRATION_ERROR_CALLBACK_MODE);
+            com.facebook.ads.AdSettings.setTestMode(true);
+            com.facebook.ads.AdSettings.addTestDevice("1e278238-70d2-418a-acc3-10ca1ad1abe1");
+            com.facebook.ads.AdSettings.addTestDevice("b94e5118-43fc-4881-b07b-0ecf44bbb6ee");
+        } catch (Throwable ignored) {}
+
         AudienceNetworkAds.buildInitSettings(this)
             .withInitListener(initResult -> {
                 runOnUiThread(() -> {
@@ -537,12 +548,50 @@ public class AdTestingActivity extends AppCompatActivity {
         MobileAds.initialize(this, initializationStatus -> {
             runOnUiThread(() -> {
                 if (currentNetwork == AdNetwork.ADMOB) {
-                    tvSdkStatus.setText("Initialized (AdMob ✓)");
+                    tvSdkStatus.setText("Initialized (AdMob Mediation ✓)");
                     tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
                 }
-                appendLog("🟢 [ADMOB INIT] Google Mobile Ads SDK Initialized successfully.");
+                appendLog("🟢 [ADMOB INIT] Google Mobile Ads SDK Initialized.");
+                Map<String, AdapterStatus> adapterStatusMap = initializationStatus.getAdapterStatusMap();
+                if (adapterStatusMap != null) {
+                    for (Map.Entry<String, AdapterStatus> entry : adapterStatusMap.entrySet()) {
+                        String adapterName = entry.getKey();
+                        String state = entry.getValue().getInitializationState().toString();
+                        if (adapterName.contains("Facebook") || adapterName.contains("facebook")) {
+                            appendLog("   🔗 Meta Bidding Adapter: " + adapterName + " -> " + state);
+                        }
+                    }
+                }
             });
         });
+    }
+
+    private void logAdMobMediationInfo(String format, ResponseInfo responseInfo) {
+        if (responseInfo == null) return;
+        String winningAdapter = responseInfo.getMediationAdapterClassName();
+        appendLog("🏆 [ADMOB MEDIATION WINNER - " + format.toUpperCase(Locale.US) + "]");
+        appendLog("   Winning Adapter: " + winningAdapter);
+        if (winningAdapter != null && winningAdapter.toLowerCase(Locale.US).contains("facebook")) {
+            appendLog("   🎯 Meta Audience Network (Facebook) WON the bidding auction!");
+        } else if (winningAdapter != null && winningAdapter.toLowerCase(Locale.US).contains("admob")) {
+            appendLog("   🎯 Google AdMob Network served this ad.");
+        } else {
+            appendLog("   🎯 Mediation Partner: " + winningAdapter);
+        }
+
+        List<AdapterResponseInfo> responses = responseInfo.getAdapterResponses();
+        if (responses != null && !responses.isEmpty()) {
+            appendLog("📊 [MEDIATION BIDDING RESPONSES]:");
+            for (AdapterResponseInfo info : responses) {
+                String name = info.getAdapterClassName();
+                long latency = info.getLatencyMillis();
+                if (info.getAdError() != null) {
+                    appendLog("   ✖ " + name + " -> No fill / Error: " + info.getAdError().getMessage());
+                } else {
+                    appendLog("   ✔ " + name + " -> Bid Ready (Latency: " + latency + "ms)");
+                }
+            }
+        }
     }
 
     private void initializeLevelPlaySdk() {
@@ -710,6 +759,7 @@ public class AdTestingActivity extends AppCompatActivity {
                             Toast.makeText(AdTestingActivity.this, "AdMob Interstitial Loaded!", Toast.LENGTH_SHORT).show();
 
                             setupAdMobInterstitialCallbacks();
+                            logAdMobMediationInfo("Interstitial", interstitialAd.getResponseInfo());
                         });
                     }
 
@@ -850,6 +900,7 @@ public class AdTestingActivity extends AppCompatActivity {
                             Toast.makeText(AdTestingActivity.this, "AdMob Rewarded Loaded!", Toast.LENGTH_SHORT).show();
 
                             setupAdMobRewardedCallbacks();
+                            logAdMobMediationInfo("Rewarded", rewardedAd.getResponseInfo());
                         });
                     }
 
@@ -982,6 +1033,7 @@ public class AdTestingActivity extends AppCompatActivity {
 
                         appendLog("🟢 [ADMOB NATIVE LOADED] NativeAd returned successfully!");
                         renderAdMobNativeAd(nativeAd);
+                        logAdMobMediationInfo("Native", nativeAd.getResponseInfo());
                         Toast.makeText(AdTestingActivity.this, "AdMob Native Ad Rendered!", Toast.LENGTH_SHORT).show();
                     });
                 })
@@ -1426,7 +1478,15 @@ public class AdTestingActivity extends AppCompatActivity {
     private void showMetaRewardedInterstitial() {
         if (metaRewardedInterstitialAd != null && metaRewardedInterstitialAd.isAdLoaded() && !metaRewardedInterstitialAd.isAdInvalidated()) {
             appendLog("▶️ [META SHOW] Presenting Meta Rewarded Interstitial Ad...");
-            metaRewardedInterstitialAd.show();
+            try {
+                metaRewardedInterstitialAd.show(
+                    metaRewardedInterstitialAd.buildShowAdConfig()
+                        .withAppOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
+                        .build()
+                );
+            } catch (Exception e) {
+                metaRewardedInterstitialAd.show();
+            }
         } else if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded() && !metaRewardedVideoAd.isAdInvalidated()) {
             appendLog("▶️ [META SHOW] Presenting Meta Rewarded Video Ad...");
             metaRewardedVideoAd.show();
