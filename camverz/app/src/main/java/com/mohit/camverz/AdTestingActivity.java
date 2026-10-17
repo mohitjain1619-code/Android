@@ -509,13 +509,6 @@ public class AdTestingActivity extends AppCompatActivity {
     // SDK INITIALIZATION
     // =========================================================================
     private void initializeMetaSdk() {
-        try {
-            com.facebook.ads.AdSettings.setIntegrationErrorMode(com.facebook.ads.AdSettings.IntegrationErrorMode.INTEGRATION_ERROR_CALLBACK_MODE);
-            com.facebook.ads.AdSettings.setTestMode(true);
-            com.facebook.ads.AdSettings.addTestDevice("1e278238-70d2-418a-acc3-10ca1ad1abe1");
-            com.facebook.ads.AdSettings.addTestDevice("b94e5118-43fc-4881-b07b-0ecf44bbb6ee");
-        } catch (Throwable ignored) {}
-
         AudienceNetworkAds.buildInitSettings(this)
             .withInitListener(initResult -> {
                 runOnUiThread(() -> {
@@ -1478,15 +1471,7 @@ public class AdTestingActivity extends AppCompatActivity {
     private void showMetaRewardedInterstitial() {
         if (metaRewardedInterstitialAd != null && metaRewardedInterstitialAd.isAdLoaded() && !metaRewardedInterstitialAd.isAdInvalidated()) {
             appendLog("▶️ [META SHOW] Presenting Meta Rewarded Interstitial Ad...");
-            try {
-                metaRewardedInterstitialAd.show(
-                    metaRewardedInterstitialAd.buildShowAdConfig()
-                        .withAppOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED)
-                        .build()
-                );
-            } catch (Exception e) {
-                metaRewardedInterstitialAd.show();
-            }
+            metaRewardedInterstitialAd.show();
         } else if (metaRewardedVideoAd != null && metaRewardedVideoAd.isAdLoaded() && !metaRewardedVideoAd.isAdInvalidated()) {
             appendLog("▶️ [META SHOW] Presenting Meta Rewarded Video Ad...");
             metaRewardedVideoAd.show();
