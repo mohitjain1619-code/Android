@@ -145,7 +145,27 @@ public class CreatePostActivity extends BaseActivity {
                     showDualBiddingAd();
                 }
             };
-            adHandler.postDelayed(adTimeoutRunnable, 3500);
+            adHandler.postDelayed(adTimeoutRunnable, 6000);
+
+            // Active check every 400ms: if ad loads before timeout, show immediately!
+            Runnable fastCheckRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (isWaitingForAd) {
+                        if (AdManager.getInstance().isDualBiddingReady()) {
+                            isWaitingForAd = false;
+                            if (adTimeoutRunnable != null) {
+                                adHandler.removeCallbacks(adTimeoutRunnable);
+                            }
+                            dismissAdLoadingDialog();
+                            showDualBiddingAd();
+                        } else {
+                            adHandler.postDelayed(this, 400);
+                        }
+                    }
+                }
+            };
+            adHandler.postDelayed(fastCheckRunnable, 400);
         }
     }
 

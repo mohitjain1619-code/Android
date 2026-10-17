@@ -111,8 +111,10 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
-
-        // Ads removed globally
+        // Initialize AdManager globally across all activities (isolated from AdTestingActivity)
+        if (!getClass().getSimpleName().contains("AdTestingActivity")) {
+            initializeIronSource(this);
+        }
     }
 
     @Override
