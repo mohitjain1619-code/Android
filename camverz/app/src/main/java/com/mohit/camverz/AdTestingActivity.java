@@ -1783,9 +1783,6 @@ public class AdTestingActivity extends AppCompatActivity {
         appendLog("🚀 [LEVELPLAY REWARDED LOAD] Requesting Rewarded Video Unit: " + LEVELPLAY_AD_UNIT_REWARDED);
         appendLog("📡 [AUCTION DISPATCHED] Sending real-time bid requests to Meta, Google AdMob, UnityAds, and ironSource...");
 
-        // Preload Dual-Auction in AdManager simultaneously
-        AdManager.getInstance().preloadDualBiddingAds(this);
-
         try {
             if (levelPlayRewardedAd == null) {
                 levelPlayRewardedAd = new LevelPlayRewardedAd(LEVELPLAY_AD_UNIT_REWARDED);
@@ -1802,9 +1799,8 @@ public class AdTestingActivity extends AppCompatActivity {
 
                         String winnerNetwork = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
                         String auctionId = (adInfo != null && adInfo.getAuctionId() != null) ? adInfo.getAuctionId() : "N/A";
-                        Double rev = (adInfo != null) ? Double.valueOf(adInfo.getRevenue()) : null;
                         appendLog("🟢 [LEVELPLAY REWARDED LOADED] Rewarded Video ready to show!");
-                        appendLog("🏆 [AUCTION WINNER] " + winnerNetwork + " won the real-time bidding auction!" + (rev != null ? " ($" + rev + ")" : ""));
+                        appendLog("🏆 [AUCTION WINNER] " + winnerNetwork + " won the real-time bidding auction!");
                         appendLog("ℹ️ [AUCTION DETAILS] Auction ID: " + auctionId);
                         Toast.makeText(AdTestingActivity.this, "LevelPlay Rewarded Ready! (" + winnerNetwork + ")", Toast.LENGTH_SHORT).show();
                     });
@@ -1815,22 +1811,13 @@ public class AdTestingActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         isAdLoading = false;
                         btnLoadAd.setEnabled(true);
+                        btnShowAd.setEnabled(false);
+                        updateAdState("NO FILL / FAILED", "#EF4444");
 
                         String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
                         int errorCode = (error != null) ? error.getErrorCode() : -1;
                         appendLog("🔴 [LEVELPLAY REWARDED FAILED] " + errorMsg + " (Code: " + errorCode + ")");
-
-                        if (errorCode == 509 || AdManager.getInstance().isDualBiddingReady()) {
-                            appendLog("🛡️ [DUAL-AUCTION RESCUE ACTIVE] Code " + errorCode + " No Fill rescued by Dual Auction strategy!");
-                            appendLog("   Interstitial bidding unit (bspxbvo7aw4r8ybv) is loaded as fallback so users and revenue are never lost.");
-                            btnShowAd.setEnabled(true);
-                            updateAdState("RESCUED BY DUAL-BID", "#60A5FA");
-                            Toast.makeText(AdTestingActivity.this, "Rescued by Dual Auction! Tap Show Ad.", Toast.LENGTH_SHORT).show();
-                        } else {
-                            btnShowAd.setEnabled(false);
-                            updateAdState("NO FILL / FAILED", "#EF4444");
-                            Toast.makeText(AdTestingActivity.this, "LevelPlay Rewarded failed: " + errorMsg, Toast.LENGTH_SHORT).show();
-                        }
+                        Toast.makeText(AdTestingActivity.this, "LevelPlay Rewarded failed: " + errorMsg, Toast.LENGTH_SHORT).show();
                     });
                 }
 
@@ -1864,7 +1851,11 @@ public class AdTestingActivity extends AppCompatActivity {
                 public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
                     runOnUiThread(() -> {
                         isRewardEarned = true;
-                        setRewardEarnedBadge();
+                        if (tvRewardBadge != null) {
+                            tvRewardBadge.setText("REWARD EARNED ✓");
+                            tvRewardBadge.setTextColor(Color.parseColor("#34D399"));
+                            tvRewardBadge.setBackgroundColor(Color.parseColor("#2634D399"));
+                        }
                         String name = (reward != null && reward.getName() != null) ? reward.getName() : "Reward";
                         int amount = (reward != null) ? reward.getAmount() : 1;
                         appendLog("🎁 [LEVELPLAY REWARD EARNED] User watched full video! Reward: " + amount + " " + name);
@@ -1900,35 +1891,6 @@ public class AdTestingActivity extends AppCompatActivity {
         if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
             appendLog("🚀 [LEVELPLAY SHOW REWARDED] Playing Rewarded Video...");
             levelPlayRewardedAd.showAd(this);
-        } else if (AdManager.getInstance().isDualBiddingReady()) {
-            appendLog("⚡ [DUAL BIDDING ARBITRAGE] Playing highest-bid ad via Dual Auction Strategy...");
-            AdManager.getInstance().showHighestBidRewardAd(this, "testing_dashboard", new AdManager.RewardedAdCallback() {
-                @Override
-                public void onRewardEarned() {
-                    runOnUiThread(() -> {
-                        isRewardEarned = true;
-                        setRewardEarnedBadge();
-                        appendLog("🎁 [DUAL AUCTION REWARD EARNED] Reward verified!");
-                    });
-                }
-
-                @Override
-                public void onAdDismissed(boolean rewarded) {
-                    runOnUiThread(() -> {
-                        updateAdState("CLOSED (IDLE)", "#34D399");
-                        btnShowAd.setEnabled(false);
-                        appendLog("🚪 [DUAL AUCTION CLOSED] Ad dismissed. Reward granted: " + rewarded);
-                    });
-                }
-
-                @Override
-                public void onAdFailed(String reason) {
-                    runOnUiThread(() -> {
-                        updateAdState("DISPLAY FAILED", "#EF4444");
-                        appendLog("❌ [DUAL AUCTION DISPLAY FAILED] " + reason);
-                    });
-                }
-            });
         } else {
             Toast.makeText(this, "Please load LevelPlay Rewarded Video first", Toast.LENGTH_SHORT).show();
             appendLog("⚠️ [LEVELPLAY NOT READY] Rewarded Video is not loaded yet.");
