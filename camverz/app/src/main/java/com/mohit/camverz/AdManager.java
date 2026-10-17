@@ -395,6 +395,9 @@ public class AdManager {
     public void preloadDualBiddingAds(Context context) {
         if (context == null) context = appContext;
         if (context == null) return;
+        if (context.getClass().getSimpleName().contains("AdTestingActivity")) {
+            return;
+        }
         this.appContext = context.getApplicationContext();
 
         preloadFallbackAds(appContext);
