@@ -118,7 +118,7 @@ public class AdTestingActivity extends AppCompatActivity {
         NATIVE
     }
 
-    private AdNetwork currentNetwork = AdNetwork.META;
+    private AdNetwork currentNetwork = AdNetwork.ADMOB;
     private AdType currentType = AdType.INTERSTITIAL;
 
     // Network Tabs
@@ -560,26 +560,33 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void logAdMobMediationInfo(String format, ResponseInfo responseInfo) {
-        if (responseInfo == null) return;
+        if (responseInfo == null) {
+            appendLog("⚠️ [ADMOB MEDIATION - " + format.toUpperCase(Locale.US) + "] No ResponseInfo returned.");
+            return;
+        }
         String winningAdapter = responseInfo.getMediationAdapterClassName();
-        appendLog("🏆 [ADMOB MEDIATION WINNER - " + format.toUpperCase(Locale.US) + "]");
-        appendLog("   Winning Adapter: " + winningAdapter);
-        if (winningAdapter != null && winningAdapter.toLowerCase(Locale.US).contains("facebook")) {
-            appendLog("   🎯 Meta Audience Network (Facebook) WON the bidding auction!");
-        } else if (winningAdapter != null && winningAdapter.toLowerCase(Locale.US).contains("admob")) {
-            appendLog("   🎯 Google AdMob Network served this ad.");
+        appendLog("🏆 [ADMOB MEDIATION - " + format.toUpperCase(Locale.US) + "]");
+        if (winningAdapter != null && !winningAdapter.isEmpty()) {
+            appendLog("   Winning Adapter: " + winningAdapter);
+            if (winningAdapter.toLowerCase(Locale.US).contains("facebook")) {
+                appendLog("   🎯 Meta Audience Network (Facebook) WON the bidding auction!");
+            } else if (winningAdapter.toLowerCase(Locale.US).contains("admob")) {
+                appendLog("   🎯 Google AdMob Network served this ad.");
+            } else {
+                appendLog("   🎯 Mediation Partner: " + winningAdapter);
+            }
         } else {
-            appendLog("   🎯 Mediation Partner: " + winningAdapter);
+            appendLog("   Winning Adapter: None (No bidder filled)");
         }
 
         List<AdapterResponseInfo> responses = responseInfo.getAdapterResponses();
         if (responses != null && !responses.isEmpty()) {
-            appendLog("📊 [MEDIATION BIDDING RESPONSES]:");
+            appendLog("📊 [MEDIATION BIDDING RESPONSES (" + responses.size() + ")]: ");
             for (AdapterResponseInfo info : responses) {
                 String name = info.getAdapterClassName();
                 long latency = info.getLatencyMillis();
                 if (info.getAdError() != null) {
-                    appendLog("   ✖ " + name + " -> No fill / Error: " + info.getAdError().getMessage());
+                    appendLog("   ✖ " + name + " -> " + info.getAdError().getMessage() + " (Code: " + info.getAdError().getCode() + ")");
                 } else {
                     appendLog("   ✔ " + name + " -> Bid Ready (Latency: " + latency + "ms)");
                 }
@@ -772,6 +779,7 @@ public class AdTestingActivity extends AppCompatActivity {
                             appendLog("🔴 [ADMOB ERROR] onAdFailedToLoad() received:");
                             appendLog("   Code: " + code + " (" + explanation + ")");
                             appendLog("   Message: " + message);
+                            logAdMobMediationInfo("Interstitial (Failed)", loadAdError.getResponseInfo());
 
                             Toast.makeText(AdTestingActivity.this, "AdMob Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
                         });
@@ -913,6 +921,7 @@ public class AdTestingActivity extends AppCompatActivity {
                             appendLog("🔴 [ADMOB ERROR] onAdFailedToLoad() received:");
                             appendLog("   Code: " + code + " (" + explanation + ")");
                             appendLog("   Message: " + message);
+                            logAdMobMediationInfo("Rewarded (Failed)", loadAdError.getResponseInfo());
 
                             Toast.makeText(AdTestingActivity.this, "AdMob Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
                         });
@@ -1045,6 +1054,7 @@ public class AdTestingActivity extends AppCompatActivity {
                             appendLog("🔴 [ADMOB NATIVE ERROR] onAdFailedToLoad() received:");
                             appendLog("   Code: " + code + " (" + explanation + ")");
                             appendLog("   Message: " + message);
+                            logAdMobMediationInfo("Native (Failed)", loadAdError.getResponseInfo());
 
                             Toast.makeText(AdTestingActivity.this, "AdMob Error " + code + ": " + explanation, Toast.LENGTH_LONG).show();
                         });
