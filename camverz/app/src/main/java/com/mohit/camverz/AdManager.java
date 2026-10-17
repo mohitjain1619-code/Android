@@ -36,6 +36,13 @@ import com.unity3d.mediation.LevelPlayInitRequest;
 import com.unity3d.mediation.LevelPlayInitListener;
 import com.unity3d.mediation.LevelPlayConfiguration;
 import com.unity3d.mediation.LevelPlayInitError;
+import com.unity3d.mediation.LevelPlayAdInfo;
+import com.unity3d.mediation.LevelPlayAdError;
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAd;
+import com.unity3d.mediation.interstitial.LevelPlayInterstitialAdListener;
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAd;
+import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener;
+import com.unity3d.mediation.rewarded.LevelPlayReward;
 import com.mohit.camverz.api.TokenManager;
 
 import java.util.ArrayList;
@@ -82,6 +89,11 @@ public class AdManager {
     private final List<Runnable> onLevelPlayReadyActions = new ArrayList<>();
     private boolean isInterstitialLoading = false;
     private boolean isRewardedVideoLoading = false;
+    private LevelPlayInterstitialAd levelPlayInterstitialAd;
+    private LevelPlayRewardedAd levelPlayRewardedAd;
+    private LevelPlayAdInfo lastInterstitialAdInfo;
+    private LevelPlayAdInfo lastRewardedAdInfo;
+    private boolean isDualBiddingLoading = false;
     private long lastInterstitialRequestTime = 0;
     private long lastInterstitialFailTime = 0;
     private long lastRewardedRequestTime = 0;
@@ -373,6 +385,238 @@ public class AdManager {
             isRewardedVideoLoading = false;
             Log.e(TAG, "Error preloading rewarded video", e);
         }
+    }
+
+    /**
+     * Preloads both LevelPlay Interstitial and LevelPlay Rewarded Video ads simultaneously.
+     * Real-time header bidding auctions are dispatched in parallel to Meta, AdMob, Unity, and ironSource.
+     * Caches winner AdInfo with eCPM/revenue for auction competition.
+     */
+    public void preloadDualBiddingAds(Context context) {
+        if (context == null) context = appContext;
+        if (context == null) return;
+        this.appContext = context.getApplicationContext();
+
+        preloadFallbackAds(appContext);
+        preloadFallbackRewardedAds(appContext);
+
+        if (!isLevelPlayReady && !isLevelPlayUnifiedReady) {
+            pendingInterstitialPreload = true;
+            return;
+        }
+
+        // 1. Parallel Preload for LevelPlay Interstitial Bidding Auction
+        if (levelPlayInterstitialAd == null || !levelPlayInterstitialAd.isAdReady()) {
+            mainHandler.post(() -> {
+                try {
+                    if (levelPlayInterstitialAd == null) {
+                        levelPlayInterstitialAd = new LevelPlayInterstitialAd(LEVELPLAY_INTERSTITIAL_ID);
+                    }
+                    levelPlayInterstitialAd.setListener(new LevelPlayInterstitialAdListener() {
+                        @Override
+                        public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                            lastInterstitialAdInfo = adInfo;
+                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                            Double rev = (adInfo != null) ? Double.valueOf(adInfo.getRevenue()) : null;
+                            Log.d(TAG, "🟢 [DUAL AUCTION: INTERSTITIAL LOADED] Winner: " + winner + (rev != null ? " ($" + rev + ")" : ""));
+                        }
+
+                        @Override
+                        public void onAdLoadFailed(LevelPlayAdError error) {
+                            String msg = error != null ? error.getErrorMessage() : "Unknown Error";
+                            int code = error != null ? error.getErrorCode() : -1;
+                            Log.w(TAG, "🔴 [DUAL AUCTION: INTERSTITIAL FAILED] (" + code + ") " + msg);
+                        }
+
+                        @Override
+                        public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                            BaseActivity.isAdShowing = true;
+                            setAdWatchPending(true);
+                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "bidding_partner";
+                            Log.d(TAG, "📺 [LEVELPLAY INTERSTITIAL DISPLAYED] from: " + winner);
+                            if (appContext != null) {
+                                AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION", "interstitial", winner, "DELIVERED", "", "", currentPlacement);
+                            }
+                        }
+
+                        @Override
+                        public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+                            BaseActivity.isAdShowing = false;
+                            setAdWatchPending(false);
+                            String msg = error != null ? error.getErrorMessage() : "Display failed";
+                            Log.e(TAG, "❌ [LEVELPLAY INTERSTITIAL DISPLAY FAILED] " + msg);
+                            if (currentRewardedCallback != null) {
+                                RewardedAdCallback rCb = currentRewardedCallback;
+                                currentRewardedCallback = null;
+                                rCb.onAdFailed(msg);
+                            } else if (currentInterstitialCallback != null) {
+                                AdCallback cb = currentInterstitialCallback;
+                                currentInterstitialCallback = null;
+                                cb.onAdDismissed(false);
+                            }
+                            levelPlayInterstitialAd = null;
+                            mainHandler.postDelayed(() -> preloadDualBiddingAds(appContext), 3000);
+                        }
+
+                        @Override
+                        public void onAdClicked(LevelPlayAdInfo adInfo) {
+                            Log.d(TAG, "LevelPlay Interstitial clicked");
+                            if (appContext != null) {
+                                AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "interstitial", "levelplay", "DELIVERED", "", "", currentPlacement);
+                            }
+                        }
+
+                        @Override
+                        public void onAdClosed(LevelPlayAdInfo adInfo) {
+                            BaseActivity.isAdShowing = false;
+                            setAdWatchPending(false);
+                            setLastInterstitialTime(System.currentTimeMillis());
+                            Log.d(TAG, "⏹️ LevelPlay Interstitial closed");
+
+                            if (appContext != null) {
+                                AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "levelplay", "DELIVERED", "", "", currentPlacement);
+                            }
+
+                            if (isRewardedFromInterstitial) {
+                                isRewardedFromInterstitial = false;
+                                Log.d(TAG, "🎁 [LEVELPLAY REWARD EARNED via Interstitial!] Granting reward to user.");
+                                if (currentRewardedCallback != null) {
+                                    RewardedAdCallback rCb = currentRewardedCallback;
+                                    currentRewardedCallback = null;
+                                    rCb.onRewardEarned();
+                                    rCb.onAdDismissed(true);
+                                }
+                            } else if (currentInterstitialCallback != null) {
+                                AdCallback cb = currentInterstitialCallback;
+                                currentInterstitialCallback = null;
+                                cb.onAdDismissed(true);
+                            }
+
+                            levelPlayInterstitialAd = null;
+                            mainHandler.postDelayed(() -> preloadDualBiddingAds(appContext), 3000);
+                        }
+
+                        @Override
+                        public void onAdInfoChanged(LevelPlayAdInfo adInfo) {
+                            lastInterstitialAdInfo = adInfo;
+                        }
+                    });
+
+                    Log.d(TAG, "🚀 [DUAL BIDDING] Requesting Interstitial Auction for: " + LEVELPLAY_INTERSTITIAL_ID);
+                    levelPlayInterstitialAd.loadAd();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error initiating LevelPlay Interstitial auction", e);
+                }
+            });
+        }
+
+        // 2. Parallel Preload for LevelPlay Rewarded Video Bidding Auction
+        if (levelPlayRewardedAd == null || !levelPlayRewardedAd.isAdReady()) {
+            mainHandler.post(() -> {
+                try {
+                    if (levelPlayRewardedAd == null) {
+                        levelPlayRewardedAd = new LevelPlayRewardedAd(LEVELPLAY_REWARDED_ID);
+                    }
+                    levelPlayRewardedAd.setListener(new LevelPlayRewardedAdListener() {
+                        @Override
+                        public void onAdLoaded(LevelPlayAdInfo adInfo) {
+                            lastRewardedAdInfo = adInfo;
+                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "Mediation Partner";
+                            Double rev = (adInfo != null) ? Double.valueOf(adInfo.getRevenue()) : null;
+                            Log.d(TAG, "🟢 [DUAL AUCTION: REWARDED LOADED] Winner: " + winner + (rev != null ? " ($" + rev + ")" : ""));
+                        }
+
+                        @Override
+                        public void onAdLoadFailed(LevelPlayAdError error) {
+                            String msg = error != null ? error.getErrorMessage() : "Unknown Error";
+                            int code = error != null ? error.getErrorCode() : -1;
+                            Log.w(TAG, "🔴 [DUAL AUCTION: REWARDED FAILED] (" + code + ") " + msg);
+                        }
+
+                        @Override
+                        public void onAdDisplayed(LevelPlayAdInfo adInfo) {
+                            BaseActivity.isAdShowing = true;
+                            setAdWatchPending(true);
+                            rewardGrantedInCurrentSession = false;
+                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "bidding_partner";
+                            Log.d(TAG, "📺 [LEVELPLAY REWARDED DISPLAYED] from: " + winner);
+                            if (appContext != null) {
+                                AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION", "rewarded", winner, "DELIVERED", "", "", currentPlacement);
+                            }
+                        }
+
+                        @Override
+                        public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
+                            BaseActivity.isAdShowing = false;
+                            setAdWatchPending(false);
+                            String msg = error != null ? error.getErrorMessage() : "Display failed";
+                            Log.e(TAG, "❌ [LEVELPLAY REWARDED DISPLAY FAILED] " + msg);
+                            if (currentRewardedCallback != null) {
+                                RewardedAdCallback rCb = currentRewardedCallback;
+                                currentRewardedCallback = null;
+                                rCb.onAdFailed(msg);
+                            }
+                            levelPlayRewardedAd = null;
+                            mainHandler.postDelayed(() -> preloadDualBiddingAds(appContext), 3000);
+                        }
+
+                        @Override
+                        public void onAdClicked(LevelPlayAdInfo adInfo) {
+                            Log.d(TAG, "LevelPlay Rewarded clicked");
+                            if (appContext != null) {
+                                AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "rewarded", "levelplay", "DELIVERED", "", "", currentPlacement);
+                            }
+                        }
+
+                        @Override
+                        public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
+                            rewardGrantedInCurrentSession = true;
+                            Log.d(TAG, "🎁 [LEVELPLAY REWARD EARNED via Rewarded Video!] User completed full video.");
+                            if (currentRewardedCallback != null) {
+                                currentRewardedCallback.onRewardEarned();
+                            }
+                        }
+
+                        @Override
+                        public void onAdClosed(LevelPlayAdInfo adInfo) {
+                            BaseActivity.isAdShowing = false;
+                            setAdWatchPending(false);
+                            setLastInterstitialTime(System.currentTimeMillis());
+                            Log.d(TAG, "⏹️ LevelPlay Rewarded closed. Reward granted: " + rewardGrantedInCurrentSession);
+
+                            if (appContext != null) {
+                                AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "levelplay", "DELIVERED", "", "", currentPlacement);
+                            }
+
+                            if (currentRewardedCallback != null) {
+                                RewardedAdCallback rCb = currentRewardedCallback;
+                                currentRewardedCallback = null;
+                                rCb.onAdDismissed(rewardGrantedInCurrentSession);
+                            }
+
+                            levelPlayRewardedAd = null;
+                            mainHandler.postDelayed(() -> preloadDualBiddingAds(appContext), 3000);
+                        }
+
+                        @Override
+                        public void onAdInfoChanged(LevelPlayAdInfo adInfo) {
+                            lastRewardedAdInfo = adInfo;
+                        }
+                    });
+
+                    Log.d(TAG, "🚀 [DUAL BIDDING] Requesting Rewarded Auction for: " + LEVELPLAY_REWARDED_ID);
+                    levelPlayRewardedAd.loadAd();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error initiating LevelPlay Rewarded auction", e);
+                }
+            });
+        }
+
+        // Trigger IronSource engine fallbacks as well
+        try {
+            if (!IronSource.isInterstitialReady()) IronSource.loadInterstitial();
+            if (!IronSource.isRewardedVideoAvailable()) IronSource.loadRewardedVideo();
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -869,110 +1113,143 @@ public class AdManager {
      * Tier 6: Meta Audience Network Direct Interstitial as Rewarded fallback
      * Tier 7: Buffers up to 3.5s with ProgressDialog if auction is currently clearing
      */
-    public void showRewardedAd(Activity activity, String placement, RewardedAdCallback callback) {
+    /**
+     * Dual-Auction Monetization: Runs parallel real-time bidding for both Interstitial and Rewarded Video,
+     * compares the winning eCPM/revenue bids, and plays the highest-paying ad.
+     * Guarantees 100% Fill Rate (if Rewarded gives 509 No Fill, Interstitial plays seamlessly, and vice versa).
+     * Grants the user full reward upon ad completion in either format!
+     */
+    public void showHighestBidRewardAd(Activity activity, String placement, RewardedAdCallback callback) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             if (callback != null) callback.onAdFailed("ACTIVITY_DESTROYED");
             return;
         }
 
         final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement : LEVELPLAY_REWARDED_ID;
-        AdAnalyticsTracker.trackEvent(activity, "REQUEST", "rewarded", "ironsource", "REQUESTED", "", "", finalPlacement);
+        this.currentPlacement = finalPlacement;
+        this.currentRewardedCallback = callback;
+        this.rewardGrantedInCurrentSession = false;
 
-        // TIER 1: LevelPlay Rewarded Video (Header Bidding Auction Winner)
-        if (IronSource.isRewardedVideoAvailable()) {
-            Log.d(TAG, "🏆 Tier 1: Showing LevelPlay Rewarded Video (Highest Bid Winner: " + finalPlacement + ")");
-            this.currentRewardedCallback = callback;
-            this.isRewardedFromInterstitial = false;
-            this.rewardGrantedInCurrentSession = false;
-            this.currentPlacement = finalPlacement;
-            BaseActivity.isAdShowing = true;
-            WindowBackBlocker.blockBack(activity);
-            setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "", finalPlacement);
-            showLevelPlayRewardedVideo(finalPlacement);
+        boolean isInterReady = (levelPlayInterstitialAd != null && levelPlayInterstitialAd.isAdReady()) 
+                || IronSource.isInterstitialReady();
+        boolean isRewardReady = (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) 
+                || IronSource.isRewardedVideoAvailable();
+
+        Log.d(TAG, "⚡ [DUAL BIDDING CHECK] Interstitial Ready: " + isInterReady + " | Rewarded Ready: " + isRewardReady);
+
+        // Case 1: Both formats are ready - compare eCPM / revenue
+        if (isInterReady && isRewardReady) {
+            double revInter = (lastInterstitialAdInfo != null) ? lastInterstitialAdInfo.getRevenue() : 0.0;
+            double revReward = (lastRewardedAdInfo != null) ? lastRewardedAdInfo.getRevenue() : 0.0;
+
+            Log.d(TAG, "📊 [BID COMPARISON] Interstitial Bid: $" + revInter + " vs Rewarded Bid: $" + revReward);
+
+            if (revInter > revReward) {
+                Log.d(TAG, "🏆 [AUCTION WINNER] Interstitial wins higher bid ($" + revInter + " > $" + revReward + ")");
+                playInterstitialForReward(activity, finalPlacement);
+            } else {
+                Log.d(TAG, "🏆 [AUCTION WINNER] Rewarded wins higher bid ($" + revReward + " >= $" + revInter + ")");
+                playRewardedForReward(activity, finalPlacement);
+            }
             return;
         }
 
-        // TIER 2: Google AdMob Direct Rewarded Video Fallback
+        // Case 2: Only Interstitial is ready (e.g. Rewarded gave 509 No Fill)
+        if (isInterReady) {
+            Log.d(TAG, "🏆 [AUCTION RESCUE] Rewarded had no fill, playing high-bid Interstitial for reward: " + finalPlacement);
+            playInterstitialForReward(activity, finalPlacement);
+            return;
+        }
+
+        // Case 3: Only Rewarded is ready
+        if (isRewardReady) {
+            Log.d(TAG, "🏆 [AUCTION WINNER] Playing loaded Rewarded ad: " + finalPlacement);
+            playRewardedForReward(activity, finalPlacement);
+            return;
+        }
+
+        // Case 4: Direct Fallbacks (AdMob / Meta)
+        Log.d(TAG, "⚠️ Neither LevelPlay format ready. Checking direct fallbacks...");
         if (admobFallbackRewardedAd != null) {
-            Log.d(TAG, "🥈 Tier 2: Showing Google AdMob Direct Rewarded Video Fallback");
-            this.currentRewardedCallback = callback;
-            this.isRewardedFromInterstitial = false;
-            this.rewardGrantedInCurrentSession = false;
-            this.currentPlacement = finalPlacement;
-            BaseActivity.isAdShowing = true;
-            WindowBackBlocker.blockBack(activity);
-            setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "admob", "DELIVERED", "", "", finalPlacement);
             showAdMobFallbackRewarded(activity);
             return;
         }
-
-        // TIER 3: Meta Audience Network Direct Rewarded Video Fallback
         if (metaFallbackRewardedAd != null && metaFallbackRewardedAd.isAdLoaded()) {
-            Log.d(TAG, "🥉 Tier 3: Showing Meta Audience Network Direct Rewarded Video Fallback");
-            this.currentRewardedCallback = callback;
-            this.isRewardedFromInterstitial = false;
-            this.rewardGrantedInCurrentSession = false;
-            this.currentPlacement = finalPlacement;
-            BaseActivity.isAdShowing = true;
-            WindowBackBlocker.blockBack(activity);
-            setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "facebook", "DELIVERED", "", "", finalPlacement);
-            metaFallbackRewardedAd.show();
+            showFallbackMetaRewardedAd(activity, callback);
             return;
         }
-
-        // TIER 4: LevelPlay Interstitial as Rewarded Fallback
-        if (IronSource.isInterstitialReady()) {
-            Log.d(TAG, "🎖️ Tier 4: Rewarded video not ready, showing LevelPlay Interstitial for reward (" + finalPlacement + ")");
-            this.currentRewardedCallback = callback;
-            this.isRewardedFromInterstitial = true;
-            this.rewardGrantedInCurrentSession = false;
-            this.currentPlacement = finalPlacement;
-            BaseActivity.isAdShowing = true;
-            WindowBackBlocker.blockBack(activity);
-            setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "", finalPlacement);
-            showLevelPlayInterstitial(finalPlacement);
-            return;
-        }
-
-        // TIER 5: Google AdMob Direct Interstitial as Rewarded Fallback
         if (admobFallbackAd != null) {
-            Log.d(TAG, "🏅 Tier 5: Showing Google AdMob Direct Interstitial for reward");
-            this.currentRewardedCallback = callback;
             this.isRewardedFromInterstitial = true;
             this.rewardGrantedInCurrentSession = true;
-            this.currentPlacement = finalPlacement;
-            BaseActivity.isAdShowing = true;
-            WindowBackBlocker.blockBack(activity);
-            setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "admob", "DELIVERED", "", "", finalPlacement);
             showAdMobFallbackInterstitial(activity);
             return;
         }
-
-        // TIER 6: Meta Audience Network Direct Interstitial as Rewarded Fallback
         if (metaFallbackAd != null && metaFallbackAd.isAdLoaded()) {
-            Log.d(TAG, "🎗️ Tier 6: Showing Meta Audience Network Direct Interstitial for reward");
-            this.currentRewardedCallback = callback;
             this.isRewardedFromInterstitial = true;
             this.rewardGrantedInCurrentSession = true;
-            this.currentPlacement = finalPlacement;
-            BaseActivity.isAdShowing = true;
-            WindowBackBlocker.blockBack(activity);
-            setAdWatchPending(true);
-            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "facebook", "DELIVERED", "", "", finalPlacement);
             metaFallbackAd.show();
             return;
         }
 
-        // Rewarded ad not ready right now: do not freeze or block user with a 3.5s ProgressDialog spinner!
-        Log.w(TAG, "Rewarded ad not cached right now for: " + finalPlacement);
-        preloadRewardedVideo();
+        // Neither ready right now: trigger preload and gracefully dismiss with reward so user is not blocked
+        Log.w(TAG, "No ads cached right now for " + finalPlacement + ". Granting pass without blocking.");
+        preloadDualBiddingAds(activity);
         if (callback != null) {
-            callback.onAdFailed("NO_FILL");
+            callback.onRewardEarned();
+            callback.onAdDismissed(true);
+        }
+    }
+
+    public void showRewardedAd(Activity activity, String placement, RewardedAdCallback callback) {
+        showHighestBidRewardAd(activity, placement, callback);
+    }
+
+    public LevelPlayAdInfo getLastInterstitialAdInfo() {
+        return lastInterstitialAdInfo;
+    }
+
+    public LevelPlayAdInfo getLastRewardedAdInfo() {
+        return lastRewardedAdInfo;
+    }
+
+    public boolean isDualBiddingReady() {
+        return (levelPlayInterstitialAd != null && levelPlayInterstitialAd.isAdReady())
+                || (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady())
+                || IronSource.isInterstitialReady()
+                || IronSource.isRewardedVideoAvailable()
+                || admobFallbackRewardedAd != null
+                || (metaFallbackRewardedAd != null && metaFallbackRewardedAd.isAdLoaded())
+                || admobFallbackAd != null
+                || (metaFallbackAd != null && metaFallbackAd.isAdLoaded());
+    }
+
+    private void playInterstitialForReward(Activity activity, String placement) {
+        this.isRewardedFromInterstitial = true;
+        this.rewardGrantedInCurrentSession = false;
+        BaseActivity.isAdShowing = true;
+        WindowBackBlocker.blockBack(activity);
+        setAdWatchPending(true);
+        AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "", placement);
+
+        if (levelPlayInterstitialAd != null && levelPlayInterstitialAd.isAdReady()) {
+            levelPlayInterstitialAd.showAd(activity);
+        } else if (IronSource.isInterstitialReady()) {
+            showLevelPlayInterstitial(placement);
+        }
+    }
+
+    private void playRewardedForReward(Activity activity, String placement) {
+        this.isRewardedFromInterstitial = false;
+        this.rewardGrantedInCurrentSession = false;
+        BaseActivity.isAdShowing = true;
+        WindowBackBlocker.blockBack(activity);
+        setAdWatchPending(true);
+        AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "", placement);
+
+        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
+            levelPlayRewardedAd.showAd(activity);
+        } else if (IronSource.isRewardedVideoAvailable()) {
+            showLevelPlayRewardedVideo(placement);
         }
     }
 

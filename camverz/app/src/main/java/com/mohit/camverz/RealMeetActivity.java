@@ -27,13 +27,6 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.unity3d.mediation.LevelPlayAdError;
-import com.unity3d.mediation.LevelPlayAdInfo;
-import com.unity3d.mediation.rewarded.LevelPlayReward;
-import com.unity3d.mediation.rewarded.LevelPlayRewardedAd;
-import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener;
-
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -130,12 +123,10 @@ public class RealMeetActivity extends BaseActivity {
 
     private boolean isCreationDialogOpen = false;
 
-    // LevelPlay Bidding Rewarded Ad state
-    private LevelPlayRewardedAd levelPlayRewardedAd;
+    // Dual-Auction Bidding Rewarded Ad state
     private ProgressDialog adProgressDialog;
     private final Handler adHandler = new Handler(Looper.getMainLooper());
     private Runnable adTimeoutRunnable;
-    private boolean isAdLoading = false;
     private boolean isWaitingForAd = false;
     private boolean isRewardEarned = false;
     private Runnable pendingAdSuccessAction;
@@ -1854,27 +1845,22 @@ public class RealMeetActivity extends BaseActivity {
         dialog.show();
     }
 
-    // ==================== LEVELPLAY BIDDING REWARDED ADS ====================
+    // ==================== DUAL-AUCTION BIDDING REWARDED ADS ====================
     private void showRewardedAdBeforePost(String placement, Runnable onCancelOrFailure, Runnable onAdCompleted) {
         if (isFinishing() || isDestroyed()) return;
 
-        this.currentAdPlacement = (placement != null && !placement.isEmpty()) ? placement : "realmeet_publish_post";
+        final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement : "realmeet_publish_post";
+        this.currentAdPlacement = finalPlacement;
         this.pendingAdSuccessAction = onAdCompleted;
         this.pendingAdCancelAction = onCancelOrFailure;
         this.isRewardEarned = false;
 
-        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
-            isWaitingForAd = false;
-            dismissAdLoadingDialog();
-            Log.d(TAG, "🚀 [LEVELPLAY SHOW REWARDED] Ad ready. Showing rewarded video ad for " + currentAdPlacement);
-            levelPlayRewardedAd.showAd(this);
+        if (AdManager.getInstance().isDualBiddingReady()) {
+            executeShowDualBiddingRewardAd(finalPlacement);
         } else {
             isWaitingForAd = true;
             showAdLoadingDialog();
-
-            if (!isAdLoading) {
-                loadLevelPlayRewardedAd();
-            }
+            AdManager.getInstance().preloadDualBiddingAds(this);
 
             if (adTimeoutRunnable != null) {
                 adHandler.removeCallbacks(adTimeoutRunnable);
@@ -1883,199 +1869,69 @@ public class RealMeetActivity extends BaseActivity {
                 if (isWaitingForAd) {
                     isWaitingForAd = false;
                     dismissAdLoadingDialog();
-                    if (pendingAdCancelAction != null) {
-                        Runnable cancelAction = pendingAdCancelAction;
-                        pendingAdSuccessAction = null;
-                        pendingAdCancelAction = null;
-                        cancelAction.run();
-                    }
-                    Toast.makeText(RealMeetActivity.this, "Ad is taking longer to load. Please check your internet connection and try again.", Toast.LENGTH_LONG).show();
+                    executeShowDualBiddingRewardAd(finalPlacement);
                 }
             };
-            adHandler.postDelayed(adTimeoutRunnable, 15000);
+            adHandler.postDelayed(adTimeoutRunnable, 3500);
         }
     }
 
-    private void loadLevelPlayRewardedAd() {
-        if (isAdLoading) return;
-        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
-            Log.d(TAG, "LevelPlay Rewarded Ad already loaded and ready.");
-            return;
-        }
+    private void executeShowDualBiddingRewardAd(String placement) {
+        dismissAdLoadingDialog();
+        isWaitingForAd = false;
+        isRewardEarned = false;
 
-        AdManager.getInstance().runWhenLevelPlayReady(this, () -> {
-            loadLevelPlayRewardedAdInternal();
-        });
-    }
-
-    private void loadLevelPlayRewardedAdInternal() {
-        if (isFinishing() || isDestroyed()) return;
-        if (isAdLoading) return;
-        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
-            Log.d(TAG, "LevelPlay Rewarded Ad already loaded and ready.");
-            if (isWaitingForAd) {
-                dismissAdLoadingDialog();
-                isWaitingForAd = false;
-                levelPlayRewardedAd.showAd(this);
+        AdManager.getInstance().showHighestBidRewardAd(this, placement, new AdManager.RewardedAdCallback() {
+            @Override
+            public void onRewardEarned() {
+                isRewardEarned = true;
             }
-            return;
-        }
 
-        isAdLoading = true;
-        try {
-            if (levelPlayRewardedAd == null) {
-                levelPlayRewardedAd = new LevelPlayRewardedAd(AdManager.LEVELPLAY_REWARDED_ID);
-                levelPlayRewardedAd.setListener(new LevelPlayRewardedAdListener() {
-                    @Override
-                    public void onAdLoaded(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            isAdLoading = false;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "unknown";
-                            Log.d(TAG, "🟢 [LEVELPLAY REWARDED LOADED] Winner Network: " + winner);
-                            if (isWaitingForAd) {
-                                dismissAdLoadingDialog();
-                                isWaitingForAd = false;
-                                isRewardEarned = false;
-                                levelPlayRewardedAd.showAd(RealMeetActivity.this);
-                            }
-                        });
+            @Override
+            public void onAdDismissed(boolean rewarded) {
+                runOnUiThread(() -> {
+                    dismissAdLoadingDialog();
+                    if (rewarded || isRewardEarned) {
+                        Toast.makeText(RealMeetActivity.this, "Ad completed! Publishing post...", Toast.LENGTH_SHORT).show();
+                        if (pendingAdSuccessAction != null) {
+                            Runnable action = pendingAdSuccessAction;
+                            pendingAdSuccessAction = null;
+                            pendingAdCancelAction = null;
+                            action.run();
+                        }
+                    } else {
+                        Toast.makeText(RealMeetActivity.this, "You must watch the full ad to publish your post.", Toast.LENGTH_LONG).show();
+                        if (pendingAdCancelAction != null) {
+                            Runnable cancelAction = pendingAdCancelAction;
+                            pendingAdSuccessAction = null;
+                            pendingAdCancelAction = null;
+                            cancelAction.run();
+                        }
                     }
-
-                    @Override
-                    public void onAdLoadFailed(LevelPlayAdError error) {
-                        runOnUiThread(() -> {
-                            isAdLoading = false;
-                            String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
-                            int code = (error != null) ? error.getErrorCode() : -1;
-                            Log.e(TAG, "🔴 [LEVELPLAY REWARDED LOAD FAILED] (" + code + ") " + errorMsg);
-
-                            if (code == 625) { // Load must be called after init success callback
-                                Log.w(TAG, "⚠️ LevelPlay SDK init still finishing (625), waiting for init callback to retry...");
-                                adHandler.postDelayed(() -> loadLevelPlayRewardedAd(), 1500);
-                                return;
-                            }
-
-                            if (isWaitingForAd) {
-                                dismissAdLoadingDialog();
-                                isWaitingForAd = false;
-                                if (pendingAdCancelAction != null) {
-                                    Runnable cancelAction = pendingAdCancelAction;
-                                    pendingAdSuccessAction = null;
-                                    pendingAdCancelAction = null;
-                                    cancelAction.run();
-                                }
-                                Toast.makeText(RealMeetActivity.this, "Unable to load video ad: " + errorMsg + ". Please try again.", Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onAdDisplayed(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            BaseActivity.isAdShowing = true;
-                            WindowBackBlocker.blockBack(RealMeetActivity.this);
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            Log.d(TAG, "📺 [LEVELPLAY REWARDED DISPLAYED] Fullscreen video playing from winner: " + winner);
-                            AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "IMPRESSION", "rewarded", winner, "DELIVERED", "", "", currentAdPlacement);
-                        });
-                    }
-
-                    @Override
-                    public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            BaseActivity.isAdShowing = false;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            String errorMsg = (error != null) ? error.getErrorMessage() : "Display failed";
-                            int code = (error != null) ? error.getErrorCode() : -1;
-                            Log.e(TAG, "❌ [LEVELPLAY REWARDED DISPLAY FAILED] (" + code + ") " + errorMsg);
-                            AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "FAILED", "rewarded", winner, "FAILED", String.valueOf(code), errorMsg, currentAdPlacement);
-                            if (isWaitingForAd) {
-                                dismissAdLoadingDialog();
-                                isWaitingForAd = false;
-                            }
-                            if (pendingAdCancelAction != null) {
-                                Runnable cancelAction = pendingAdCancelAction;
-                                pendingAdSuccessAction = null;
-                                pendingAdCancelAction = null;
-                                cancelAction.run();
-                            }
-                            Toast.makeText(RealMeetActivity.this, "Ad display failed: " + errorMsg + ". Please try again.", Toast.LENGTH_SHORT).show();
-                            loadLevelPlayRewardedAd();
-                        });
-                    }
-
-                    @Override
-                    public void onAdClicked(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "CLICKED", "rewarded", winner, "DELIVERED", "", "", currentAdPlacement);
-                        });
-                    }
-
-                    @Override
-                    public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            isRewardEarned = true;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            Log.d(TAG, "🎁 [LEVELPLAY REWARD EARNED] Video completed! Winner: " + winner);
-                            AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "COMPLETED", "rewarded", winner, "DELIVERED", "", "", currentAdPlacement);
-                        });
-                    }
-
-                    @Override
-                    public void onAdClosed(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            BaseActivity.isAdShowing = false;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            Log.d(TAG, "⏹️ [LEVELPLAY REWARDED CLOSED] isRewardEarned=" + isRewardEarned);
-                            AdAnalyticsTracker.trackEvent(RealMeetActivity.this, "CLOSED", "rewarded", winner, "DELIVERED", "", "", currentAdPlacement);
-
-                            if (isRewardEarned) {
-                                // Full video was watched and reward was earned -> Publish post!
-                                Toast.makeText(RealMeetActivity.this, "Ad completed! Publishing post...", Toast.LENGTH_SHORT).show();
-                                if (pendingAdSuccessAction != null) {
-                                    Runnable action = pendingAdSuccessAction;
-                                    pendingAdSuccessAction = null;
-                                    pendingAdCancelAction = null;
-                                    action.run();
-                                }
-                            } else {
-                                // User closed or stopped the ad before completion -> NO POST!
-                                Toast.makeText(RealMeetActivity.this, "You must watch the full ad to publish your post.", Toast.LENGTH_LONG).show();
-                                if (pendingAdCancelAction != null) {
-                                    Runnable cancelAction = pendingAdCancelAction;
-                                    pendingAdSuccessAction = null;
-                                    pendingAdCancelAction = null;
-                                    cancelAction.run();
-                                }
-                            }
-                            // Preload for the next post
-                            loadLevelPlayRewardedAd();
-                        });
-                    }
-
-                    @Override
-                    public void onAdInfoChanged(LevelPlayAdInfo adInfo) {}
+                    AdManager.getInstance().preloadDualBiddingAds(RealMeetActivity.this);
                 });
             }
 
-            Log.d(TAG, "🚀 [LEVELPLAY REWARDED LOAD] Dispatching mediation auction request...");
-            AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "levelplay", "REQUESTED", "", "", currentAdPlacement);
-            levelPlayRewardedAd.loadAd();
-        } catch (Exception e) {
-            isAdLoading = false;
-            Log.e(TAG, "Exception loading LevelPlay rewarded ad: " + e.getMessage(), e);
-            if (isWaitingForAd) {
-                dismissAdLoadingDialog();
-                isWaitingForAd = false;
-                if (pendingAdCancelAction != null) {
-                    Runnable cancelAction = pendingAdCancelAction;
-                    pendingAdSuccessAction = null;
-                    pendingAdCancelAction = null;
-                    cancelAction.run();
-                }
+            @Override
+            public void onAdFailed(String reason) {
+                runOnUiThread(() -> {
+                    dismissAdLoadingDialog();
+                    Log.w(TAG, "Ad display failed (" + reason + "), proceeding with post publication.");
+                    Toast.makeText(RealMeetActivity.this, "Publishing post...", Toast.LENGTH_SHORT).show();
+                    if (pendingAdSuccessAction != null) {
+                        Runnable action = pendingAdSuccessAction;
+                        pendingAdSuccessAction = null;
+                        pendingAdCancelAction = null;
+                        action.run();
+                    }
+                    AdManager.getInstance().preloadDualBiddingAds(RealMeetActivity.this);
+                });
             }
-        }
+        });
+    }
+
+    private void loadLevelPlayRewardedAd() {
+        AdManager.getInstance().preloadDualBiddingAds(this);
     }
 
     private void showAdLoadingDialog() {
@@ -2164,9 +2020,6 @@ public class RealMeetActivity extends BaseActivity {
         if (adTimeoutRunnable != null) {
             adHandler.removeCallbacks(adTimeoutRunnable);
             adTimeoutRunnable = null;
-        }
-        if (levelPlayRewardedAd != null) {
-            levelPlayRewardedAd = null;
         }
         pendingAdSuccessAction = null;
         pendingAdCancelAction = null;

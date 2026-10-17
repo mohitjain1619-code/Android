@@ -292,8 +292,9 @@ public class CallActivity extends BaseActivity {
 
         initUI();
         checkPermissions();
-        
 
+        // Preload Dual Bidding (Interstitial & Rewarded) auctions for post-call monetization
+        preloadPostCallDualBiddingAds();
     }
  
     @Override
@@ -692,6 +693,7 @@ public class CallActivity extends BaseActivity {
                     if (callConnectedTime == 0) {
                         callConnectedTime = System.currentTimeMillis();
                         startLimitCountdown();
+                        preloadPostCallDualBiddingAds();
                     }
                 } else if (s == PeerConnection.IceConnectionState.FAILED) {
                     if (!turnFallbackAttempted) {
@@ -1677,8 +1679,43 @@ public class CallActivity extends BaseActivity {
                     prefs.edit().putInt("call_counter", currentCount).apply();
                 } catch (Exception e) {}
 
-                // Finish immediately without ads
-                finish();
+                // Enforce post-call dual-bidding ads logic (Random video call & Private call)
+                long durationMs = callConnectedTime > 0 ? (System.currentTimeMillis() - callConnectedTime) : 0;
+                long durationSec = durationMs / 1000;
+                Log.d(TAG, "📞 Call finished. Duration: " + durationSec + " seconds. isPrivate: " + isPrivateCall);
+
+                if (tokenManager != null && tokenManager.isVideoCallAdFree()) {
+                    Log.d(TAG, "User has video call ad-free pass. Finishing immediately.");
+                    finish();
+                } else if (isPrivateCall && durationSec >= 30) {
+                    Log.d(TAG, "Private call lasted >= 30s. Triggering dual-bidding ad.");
+                    showPostCallAdAndFinish();
+                } else if (!isPrivateCall) {
+                    boolean shouldShowAd = false;
+                    if (durationSec >= 120) {
+                        Log.d(TAG, "Random call lasted >= 2 min (120s). Triggering dual-bidding ad.");
+                        shouldShowAd = true;
+                    } else if (callConnectedTime > 0) {
+                        // Short call (< 2 min) — increment short call counter, show ad every 2 calls
+                        android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
+                        int shortCalls = statsPrefs.getInt("short_call_count", 0);
+                        shortCalls++;
+                        statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
+                        Log.d(TAG, "Short call count: " + shortCalls);
+                        if (shortCalls % 2 == 0) {
+                            Log.d(TAG, "Short call threshold reached (every 2 calls). Triggering dual-bidding ad.");
+                            shouldShowAd = true;
+                        }
+                    }
+
+                    if (shouldShowAd) {
+                        showPostCallAdAndFinish();
+                    } else {
+                        finish();
+                    }
+                } else {
+                    finish();
+                }
             });
         }).start();
     }
@@ -1995,5 +2032,36 @@ public class CallActivity extends BaseActivity {
             }
         };
         limitCountdownHandler.postDelayed(limitCountdownRunnable, 1000);
+    }
+
+    private void showPostCallAdAndFinish() {
+        if (isFinishing() || isDestroyed()) return;
+
+        String placement = isPrivateCall ? "private_call_exit" : "call_exit";
+        Log.d(TAG, "🚀 [POST-CALL AD] Requesting highest-bid ad for placement: " + placement);
+        AdManager.getInstance().showHighestBidRewardAd(this, placement, new AdManager.RewardedAdCallback() {
+            @Override
+            public void onRewardEarned() {
+                Log.d(TAG, "🎁 Post-call ad completed.");
+            }
+
+            @Override
+            public void onAdDismissed(boolean rewarded) {
+                runOnUiThread(() -> finish());
+            }
+
+            @Override
+            public void onAdFailed(String reason) {
+                Log.w(TAG, "Post-call ad display failed: " + reason);
+                runOnUiThread(() -> finish());
+            }
+        });
+    }
+
+    private void preloadPostCallDualBiddingAds() {
+        if (tokenManager != null && tokenManager.isVideoCallAdFree()) return;
+        if (isFinishing() || isDestroyed()) return;
+
+        AdManager.getInstance().preloadDualBiddingAds(this);
     }
 }

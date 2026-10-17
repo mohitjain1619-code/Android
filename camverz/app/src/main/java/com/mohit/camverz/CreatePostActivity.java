@@ -17,12 +17,6 @@ import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
 import com.mohit.camverz.api.ApiService;
 import com.mohit.camverz.api.TokenManager;
-import com.unity3d.mediation.LevelPlayAdError;
-import com.unity3d.mediation.LevelPlayAdInfo;
-import com.unity3d.mediation.rewarded.LevelPlayReward;
-import com.unity3d.mediation.rewarded.LevelPlayRewardedAd;
-import com.unity3d.mediation.rewarded.LevelPlayRewardedAdListener;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,14 +41,12 @@ public class CreatePostActivity extends BaseActivity {
     private TokenManager tokenManager;
 
     private boolean isPosting = false;
-    private boolean isAdLoading = false;
     private boolean isWaitingForAd = false;
     private boolean isRewardEarned = false;
 
     private String pendingPostText = "";
     private String pendingCategory = "";
 
-    private LevelPlayRewardedAd levelPlayRewardedAd;
     private ProgressDialog adProgressDialog;
     private final Handler adHandler = new Handler(Looper.getMainLooper());
     private Runnable adTimeoutRunnable;
@@ -100,157 +92,8 @@ public class CreatePostActivity extends BaseActivity {
             }
         });
 
-        // Preload LevelPlay Mediation Bidding Rewarded Video ad immediately while user types
-        loadLevelPlayRewardedAd();
-    }
-
-    private void loadLevelPlayRewardedAd() {
-        if (isAdLoading) return;
-        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
-            Log.d(TAG, "LevelPlay Rewarded Ad already loaded and ready.");
-            return;
-        }
-
-        AdManager.getInstance().runWhenLevelPlayReady(this, () -> {
-            loadLevelPlayRewardedAdInternal();
-        });
-    }
-
-    private void loadLevelPlayRewardedAdInternal() {
-        if (isFinishing() || isDestroyed()) return;
-        if (isAdLoading) return;
-        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
-            Log.d(TAG, "LevelPlay Rewarded Ad already loaded and ready.");
-            if (isWaitingForAd) {
-                dismissAdLoadingDialog();
-                isWaitingForAd = false;
-                showLoadedRewardedAd();
-            }
-            return;
-        }
-
-        isAdLoading = true;
-        try {
-            if (levelPlayRewardedAd == null) {
-                levelPlayRewardedAd = new LevelPlayRewardedAd(AdManager.LEVELPLAY_REWARDED_ID);
-                levelPlayRewardedAd.setListener(new LevelPlayRewardedAdListener() {
-                    @Override
-                    public void onAdLoaded(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            isAdLoading = false;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "unknown";
-                            Log.d(TAG, "🟢 [LEVELPLAY REWARDED LOADED] Winner Network: " + winner);
-                            if (isWaitingForAd) {
-                                dismissAdLoadingDialog();
-                                isWaitingForAd = false;
-                                showLoadedRewardedAd();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onAdLoadFailed(LevelPlayAdError error) {
-                        runOnUiThread(() -> {
-                            isAdLoading = false;
-                            String errorMsg = (error != null) ? error.getErrorMessage() : "Unknown Error";
-                            int code = (error != null) ? error.getErrorCode() : -1;
-                            Log.e(TAG, "🔴 [LEVELPLAY REWARDED LOAD FAILED] (" + code + ") " + errorMsg);
-
-                            if (code == 625) { // Load must be called after init success callback
-                                Log.w(TAG, "⚠️ LevelPlay SDK init still finishing (625), waiting for init callback to retry...");
-                                adHandler.postDelayed(() -> loadLevelPlayRewardedAd(), 1500);
-                                return;
-                            }
-
-                            if (isWaitingForAd) {
-                                dismissAdLoadingDialog();
-                                isWaitingForAd = false;
-                                isPosting = false;
-                                postButton.setEnabled(true);
-                                Toast.makeText(CreatePostActivity.this, "Unable to load video ad: " + errorMsg + ". Please try again.", Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onAdDisplayed(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            BaseActivity.isAdShowing = true;
-                            WindowBackBlocker.blockBack(CreatePostActivity.this);
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            Log.d(TAG, "📺 [LEVELPLAY REWARDED DISPLAYED] Fullscreen video playing from: " + winner);
-                            AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "IMPRESSION", "rewarded", winner, "DELIVERED", "", "", PLACEMENT);
-                        });
-                    }
-
-                    @Override
-                    public void onAdDisplayFailed(LevelPlayAdError error, LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            BaseActivity.isAdShowing = false;
-                            isPosting = false;
-                            postButton.setEnabled(true);
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            String errorMsg = (error != null) ? error.getErrorMessage() : "Display failed";
-                            int code = (error != null) ? error.getErrorCode() : -1;
-                            Log.e(TAG, "❌ [LEVELPLAY REWARDED DISPLAY FAILED] (" + code + ") " + errorMsg);
-                            AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "FAILED", "rewarded", winner, "FAILED", String.valueOf(code), errorMsg, PLACEMENT);
-                            Toast.makeText(CreatePostActivity.this, "Ad display failed: " + errorMsg, Toast.LENGTH_SHORT).show();
-                            loadLevelPlayRewardedAd();
-                        });
-                    }
-
-                    @Override
-                    public void onAdClicked(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "CLICKED", "rewarded", winner, "DELIVERED", "", "", PLACEMENT);
-                        });
-                    }
-
-                    @Override
-                    public void onAdRewarded(LevelPlayReward reward, LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            isRewardEarned = true;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            Log.d(TAG, "🎁 [LEVELPLAY REWARD EARNED] Video completed! Winner: " + winner);
-                            AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "COMPLETED", "rewarded", winner, "DELIVERED", "", "", PLACEMENT);
-                        });
-                    }
-
-                    @Override
-                    public void onAdClosed(LevelPlayAdInfo adInfo) {
-                        runOnUiThread(() -> {
-                            BaseActivity.isAdShowing = false;
-                            String winner = (adInfo != null && adInfo.getAdNetwork() != null) ? adInfo.getAdNetwork() : "ironsource";
-                            Log.d(TAG, "⏹️ [LEVELPLAY REWARDED CLOSED] isRewardEarned=" + isRewardEarned);
-                            AdAnalyticsTracker.trackEvent(CreatePostActivity.this, "CLOSED", "rewarded", winner, "DELIVERED", "", "", PLACEMENT);
-
-                            if (isRewardEarned) {
-                                // Full video was watched and reward was earned
-                                Toast.makeText(CreatePostActivity.this, "Ad completed! Publishing post...", Toast.LENGTH_SHORT).show();
-                                executePostUpload(pendingPostText, pendingCategory);
-                            } else {
-                                // User closed or stopped the ad before completion
-                                isPosting = false;
-                                postButton.setEnabled(true);
-                                Toast.makeText(CreatePostActivity.this, "You must watch the full ad to publish your post.", Toast.LENGTH_LONG).show();
-                                loadLevelPlayRewardedAd();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onAdInfoChanged(LevelPlayAdInfo adInfo) {}
-                });
-            }
-
-            Log.d(TAG, "🚀 [LEVELPLAY REWARDED LOAD] Dispatching mediation auction request...");
-            AdAnalyticsTracker.trackEvent(this, "REQUEST", "rewarded", "levelplay", "REQUESTED", "", "", PLACEMENT);
-            levelPlayRewardedAd.loadAd();
-        } catch (Exception e) {
-            isAdLoading = false;
-            Log.e(TAG, "Exception loading LevelPlay rewarded ad: " + e.getMessage(), e);
-        }
+        // Preload Dual Bidding (Interstitial & Rewarded) auctions immediately while user types
+        AdManager.getInstance().preloadDualBiddingAds(this);
     }
 
     private void uploadPost() {
@@ -282,20 +125,16 @@ public class CreatePostActivity extends BaseActivity {
     }
 
     private void proceedWithRewardedAd() {
-        if (levelPlayRewardedAd != null && levelPlayRewardedAd.isAdReady()) {
-            showLoadedRewardedAd();
+        isPosting = true;
+        postButton.setEnabled(false);
+
+        if (AdManager.getInstance().isDualBiddingReady()) {
+            showDualBiddingAd();
         } else {
-            // Ad not ready yet: buffer with spinner while auction completes
             isWaitingForAd = true;
-            postButton.setEnabled(false);
-
             showAdLoadingDialog();
+            AdManager.getInstance().preloadDualBiddingAds(this);
 
-            if (!isAdLoading) {
-                loadLevelPlayRewardedAd();
-            }
-
-            // 15-second safety timeout
             if (adTimeoutRunnable != null) {
                 adHandler.removeCallbacks(adTimeoutRunnable);
             }
@@ -303,21 +142,51 @@ public class CreatePostActivity extends BaseActivity {
                 if (isWaitingForAd) {
                     isWaitingForAd = false;
                     dismissAdLoadingDialog();
-                    isPosting = false;
-                    postButton.setEnabled(true);
-                    Toast.makeText(CreatePostActivity.this, "Ad is taking longer to load. Please check your internet and tap Post again.", Toast.LENGTH_LONG).show();
+                    showDualBiddingAd();
                 }
             };
-            adHandler.postDelayed(adTimeoutRunnable, 15000);
+            adHandler.postDelayed(adTimeoutRunnable, 3500);
         }
     }
 
-    private void showLoadedRewardedAd() {
+    private void showDualBiddingAd() {
+        dismissAdLoadingDialog();
+        isWaitingForAd = false;
         isRewardEarned = false;
-        isPosting = true;
-        postButton.setEnabled(false);
-        Log.d(TAG, "🚀 [LEVELPLAY SHOW REWARDED] Showing rewarded video ad...");
-        levelPlayRewardedAd.showAd(this);
+
+        AdManager.getInstance().showHighestBidRewardAd(this, PLACEMENT, new AdManager.RewardedAdCallback() {
+            @Override
+            public void onRewardEarned() {
+                isRewardEarned = true;
+            }
+
+            @Override
+            public void onAdDismissed(boolean rewarded) {
+                runOnUiThread(() -> {
+                    dismissAdLoadingDialog();
+                    if (rewarded || isRewardEarned) {
+                        Toast.makeText(CreatePostActivity.this, "Ad completed! Publishing post...", Toast.LENGTH_SHORT).show();
+                        executePostUpload(pendingPostText, pendingCategory);
+                    } else {
+                        isPosting = false;
+                        postButton.setEnabled(true);
+                        Toast.makeText(CreatePostActivity.this, "You must watch the full ad to publish your post.", Toast.LENGTH_LONG).show();
+                    }
+                    AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
+                });
+            }
+
+            @Override
+            public void onAdFailed(String reason) {
+                runOnUiThread(() -> {
+                    dismissAdLoadingDialog();
+                    Log.w(TAG, "Ad display failed (" + reason + "), proceeding with post publication.");
+                    Toast.makeText(CreatePostActivity.this, "Publishing post...", Toast.LENGTH_SHORT).show();
+                    executePostUpload(pendingPostText, pendingCategory);
+                    AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
+                });
+            }
+        });
     }
 
     private void showAdLoadingDialog() {
@@ -325,7 +194,7 @@ public class CreatePostActivity extends BaseActivity {
         try {
             if (adProgressDialog == null) {
                 adProgressDialog = new ProgressDialog(this);
-                adProgressDialog.setMessage("Loading video ad to publish post... Please wait");
+                adProgressDialog.setMessage("Loading highest bid ad... Please wait");
                 adProgressDialog.setCancelable(false);
             }
             if (!adProgressDialog.isShowing()) {
@@ -339,6 +208,7 @@ public class CreatePostActivity extends BaseActivity {
     private void dismissAdLoadingDialog() {
         if (adTimeoutRunnable != null) {
             adHandler.removeCallbacks(adTimeoutRunnable);
+            adTimeoutRunnable = null;
         }
         try {
             if (adProgressDialog != null && adProgressDialog.isShowing()) {
@@ -410,9 +280,6 @@ public class CreatePostActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         dismissAdLoadingDialog();
-        if (levelPlayRewardedAd != null) {
-            levelPlayRewardedAd = null;
-        }
         super.onDestroy();
     }
 }
