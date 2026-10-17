@@ -1912,7 +1912,6 @@ public class RealMeetActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
                     if (rewarded || isRewardEarned) {
-                        Toast.makeText(RealMeetActivity.this, "Ad completed! Publishing post...", Toast.LENGTH_SHORT).show();
                         if (pendingAdSuccessAction != null) {
                             Runnable action = pendingAdSuccessAction;
                             pendingAdSuccessAction = null;
@@ -1937,7 +1936,6 @@ public class RealMeetActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
                     Log.w(TAG, "Ad display failed (" + reason + "), proceeding with post publication.");
-                    Toast.makeText(RealMeetActivity.this, "Publishing post...", Toast.LENGTH_SHORT).show();
                     if (pendingAdSuccessAction != null) {
                         Runnable action = pendingAdSuccessAction;
                         pendingAdSuccessAction = null;

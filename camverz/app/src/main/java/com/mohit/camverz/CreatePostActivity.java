@@ -185,7 +185,6 @@ public class CreatePostActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
                     if (rewarded || isRewardEarned) {
-                        Toast.makeText(CreatePostActivity.this, "Ad completed! Publishing post...", Toast.LENGTH_SHORT).show();
                         executePostUpload(pendingPostText, pendingCategory);
                     } else {
                         isPosting = false;
@@ -201,7 +200,6 @@ public class CreatePostActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
                     Log.w(TAG, "Ad display failed (" + reason + "), proceeding with post publication.");
-                    Toast.makeText(CreatePostActivity.this, "Publishing post...", Toast.LENGTH_SHORT).show();
                     executePostUpload(pendingPostText, pendingCategory);
                     AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
                 });

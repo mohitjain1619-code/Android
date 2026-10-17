@@ -1691,7 +1691,6 @@ public class AdTestingActivity extends AppCompatActivity {
                         appendLog("🟢 [LEVELPLAY LOADED] Interstitial Ad loaded successfully!");
                         appendLog("🏆 [AUCTION WINNER] " + winnerNetwork + " won the real-time bidding auction!");
                         appendLog("ℹ️ [AUCTION DETAILS] Auction ID: " + auctionId);
-                        Toast.makeText(AdTestingActivity.this, "LevelPlay Ready! (Won by " + winnerNetwork + ")", Toast.LENGTH_SHORT).show();
                     });
                 }
 
@@ -1802,7 +1801,6 @@ public class AdTestingActivity extends AppCompatActivity {
                         appendLog("🟢 [LEVELPLAY REWARDED LOADED] Rewarded Video ready to show!");
                         appendLog("🏆 [AUCTION WINNER] " + winnerNetwork + " won the real-time bidding auction!");
                         appendLog("ℹ️ [AUCTION DETAILS] Auction ID: " + auctionId);
-                        Toast.makeText(AdTestingActivity.this, "LevelPlay Rewarded Ready! (" + winnerNetwork + ")", Toast.LENGTH_SHORT).show();
                     });
                 }
 
