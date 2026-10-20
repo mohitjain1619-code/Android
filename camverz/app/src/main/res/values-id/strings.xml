@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">camverz</string>
-    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com</string>
 
     <!-- Language Selection -->
     <string name="choose_language_title">Pilih Bahasa Anda</string>
@@ -514,4 +514,10 @@ Anda hanya dapat memposting 1 acara pesta per hari. Apakah Anda ingin mengganti 
     <string name="no_fantasies_matching">Tidak ada postingan fantasi yang sesuai dengan pencarian.</string>
     <string name="post_expired">Postingan ini telah kedaluwarsa.</string>
     <string name="default_request_msg">Halo! Saya tertarik dengan postingan pertemuan Anda.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">Pembaruan Baru Tersedia! 🚀</string>
+    <string name="update_dialog_message">Versi terbaru Camverz telah tersedia di Google Play dengan fitur terbaru dan peningkatan performa. Silakan perbarui untuk melanjutkan.</string>
+    <string name="update_dialog_btn_update">Perbarui Sekarang</string>
+    <string name="update_dialog_btn_later">Nanti</string>
 </resources>

@@ -77,6 +77,19 @@ app.get("/", (req, res) => {
   res.status(200).send("Ultra-Backend is running (VPS-Ready)");
 });
 
+app.get("/api/app-version", (req, res) => {
+  const latestVersionCode = parseInt(process.env.LATEST_VERSION_CODE || "10", 10);
+  const minVersionCode = parseInt(process.env.MIN_VERSION_CODE || "1", 10);
+  const forceUpdate = process.env.FORCE_UPDATE === "true";
+  res.json({
+    latestVersionCode,
+    minVersionCode,
+    versionName: process.env.LATEST_VERSION_NAME || "1.0.8",
+    forceUpdate,
+    playStoreUrl: "https://play.google.com/store/apps/details?id=com.mohit.camverz"
+  });
+});
+
 app.get("/health", async (req, res) => {
   const dbOk = await dbHealthCheck();
   const redisOk = await redisHealthCheck();

@@ -3,21 +3,27 @@ package com.mohit.camverz;
 public class LegalTexts {
 
     public static final String CHILD_SAFETY = "<h2>CHILD SAFETY & EXPLOITATION PREVENTION POLICY</h2>" +
-            "<p><b>Effective Date: August 20, 2026</b></p>" +
-            "<p>Camverz maintains an absolute <b>ZERO-TOLERANCE POLICY</b> regarding any form of child abuse, child sexual exploitation, or minor endangerment. This application is strictly restricted to adult users who are 18 years of age or older. We employ automated filters, AI scanning, and human moderation teams to monitor content 24 hours a day, 7 days a week.</p>" +
+            "<p><b>Application:</b> Camverz: Videocall & RealMeet (com.mohit.camverz)</p>" +
+            "<p><b>Effective Date: October 21, 2026</b></p>" +
+            "<p><b>Camverz: Videocall & RealMeet</b> maintains an absolute <b>ZERO-TOLERANCE POLICY</b> regarding any form of child sexual abuse material (CSAM), child sexual exploitation and abuse (CSAE), child grooming, or minor endangerment. This application is strictly restricted to adult users who are 18 years of age or older. We employ automated filters, AI scanning, and human moderation teams to monitor content 24 hours a day, 7 days a week.</p>" +
             "<h3>1. STRICT AGE BOUNDARY (18+)</h3>" +
-            "<p>Minors (individuals under the age of 18) are prohibited from accessing, creating accounts, or using the Camverz platform. Any account found to belong to a minor, or any account depicting, simulating, or suggesting the presence of a minor, will be subject to <b>immediate, permanent termination</b> without notice.</p>" +
-            "<h3>2. ZERO-TOLERANCE & MANDATORY LAW ENFORCEMENT REPORTING</h3>" +
-            "<p>In compliance with international laws, including the Protect Our Children Act, any detection of Child Sexual Abuse Material (CSAM) or any behavior suggesting child exploitation will result in: </p>" +
+            "<p>Minors (individuals under the age of 18) are strictly prohibited from accessing, creating accounts, or using the Camverz platform. Any account found to belong to a minor, or any account depicting, simulating, or suggesting the presence of a minor, will be subject to <b>immediate, permanent termination</b> without notice.</p>" +
+            "<h3>2. ZERO-TOLERANCE FOR CSAM/CSAE & MANDATORY LAW ENFORCEMENT REPORTING</h3>" +
+            "<p>In strict compliance with international child protection laws, including 18 U.S.C. § 2258A and global cyber safety regulations, any detection or suspicion of Child Sexual Abuse Material (CSAM) or Child Sexual Exploitation and Abuse (CSAE) will result in: </p>" +
             "<ul>" +
-            "  <li><b>Immediate and irreversible account deletion.</b></li>" +
-            "  <li><b>Permanent hardware/device ID bans</b> (denying all future access from the offending device).</li>" +
-            "  <li><b>Immediate reporting to the National Center for Missing & Exploited Children (NCMEC)</b> and relevant federal/national cyber police agencies, including sharing of IP addresses, location markers, email records, and identity logs.</li>" +
+            "  <li><b>Immediate and irreversible account termination and ban.</b></li>" +
+            "  <li><b>Permanent hardware/device ID and IP address blacklisting.</b></li>" +
+            "  <li><b>Immediate mandatory reporting to the National Center for Missing & Exploited Children (NCMEC)</b> and relevant federal/national cyber police agencies, including sharing of IP addresses, location markers, email records, and identity logs.</li>" +
             "</ul>" +
             "<h3>3. PROACTIVE MODERATION & DETECTION</h3>" +
             "<p>We utilize advanced computer vision models (including local face detection) and secure server scanning to inspect uploads and messages. Any attempt to bypass our safety parameters triggers automatic locks on the user profile pending human verification.</p>" +
-            "<h3>4. USER REPORTING OBLIGATION</h3>" +
-            "<p>If you encounter any profile, post, or message that violates child safety rules, you are legally and ethically obligated to report it immediately using our in-app reporting button. We review all reports within 15 minutes of submission.</p>";
+            "<h3>4. IN-APP MECHANISM FOR USER FEEDBACK & REPORTING</h3>" +
+            "<p>Camverz: Videocall & RealMeet provides an active, direct <b>in-app mechanism for users to submit feedback and report child safety concerns without leaving the application</b>. You can report any profile, user, or incident immediately by tapping the <b>Report Safety Concern (In-App)</b> button below, or via the 'Safety Feedback & Report' menu available on any profile screen.</p>" +
+            "<h3>5. DESIGNATED CHILD SAFETY POINT OF CONTACT</h3>" +
+            "<p>For regulatory inquiries, compliance verification, or urgent child safety concerns, our designated point of contact is ready and authorized to assist:<br/>" +
+            "<b>Child Safety Officer:</b> Mohit Jain<br/>" +
+            "<b>Dedicated Contact Email:</b> jainmohit.cr007@gmail.com<br/>" +
+            "<b>Application:</b> Camverz: Videocall & RealMeet</p>";
 
     public static final String PRIVACY_POLICY = "<h2>PRIVACY & DATA PROTECTION POLICY</h2>" +
             "<p><b>Effective Date: August 20, 2026</b></p>" +

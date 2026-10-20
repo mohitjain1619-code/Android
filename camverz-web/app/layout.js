@@ -109,7 +109,8 @@ export const metadata = {
 };
 
 export const viewport = {
-  width: '1024',
+  width: 'device-width',
+  initialScale: 1,
   viewportFit: 'cover',
   themeColor: '#0f0f17',
 };
@@ -121,7 +122,7 @@ const organizationSchema = {
   url: 'https://camverz.com',
   logo: 'https://camverz.com/favicon.ico',
   sameAs: [
-    'https://play.google.com/store/apps/details?id=com.mohitt.camverz'
+    'https://play.google.com/store/apps/details?id=com.mohit.camverz'
   ],
 };
 

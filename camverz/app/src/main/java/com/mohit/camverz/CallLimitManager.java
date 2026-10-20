@@ -76,11 +76,10 @@ public class CallLimitManager {
             case 1:
                 return 30L * 60L * 1000L; // 30 minutes
             case 2:
+                return 8L * 60L * 60L * 1000L; // 8 hours
             case 3:
-                return 3L * 60L * 60L * 1000L; // 3 hours
-            case 4:
             default:
-                return 10L * 60L * 60L * 1000L; // 10 hours
+                return 12L * 60L * 60L * 1000L; // 12 hours
         }
     }
 
@@ -91,9 +90,9 @@ public class CallLimitManager {
         long elapsed = System.currentTimeMillis() - blockedTime;
         long duration = getBlockDurationMs(context);
         if (elapsed >= duration) {
-            // Cooldown duration passed, advance block level for next cycle and auto reset limits!
+            // Cooldown duration passed! Advance block level for next round and reset session to 15 min cycle
             int currentLevel = getBlockLevel(context);
-            int nextLevel = (currentLevel >= 4) ? 1 : currentLevel + 1;
+            int nextLevel = (currentLevel >= 3) ? 1 : (currentLevel + 1);
             resetLimitsForNextSession(context, nextLevel);
             return false;
         }
@@ -118,13 +117,14 @@ public class CallLimitManager {
         if (hours > 0) {
             return String.format(java.util.Locale.US, "%d hour(s) %d minute(s)", hours, minutes);
         } else if (minutes > 0) {
-            return String.format(java.util.Locale.US, "%d minute(s)", minutes);
+            return String.format(java.util.Locale.US, "%d minute(s) %d second(s)", minutes, seconds);
         } else {
             return String.format(java.util.Locale.US, "%d second(s)", seconds);
         }
     }
 
     public static void resetLimitsForNextSession(Context context, int nextBlockLevel) {
+        if (context == null) return;
         getPrefs(context).edit()
                 .putLong(KEY_FREE_SECONDS_LEFT, INITIAL_FREE_SECONDS)
                 .putInt(KEY_REWARDED_ADS_WATCHED, 0)

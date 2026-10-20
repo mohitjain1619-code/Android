@@ -39,7 +39,7 @@ export default function Footer() {
           <div className={styles.linkGroup}>
             <h4>Mobile App</h4>
             <a 
-              href="https://play.google.com/store/apps/details?id=com.mohitt.camverz" 
+              href="https://play.google.com/store/apps/details?id=com.mohit.camverz" 
               target="_blank" 
               rel="noopener noreferrer"
               style={{ color: '#00E5FF', fontWeight: 600 }}

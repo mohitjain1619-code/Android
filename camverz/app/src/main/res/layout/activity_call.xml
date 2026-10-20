@@ -201,6 +201,16 @@
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </androidx.cardview.widget.CardView>
+
+            <ImageButton
+                android:id="@+id/btn_report_call"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_glass_card_luxury"
+                android:src="@drawable/ic_shield_alert"
+                android:contentDescription="Report Safety Concern"
+                android:padding="6dp" />
         </LinearLayout>
 
         <!-- Bottom Call Control Dock -->

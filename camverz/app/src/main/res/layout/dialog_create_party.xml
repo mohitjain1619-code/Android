@@ -212,7 +212,7 @@
                 android:background="@drawable/bg_luxury_pill_white"
                 android:gravity="center"
                 android:paddingVertical="12dp"
-                android:text="@string/host_event"
+                android:text="Watch Ad &amp; Host"
                 android:textColor="#000000"
                 android:textSize="13sp"
                 android:textStyle="bold" />

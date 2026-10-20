@@ -117,9 +117,6 @@ public class VerificationActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_verification);
 
-        // ✅ Request camera permission before proceeding
-        requestCameraPermission();
-
         initializeUI();
         initializeApi();
         initializeFaceDetector();
@@ -132,10 +129,13 @@ public class VerificationActivity extends BaseActivity {
         cameraExecutor = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
 
-        startCamera();
-
-        // Show instructions popup
-        showInstructionsPopup();
+        // Check camera permission first: if already granted, start camera; otherwise prompt user
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            startCamera();
+            showInstructionsPopup();
+        } else {
+            requestCameraPermission();
+        }
     }
 
     private void showInstructionsPopup() {
@@ -205,6 +205,11 @@ public class VerificationActivity extends BaseActivity {
 
     @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
     private void startCamera() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Cannot start camera: Permission not granted yet");
+            return;
+        }
+
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         cameraProviderFuture.addListener(() -> {
@@ -304,7 +309,15 @@ public class VerificationActivity extends BaseActivity {
                     }
                 });
 
-                CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+                CameraSelector cameraSelector;
+                if (cameraProvider.hasCamera(CameraSelector.DEFAULT_FRONT_CAMERA)) {
+                    cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+                } else if (cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) {
+                    cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+                } else {
+                    Toast.makeText(this, "No available camera found on this device", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 cameraProvider.unbindAll();
                 camera = cameraProvider.bindToLifecycle(
@@ -325,7 +338,7 @@ public class VerificationActivity extends BaseActivity {
                 }
 
                 Log.d(TAG, "Camera started successfully");
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Error starting camera", e);
                 Toast.makeText(this, "Camera initialization failed", Toast.LENGTH_SHORT).show();
             }
@@ -781,10 +794,12 @@ public class VerificationActivity extends BaseActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100) {
             if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, "✅ Camera permission granted");
+                Log.d(TAG, "✅ Camera permission granted - starting camera and instructions");
+                startCamera();
+                showInstructionsPopup();
             } else {
                 Log.e(TAG, "❌ Camera permission denied");
-                Toast.makeText(this, "Camera permission is required for verification", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Camera permission is required for female verification", Toast.LENGTH_LONG).show();
                 finish();
             }
         }

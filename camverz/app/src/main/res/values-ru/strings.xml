@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">camverz</string>
-    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com</string>
 
     <!-- Language Selection -->
     <string name="choose_language_title">Выберите ваш язык</string>
@@ -514,4 +514,10 @@
     <string name="no_fantasies_matching">Нет публикаций фантазий, соответствующих поиску.</string>
     <string name="post_expired">Срок действия этой публикации истек.</string>
     <string name="default_request_msg">Привет! Меня заинтересовал твой пост о встрече.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">Доступно новое обновление! 🚀</string>
+    <string name="update_dialog_message">В Google Play доступна новая версия Camverz с новейшими функциями и улучшенной производительностью. Пожалуйста, обновитесь для продолжения.</string>
+    <string name="update_dialog_btn_update">Обновить сейчас</string>
+    <string name="update_dialog_btn_later">Позже</string>
 </resources>

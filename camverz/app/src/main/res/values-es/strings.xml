@@ -511,4 +511,10 @@ Solo puedes publicar 1 fiesta por día. ¿Te gustaría reemplazar tu evento ante
     <string name="no_fantasies_matching">No hay publicaciones de fantasía que coincidan.</string>
     <string name="post_expired">Esta publicación ha expirado.</string>
     <string name="default_request_msg">¡Hola! Estoy interesado en tu publicación de encuentro.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">¡Nueva actualización disponible! 🚀</string>
+    <string name="update_dialog_message">Una nueva versión de Camverz está disponible en Google Play con las últimas funciones y mejoras de rendimiento. Por favor, actualiza para continuar.</string>
+    <string name="update_dialog_btn_update">Actualizar ahora</string>
+    <string name="update_dialog_btn_later">Más tarde</string>
 </resources>

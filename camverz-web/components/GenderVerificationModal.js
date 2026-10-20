@@ -148,25 +148,41 @@ export default function GenderVerificationModal({ onClose }) {
       setCapturedBlob(null);
       setIsFaceAligned(false);
 
-      // Request front-facing camera
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-        },
-        audio: false,
-      });
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera access not supported on this browser. Please ensure you are browsing via HTTPS.');
+      }
+
+      // Request front-facing camera with iPad/Safari flexible constraints fallback
+      let mediaStream;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'user',
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
+          audio: false,
+        });
+      } catch (constraintErr) {
+        console.warn('Initial camera constraints failed, attempting fallback for iPad/Safari:', constraintErr);
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' },
+          audio: false,
+        });
+      }
 
       setStream(mediaStream);
       if (videoRef.current) {
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
         videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch(e => console.log('Video play error on iOS/Safari:', e));
       }
     } catch (err) {
       console.error('Webcam Access Error:', err);
       setPermissionError(true);
       setStatus('error');
-      setErrorMsg('Camera access denied. Please grant camera permission in your browser settings.');
+      setErrorMsg('Camera access denied or unavailable. Tap "Allow Camera & Try Again" or grant camera permission in browser settings.');
     }
   };
 
@@ -502,12 +518,32 @@ export default function GenderVerificationModal({ onClose }) {
             <div className={styles.statusTitle} style={{ color: 'var(--neon-pink)' }}>Verification Error</div>
             <div className={styles.statusDesc}>{errorMsg}</div>
             
+            {/* Retry Camera Permission Button */}
+            <button 
+              onClick={startCamera}
+              className="btn-neon"
+              style={{ 
+                marginTop: '16px', 
+                padding: '10px 22px', 
+                fontSize: '0.9rem',
+                background: 'linear-gradient(135deg, var(--neon-pink), var(--neon-purple))', 
+                borderColor: 'var(--neon-pink)', 
+                color: '#FFFFFF',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                boxShadow: '0 4px 15px rgba(255, 0, 92, 0.4)'
+              }}
+            >
+              📸 Allow Camera &amp; Try Again
+            </button>
+
             {/* Offer switching gender */}
             <button 
               onClick={handleGoToProfile}
               className="btn-neon"
               style={{ 
-                marginTop: '16px', 
+                marginTop: '10px', 
                 padding: '8px 16px', 
                 fontSize: '0.85rem',
                 background: 'rgba(0, 229, 255, 0.05)', 

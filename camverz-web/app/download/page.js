@@ -22,7 +22,7 @@ function DownloadRedirectContent() {
 
   const goToPlayStore = () => {
     const destinationCode = ref ? ref.trim().toUpperCase() : '';
-    const pkg = 'com.mohitt.camverz';
+    const pkg = 'com.mohit.camverz';
 
     // Standard Google Play Install Referrer format: utm_source=CODE&utm_medium=affiliate
     const referrerString = destinationCode

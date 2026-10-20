@@ -31,16 +31,27 @@ public class WindowBackBlocker {
             || name.contains("inmobi")
             || name.contains("mintegral")
             || name.contains("chartboost")
-            || name.contains("google.android.gms.ads");
+            || name.contains("google.android.gms.ads")
+            || name.contains("levelplay")
+            || name.contains("rewarded")
+            || name.contains("interstitial");
     }
 
     public static void blockBack(Window window) {
+        blockBack(window, false);
+    }
+
+    public static void blockBack(Window window, boolean isAd) {
         if (window == null) return;
         try {
             Window.Callback current = window.getCallback();
             if (!(current instanceof WindowCallbackWrapper)) {
-                window.setCallback(new WindowCallbackWrapper(current));
-                Log.d(TAG, "🔒 WindowCallbackWrapper attached to Window directly");
+                window.setCallback(new WindowCallbackWrapper(current, isAd));
+                Log.d(TAG, "🔒 WindowCallbackWrapper attached to Window directly (isAd=" + isAd + ")");
+            } else if (isAd) {
+                Window.Callback delegate = ((WindowCallbackWrapper) current).getDelegate();
+                window.setCallback(new WindowCallbackWrapper(delegate, true));
+                Log.d(TAG, "🔒 WindowCallbackWrapper updated to forceBlockBack=true");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error attaching WindowCallbackWrapper to Window", e);
@@ -49,9 +60,10 @@ public class WindowBackBlocker {
 
     public static void blockBack(Activity activity) {
         if (activity == null) return;
+        boolean isAd = isAdActivity(activity) || BaseActivity.isAdShowing || AdManager.getInstance().isAdWatchPending(activity);
 
         // 1. Wrap Window.Callback to capture KEYCODE_BACK at the absolute lowest system level
-        blockBack(activity.getWindow());
+        blockBack(activity.getWindow(), isAd);
 
         try {
             // 2. Disable Predictive Back Gestures on Android 13+ (API 33+)
@@ -61,7 +73,7 @@ public class WindowBackBlocker {
                     new OnBackInvokedCallback() {
                         @Override
                         public void onBackInvoked() {
-                            if (BaseActivity.isAdShowing) {
+                            if (isAd || BaseActivity.isAdShowing || AdManager.getInstance().isAdWatchPending(activity)) {
                                 Log.d(TAG, "🚫 Predictive back gesture blocked on " + activity.getClass().getSimpleName());
                             }
                         }
@@ -80,7 +92,7 @@ public class WindowBackBlocker {
                     new OnBackPressedCallback(true) {
                         @Override
                         public void handleOnBackPressed() {
-                            if (BaseActivity.isAdShowing) {
+                            if (isAd || BaseActivity.isAdShowing || AdManager.getInstance().isAdWatchPending(activity)) {
                                 Log.d(TAG, "🚫 ComponentActivity back press blocked on " + activity.getClass().getSimpleName());
                             } else {
                                 setEnabled(false);

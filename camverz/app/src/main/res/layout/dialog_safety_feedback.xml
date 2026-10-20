@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog_rounded_dark"
+    android:padding="22dp">
+
+    <!-- Header with Shield Icon -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🛡️"
+            android:textSize="24sp"
+            android:layout_marginEnd="10dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="In-App Safety &amp; Feedback"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Child Safety &amp; Community Protection"
+                android:textColor="#94A3B8"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_close_safety_dialog"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_close"
+            android:contentDescription="Close"
+            app:tint="#94A3B8" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#334155"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Optional Target User Info (Visible when reporting specific user) -->
+    <TextView
+        android:id="@+id/tv_reporting_target"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#38BDF8"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Category Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Report / Feedback Category:"
+        android:textColor="#E2E8F0"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <!-- RadioGroup for Categories -->
+    <RadioGroup
+        android:id="@+id/rg_safety_category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp">
+
+        <RadioButton
+            android:id="@+id/rb_cat_child_safety"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛡️ Child Safety / Exploitation (CSAE/CSAM)"
+            android:textColor="#F43F5E"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:checked="true"
+            android:paddingStart="6dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
+
+        <RadioButton
+            android:id="@+id/rb_cat_underage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🚫 Suspected Underage User (Under 18)"
+            android:textColor="#FBBF24"
+            android:textSize="13sp"
+            android:paddingStart="6dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
+
+        <RadioButton
+            android:id="@+id/rb_cat_harassment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚠️ Harassment / Inappropriate Behavior"
+            android:textColor="#E2E8F0"
+            android:textSize="13sp"
+            android:paddingStart="6dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
+
+        <RadioButton
+            android:id="@+id/rb_cat_feedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 General Safety Feedback &amp; Suggestions"
+            android:textColor="#94A3B8"
+            android:textSize="13sp"
+            android:paddingStart="6dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
+    </RadioGroup>
+
+    <!-- Details Input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Description &amp; Details:"
+        android:textColor="#E2E8F0"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <EditText
+        android:id="@+id/et_safety_description"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:background="@drawable/bg_glass_input"
+        android:gravity="top|start"
+        android:hint="Provide details so our safety team can investigate immediately..."
+        android:textColor="#FFFFFF"
+        android:textColorHint="#64748B"
+        android:textSize="13sp"
+        android:padding="12dp"
+        android:inputType="textMultiLine|textCapSentences"
+        android:layout_marginBottom="14dp" />
+
+    <!-- 24/7 Moderation Commitment Notice -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🔒 Reports submitted in-app are encrypted and reviewed by our Child Safety &amp; Moderation team within 15 minutes. False or malicious reports are prohibited."
+        android:textColor="#64748B"
+        android:textSize="11sp"
+        android:lineSpacingExtra="2dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_cancel_safety"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:text="Cancel"
+            android:textColor="#94A3B8"
+            android:background="?attr/selectableItemBackground"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:layout_marginEnd="10dp" />
+
+        <Button
+            android:id="@+id/btn_submit_safety_report"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:text="Submit Safety Report"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:background="@drawable/bg_btn_primary_gradient"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textAllCaps="false"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -511,4 +511,10 @@ Vous ne pouvez publier qu\'une seule soirée par jour. Souhaitez-vous remplacer 
     <string name="no_fantasies_matching">Aucune publication de fantasme ne correspond à votre recherche.</string>
     <string name="post_expired">Cette publication a expiré.</string>
     <string name="default_request_msg">Salut ! Je suis intéressé(e) par ta publication de rencontre.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">Nouvelle mise à jour disponible ! 🚀</string>
+    <string name="update_dialog_message">Une nouvelle version de Camverz est disponible sur Google Play avec les dernières fonctionnalités et améliorations de performances. Veuillez mettre à jour pour continuer.</string>
+    <string name="update_dialog_btn_update">Mettre à jour</string>
+    <string name="update_dialog_btn_later">Plus tard</string>
 </resources>

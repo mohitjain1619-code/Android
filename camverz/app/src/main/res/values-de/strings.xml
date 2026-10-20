@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">camverz</string>
-    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com</string>
 
     <!-- Language Selection -->
     <string name="choose_language_title">Wählen Sie Ihre Sprache</string>
@@ -514,4 +514,10 @@ Du kannst nur 1 Party pro Tag veröffentlichen. Möchtest du dein vorheriges Eve
     <string name="no_fantasies_matching">Keine Fantasie-Beiträge gefunden, die deiner Suche entsprechen.</string>
     <string name="post_expired">Dieser Beitrag ist abgelaufen.</string>
     <string name="default_request_msg">Hey! Ich interessiere mich für deinen Treffen-Beitrag.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">Neues Update verfügbar! 🚀</string>
+    <string name="update_dialog_message">Eine neuere Version von Camverz ist im Google Play Store mit den neuesten Funktionen und Leistungsverbesserungen verfügbar. Bitte aktualisieren Sie, um fortzufahren.</string>
+    <string name="update_dialog_btn_update">Jetzt aktualisieren</string>
+    <string name="update_dialog_btn_later">Später</string>
 </resources>

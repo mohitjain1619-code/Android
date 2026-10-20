@@ -23,8 +23,14 @@ public class LegalActivity extends BaseActivity {
         rgPolicySelector = findViewById(R.id.rg_policy_selector);
         tvPolicyContent = findViewById(R.id.tv_policy_content);
         btnBack = findViewById(R.id.btn_back);
+        android.widget.Button btnReportSafety = findViewById(R.id.btn_report_safety_inapp);
 
         btnBack.setOnClickListener(v -> finish());
+        if (btnReportSafety != null) {
+            btnReportSafety.setOnClickListener(v -> {
+                SafetyFeedbackDialog.show(LegalActivity.this, null, null);
+            });
+        }
 
         // Setup check change listener for RadioGroup
         rgPolicySelector.setOnCheckedChangeListener((group, checkedId) -> {

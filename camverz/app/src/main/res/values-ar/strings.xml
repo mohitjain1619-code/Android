@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">camverz</string>
-    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com</string>
 
     <!-- Language Selection -->
     <string name="choose_language_title">اختر لغتك</string>
@@ -514,4 +514,10 @@
     <string name="no_fantasies_matching">لا توجد منشورات خيال مطابقة للبحث.</string>
     <string name="post_expired">انتهت صلاحية هذا المنشور.</string>
     <string name="default_request_msg">مرحبًا! أنا مهتم بطلب اللقاء الخاص بك.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">تحديث جديد متاح! 🚀</string>
+    <string name="update_dialog_message">يتوفر إصدار أحدث من Camverz على متجر Google Play مع ميزات جديدة وتحسينات في الأداء. يرجى التحديث للمتابعة.</string>
+    <string name="update_dialog_btn_update">تحديث الآن</string>
+    <string name="update_dialog_btn_later">لاحقاً</string>
 </resources>

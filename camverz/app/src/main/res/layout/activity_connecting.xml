@@ -5,42 +5,71 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_page_ambient_gradient">
 
-    <LinearLayout
+    <!-- Scrollable content area above Cancel Button -->
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginHorizontal="24dp"
-        android:background="@drawable/bg_glass_card_premium"
-        android:elevation="8dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="36dp">
+        android:layout_height="match_parent"
+        android:layout_above="@id/cancelButton"
+        android:layout_alignParentTop="true"
+        android:fillViewport="true"
+        android:scrollbars="none">
 
-        <!-- Animated Search Indicator -->
-        <ProgressBar
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:indeterminateTint="@color/accent_primary" />
-
-        <TextView
-            android:id="@+id/waitingText"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Finding your match..."
-            android:textColor="@color/text_primary"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="36dp"
+            android:paddingBottom="16dp">
 
-        <TextView
-            android:id="@+id/categoryText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Category: Straight"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
-    </LinearLayout>
+            <!-- Search Indicator Card -->
+            <LinearLayout
+                android:id="@+id/searchCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_glass_card_premium"
+                android:elevation="6dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingVertical="22dp"
+                android:paddingHorizontal="24dp">
+
+                <ProgressBar
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:indeterminateTint="@color/accent_primary" />
+
+                <TextView
+                    android:id="@+id/waitingText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Finding your match..."
+                    android:textColor="@color/text_primary"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/categoryText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Category: Straight"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- LevelPlay Bidding Native Ad Container -->
+            <FrameLayout
+                android:id="@+id/nativeAdContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/cancelButton"
@@ -48,7 +77,7 @@
         android:layout_height="52dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="48dp"
+        android:layout_marginBottom="32dp"
         android:background="@drawable/bg_glass_card_premium"
         android:elevation="6dp"
         android:text="Cancel"

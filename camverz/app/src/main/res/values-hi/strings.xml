@@ -505,4 +505,10 @@
     <string name="no_fantasies_matching">खोज से मेल खाती कोई फैंटेसी पोस्ट नहीं है।</string>
     <string name="post_expired">यह पोस्ट समाप्त (Expired) हो चुकी है।</string>
     <string name="default_request_msg">नमस्ते! मुझे आपकी मुलाकात पोस्ट में रुचि है।</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">नया अपडेट उपलब्ध है! 🚀</string>
+    <string name="update_dialog_message">Google Play Store पर Camverz का नया वर्शन उपलब्ध है जिसमें नए फीचर्स और बेहतर परफॉर्मेंस शामिल हैं। जारी रखने के लिए कृपया अपडेट करें।</string>
+    <string name="update_dialog_btn_update">अभी अपडेट करें</string>
+    <string name="update_dialog_btn_later">बाद में</string>
 </resources>

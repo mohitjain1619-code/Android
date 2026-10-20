@@ -38,6 +38,14 @@
           }
         },
         {
+          "client_id": "839315244344-eq7f31s29o8ec82gtttmvt2dbd5nmqic.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mohit.camverz",
+            "certificate_hash": "eeebf2f8af0c6b699b4c6c3c67141f2879f3883f"
+          }
+        },
+        {
           "client_id": "839315244344-f3744l3ljj299a1jre8quscnlhpgqj7u.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

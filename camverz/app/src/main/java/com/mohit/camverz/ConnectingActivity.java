@@ -23,6 +23,13 @@ import android.graphics.Color;
 import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 
+import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
+import com.ironsource.mediationsdk.ads.nativead.LevelPlayMediaView;
+import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAd;
+import com.ironsource.mediationsdk.ads.nativead.LevelPlayNativeAdListener;
+import com.ironsource.mediationsdk.ads.nativead.NativeAdLayout;
+import com.ironsource.mediationsdk.logger.IronSourceError;
+
 public class ConnectingActivity extends BaseActivity {
 
     private static final String TAG = "ConnectingActivity";
@@ -49,6 +56,10 @@ public class ConnectingActivity extends BaseActivity {
     private TextView waitingText;
     private long searchStartTime = 0;
 
+    // LevelPlay Bidding Native Ad
+    private LevelPlayNativeAd levelPlayNativeAd;
+    private FrameLayout nativeAdContainer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,11 +84,14 @@ public class ConnectingActivity extends BaseActivity {
         TextView categoryText = findViewById(R.id.categoryText);
         categoryText.setText("Category: " + category.substring(0, 1).toUpperCase() + category.substring(1));
 
+        nativeAdContainer = findViewById(R.id.nativeAdContainer);
+
         // Start search timer
         searchStartTime = System.currentTimeMillis();
 
         setupSocketListeners();
         loadUserDataAndJoinQueue();
+        loadBiddingNativeAd();
 
         findViewById(R.id.cancelButton).setOnClickListener(v -> {
             leaveQueue();
@@ -150,6 +164,7 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void leaveQueue() {
+        destroyNativeAd();
         isWaiting = false;
         stopQueueHeartbeat();
         cancelCountdown();
@@ -217,7 +232,6 @@ public class ConnectingActivity extends BaseActivity {
             cancelCountdown();
             matchedPeerId = null;
             isWaiting = false;
-            android.widget.Toast.makeText(ConnectingActivity.this, "User disconnected. Searching again...", android.widget.Toast.LENGTH_SHORT).show();
             setupSocketListeners();
             joinQueue();
         });
@@ -252,30 +266,19 @@ public class ConnectingActivity extends BaseActivity {
 
     private void startMatchTransitionCountdown(String peerId, String peerName, String peerAvatar) {
         cancelCountdown();
-        final int[] secondsRemaining = {5};
-        countdownHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-        countdownRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (isFinishing() || isDestroyed()) return;
-
-                if (secondsRemaining[0] > 0) {
-                    if (waitingText != null) {
-                        waitingText.setText("Matched! Connecting in " + secondsRemaining[0] + "s...");
-                    }
-                    secondsRemaining[0]--;
-                    if (countdownHandler != null) {
-                        countdownHandler.postDelayed(this, 1000);
-                    }
-                } else {
-                    transitionToCall(peerId, peerName, peerAvatar);
-                }
-            }
+        if (waitingText != null) {
+            waitingText.setText("Matched! Connecting...");
+        }
+        countdownHandler = new Handler(Looper.getMainLooper());
+        countdownRunnable = () -> {
+            if (isFinishing() || isDestroyed()) return;
+            transitionToCall(peerId, peerName, peerAvatar);
         };
-        countdownHandler.post(countdownRunnable);
+        countdownHandler.postDelayed(countdownRunnable, 300);
     }
 
     private void transitionToCall(String peerId, String peerName, String peerAvatar) {
+        destroyNativeAd();
         Log.d(TAG, "🚀 transitionToCall starting CallActivity with peerId: " + peerId);
         matchAccepted = true;
         Intent i = new Intent(ConnectingActivity.this, CallActivity.class);
@@ -285,6 +288,133 @@ public class ConnectingActivity extends BaseActivity {
         i.putExtra("category", category);
         startActivity(i);
         finish();
+    }
+
+    // =========================================================================
+    // LEVELPLAY HEADER BIDDING NATIVE AD INTEGRATION
+    // =========================================================================
+
+    private void loadBiddingNativeAd() {
+        try {
+            if (levelPlayNativeAd != null) {
+                levelPlayNativeAd.destroyAd();
+                levelPlayNativeAd = null;
+            }
+
+            Log.d(TAG, "📡 Requesting LevelPlay Bidding Native Ad...");
+            LevelPlayNativeAd.Builder builder = new LevelPlayNativeAd.Builder();
+            builder.withListener(new LevelPlayNativeAdListener() {
+                @Override
+                public void onAdLoaded(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
+                    runOnUiThread(() -> {
+                        if (isFinishing() || isDestroyed() || !isWaiting) {
+                            if (nativeAd != null) {
+                                nativeAd.destroyAd();
+                            }
+                            return;
+                        }
+                        levelPlayNativeAd = nativeAd;
+                        String network = adInfo != null && adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "Bidding Winner";
+                        Log.d(TAG, "🟢 LevelPlay Bidding Native Ad Loaded! Winner: " + network);
+                        renderNativeAdView(nativeAd);
+                    });
+                }
+
+                @Override
+                public void onAdLoadFailed(LevelPlayNativeAd nativeAd, IronSourceError error) {
+                    runOnUiThread(() -> {
+                        String msg = error != null ? error.getErrorMessage() : "Unknown error";
+                        int code = error != null ? error.getErrorCode() : -1;
+                        Log.w(TAG, "🔴 LevelPlay Bidding Native Ad Failed: " + msg + " [Code: " + code + "]");
+                        if (nativeAdContainer != null) {
+                            nativeAdContainer.setVisibility(View.GONE);
+                        }
+                    });
+                }
+
+                @Override
+                public void onAdImpression(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
+                    Log.d(TAG, "👁️ LevelPlay Native Ad Impression recorded");
+                }
+
+                @Override
+                public void onAdClicked(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
+                    Log.d(TAG, "🖱️ LevelPlay Native Ad clicked by user");
+                }
+            });
+
+            levelPlayNativeAd = builder.build();
+            levelPlayNativeAd.loadAd();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception initializing LevelPlay Native Ad", e);
+        }
+    }
+
+    private void renderNativeAdView(LevelPlayNativeAd nativeAd) {
+        if (nativeAd == null || nativeAdContainer == null || isFinishing() || isDestroyed()) return;
+
+        try {
+            nativeAdContainer.removeAllViews();
+
+            NativeAdLayout nativeAdLayout = (NativeAdLayout) LayoutInflater.from(this)
+                    .inflate(R.layout.layout_levelplay_native_ad, nativeAdContainer, false);
+
+            TextView tvTitle = nativeAdLayout.findViewById(R.id.lp_native_title);
+            TextView tvAdvertiser = nativeAdLayout.findViewById(R.id.lp_native_advertiser);
+            TextView tvBody = nativeAdLayout.findViewById(R.id.lp_native_body);
+            ImageView ivIcon = nativeAdLayout.findViewById(R.id.lp_native_icon);
+            Button btnCta = nativeAdLayout.findViewById(R.id.lp_native_cta);
+            LevelPlayMediaView mediaView = nativeAdLayout.findViewById(R.id.lp_native_media_view);
+
+            if (tvTitle != null && nativeAd.getTitle() != null) {
+                tvTitle.setText(nativeAd.getTitle());
+                nativeAdLayout.setTitleView(tvTitle);
+            }
+            if (tvAdvertiser != null && nativeAd.getAdvertiser() != null) {
+                tvAdvertiser.setText(nativeAd.getAdvertiser());
+                nativeAdLayout.setAdvertiserView(tvAdvertiser);
+            }
+            if (tvBody != null && nativeAd.getBody() != null) {
+                tvBody.setText(nativeAd.getBody());
+                nativeAdLayout.setBodyView(tvBody);
+            }
+            if (btnCta != null && nativeAd.getCallToAction() != null) {
+                btnCta.setText(nativeAd.getCallToAction());
+                nativeAdLayout.setCallToActionView(btnCta);
+            }
+            if (ivIcon != null && nativeAd.getIcon() != null && nativeAd.getIcon().getDrawable() != null) {
+                ivIcon.setImageDrawable(nativeAd.getIcon().getDrawable());
+                nativeAdLayout.setIconView(ivIcon);
+            }
+            if (mediaView != null) {
+                nativeAdLayout.setMediaView(mediaView);
+            }
+
+            // Register native layout with SDK for click and impression tracking
+            nativeAdLayout.registerNativeAdViews(nativeAd);
+
+            nativeAdContainer.addView(nativeAdLayout);
+            nativeAdContainer.setVisibility(View.VISIBLE);
+            Log.d(TAG, "🖼️ LevelPlay Native Ad rendered successfully.");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error rendering LevelPlay native ad", e);
+        }
+    }
+
+    private void destroyNativeAd() {
+        try {
+            if (levelPlayNativeAd != null) {
+                levelPlayNativeAd.destroyAd();
+                levelPlayNativeAd = null;
+            }
+            if (nativeAdContainer != null) {
+                nativeAdContainer.removeAllViews();
+                nativeAdContainer.setVisibility(View.GONE);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error destroying native ad: " + e.getMessage());
+        }
     }
 
     private int dpToPx(int dp) {
@@ -337,6 +467,7 @@ public class ConnectingActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        destroyNativeAd();
         if (!matchAccepted) {
             leaveQueue();
         }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">camverz</string>
-    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com</string>
     
     <!-- Language Selection -->
     <string name="choose_language_title">Choose Your Language</string>
@@ -162,7 +162,7 @@
     <string name="whats_on_your_mind">What\'s on your mind?</string>
     <string name="audience_visibility">Audience Visibility</string>
     <string name="all">All</string>
-    <string name="publish_post">Publish Post</string>
+    <string name="publish_post">Watch Ad &amp; Post</string>
     <string name="comments_title">Comments</string>
     <string name="write_a_comment">Write a comment...</string>
     <string name="replying_to">Replying to %1$s</string>
@@ -483,7 +483,7 @@ You can only post 1 Party event per day. Would you like to replace your previous
     <string name="meeting_time_label">MEETING TIME</string>
     <string name="description_label">DESCRIPTION (MAX 200 LETTERS)</string>
     <string name="hint_realmeet_description">Describe why you want to meet up...</string>
-    <string name="publish_post_btn">Publish Post</string>
+    <string name="publish_post_btn">Watch Ad &amp; Post</string>
     <string name="full_details_description_upper">FULL DETAILS &amp; DESCRIPTION</string>
     <string name="send_request_btn">⚡ Send Request</string>
     <string name="btn_video_call">🎥 Video Call</string>
@@ -516,4 +516,10 @@ You can only post 1 Party event per day. Would you like to replace your previous
     <string name="no_fantasies_matching">No fantasy posts matching search.</string>
     <string name="post_expired">This post has expired.</string>
     <string name="default_request_msg">Hey! I\'m interested in your meet post.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">New Update Available! 🚀</string>
+    <string name="update_dialog_message">A newer version of Camverz is available on Google Play with latest features and performance improvements. Please update to continue.</string>
+    <string name="update_dialog_btn_update">Update Now</string>
+    <string name="update_dialog_btn_later">Later</string>
 </resources>

@@ -132,7 +132,6 @@ public class CreatePostActivity extends BaseActivity {
             showDualBiddingAd();
         } else {
             isWaitingForAd = true;
-            showAdLoadingDialog();
             AdManager.getInstance().preloadDualBiddingAds(this);
 
             if (adTimeoutRunnable != null) {
@@ -141,13 +140,12 @@ public class CreatePostActivity extends BaseActivity {
             adTimeoutRunnable = () -> {
                 if (isWaitingForAd) {
                     isWaitingForAd = false;
-                    dismissAdLoadingDialog();
                     showDualBiddingAd();
                 }
             };
-            adHandler.postDelayed(adTimeoutRunnable, 6000);
+            adHandler.postDelayed(adTimeoutRunnable, 1500);
 
-            // Active check every 400ms: if ad loads before timeout, show immediately!
+            // Active check every 250ms: if ad loads before timeout, show immediately!
             Runnable fastCheckRunnable = new Runnable() {
                 @Override
                 public void run() {
@@ -157,15 +155,14 @@ public class CreatePostActivity extends BaseActivity {
                             if (adTimeoutRunnable != null) {
                                 adHandler.removeCallbacks(adTimeoutRunnable);
                             }
-                            dismissAdLoadingDialog();
                             showDualBiddingAd();
                         } else {
-                            adHandler.postDelayed(this, 400);
+                            adHandler.postDelayed(this, 250);
                         }
                     }
                 }
             };
-            adHandler.postDelayed(fastCheckRunnable, 400);
+            adHandler.postDelayed(fastCheckRunnable, 250);
         }
     }
 
@@ -174,7 +171,7 @@ public class CreatePostActivity extends BaseActivity {
         isWaitingForAd = false;
         isRewardEarned = false;
 
-        AdManager.getInstance().showHighestBidRewardAd(this, PLACEMENT, new AdManager.RewardedAdCallback() {
+        AdManager.getInstance().showRewardedAd(this, PLACEMENT, new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {
                 isRewardEarned = true;
@@ -189,7 +186,6 @@ public class CreatePostActivity extends BaseActivity {
                     } else {
                         isPosting = false;
                         postButton.setEnabled(true);
-                        Toast.makeText(CreatePostActivity.this, "You must watch the full ad to publish your post.", Toast.LENGTH_LONG).show();
                     }
                     AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
                 });
@@ -208,19 +204,7 @@ public class CreatePostActivity extends BaseActivity {
     }
 
     private void showAdLoadingDialog() {
-        if (isFinishing() || isDestroyed()) return;
-        try {
-            if (adProgressDialog == null) {
-                adProgressDialog = new ProgressDialog(this);
-                adProgressDialog.setMessage("Loading highest bid ad... Please wait");
-                adProgressDialog.setCancelable(false);
-            }
-            if (!adProgressDialog.isShowing()) {
-                adProgressDialog.show();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error showing ad progress dialog", e);
-        }
+        // Disabled: Clean, silent ad buffering without intrusive popup prompt
     }
 
     private void dismissAdLoadingDialog() {

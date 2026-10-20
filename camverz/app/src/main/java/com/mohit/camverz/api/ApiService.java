@@ -256,4 +256,10 @@ public interface ApiService {
     // ============================================
     @POST("ads/track")
     Call<JsonObject> trackAdEvent(@Body Map<String, Object> body);
+
+    // ============================================
+    // APP VERSION & UPDATE CHECK
+    // ============================================
+    @GET("app-version")
+    Call<JsonObject> getAppVersion();
 }

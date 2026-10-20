@@ -364,8 +364,13 @@ public class CallActivity extends BaseActivity {
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnEnd.setOnClickListener(v -> disconnect());
         btnToggleVideo.setOnClickListener(v -> toggleVideo());
-        if (btnSpeaker != null) btnSpeaker.setOnClickListener(v -> toggleSpeaker());
-        followButton.setOnClickListener(v -> handleFollowClick());
+        ImageButton btnReportCall = findViewById(R.id.btn_report_call);
+        if (btnReportCall != null) {
+            btnReportCall.setOnClickListener(v -> {
+                String peerNameStr = peerName != null ? peerName.getText().toString() : "";
+                SafetyFeedbackDialog.show(CallActivity.this, peerId, peerNameStr);
+            });
+        }
 
         AvatarHelper.loadAvatar(this, null, tokenManager.getUserAvatar(), tokenManager.getUserName(), localAvatarSmall);
         
@@ -1688,28 +1693,26 @@ public class CallActivity extends BaseActivity {
                     Log.d(TAG, "User has video call ad-free pass. Finishing immediately.");
                     finish();
                 } else if (isPrivateCall && durationSec >= 30) {
-                    Log.d(TAG, "Private call lasted >= 30s. Triggering dual-bidding ad.");
-                    showPostCallAdAndFinish();
+                    Log.d(TAG, "Private call lasted >= 30s. Triggering post-call interstitial.");
+                    showPostCallInterstitialAdAndFinish();
                 } else if (!isPrivateCall) {
-                    boolean shouldShowAd = false;
                     if (durationSec >= 120) {
-                        Log.d(TAG, "Random call lasted >= 2 min (120s). Triggering dual-bidding ad.");
-                        shouldShowAd = true;
+                        Log.d(TAG, "Random call lasted >= 2 min (" + durationSec + "s). Triggering 1 post-call Rewarded ad.");
+                        showPostCallRewardAdAndFinish();
                     } else if (callConnectedTime > 0) {
-                        // Short call (< 2 min) — increment short call counter, show ad every 2 calls
+                        // Short call (< 2 min) — increment short call counter, show interstitial every 2 calls
                         android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
                         int shortCalls = statsPrefs.getInt("short_call_count", 0);
                         shortCalls++;
-                        statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
                         Log.d(TAG, "Short call count: " + shortCalls);
-                        if (shortCalls % 2 == 0) {
-                            Log.d(TAG, "Short call threshold reached (every 2 calls). Triggering dual-bidding ad.");
-                            shouldShowAd = true;
+                        if (shortCalls >= 2) {
+                            statsPrefs.edit().putInt("short_call_count", 0).apply();
+                            Log.d(TAG, "Short call threshold reached (every 2 calls). Triggering post-call Interstitial ad.");
+                            showPostCallInterstitialAdAndFinish();
+                        } else {
+                            statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
+                            finish();
                         }
-                    }
-
-                    if (shouldShowAd) {
-                        showPostCallAdAndFinish();
                     } else {
                         finish();
                     }
@@ -2034,15 +2037,14 @@ public class CallActivity extends BaseActivity {
         limitCountdownHandler.postDelayed(limitCountdownRunnable, 1000);
     }
 
-    private void showPostCallAdAndFinish() {
+    private void showPostCallRewardAdAndFinish() {
         if (isFinishing() || isDestroyed()) return;
 
-        String placement = isPrivateCall ? "private_call_exit" : "call_exit";
-        Log.d(TAG, "🚀 [POST-CALL AD] Requesting highest-bid ad for placement: " + placement);
-        AdManager.getInstance().showHighestBidRewardAd(this, placement, new AdManager.RewardedAdCallback() {
+        Log.d(TAG, "🚀 [POST-CALL REWARDED] Requesting Rewarded ad on call exit (>= 2 min call)");
+        AdManager.getInstance().showRewardedAd(this, "call_exit_rewarded", new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {
-                Log.d(TAG, "🎁 Post-call ad completed.");
+                Log.d(TAG, "Post-call rewarded ad completed.");
             }
 
             @Override
@@ -2052,9 +2054,20 @@ public class CallActivity extends BaseActivity {
 
             @Override
             public void onAdFailed(String reason) {
-                Log.w(TAG, "Post-call ad display failed: " + reason);
-                runOnUiThread(() -> finish());
+                Log.w(TAG, "Rewarded ad unavailable (" + reason + "), falling back to interstitial on call exit.");
+                showPostCallInterstitialAdAndFinish();
             }
+        });
+    }
+
+    private void showPostCallInterstitialAdAndFinish() {
+        if (isFinishing() || isDestroyed()) return;
+
+        String placement = isPrivateCall ? "private_call_exit" : "call_exit";
+        Log.d(TAG, "🚀 [POST-CALL INTERSTITIAL] Requesting interstitial ad for placement: " + placement);
+        AdManager.getInstance().showInterstitialWithFallback(this, placement, false, watched -> {
+            Log.d(TAG, "Post-call interstitial ad completed (watched: " + watched + "). Finishing call.");
+            runOnUiThread(() -> finish());
         });
     }
 

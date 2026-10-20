@@ -25,9 +25,15 @@ import java.util.List;
 public class WindowCallbackWrapper implements Window.Callback {
     private static final String TAG = "WindowCallbackWrapper";
     private final Window.Callback delegate;
+    private final boolean forceBlockBack;
 
     public WindowCallbackWrapper(Window.Callback delegate) {
+        this(delegate, false);
+    }
+
+    public WindowCallbackWrapper(Window.Callback delegate, boolean forceBlockBack) {
         this.delegate = delegate;
+        this.forceBlockBack = forceBlockBack;
     }
 
     public Window.Callback getDelegate() {
@@ -37,9 +43,10 @@ public class WindowCallbackWrapper implements Window.Callback {
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            if (BaseActivity.isAdShowing) {
-                Log.d(TAG, "🚫 KEYCODE_BACK blocked in WindowCallbackWrapper while ad is showing");
-                return true; // Consume event completely only while ad is showing
+            boolean adPending = AdManager.getInstance().isAdWatchPending(null);
+            if (forceBlockBack || BaseActivity.isAdShowing || adPending) {
+                Log.d(TAG, "🚫 KEYCODE_BACK blocked in WindowCallbackWrapper (forceBlock=" + forceBlockBack + ", isAdShowing=" + BaseActivity.isAdShowing + ", adPending=" + adPending + ")");
+                return true; // Consume event completely
             }
         }
         return delegate != null && delegate.dispatchKeyEvent(event);

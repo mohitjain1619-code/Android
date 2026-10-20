@@ -146,7 +146,7 @@
                 android:background="@drawable/bg_luxury_pill_white"
                 android:gravity="center"
                 android:paddingVertical="12dp"
-                android:text="@string/publish_fantasy"
+                android:text="@string/publish_post"
                 android:textColor="#000000"
                 android:textSize="13sp"
                 android:textStyle="bold" />

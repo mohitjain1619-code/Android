@@ -366,9 +366,6 @@ public class MainScreenActivity extends BaseActivity {
             } else if (itemId == R.id.action_rate_app) {
                 openPlayStoreForRating();
                 return true;
-            } else if (itemId == R.id.action_ad_testing) {
-                startActivity(new Intent(this, AdTestingActivity.class));
-                return true;
             }
             return false;
         });
@@ -630,8 +627,15 @@ public class MainScreenActivity extends BaseActivity {
 
         long secondsLeft = CallLimitManager.getFreeSecondsLeft(this);
         if (secondsLeft <= 0) {
-            CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
-            showExceededBlockDialog();
+            int tier = CallLimitManager.getRewardedTier(this);
+            if (tier == 1 || tier == 2) {
+                showWatchAdsDialog(onPassed);
+            } else {
+                if (CallLimitManager.getLimitBlockedTime(this) == 0) {
+                    CallLimitManager.setLimitBlockedTime(this, System.currentTimeMillis());
+                }
+                showExceededBlockDialog();
+            }
             return;
         }
 
@@ -639,17 +643,105 @@ public class MainScreenActivity extends BaseActivity {
     }
 
     private void showExceededBlockDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
+        int level = CallLimitManager.getBlockLevel(this);
         String remainingTime = CallLimitManager.getFormattedRemainingBlockTime(this);
-        String message = "Your call limit is finished. Please come back after " + remainingTime + " to continue calling!";
+
+        String title;
+        String message;
+
+        if (level == 1) {
+            title = "Call Limit Reached (30-Min Cooldown)";
+            message = "Aapne session ke poore 15 minute call time use kar liye hain.\n\nAgla 15 minute ka session unlock karne ke liye kripya 30 minute wait karein.\n\nBacha hua samay: " + remainingTime;
+        } else if (level == 2) {
+            title = "Call Limit Reached (8-Hour Cooldown)";
+            message = "Aapne dusre session ke bhi poore 15 minute call time use kar liye hain.\n\nAgla 15 minute ka session unlock karne ke liye kripya 8 ghante baad aayein.\n\nBacha hua samay: " + remainingTime;
+        } else {
+            title = "Call Limit Reached (12-Hour Cooldown)";
+            message = "Aapne teesre session ke bhi poore 15 minute call time use kar liye hain.\n\nAgla 15 minute ka session unlock karne ke liye kripya 12 ghante baad aayein.\n\nBacha hua samay: " + remainingTime;
+        }
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Limit Exceeded")
+            .setTitle(title)
             .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("OK", (dialog, which) -> {
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com"));
                 startActivity(browserIntent);
             })
+            .show();
+    }
+
+    private void showWatchAdsDialog(Runnable onPassed) {
+        if (isFinishing() || isDestroyed()) return;
+
+        int watched = CallLimitManager.getRewardedAdsWatched(this);
+        int currentTier = CallLimitManager.getRewardedTier(this);
+        String title = currentTier == 1 ? "Free Call Time Completed" : "Second Limit Completed";
+        String message = currentTier == 1 
+            ? "Aapka 5 minute ka free call time poora ho chuka hai.\n\n3 short video ads dekhkar agle 5 minute ka call time unlock karein!\n\nAds Watched: " + watched + "/3"
+            : "Aapka dusra 5 minute ka call time bhi poora ho chuka hai.\n\n3 aur short video ads dekhkar iss session ka aakhri 5 minute call time unlock karein!\n\nAds Watched: " + watched + "/3";
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Watch Ad", (dialog, which) -> {
+                AdManager.getInstance().preloadRewardedVideo();
+
+                final boolean[] rewardGranted = new boolean[]{false};
+
+                AdManager.getInstance().showRewardedAd(MainScreenActivity.this, "call_limit_rewarded", new AdManager.RewardedAdCallback() {
+                    @Override
+                    public void onRewardEarned() {
+                        rewardGranted[0] = true;
+                    }
+
+                    @Override
+                    public void onAdDismissed(boolean rewarded) {
+                        runOnUiThread(() -> {
+                            if (rewardGranted[0] || rewarded) {
+                                CallLimitManager.incrementRewardedAdsWatched(MainScreenActivity.this);
+                                int newWatched = CallLimitManager.getRewardedAdsWatched(MainScreenActivity.this);
+                                if (newWatched >= 3) {
+                                    int nextTier = currentTier + 1; // Tier 1 -> Tier 2, Tier 2 -> Tier 3
+                                    CallLimitManager.setRewardedTier(MainScreenActivity.this, nextTier);
+                                    CallLimitManager.addFreeSeconds(MainScreenActivity.this, 300); // 5 minutes
+                                    CallLimitManager.resetRewardedAdsWatched(MainScreenActivity.this);
+
+                                    new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
+                                        .setTitle("Call Time Unlocked! 🎉")
+                                        .setMessage(currentTier == 1 
+                                            ? "Badhai ho! Aapko agle 5 minute ka call time mil gaya hai. Aap calling jari rakh sakte hain." 
+                                            : "Badhai ho! Aapko iss session ka aakhri 5 minute call time mil gaya hai. Aap calling jari rakh sakte hain.")
+                                        .setPositiveButton("Start Calling", (d, w) -> onPassed.run())
+                                        .show();
+                                } else {
+                                    Toast.makeText(MainScreenActivity.this, "Ad watched! (" + newWatched + "/3)", Toast.LENGTH_SHORT).show();
+                                    showWatchAdsDialog(onPassed);
+                                }
+                            } else {
+                                new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
+                                    .setTitle("Ad Incomplete ⚠️")
+                                    .setMessage("Aapne video ad poora nahi dekha ya beech me band kar diya! Call time paane ke liye poora ad dekhna anivarya hai. Ye ad count nahi hua.")
+                                    .setPositiveButton("Try Again", (d, w) -> showWatchAdsDialog(onPassed))
+                                    .setNegativeButton("Cancel", null)
+                                    .show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onAdFailed(String reason) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(MainScreenActivity.this, "Video ad load ho raha hai, kripya kuch second baad punah koshish karein.", Toast.LENGTH_SHORT).show();
+                            showWatchAdsDialog(onPassed);
+                        });
+                    }
+                });
+            })
+            .setNegativeButton("Cancel", null)
             .show();
     }
 

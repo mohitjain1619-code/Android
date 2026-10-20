@@ -133,6 +133,10 @@ public class RealMeetActivity extends BaseActivity {
     private Runnable pendingAdCancelAction;
     private String currentAdPlacement = "realmeet_publish_post";
 
+    // 5-Minute Interstitial Ad Timer Handler
+    private final Handler interstitialAdHandler = new Handler(Looper.getMainLooper());
+    private Runnable interstitialAdRunnable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -1859,7 +1863,6 @@ public class RealMeetActivity extends BaseActivity {
             executeShowDualBiddingRewardAd(finalPlacement);
         } else {
             isWaitingForAd = true;
-            showAdLoadingDialog();
             AdManager.getInstance().preloadDualBiddingAds(this);
 
             if (adTimeoutRunnable != null) {
@@ -1868,13 +1871,12 @@ public class RealMeetActivity extends BaseActivity {
             adTimeoutRunnable = () -> {
                 if (isWaitingForAd) {
                     isWaitingForAd = false;
-                    dismissAdLoadingDialog();
                     executeShowDualBiddingRewardAd(finalPlacement);
                 }
             };
-            adHandler.postDelayed(adTimeoutRunnable, 6000);
+            adHandler.postDelayed(adTimeoutRunnable, 1500);
 
-            // Active check every 400ms: if ad loads before timeout, show immediately!
+            // Active check every 250ms: if ad loads before timeout, show immediately!
             Runnable fastCheckRunnable = new Runnable() {
                 @Override
                 public void run() {
@@ -1884,15 +1886,14 @@ public class RealMeetActivity extends BaseActivity {
                             if (adTimeoutRunnable != null) {
                                 adHandler.removeCallbacks(adTimeoutRunnable);
                             }
-                            dismissAdLoadingDialog();
                             executeShowDualBiddingRewardAd(finalPlacement);
                         } else {
-                            adHandler.postDelayed(this, 400);
+                            adHandler.postDelayed(this, 250);
                         }
                     }
                 }
             };
-            adHandler.postDelayed(fastCheckRunnable, 400);
+            adHandler.postDelayed(fastCheckRunnable, 250);
         }
     }
 
@@ -1901,7 +1902,7 @@ public class RealMeetActivity extends BaseActivity {
         isWaitingForAd = false;
         isRewardEarned = false;
 
-        AdManager.getInstance().showHighestBidRewardAd(this, placement, new AdManager.RewardedAdCallback() {
+        AdManager.getInstance().showRewardedAd(this, placement, new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {
                 isRewardEarned = true;
@@ -1919,7 +1920,6 @@ public class RealMeetActivity extends BaseActivity {
                             action.run();
                         }
                     } else {
-                        Toast.makeText(RealMeetActivity.this, "You must watch the full ad to publish your post.", Toast.LENGTH_LONG).show();
                         if (pendingAdCancelAction != null) {
                             Runnable cancelAction = pendingAdCancelAction;
                             pendingAdSuccessAction = null;
@@ -1953,19 +1953,7 @@ public class RealMeetActivity extends BaseActivity {
     }
 
     private void showAdLoadingDialog() {
-        if (isFinishing() || isDestroyed()) return;
-        try {
-            if (adProgressDialog == null) {
-                adProgressDialog = new ProgressDialog(this);
-                adProgressDialog.setMessage("Loading video ad to publish post... Please wait");
-                adProgressDialog.setCancelable(false);
-            }
-            if (!adProgressDialog.isShowing()) {
-                adProgressDialog.show();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error showing ad progress dialog", e);
-        }
+        // Disabled: Clean, silent ad buffering without intrusive popup prompt
     }
 
     private void dismissAdLoadingDialog() {
@@ -1977,28 +1965,84 @@ public class RealMeetActivity extends BaseActivity {
             if (adProgressDialog != null && adProgressDialog.isShowing()) {
                 adProgressDialog.dismiss();
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error dismissing ad progress dialog", e);
-        }
+        } catch (Exception ignored) {}
     }
 
     private void showPostCreationRewardAd() {}
 
-    private void preloadInterstitialAd() {}
+    private void preloadInterstitialAd() {
+        if (tokenManager.isCommunityAdFree()) return;
+        AdManager.getInstance().preloadInterstitial(this);
+    }
 
-    private long getAccumulatedTime() { return 0; }
+    private long getAccumulatedTime() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        return prefs.getLong(KEY_REALMEET_ACCUMULATED_TIME, 0);
+    }
 
-    private void saveAccumulatedTime(long timeMs) {}
+    private void saveAccumulatedTime(long timeMs) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        prefs.edit().putLong(KEY_REALMEET_ACCUMULATED_TIME, timeMs).apply();
+    }
 
-    private boolean isRealMeetAdPending() { return false; }
+    private boolean isRealMeetAdPending() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        return prefs.getBoolean(KEY_AD_WATCH_PENDING, false);
+    }
 
-    private void setRealMeetAdPending(boolean pending) {}
+    private void setRealMeetAdPending(boolean pending) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_AD_TIMER, MODE_PRIVATE);
+        prefs.edit().putBoolean(KEY_AD_WATCH_PENDING, pending).apply();
+    }
 
-    private void scheduleInterstitialAd() {}
+    private void scheduleInterstitialAd() {
+        if (tokenManager.isCommunityAdFree()) return;
+        cancelInterstitialAdSchedule();
 
-    private void cancelInterstitialAdSchedule() {}
+        long accumulated = getAccumulatedTime();
+        long delay;
+        if (accumulated >= INTERSTITIAL_INTERVAL_MS) {
+            delay = 3000; // Trigger after 3s if already accumulated 5 mins
+        } else {
+            delay = INTERSTITIAL_INTERVAL_MS - accumulated;
+        }
 
-    private void showScheduledInterstitialAd() {}
+        Log.d(TAG, "⏱️ RealMeet 5-Minute Interstitial scheduled in " + (delay / 1000) + " seconds (accumulated: " + (accumulated / 1000) + "s).");
+
+        interstitialAdRunnable = () -> {
+            if (isFinishing() || isDestroyed()) return;
+            showScheduledInterstitialAd();
+        };
+        interstitialAdHandler.postDelayed(interstitialAdRunnable, delay);
+    }
+
+    private void cancelInterstitialAdSchedule() {
+        if (interstitialAdRunnable != null) {
+            interstitialAdHandler.removeCallbacks(interstitialAdRunnable);
+            interstitialAdRunnable = null;
+        }
+    }
+
+    private void showScheduledInterstitialAd() {
+        if (tokenManager.isCommunityAdFree() || isFinishing() || isDestroyed()) return;
+
+        // If user is currently watching rewarded ad or creating a post, don't interrupt
+        if (isWaitingForAd || isCreationDialogOpen) {
+            Log.d(TAG, "Ad/Dialog currently open. Postponing scheduled interstitial by 30 seconds.");
+            interstitialAdHandler.postDelayed(this::showScheduledInterstitialAd, 30000);
+            return;
+        }
+
+        Log.d(TAG, "🎬 5-Minute Timer Elapsed: Triggering LevelPlay Header Bidding Interstitial Ad...");
+        AdManager.getInstance().showInterstitialWithFallback(this, "realmeet_timer", tokenManager.isCommunityAdFree(), success -> {
+            // Reset accumulated time and pending flag once ad cycle completes
+            saveAccumulatedTime(0);
+            setRealMeetAdPending(false);
+            realMeetSessionStartTime = System.currentTimeMillis();
+            Log.d(TAG, "RealMeet 5-Minute ad completed (success=" + success + "). Rescheduling next 5-min cycle.");
+            scheduleInterstitialAd();
+        });
+    }
 
     private int parseStatsCount(JsonObject data, JsonObject userObj, String... keys) {
         for (JsonObject obj : new JsonObject[]{userObj, data}) {
@@ -2034,6 +2078,7 @@ public class RealMeetActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        cancelInterstitialAdSchedule();
         dismissAdLoadingDialog();
         if (adTimeoutRunnable != null) {
             adHandler.removeCallbacks(adTimeoutRunnable);

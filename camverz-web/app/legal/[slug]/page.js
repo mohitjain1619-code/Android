@@ -12,19 +12,31 @@ const legalDocs = {
     themeColor: '#FF0055',
     content: (
       <>
-        <p>Camverz is committed to providing a safe, clean, and secure environment for all users. We enforce a strict zero-tolerance policy against any form of Child Sexual Abuse Material (CSAM) and Child Sexual Exploitation and Abuse (CSAE).</p>
+        <p><strong>Camverz: Videocall & RealMeet (com.mohit.camverz)</strong> is deeply committed to maintaining a safe, respectful, and fully compliant digital environment. We strictly enforce an absolute zero-tolerance policy against Child Sexual Abuse Material (CSAM) and Child Sexual Exploitation and Abuse (CSAE) across all our platforms, mobile applications, and services.</p>
 
-        <h2>1. Zero Tolerance Policy for CSAM & CSAE</h2>
-        <p>Camverz strictly prohibits the creation, upload, sharing, transmission, or display of any content depicting child sexual abuse or exploitation. Any account or device found attempting to share, display, or engage in CSAM/CSAE will be permanently terminated immediately, with hardware and IP access revoked, and reported to legal authorities.</p>
+        <h2>1. Zero-Tolerance Policy for CSAM & CSAE</h2>
+        <p>Camverz: Videocall & RealMeet strictly prohibits the creation, upload, transmission, display, or facilitation of any content or interaction depicting, promoting, or suggesting child sexual abuse or exploitation. Any account, user, or device found engaging in or attempting CSAM/CSAE will be permanently banned immediately, with device hardware identifiers and IP addresses permanently blacklisted, and all relevant logs reported to legal law enforcement agencies.</p>
 
-        <h2>2. Strict 18+ Age Requirement & Minor Protection</h2>
-        <p>Camverz is strictly reserved for users aged 18 and older. Minors under the age of 18 are strictly prohibited from creating accounts, accessing the web app, or using our live video matching services. We employ age-verification prompts, automated behavioral filters, and active moderation to detect and remove unauthorized minor accounts instantly.</p>
+        <h2>2. Strict 18+ Age Boundary & Minor Protection</h2>
+        <p>Camverz: Videocall & RealMeet is strictly intended and restricted to adult users aged 18 and older. Minors (individuals under the age of 18) are strictly prohibited from creating accounts, accessing our video calling features, or using RealMeet hangouts. We utilize mandatory age verification gates, automated facial analysis checks, and 24/7 moderation systems to detect and immediately purge any underage accounts.</p>
 
-        <h2>3. Mandatory Reporting to NCMEC & Law Enforcement</h2>
-        <p>In accordance with federal and international child protection laws, Camverz reports all detected instances of CSAM/CSAE content, child safety violations, or minor exploitation attempts directly to the National Center for Missing & Exploited Children (NCMEC) and appropriate regional law enforcement agencies.</p>
+        <h2>3. Mandatory Reporting to NCMEC & Global Law Enforcement</h2>
+        <p>In full compliance with federal and international child safety laws (including 18 U.S.C. § 2258A and relevant global statutory requirements), Camverz: Videocall & RealMeet immediately reports all detected or suspected instances of CSAM/CSAE, child grooming, or minor exploitation to the <strong>National Center for Missing & Exploited Children (NCMEC)</strong> and regional cyber crime law enforcement authorities.</p>
 
-        <h2>4. In-App Reporting & Contact Information</h2>
-        <p>Users can report child safety concerns directly within the video call interface or story feeds using the <strong>Report</strong> button. For urgent child safety inquiries, law enforcement requests, or compliance matters, please reach our designated Child Safety Officer at: <strong>jainmohit.cr007@gmail.com</strong>.</p>
+        <h2>4. In-App Mechanism for User Feedback & Reporting</h2>
+        <p>In accordance with Google Play Child Safety Standards, Camverz: Videocall & RealMeet provides an active, user-accessible <strong>in-app reporting and feedback mechanism without leaving the app</strong>. Users can submit immediate child safety alerts, report underage users, or send safety feedback directly from:</p>
+        <ul>
+          <li>The user profile menu (tap the menu icon ➔ select <strong>&quot;Safety Feedback &amp; Report&quot;</strong>).</li>
+          <li>The in-app Legal &amp; Safety section (tap <strong>&quot;Report Safety Concern (In-App)&quot;</strong>).</li>
+          <li>The video calling interface reporting button.</li>
+        </ul>
+        <p>All safety reports submitted in-app are prioritized by our 24/7 safety moderation team and investigated within 15 minutes of receipt.</p>
+
+        <h2>5. Designated Child Safety Point of Contact</h2>
+        <p>Our designated point of contact is ready and authorized to address all child sexual abuse material (CSAM/CSAE) inquiries, user reports, and regulatory compliance communications:</p>
+        <p><strong>Child Safety Officer:</strong> Mohit Jain<br />
+        <strong>Point of Contact Email:</strong> <a href="mailto:jainmohit.cr007@gmail.com" style={{ color: '#FF0055', fontWeight: 'bold' }}>jainmohit.cr007@gmail.com</a><br />
+        <strong>Application:</strong> Camverz: Videocall &amp; RealMeet (Package: com.mohit.camverz)</p>
       </>
     )
   },

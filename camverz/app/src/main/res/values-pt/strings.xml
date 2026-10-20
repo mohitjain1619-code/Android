@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">camverz</string>
-    <string name="default_web_client_id">973141718708-hjb3sgbdng8k7osid7hn74h8moscr1nc.apps.googleusercontent.com</string>
+    <string name="default_web_client_id">839315244344-enkkm3rcbebdi6h0djlnu2vtqgviq5mn.apps.googleusercontent.com</string>
 
     <!-- Language Selection -->
     <string name="choose_language_title">Escolha seu idioma</string>
@@ -514,4 +514,10 @@ Você só pode publicar 1 festa por dia. Deseja substituir seu evento anterior?<
     <string name="no_fantasies_matching">Nenhuma publicação de fantasia encontrada.</string>
     <string name="post_expired">Esta publicação expirou.</string>
     <string name="default_request_msg">Olá! Estou interessado/a no seu encontro.</string>
+
+    <!-- App Update Dialog -->
+    <string name="update_dialog_title">Nova atualização disponível! 🚀</string>
+    <string name="update_dialog_message">Uma nova versão do Camverz está disponível no Google Play com os recursos mais recentes e melhorias de desempenho. Atualize para continuar.</string>
+    <string name="update_dialog_btn_update">Atualizar agora</string>
+    <string name="update_dialog_btn_later">Mais tarde</string>
 </resources>

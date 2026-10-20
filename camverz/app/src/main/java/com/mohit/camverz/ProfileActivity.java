@@ -448,12 +448,16 @@ public class ProfileActivity extends BaseActivity {
         String deleteAccountStr = getString(R.string.delete_account);
         String unblockUserStr = getString(R.string.unblock_user);
         String blockUserStr = getString(R.string.block_user);
+        String safetyFeedbackStr = "🛡️ Safety Feedback & Reporting";
+        String reportUserSafetyStr = "🚨 Report User / Child Safety Concern";
 
         if (currentUserId.equals(visitedUserId)) {
+            popup.getMenu().add(safetyFeedbackStr);
             popup.getMenu().add(blockedUsersStr);
             popup.getMenu().add(legalPrivacyStr);
             popup.getMenu().add(deleteAccountStr);
         } else {
+            popup.getMenu().add(reportUserSafetyStr);
             if (isBlocked) {
                 popup.getMenu().add(unblockUserStr);
             } else {
@@ -463,7 +467,12 @@ public class ProfileActivity extends BaseActivity {
 
         popup.setOnMenuItemClickListener(item -> {
             String title = item.getTitle().toString();
-            if (title.equals(blockedUsersStr)) {
+            if (title.equals(safetyFeedbackStr)) {
+                SafetyFeedbackDialog.show(this, null, null);
+            } else if (title.equals(reportUserSafetyStr)) {
+                String targetName = profileName != null ? profileName.getText().toString() : "";
+                SafetyFeedbackDialog.show(this, visitedUserId, targetName);
+            } else if (title.equals(blockedUsersStr)) {
                 startActivity(new Intent(this, BlockedUsersActivity.class));
             } else if (title.equals(legalPrivacyStr)) {
                 startActivity(new Intent(this, LegalActivity.class));

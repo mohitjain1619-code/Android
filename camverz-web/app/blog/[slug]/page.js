@@ -16,7 +16,7 @@ const articlesContent = {
       <>
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -47,7 +47,7 @@ const articlesContent = {
           <li><strong>Hardware Device Bans:</strong> Permanent hardware-level bans for repeat offenders.</li>
         </ul>
 
-        <p>Ready to experience safe, verified live video connections? <a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz" target="_blank" rel="noopener noreferrer">Install Camverz on Google Play Store</a> or access it on any Web browser.</p>
+        <p>Ready to experience safe, verified live video connections? <a href="https://play.google.com/store/apps/details?id=com.mohit.camverz" target="_blank" rel="noopener noreferrer">Install Camverz on Google Play Store</a> or access it on any Web browser.</p>
       </>
     )
   },
@@ -61,7 +61,7 @@ const articlesContent = {
       <>
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -84,7 +84,7 @@ const articlesContent = {
         <h2>3. Transition from Online Chat to Local City Hangouts</h2>
         <p>With features like <strong>Real Meet</strong> on Camverz, you can discover local coffee hangouts, activity groups, and city events, making it easy to bridge digital conversations into real-world friendships safely.</p>
 
-        <p>Start connecting with real people worldwide today! <a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz" target="_blank" rel="noopener noreferrer">Download Camverz on Google Play</a> or open the Web App.</p>
+        <p>Start connecting with real people worldwide today! <a href="https://play.google.com/store/apps/details?id=com.mohit.camverz" target="_blank" rel="noopener noreferrer">Download Camverz on Google Play</a> or open the Web App.</p>
       </>
     )
   },
@@ -99,7 +99,7 @@ const articlesContent = {
         {/* PlayStore CTA Header */}
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -159,7 +159,7 @@ const articlesContent = {
 
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -251,7 +251,7 @@ const articlesContent = {
 
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -298,7 +298,7 @@ const articlesContent = {
         <p>Switching from Chamet to Camverz is fast, simple, and 100% free:</p>
 
         <ol>
-          <li><strong>Download Camverz:</strong> Open the official Google Play Store page (<a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Download Camverz App</a>) or open the Web app.</li>
+          <li><strong>Download Camverz:</strong> Open the official Google Play Store page (<a href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Download Camverz App</a>) or open the Web app.</li>
           <li><strong>Quick Sign-In:</strong> Sign in securely with one tap using Google authentication.</li>
           <li><strong>Set Up Profile:</strong> Choose your avatar, name, pronouns, and matching preferences.</li>
           <li><strong>Start Video Calling:</strong> Hit "Start Video Call" and begin matching with verified users around the world instantly!</li>
@@ -316,12 +316,12 @@ const articlesContent = {
         <p>Yes! Camverz uses hardware DRM protection on Android that turns screenshot captures black and automatically halts video feeds if screen recording software is detected.</p>
 
         <h3>Q4: How can I download the Camverz app?</h3>
-        <p>You can download Camverz directly from the <a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Google Play Store</a> for Android or open it instantly on any Web browser.</p>
+        <p>You can download Camverz directly from the <a href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Google Play Store</a> for Android or open it instantly on any Web browser.</p>
 
         {/* Final CTA Footer */}
         <div className={styles.ctaWrapper} style={{ marginTop: '40px' }}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -345,7 +345,7 @@ const articlesContent = {
         {/* PlayStore CTA Header */}
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -405,7 +405,7 @@ const articlesContent = {
 
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -497,7 +497,7 @@ const articlesContent = {
 
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -539,7 +539,7 @@ const articlesContent = {
         <p>Getting started on the <strong>best free alternative to Holla App</strong> takes under 30 seconds:</p>
 
         <ol>
-          <li><strong>Download Camverz:</strong> Open the official Google Play Store page (<a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Download Camverz on Android</a>) or access the Web application.</li>
+          <li><strong>Download Camverz:</strong> Open the official Google Play Store page (<a href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Download Camverz on Android</a>) or access the Web application.</li>
           <li><strong>Quick Sign-In:</strong> Sign in securely with one tap using Google authentication.</li>
           <li><strong>Set Up Profile:</strong> Select your avatar, name, pronouns, and matching preferences.</li>
           <li><strong>Start Video Calling:</strong> Hit "Start Video Call" and begin matching with verified users around the world instantly!</li>
@@ -560,12 +560,12 @@ const articlesContent = {
         <p>Yes. Random video matching, preference filters, direct messaging, social post sharing, Real Meet, and Party Host on Camverz are 100% free without hidden paywalls.</p>
 
         <h3>Q5: How can I download the Camverz app?</h3>
-        <p>You can download Camverz directly from the <a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Google Play Store</a> for Android or open it instantly on any Web browser.</p>
+        <p>You can download Camverz directly from the <a href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Google Play Store</a> for Android or open it instantly on any Web browser.</p>
 
         {/* Final CTA Footer */}
         <div className={styles.ctaWrapper} style={{ marginTop: '40px' }}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -589,7 +589,7 @@ const articlesContent = {
         {/* PlayStore CTA Header */}
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -649,7 +649,7 @@ const articlesContent = {
 
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -741,7 +741,7 @@ const articlesContent = {
 
         <div className={styles.ctaWrapper}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
@@ -783,7 +783,7 @@ const articlesContent = {
         <p>Getting started on the <strong>best free alternative to Azar</strong> takes less than half a minute:</p>
 
         <ol>
-          <li><strong>Download Camverz:</strong> Open the official Google Play Store page (<a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Download Camverz App</a>) or open the Web portal.</li>
+          <li><strong>Download Camverz:</strong> Open the official Google Play Store page (<a href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Download Camverz App</a>) or open the Web portal.</li>
           <li><strong>Quick Sign-In:</strong> Sign in with one tap via Google authentication.</li>
           <li><strong>Customize Your Profile:</strong> Set up your name, avatar, pronouns, and orientation preferences.</li>
           <li><strong>Start Calling:</strong> Hit "Start Video Call" and begin matching with verified users around the world instantly!</li>
@@ -804,12 +804,12 @@ const articlesContent = {
         <p>Yes! Random video matching, preference filters, direct messaging, social post sharing, Real Meet, and Party Host on Camverz are 100% free without hidden paywalls.</p>
 
         <h3>Q5: Where can I download the Camverz app?</h3>
-        <p>You can download Camverz directly from the <a href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Google Play Store</a> for Android or access it instantly via Web browser.</p>
+        <p>You can download Camverz directly from the <a href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" target="_blank" rel="noopener noreferrer">Google Play Store</a> for Android or access it instantly via Web browser.</p>
 
         {/* Final CTA Footer */}
         <div className={styles.ctaWrapper} style={{ marginTop: '40px' }}>
           <a 
-            href="https://play.google.com/store/apps/details?id=com.mohitt.camverz&pcampaignid=web_share" 
+            href="https://play.google.com/store/apps/details?id=com.mohit.camverz&pcampaignid=web_share" 
             target="_blank" 
             rel="noopener noreferrer"
             className={styles.playstoreBtn}
