@@ -262,4 +262,10 @@ public interface ApiService {
     // ============================================
     @GET("app-version")
     Call<JsonObject> getAppVersion();
+
+    // ============================================
+    // PUSH NOTIFICATIONS (FCM)
+    // ============================================
+    @POST("users/fcm-token")
+    Call<JsonObject> updateFcmToken(@Body Map<String, Object> body);
 }

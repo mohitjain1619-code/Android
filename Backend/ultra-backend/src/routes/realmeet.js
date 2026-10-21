@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const NotificationService = require("../services/notificationService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -564,6 +565,26 @@ router.post("/request", async (req, res) => {
         "INSERT INTO notifications (user_id, type, triggering_user_id, community_post_id) VALUES ($1, 'realmeet_request', $2, $3)",
         [posterUserId, req.user.userId, postId]
       );
+
+      // Trigger Push Notification to host
+      (async () => {
+        try {
+          const applicant = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+          NotificationService.sendToUser(posterUserId, {
+            title: "RealMeet Request 🎉",
+            body: `${applicant ? applicant.name : "Someone"} sent a request to join your RealMeet`,
+            type: "realmeet_request",
+            channelId: "camverz_social",
+            data: {
+              communityPostId: postId,
+              requestId: reqId,
+              triggeringUserId: req.user.userId,
+            },
+          });
+        } catch (err) {
+          console.error("RealMeet request push error:", err.message);
+        }
+      })();
     }
 
     // Get applicant user details to emit
@@ -618,6 +639,26 @@ router.put("/request/status", async (req, res) => {
         "INSERT INTO notifications (user_id, type, triggering_user_id, community_post_id) VALUES ($1, 'realmeet_accepted', $2, $3)",
         [request.applicant_user_id, req.user.userId, request.post_id]
       );
+
+      // Trigger Push Notification to applicant
+      (async () => {
+        try {
+          const host = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+          NotificationService.sendToUser(request.applicant_user_id, {
+            title: "RealMeet Accepted! ✅",
+            body: `${host ? host.name : "Host"} accepted your RealMeet request!`,
+            type: "realmeet_accepted",
+            channelId: "camverz_social",
+            data: {
+              communityPostId: request.post_id,
+              requestId: requestId,
+              triggeringUserId: req.user.userId,
+            },
+          });
+        } catch (err) {
+          console.error("RealMeet accepted push error:", err.message);
+        }
+      })();
     }
 
     const io = req.app.get("io");

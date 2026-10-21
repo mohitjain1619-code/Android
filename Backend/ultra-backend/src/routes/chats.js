@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const NotificationService = require("../services/notificationService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -195,6 +196,29 @@ router.post("/:targetUserId/messages", async (req, res) => {
     } catch (socketErr) {
       console.error("Socket emit error (non-fatal):", socketErr);
     }
+
+    // Trigger high-priority push notification to recipient
+    (async () => {
+      try {
+        const sender = await queryOne("SELECT name, avatar FROM users WHERE id = $1", [req.user.userId]);
+        NotificationService.sendToUser(targetId, {
+          title: sender ? sender.name : "New Message",
+          body: text.trim(),
+          type: "chat",
+          channelId: "camverz_chats",
+          highPriority: true,
+          data: {
+            targetUserId: req.user.userId,
+            targetUserName: sender ? sender.name : "User",
+            targetUserAvatar: sender ? (sender.avatar || "") : "",
+            chatId: chat.id,
+            messageId: message.id,
+          },
+        });
+      } catch (fcmErr) {
+        console.error("Error triggering chat push notification:", fcmErr.message);
+      }
+    })();
 
     return res.json({
       ok: true,

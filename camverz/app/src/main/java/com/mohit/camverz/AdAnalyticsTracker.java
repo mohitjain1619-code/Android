@@ -17,7 +17,7 @@ import retrofit2.Response;
 public class AdAnalyticsTracker {
     private static final String TAG = "AdAnalyticsTracker";
 
-    public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage, String placement) {
+    public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage, String placement, Double revenue) {
         if (context == null) return;
         try {
             String userId = TokenManager.getInstance(context).getUserId();
@@ -31,12 +31,16 @@ public class AdAnalyticsTracker {
             body.put("errorMessage", errorMessage != null ? errorMessage : "");
             body.put("platform", "android");
             body.put("placement", placement != null ? placement : "general");
+            if (revenue != null) {
+                body.put("revenue", revenue);
+                body.put("ecpm", revenue * 1000.0);
+            }
 
             ApiClient.getInstance(context).getApi().trackAdEvent(body).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     if (response.isSuccessful()) {
-                        Log.d(TAG, "Ad event tracked: " + eventType + " (" + status + ") placement: " + placement);
+                        Log.d(TAG, "Ad event tracked: " + eventType + " (" + status + ") placement: " + placement + (revenue != null ? (" | Revenue: $" + revenue) : ""));
                     } else {
                         Log.w(TAG, "Failed to track ad event: HTTP " + response.code());
                     }
@@ -52,7 +56,11 @@ public class AdAnalyticsTracker {
         }
     }
 
+    public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage, String placement) {
+        trackEvent(context, eventType, adType, adNetwork, status, errorCode, errorMessage, placement, null);
+    }
+
     public static void trackEvent(Context context, String eventType, String adType, String adNetwork, String status, String errorCode, String errorMessage) {
-        trackEvent(context, eventType, adType, adNetwork, status, errorCode, errorMessage, "general");
+        trackEvent(context, eventType, adType, adNetwork, status, errorCode, errorMessage, "general", null);
     }
 }

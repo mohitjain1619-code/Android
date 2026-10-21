@@ -28,6 +28,8 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
 import com.ironsource.mediationsdk.IronSource;
 import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
+import com.ironsource.mediationsdk.impressionData.ImpressionData;
+import com.ironsource.mediationsdk.impressionData.ImpressionDataListener;
 import com.ironsource.mediationsdk.logger.IronSourceError;
 import com.ironsource.mediationsdk.model.Placement;
 import com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener;
@@ -44,6 +46,7 @@ import com.mohit.camverz.api.TokenManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Centralized, production-grade AdManager for Camverz.
@@ -102,6 +105,16 @@ public class AdManager {
     private Context appContext;
 
     private boolean pendingInterstitialPreload = false;
+    private Double lastAdRevenue = null;
+    private double totalSessionRevenue = 0.0;
+
+    public Double getLastAdRevenue() {
+        return lastAdRevenue;
+    }
+
+    public double getTotalSessionRevenue() {
+        return totalSessionRevenue;
+    }
 
     // Callbacks
     public interface AdCallback {
@@ -169,6 +182,13 @@ public class AdManager {
         try {
             IronSource.setLevelPlayInterstitialListener(interstitialListener);
             IronSource.setLevelPlayRewardedVideoListener(rewardedVideoListener);
+
+            try {
+                IronSource.addImpressionDataListener(impressionDataListener);
+                Log.d(TAG, "📊 LevelPlay ImpressionDataListener (ILRD) registered");
+            } catch (Exception e) {
+                Log.w(TAG, "Error registering ImpressionDataListener: " + e.getMessage());
+            }
 
             // Configure user ID for server-side verification and optimal bidder targeting
             try {
@@ -614,8 +634,100 @@ public class AdManager {
     }
 
     // ==========================================
-    // PERMANENT LEVELPLAY LISTENERS
+    // PERMANENT LEVELPLAY LISTENERS & REVENUE TRACKING
     // ==========================================
+
+    public void logAdRevenue(String format, String event, AdInfo adInfo) {
+        if (adInfo == null) {
+            Log.d(TAG, "ℹ️ [" + format + " - " + event + "] adInfo is null");
+            return;
+        }
+        try {
+            Double revenue = adInfo.getRevenue();
+            String network = adInfo.getAdNetwork();
+            String precision = adInfo.getPrecision();
+            String instanceName = adInfo.getInstanceName();
+            String country = adInfo.getCountry();
+            String auctionId = adInfo.getAuctionId();
+            String adUnit = adInfo.getAdUnit();
+
+            if (revenue != null && revenue > 0.0) {
+                lastAdRevenue = revenue;
+                totalSessionRevenue += revenue;
+            }
+
+            double ecpm = (revenue != null ? revenue * 1000.0 : 0.0);
+
+            Log.d(TAG, "========================================================================");
+            Log.d(TAG, "💰 [AD REVENUE] adInfo.getRevenue() -> " + format + " (" + event + ")");
+            Log.d(TAG, "💵 Revenue: " + (revenue != null ? String.format(Locale.US, "$%.6f USD", revenue) : "$0.000000 USD (Not reported)")
+                    + " | eCPM: " + String.format(Locale.US, "$%.2f USD", ecpm)
+                    + " | Precision: " + (precision != null ? precision : "N/A"));
+            Log.d(TAG, "🏢 Winner Bidding Network: " + (network != null ? network : "unknown")
+                    + " | Instance: " + (instanceName != null ? instanceName : "N/A")
+                    + " | Country: " + (country != null ? country : "N/A"));
+            if (auctionId != null && !auctionId.isEmpty()) {
+                Log.d(TAG, "🏷️ Auction ID: " + auctionId);
+            }
+            Log.d(TAG, "📈 Total Session Earned: " + String.format(Locale.US, "$%.6f USD", totalSessionRevenue));
+            Log.d(TAG, "========================================================================");
+
+            if (appContext != null && ("onAdOpened".equals(event) || "onAdRewarded".equals(event))) {
+                AdAnalyticsTracker.trackEvent(appContext, "IMPRESSION_REVENUE",
+                        format.toLowerCase(Locale.US),
+                        (network != null ? network : "ironsource"),
+                        "DELIVERED", "", "", currentPlacement, revenue);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error in logAdRevenue: " + e.getMessage());
+        }
+    }
+
+    private final ImpressionDataListener impressionDataListener = new ImpressionDataListener() {
+        @Override
+        public void onImpressionSuccess(ImpressionData impressionData) {
+            if (impressionData == null) return;
+            try {
+                Double revenue = impressionData.getRevenue();
+                String network = impressionData.getAdNetwork();
+                String precision = impressionData.getPrecision();
+                String instanceName = impressionData.getInstanceName();
+                String country = impressionData.getCountry();
+                String adUnit = impressionData.getAdUnit();
+                Double lifetime = impressionData.getLifetimeRevenue();
+
+                if (revenue != null && revenue > 0.0) {
+                    lastAdRevenue = revenue;
+                    totalSessionRevenue += revenue;
+                }
+
+                double ecpm = (revenue != null ? revenue * 1000.0 : 0.0);
+
+                Log.d(TAG, "========================================================================");
+                Log.d(TAG, "💰 [ILRD IMPRESSION DATA] Format: " + (adUnit != null ? adUnit : "Ad"));
+                Log.d(TAG, "💵 Impression Revenue: " + (revenue != null ? String.format(Locale.US, "$%.6f USD", revenue) : "N/A")
+                        + " | eCPM: " + String.format(Locale.US, "$%.2f USD", ecpm)
+                        + " | Precision: " + (precision != null ? precision : "N/A"));
+                Log.d(TAG, "🏢 Winner Network: " + (network != null ? network : "N/A")
+                        + " | Instance: " + (instanceName != null ? instanceName : "N/A")
+                        + " | Country: " + (country != null ? country : "N/A"));
+                if (lifetime != null) {
+                    Log.d(TAG, "💎 Lifetime User Revenue: " + String.format(Locale.US, "$%.6f USD", lifetime));
+                }
+                Log.d(TAG, "📈 Total Session Earned: " + String.format(Locale.US, "$%.6f USD", totalSessionRevenue));
+                Log.d(TAG, "========================================================================");
+
+                if (appContext != null && revenue != null) {
+                    AdAnalyticsTracker.trackEvent(appContext, "REVENUE",
+                            (adUnit != null ? adUnit.toLowerCase(Locale.US) : "ad"),
+                            (network != null ? network : "ironsource"),
+                            "DELIVERED", "", "", currentPlacement, revenue);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error handling ILRD impression data: " + e.getMessage());
+            }
+        }
+    };
 
     private final LevelPlayInterstitialListener interstitialListener = new LevelPlayInterstitialListener() {
         @Override
@@ -623,6 +735,7 @@ public class AdManager {
             isInterstitialLoading = false;
             Log.d(TAG, "✅ LevelPlay Interstitial ready (Network: "
                     + (adInfo != null ? adInfo.getAdNetwork() : "unknown") + ")");
+            logAdRevenue("Interstitial", "onAdReady", adInfo);
         }
 
         @Override
@@ -643,11 +756,13 @@ public class AdManager {
             BaseActivity.isAdShowing = true;
             setAdWatchPending(true);
             Log.d(TAG, "▶️ LevelPlay Interstitial opened");
+            logAdRevenue("Interstitial", "onAdOpened", adInfo);
         }
 
         @Override
         public void onAdShowSucceeded(AdInfo adInfo) {
             Log.d(TAG, "LevelPlay Interstitial show succeeded");
+            logAdRevenue("Interstitial", "onAdShowSucceeded", adInfo);
         }
 
         @Override
@@ -688,6 +803,7 @@ public class AdManager {
             setAdWatchPending(false);
             setLastInterstitialTime(System.currentTimeMillis());
             Log.d(TAG, "⏹️ LevelPlay Interstitial closed");
+            logAdRevenue("Interstitial", "onAdClosed", adInfo);
 
             if (appContext != null) {
                 AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "interstitial", "ironsource", "DELIVERED", "", "",
@@ -711,6 +827,7 @@ public class AdManager {
             isRewardedVideoLoading = false;
             Log.d(TAG, "✅ LevelPlay Rewarded Video available (Network: "
                     + (adInfo != null ? adInfo.getAdNetwork() : "unknown") + ")");
+            logAdRevenue("Rewarded Video", "onAdAvailable", adInfo);
         }
 
         @Override
@@ -726,6 +843,7 @@ public class AdManager {
             rewardGrantedInCurrentSession = false;
             setAdWatchPending(true);
             Log.d(TAG, "▶️ LevelPlay Rewarded Video opened");
+            logAdRevenue("Rewarded Video", "onAdOpened", adInfo);
         }
 
         @Override
@@ -771,9 +889,10 @@ public class AdManager {
         public void onAdRewarded(Placement placement, AdInfo adInfo) {
             rewardGrantedInCurrentSession = true;
             Log.d(TAG, "🎁 LevelPlay Rewarded Video completed (reward granted)");
+            logAdRevenue("Rewarded Video", "onAdRewarded", adInfo);
             if (appContext != null) {
                 AdAnalyticsTracker.trackEvent(appContext, "COMPLETED", "rewarded", "ironsource", "DELIVERED", "", "",
-                        currentPlacement);
+                        currentPlacement, (adInfo != null ? adInfo.getRevenue() : null));
             }
             if (currentRewardedCallback != null) {
                 currentRewardedCallback.onRewardEarned();
@@ -786,6 +905,7 @@ public class AdManager {
             setAdWatchPending(false);
             setLastInterstitialTime(System.currentTimeMillis());
             Log.d(TAG, "⏹️ LevelPlay Rewarded Video closed");
+            logAdRevenue("Rewarded Video", "onAdClosed", adInfo);
 
             if (appContext != null) {
                 AdAnalyticsTracker.trackEvent(appContext, "CLOSED", "rewarded", "ironsource", "DELIVERED", "", "",

@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const NotificationService = require("../services/notificationService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -200,6 +201,25 @@ router.post("/:id/like", async (req, res) => {
            VALUES ($1, 'like', $2, $3)`,
           [post.user_id, req.user.userId, req.params.id]
         );
+
+        // Send Push Notification
+        (async () => {
+          try {
+            const liker = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+            NotificationService.sendToUser(post.user_id, {
+              title: "New Like ❤️",
+              body: `${liker ? liker.name : "Someone"} liked your post`,
+              type: "like",
+              channelId: "camverz_social",
+              data: {
+                postId: req.params.id,
+                triggeringUserId: req.user.userId,
+              },
+            });
+          } catch (err) {
+            console.error("Like push error:", err.message);
+          }
+        })();
       }
     }
 
@@ -273,6 +293,25 @@ router.post("/:id/comments", async (req, res) => {
          VALUES ($1, 'comment', $2, $3, $4)`,
         [post.user_id, req.user.userId, req.params.id, comment.id]
       );
+
+      (async () => {
+        try {
+          const commenter = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+          NotificationService.sendToUser(post.user_id, {
+            title: "New Comment 💬",
+            body: `${commenter ? commenter.name : "Someone"}: ${text.trim().substring(0, 80)}`,
+            type: "comment",
+            channelId: "camverz_social",
+            data: {
+              postId: req.params.id,
+              commentId: comment.id,
+              triggeringUserId: req.user.userId,
+            },
+          });
+        } catch (err) {
+          console.error("Comment push error:", err.message);
+        }
+      })();
     }
 
     // Notification for parent comment owner (if reply)
@@ -284,6 +323,25 @@ router.post("/:id/comments", async (req, res) => {
            VALUES ($1, 'reply', $2, $3, $4)`,
           [parentComment.user_id, req.user.userId, req.params.id, comment.id]
         );
+
+        (async () => {
+          try {
+            const replier = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+            NotificationService.sendToUser(parentComment.user_id, {
+              title: "New Reply 💬",
+              body: `${replier ? replier.name : "Someone"} replied to your comment`,
+              type: "comment",
+              channelId: "camverz_social",
+              data: {
+                postId: req.params.id,
+                commentId: comment.id,
+                triggeringUserId: req.user.userId,
+              },
+            });
+          } catch (err) {
+            console.error("Reply push error:", err.message);
+          }
+        })();
       }
     }
 

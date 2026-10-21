@@ -109,12 +109,19 @@ public class CommunityChatActivity extends BaseActivity {
 
         btnHeaderCallRequest.setOnClickListener(v -> {
             if (isCallUnlocked) {
-                Intent callIntent = new Intent(this, CallActivity.class);
-                callIntent.putExtra("targetUserId", targetUserId);
-                callIntent.putExtra("isCaller", true);
-                callIntent.putExtra("isPrivateCall", true);
-                callIntent.putExtra("isVideoCall", true);
-                startActivity(callIntent);
+                new AlertDialog.Builder(this)
+                        .setTitle("Start Video Call")
+                        .setMessage("Start private video call?\n\n(A short sponsor video will play after the call ends).")
+                        .setPositiveButton("Start Call", (dialog, which) -> {
+                            Intent callIntent = new Intent(this, CallActivity.class);
+                            callIntent.putExtra("targetUserId", targetUserId);
+                            callIntent.putExtra("isCaller", true);
+                            callIntent.putExtra("isPrivateCall", true);
+                            callIntent.putExtra("isVideoCall", true);
+                            startActivity(callIntent);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
             } else {
                 sendInChatCallRequest();
             }

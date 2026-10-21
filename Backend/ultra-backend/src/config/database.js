@@ -321,7 +321,16 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_story_views_story_id ON story_views(story_id);
     `);
 
-    console.log("✅ Database migrations and speed indexing applied successfully!");
+    // 17. Add FCM Token & Timestamp to Users for Push Notifications
+    await pool.query(`
+      ALTER TABLE users 
+      ADD COLUMN IF NOT EXISTS fcm_token TEXT,
+      ADD COLUMN IF NOT EXISTS fcm_updated_at TIMESTAMPTZ DEFAULT NOW();
+
+      CREATE INDEX IF NOT EXISTS idx_users_fcm_token ON users(fcm_token) WHERE fcm_token IS NOT NULL;
+    `);
+
+    console.log("✅ Database migrations, FCM columns, and speed indexing applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations or indexes:", err.message);
   }

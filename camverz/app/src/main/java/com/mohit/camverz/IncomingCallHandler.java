@@ -214,7 +214,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         
         AlertDialog.Builder builder = new AlertDialog.Builder(currentActivity);
         builder.setTitle("Incoming " + callType);
-        builder.setMessage(pendingCallerName + " is calling you" + (pendingIsVideo ? " with video." : " with voice."));
+        builder.setMessage(pendingCallerName + " is calling you" + (pendingIsVideo ? " with video." : " with voice.") + "\n\n(A short sponsor video will play after the call ends).");
         builder.setCancelable(false);
         
         builder.setPositiveButton("Accept", (dialog, which) -> {

@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const NotificationService = require("../services/notificationService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -122,6 +123,34 @@ router.get("/unread-count", async (req, res) => {
     return res.json({ ok: true, count: parseInt(result.count), unreadCount: parseInt(result.count) });
   } catch (err) {
     console.error("Unread count error:", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+// ============================================
+// POST /notifications/broadcast — Broadcast to 10 Lakhs users via Google FCM Topic
+// ============================================
+router.post("/broadcast", async (req, res) => {
+  try {
+    const { title, body, imageUrl, data, topic = "all_users" } = req.body;
+    if (!title || !body) {
+      return res.status(400).json({ error: "Title and body are required" });
+    }
+
+    NotificationService.broadcastTopic(topic, {
+      title,
+      body,
+      imageUrl,
+      data: data || {},
+      channelId: "camverz_marketing",
+    });
+
+    return res.json({
+      ok: true,
+      message: `Broadcast successfully dispatched to topic '${topic}'`,
+    });
+  } catch (err) {
+    console.error("Broadcast error:", err);
     return res.status(500).json({ error: "Internal error" });
   }
 });

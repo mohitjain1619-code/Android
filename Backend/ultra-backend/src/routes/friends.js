@@ -2,6 +2,7 @@ const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
 const { isUserOnline } = require("../config/redis");
+const NotificationService = require("../services/notificationService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -50,6 +51,25 @@ router.post("/request", async (req, res) => {
       [resolvedTargetId, req.user.userId]
     );
 
+    // Send Push Notification
+    (async () => {
+      try {
+        const sender = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+        NotificationService.sendToUser(resolvedTargetId, {
+          title: "Friend Request 👥",
+          body: `${sender ? sender.name : "Someone"} sent you a friend request`,
+          type: "friend_request",
+          channelId: "camverz_social",
+          data: {
+            fromUserId: req.user.userId,
+            requestId: request.id,
+          },
+        });
+      } catch (err) {
+        console.error("Friend request push error:", err.message);
+      }
+    })();
+
     return res.json({ ok: true, request: formatRequest(request) });
   } catch (err) {
     console.error("Send friend request error:", err);
@@ -86,6 +106,24 @@ router.put("/request/:id/accept", async (req, res) => {
       `INSERT INTO notifications (user_id, type, triggering_user_id) VALUES ($1, 'friend_accepted', $2)`,
       [request.from_user_id, req.user.userId]
     );
+
+    // Send Push Notification
+    (async () => {
+      try {
+        const acceptor = await queryOne("SELECT name FROM users WHERE id = $1", [req.user.userId]);
+        NotificationService.sendToUser(request.from_user_id, {
+          title: "Friend Request Accepted 🎉",
+          body: `${acceptor ? acceptor.name : "Someone"} accepted your friend request!`,
+          type: "friend_accepted",
+          channelId: "camverz_social",
+          data: {
+            friendUserId: req.user.userId,
+          },
+        });
+      } catch (err) {
+        console.error("Friend accept push error:", err.message);
+      }
+    })();
 
     return res.json({ ok: true });
   } catch (err) {

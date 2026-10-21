@@ -24,6 +24,7 @@ public class TokenManager {
     private static final String KEY_PLAN_IS_AD_FREE = "plan_is_ad_free";
     private static final String KEY_HAS_ACTIVE_PLAN = "has_active_plan";
     private static final String KEY_PLAN_NAME = "plan_name";
+    private static final String KEY_FCM_TOKEN = "fcm_token";
 
     private static TokenManager instance;
     private SharedPreferences prefs;
@@ -186,5 +187,50 @@ public class TokenManager {
 
     public boolean isLoggedIn() {
         return hasToken() && getUserId() != null;
+    }
+
+    // ============================================
+    // FCM PUSH TOKEN MANAGEMENT
+    // ============================================
+    public void saveFcmToken(String token) {
+        if (token != null && !token.trim().isEmpty()) {
+            prefs.edit().putString(KEY_FCM_TOKEN, token.trim()).apply();
+        }
+    }
+
+    public String getFcmToken() {
+        return prefs.getString(KEY_FCM_TOKEN, null);
+    }
+
+    public void syncFcmTokenToServer(Context context, String token) {
+        if (token != null && !token.trim().isEmpty()) {
+            saveFcmToken(token);
+        }
+        final String fcm = getFcmToken();
+        if (fcm == null || fcm.isEmpty() || !isLoggedIn()) {
+            return;
+        }
+
+        try {
+            java.util.Map<String, Object> body = new java.util.HashMap<>();
+            body.put("fcmToken", fcm);
+            ApiClient.getInstance(context).getApi().updateFcmToken(body).enqueue(new retrofit2.Callback<com.google.gson.JsonObject>() {
+                @Override
+                public void onResponse(retrofit2.Call<com.google.gson.JsonObject> call, retrofit2.Response<com.google.gson.JsonObject> response) {
+                    if (response.isSuccessful()) {
+                        android.util.Log.d("TokenManager", "✅ FCM Token successfully synced to server");
+                    } else {
+                        android.util.Log.w("TokenManager", "Failed to sync FCM Token: HTTP " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<com.google.gson.JsonObject> call, Throwable t) {
+                    android.util.Log.e("TokenManager", "Error syncing FCM Token to server", t);
+                }
+            });
+        } catch (Exception e) {
+            android.util.Log.e("TokenManager", "Exception in syncFcmTokenToServer", e);
+        }
     }
 }

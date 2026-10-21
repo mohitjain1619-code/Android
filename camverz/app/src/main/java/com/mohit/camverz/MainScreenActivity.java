@@ -17,6 +17,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.List;
 
 import com.google.gson.JsonObject;
@@ -105,6 +111,9 @@ public class MainScreenActivity extends BaseActivity {
         
         // Initialize global incoming call handler (works from any screen)
         IncomingCallHandler.getInstance().init(getApplication(), socket);
+
+        // Initialize production-grade push notifications & FCM channels
+        setupPushNotifications();
 
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {
@@ -323,6 +332,41 @@ public class MainScreenActivity extends BaseActivity {
             goToConnecting("lesbian");
         });
         cardStraight.setOnClickListener(v -> goToConnecting("straight"));
+
+        // Initialize Enterprise Push Notifications (Channels, Android 13+ runtime permissions, Token sync, Topics)
+        initPushNotifications();
+    }
+
+    private void initPushNotifications() {
+        // 1. Create notification channels
+        NotificationHelper.createNotificationChannels(this);
+
+        // 2. Request Android 13+ (API 33+) Runtime Notification Permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1002);
+            }
+        }
+
+        // 3. Register & Sync FCM Token
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                String token = task.getResult();
+                Log.d(TAG, "FCM Device Token retrieved: " + token);
+                tokenManager.saveFcmToken(token);
+                tokenManager.syncFcmTokenToServer(this, token);
+            } else {
+                Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+            }
+        });
+
+        // 4. Subscribe to 'all_users' topic for massive 10 Lakhs broadcast campaigns with 0 server memory load
+        FirebaseMessaging.getInstance().subscribeToTopic("all_users")
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d(TAG, "Subscribed to FCM topic: all_users");
+                    }
+                });
     }
 
 
@@ -394,6 +438,48 @@ public class MainScreenActivity extends BaseActivity {
             startActivity(Intent.createChooser(shareIntent, "Share App via"));
         } catch (Exception e) {
             Toast.makeText(this, "Unable to share app", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static final int REQUEST_CODE_POST_NOTIFICATIONS = 1010;
+
+    private void setupPushNotifications() {
+        try {
+            // 1. Create all 4 notification channels
+            NotificationHelper.createNotificationChannels(this);
+
+            // 2. Request Android 13+ (API 33+) Runtime Permission
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                            REQUEST_CODE_POST_NOTIFICATIONS
+                    );
+                }
+            }
+
+            // 3. Subscribe to 10 Lakh Broadcast Topic ("all_users")
+            FirebaseMessaging.getInstance().subscribeToTopic("all_users")
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "📢 Subscribed to FCM 'all_users' broadcast topic");
+                        }
+                    });
+
+            // 4. Retrieve current device token and sync to backend
+            FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    String token = task.getResult();
+                    Log.d(TAG, "🔑 FCM Device Token on start: " + token);
+                    tokenManager.syncFcmTokenToServer(MainScreenActivity.this, token);
+                } else {
+                    Log.w(TAG, "Failed to retrieve FCM token on start", task.getException());
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing push notifications", e);
         }
     }
 

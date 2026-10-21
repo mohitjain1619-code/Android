@@ -402,4 +402,26 @@ function formatUser(user) {
   };
 }
 
+// ============================================
+// POST /users/fcm-token — Register or update FCM Token for push notifications
+// ============================================
+router.post("/fcm-token", requireAuth, async (req, res) => {
+  try {
+    const { fcmToken } = req.body;
+    if (!fcmToken || typeof fcmToken !== "string" || !fcmToken.trim()) {
+      return res.status(400).json({ error: "fcmToken is required" });
+    }
+
+    await query(
+      "UPDATE users SET fcm_token = $1, fcm_updated_at = NOW() WHERE id = $2",
+      [fcmToken.trim(), req.user.userId]
+    );
+
+    return res.json({ ok: true, message: "FCM token updated successfully" });
+  } catch (err) {
+    console.error("Update FCM token error:", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
 module.exports = router;

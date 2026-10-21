@@ -22,6 +22,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.bumptech.glide.Glide;
 // import com.applovin.mediation.ads.MaxInterstitialAd;
@@ -306,6 +308,7 @@ public class CallActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        CamverzFirebaseMessagingService.isCallScreenActive = false;
         if (videoCapturer != null) {
             try {
                 videoCapturer.stopCapture();
@@ -318,6 +321,7 @@ public class CallActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        CamverzFirebaseMessagingService.isCallScreenActive = true;
         if (videoCapturer != null) {
             try {
                 videoCapturer.startCapture(720, 1280, 30);
@@ -395,6 +399,14 @@ public class CallActivity extends BaseActivity {
             }
         }
         
+        ViewCompat.setOnApplyWindowInsetsListener(topUserInfoBar, (v, insets) -> {
+            androidx.core.graphics.Insets statusBarInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            int minTop = (int) (44 * getResources().getDisplayMetrics().density);
+            int topPadding = Math.max(statusBarInsets.top + (int) (6 * getResources().getDisplayMetrics().density), minTop);
+            v.setPadding(v.getPaddingLeft(), topPadding, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
+
         remoteView.setOnClickListener(v -> {
             if (isVideoCall) {
                 toggleControlsVisibility();
@@ -402,14 +414,15 @@ public class CallActivity extends BaseActivity {
         });
         setupDraggableLocalView();
         setupButtonAnimations();
-        if (isVideoCall) {
-            setupAutoHideControls();
-        } else {
-            // Audio call controls remain visible always
-            areControlsVisible = true;
-            topUserInfoBar.setVisibility(View.VISIBLE);
-            bottomControls.setVisibility(View.VISIBLE);
-        }
+        
+        // Peer user info header and call controls remain visible throughout the call
+        areControlsVisible = true;
+        topUserInfoBar.setVisibility(View.VISIBLE);
+        topUserInfoBar.setAlpha(1.0f);
+        topUserInfoBar.setTranslationY(0f);
+        bottomControls.setVisibility(View.VISIBLE);
+        bottomControls.setAlpha(1.0f);
+        bottomControls.setTranslationY(0f);
         startConnectionAnimation();
         loadPeerUserInfo();
     }
@@ -990,22 +1003,15 @@ public class CallActivity extends BaseActivity {
     }
     
     private void setupAutoHideControls() {
-        autoHideRunnable = () -> {
-            if (areControlsVisible) {
-                toggleControlsVisibility();
-            }
-        };
-        areControlsVisible = true;
-        resetAutoHideTimer();
+        // Disabled: User header and call controls stay visible during call
     }
     
     private void resetAutoHideTimer() {
-        cancelAutoHideTimer();
-        autoHideHandler.postDelayed(autoHideRunnable, 5000);
+        // Disabled
     }
     
     private void cancelAutoHideTimer() {
-        autoHideHandler.removeCallbacks(autoHideRunnable);
+        // Disabled
     }
     
     private void startConnectionAnimation() {
@@ -1091,20 +1097,18 @@ public class CallActivity extends BaseActivity {
     }
 
     private void toggleControlsVisibility() {
+        // Peer user info header always remains visible
+        topUserInfoBar.setVisibility(View.VISIBLE);
+        topUserInfoBar.setAlpha(1.0f);
+        topUserInfoBar.setTranslationY(0f);
+
         areControlsVisible = !areControlsVisible;
-        
         if (areControlsVisible) {
-            topUserInfoBar.setVisibility(View.VISIBLE);
             bottomControls.setVisibility(View.VISIBLE);
-            topUserInfoBar.animate().alpha(1.0f).translationY(0).setDuration(300).start();
             bottomControls.animate().alpha(1.0f).translationY(0).setDuration(300).start();
-            resetAutoHideTimer();
         } else {
-            topUserInfoBar.animate().alpha(0.0f).translationY(-topUserInfoBar.getHeight()).setDuration(300)
-                    .withEndAction(() -> topUserInfoBar.setVisibility(View.GONE)).start();
             bottomControls.animate().alpha(0.0f).translationY(bottomControls.getHeight()).setDuration(300)
                     .withEndAction(() -> bottomControls.setVisibility(View.GONE)).start();
-            cancelAutoHideTimer();
         }
     }
 
@@ -1693,8 +1697,8 @@ public class CallActivity extends BaseActivity {
                     Log.d(TAG, "User has video call ad-free pass. Finishing immediately.");
                     finish();
                 } else if (isPrivateCall && durationSec >= 30) {
-                    Log.d(TAG, "Private call lasted >= 30s. Triggering post-call interstitial.");
-                    showPostCallInterstitialAdAndFinish();
+                    Log.d(TAG, "Private call lasted >= 30s (" + durationSec + "s). Triggering post-call Rewarded ad.");
+                    showPostCallRewardAdAndFinish();
                 } else if (!isPrivateCall) {
                     if (durationSec >= 120) {
                         Log.d(TAG, "Random call lasted >= 2 min (" + durationSec + "s). Triggering 1 post-call Rewarded ad.");
@@ -2011,6 +2015,7 @@ public class CallActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        CamverzFirebaseMessagingService.isCallScreenActive = false;
         disconnect();
         try {
             unregisterReceiver(headsetReceiver);
@@ -2040,8 +2045,9 @@ public class CallActivity extends BaseActivity {
     private void showPostCallRewardAdAndFinish() {
         if (isFinishing() || isDestroyed()) return;
 
-        Log.d(TAG, "🚀 [POST-CALL REWARDED] Requesting Rewarded ad on call exit (>= 2 min call)");
-        AdManager.getInstance().showRewardedAd(this, "call_exit_rewarded", new AdManager.RewardedAdCallback() {
+        String placement = isPrivateCall ? "private_call_rewarded" : "call_exit_rewarded";
+        Log.d(TAG, "🚀 [POST-CALL REWARDED] Requesting Rewarded ad on call exit (placement: " + placement + ")");
+        AdManager.getInstance().showRewardedAd(this, placement, new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {
                 Log.d(TAG, "Post-call rewarded ad completed.");

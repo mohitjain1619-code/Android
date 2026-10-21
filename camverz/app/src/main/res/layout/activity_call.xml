@@ -125,6 +125,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:background="#800F172A"
+            android:elevation="12dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="20dp"

@@ -8,6 +8,7 @@ espressoCore = "3.7.0"
 appcompat = "1.7.1"
 material = "1.13.0"
 googleServices = "4.4.3"
+firebaseMessaging = "24.1.0"
 
 # Upgraded Libraries
 camerax = "1.6.2"
@@ -69,6 +70,7 @@ play-services-ads = { group = "com.google.android.gms", name = "play-services-ad
 play-services-appset = { group = "com.google.android.gms", name = "play-services-appset", version.ref = "playServicesAppset" }
 play-services-ads-identifier = { group = "com.google.android.gms", name = "play-services-ads-identifier", version.ref = "playServicesAdsIdentifier" }
 play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "appUpdate" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 
 # Retrofit & OkHttp
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }

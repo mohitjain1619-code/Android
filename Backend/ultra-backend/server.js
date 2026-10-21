@@ -28,6 +28,7 @@ const friendRoutes = require("./src/routes/friends");
 const affiliateRoutes = require("./src/routes/affiliate");
 const adsRoutes = require("./src/routes/ads");
 const realMeetRoutes = require("./src/routes/realmeet");
+const NotificationService = require("./src/services/notificationService");
 const storiesRoutes = require("./src/routes/stories");
 
 // Services
@@ -489,6 +490,27 @@ io.on("connection", (socket) => {
     } else {
       console.log("❌ Target user", targetId, "not connected");
       socket.emit("call-failed", { reason: "User offline" });
+    }
+
+    // Always dispatch urgent high-priority call push notification (wakes up sleeping/backgrounded devices)
+    try {
+      NotificationService.sendToUser(targetId, {
+        title: isVideo ? "Incoming Video Call" : "Incoming Voice Call",
+        body: `${callerName || "Someone"} is calling you...`,
+        type: "call",
+        channelId: "camverz_calls",
+        highPriority: true,
+        data: {
+          callerId: String(callerId),
+          callerName: String(callerName || "Unknown"),
+          callerAvatar: String(callerAvatar || ""),
+          isVideo: String(isVideo),
+          roomName: String(room),
+          isPrivateCall: "true",
+        },
+      });
+    } catch (callPushErr) {
+      console.error("Error triggering call push notification:", callPushErr.message);
     }
   });
 

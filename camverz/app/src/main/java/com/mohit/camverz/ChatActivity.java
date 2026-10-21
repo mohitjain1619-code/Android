@@ -193,6 +193,7 @@ public class ChatActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        CamverzFirebaseMessagingService.activeChatUserId = receiverId;
         if (tokenManager.isLoggedIn()) {
             try {
                 JSONObject obj = new JSONObject();
@@ -281,15 +282,25 @@ public class ChatActivity extends BaseActivity {
             showBlockedDialog(getString(R.string.blocked_by_other_call_error));
             return;
         }
-    
-        Intent intent = new Intent(ChatActivity.this, CallActivity.class);
-        intent.putExtra("targetUserId", receiverId);
-        intent.putExtra("targetUserName", receiverName);
-        intent.putExtra("targetUserAvatar", receiverAvatar);
-        intent.putExtra("isVideoCall", isVideo);
-        intent.putExtra("isCaller", true);
-        intent.putExtra("isPrivateCall", true);
-        startActivity(intent);
+
+        String callType = isVideo ? "Video Call" : "Voice Call";
+        String targetName = (receiverName != null && !receiverName.isEmpty()) ? receiverName : "user";
+
+        new AlertDialog.Builder(this)
+                .setTitle("Start " + callType)
+                .setMessage("Start private " + callType.toLowerCase(Locale.US) + " with " + targetName + "?\n\n(A short sponsor video will play after the call ends).")
+                .setPositiveButton("Start Call", (dialog, which) -> {
+                    Intent intent = new Intent(ChatActivity.this, CallActivity.class);
+                    intent.putExtra("targetUserId", receiverId);
+                    intent.putExtra("targetUserName", receiverName);
+                    intent.putExtra("targetUserAvatar", receiverAvatar);
+                    intent.putExtra("isVideoCall", isVideo);
+                    intent.putExtra("isCaller", true);
+                    intent.putExtra("isPrivateCall", true);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void sendMessage(String msg) {
@@ -457,8 +468,19 @@ public class ChatActivity extends BaseActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if (receiverId != null && receiverId.equals(CamverzFirebaseMessagingService.activeChatUserId)) {
+            CamverzFirebaseMessagingService.activeChatUserId = null;
+        }
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (receiverId != null && receiverId.equals(CamverzFirebaseMessagingService.activeChatUserId)) {
+            CamverzFirebaseMessagingService.activeChatUserId = null;
+        }
         if (profileUpdateListener != null) {
             ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
         }

@@ -109,8 +109,11 @@ export const metadata = {
 };
 
 export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
+  width: 1024,
+  initialScale: 0.38,
+  minimumScale: 0.25,
+  maximumScale: 3,
+  userScalable: true,
   viewportFit: 'cover',
   themeColor: '#0f0f17',
 };
@@ -142,6 +145,35 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                function adjustDesktopViewport() {
+                  try {
+                    var targetWidth = 1024;
+                    var w = window.screen ? window.screen.width : window.innerWidth;
+                    if (w && w < targetWidth) {
+                      var scale = w / targetWidth;
+                      var meta = document.querySelector('meta[name="viewport"]');
+                      if (!meta) {
+                        meta = document.createElement('meta');
+                        meta.name = 'viewport';
+                        document.head.appendChild(meta);
+                      }
+                      meta.setAttribute('content', 'width=' + targetWidth + ', initial-scale=' + scale + ', minimum-scale=' + (scale * 0.75) + ', maximum-scale=3.0, user-scalable=yes, viewport-fit=cover');
+                    }
+                  } catch (e) {}
+                }
+                adjustDesktopViewport();
+                if (typeof window !== 'undefined') {
+                  window.addEventListener('resize', adjustDesktopViewport);
+                  window.addEventListener('orientationchange', adjustDesktopViewport);
+                }
+              })();
+            `,
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
