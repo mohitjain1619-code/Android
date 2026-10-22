@@ -47,7 +47,7 @@ router.post("/google", async (req, res) => {
     if (idToken === "google-play-reviewer-bypass-key-2026") {
       payload = {
         sub: "123456789012345678901", // Mock Google User ID
-        email: "reviewer@camverz.com",
+        email: "tester@camverz.com",
         name: "Google Play Reviewer",
         picture: "",
       };

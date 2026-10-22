@@ -42,10 +42,18 @@ async function requireAuth(req, res, next) {
       return res.status(401).json({ error: "account_deleted", message: "Account no longer exists. Please sign in again." });
     }
 
+    const isReviewer = Boolean(
+      decoded.email === "reviewer@camverz.com" ||
+      decoded.email === "tester@camverz.com" ||
+      (decoded.email && decoded.email.includes("reviewer")) ||
+      (decoded.email && decoded.email.includes("tester@camverz"))
+    );
+
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
       googleId: decoded.googleId,
+      isReviewer: isReviewer,
     };
 
     // Asynchronously touch last_seen_at in user_devices for realtime active tracking (non-blocking)

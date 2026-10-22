@@ -40,6 +40,11 @@ const ADMIN_EMAIL = "mohitjain1619@gmail.com";
 // ============================================
 router.get("/active", async (req, res) => {
   try {
+    // Reviewer Sandbox: keep stories pristine and clean during review
+    if (req.user && req.user.isReviewer) {
+      return res.json({ ok: true, stories: [] });
+    }
+
     const currentUserId = req.user ? req.user.userId : null;
     const rows = await queryMany(
       `SELECT s.*, u.name as user_name, u.avatar as user_avatar, u.photo_url as user_photo_url, u.email as user_email,

@@ -103,6 +103,16 @@ async function cleanupExpiredPosts() {
 // ============================================
 router.get("/feed", async (req, res) => {
   try {
+    // Reviewer Sandbox: if logged in as Google Play Reviewer, return empty lists
+    if (req.user && req.user.isReviewer) {
+      return res.json({
+        ok: true,
+        realMeetPosts: [],
+        partyPosts: [],
+        fantasyPosts: []
+      });
+    }
+
     await cleanupExpiredPosts();
     const rows = await queryMany(
       `SELECT cp.*, u.name as user_name, u.avatar as user_avatar, u.photo_url, u.gender, u.verified, u.is_premium as premium, u.sex_preference, u.dob

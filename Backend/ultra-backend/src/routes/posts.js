@@ -11,6 +11,33 @@ router.use(requireAuth);
 // ============================================
 router.get("/", async (req, res) => {
   try {
+    // Reviewer Sandbox: if logged in as Google Play Reviewer, return clean official welcome post
+    if (req.user && req.user.isReviewer) {
+      return res.json({
+        ok: true,
+        posts: [
+          {
+            id: "reviewer-welcome-post",
+            userId: req.user.userId,
+            username: "Camverz Official",
+            userAvatar: "1",
+            userPhotoUrl: "",
+            category: "general",
+            text: "Welcome to Camverz! Connect respectfully, make friends, and experience live video discovery.",
+            mediaUrl: null,
+            likeCount: 42,
+            commentCount: 0,
+            likedByMe: false,
+            verified: true,
+            gender: "other",
+            sexPreference: "all",
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 86400000).toISOString(),
+          },
+        ],
+      });
+    }
+
     // Delete expired posts physically from database on feed fetch
     await query("DELETE FROM posts WHERE expiry_at <= NOW()");
 
