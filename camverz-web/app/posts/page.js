@@ -100,7 +100,7 @@ export default function PostsPage() {
         {/* Header */}
         <header className={styles.header}>
           <h1 className="neon-text">Community Feed</h1>
-          <p>Share moments that vanish after 7 minutes. Keep it raw, keep it real.</p>
+          <p>Share moments that vanish after 24 hours. Keep it raw, keep it real.</p>
         </header>
 
         <div className={styles.mainLayout}>

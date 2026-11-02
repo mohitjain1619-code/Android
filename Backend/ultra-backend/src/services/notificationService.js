@@ -124,6 +124,49 @@ class NotificationService {
         }
       }
 
+      // Ensure cross-compatible aliases for client activities (handles all intent unpacking paths)
+      if (type === "chat") {
+        const uid = stringifiedData.userId || stringifiedData.targetUserId || stringifiedData.senderId;
+        if (uid) {
+          stringifiedData.userId = uid;
+          stringifiedData.targetUserId = uid;
+        }
+        const name = stringifiedData.userName || stringifiedData.targetUserName || stringifiedData.senderName;
+        if (name) {
+          stringifiedData.userName = name;
+          stringifiedData.targetUserName = name;
+        }
+        const avatar = stringifiedData.userAvatar || stringifiedData.targetUserAvatar || stringifiedData.senderAvatar;
+        if (avatar) {
+          stringifiedData.userAvatar = avatar;
+          stringifiedData.targetUserAvatar = avatar;
+        }
+      } else if (type === "call") {
+        const caller = stringifiedData.callerId || stringifiedData.targetUserId || stringifiedData.peer;
+        if (caller) {
+          stringifiedData.callerId = caller;
+          stringifiedData.targetUserId = caller;
+          stringifiedData.peer = caller;
+        }
+        const cName = stringifiedData.callerName || stringifiedData.targetUserName || stringifiedData.peerName;
+        if (cName) {
+          stringifiedData.callerName = cName;
+          stringifiedData.targetUserName = cName;
+          stringifiedData.peerName = cName;
+        }
+        const cAvatar = stringifiedData.callerAvatar || stringifiedData.targetUserAvatar || stringifiedData.peerAvatar;
+        if (cAvatar) {
+          stringifiedData.callerAvatar = cAvatar;
+          stringifiedData.targetUserAvatar = cAvatar;
+          stringifiedData.peerAvatar = cAvatar;
+        }
+        const room = stringifiedData.roomName || stringifiedData.room;
+        if (room) {
+          stringifiedData.roomName = room;
+          stringifiedData.room = room;
+        }
+      }
+
       const message = {
         token: token,
         notification: {

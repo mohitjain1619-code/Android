@@ -411,9 +411,13 @@ public class LoginActivity extends BaseActivity {
                         // Navigate based on profile completeness
                         String gender = user.has("gender") ? user.get("gender").getAsString() : "";
                         String userName = user.has("name") ? user.get("name").getAsString() : "";
+                        String city = user.has("city") ? user.get("city").getAsString() : "";
+                        String dob = user.has("dob") ? user.get("dob").getAsString() : "";
                         boolean isProfileComplete = !isNewUser
                                 && (gender != null && !gender.trim().isEmpty())
-                                && (userName != null && !userName.trim().isEmpty());
+                                && (userName != null && !userName.trim().isEmpty())
+                                && (city != null && !city.trim().isEmpty())
+                                && (dob != null && !dob.trim().isEmpty());
 
                         if (isProfileComplete) {
                             tokenManager.setOnboardingComplete(true);
@@ -510,7 +514,7 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void goToGenderSelection() {
-        Intent intent = new Intent(LoginActivity.this, GenderSelectionActivity.class);
+        Intent intent = new Intent(LoginActivity.this, OnboardingActivity.class);
         intent.putExtra("userName", tokenManager.getUserName());
         startActivity(intent);
         finish();

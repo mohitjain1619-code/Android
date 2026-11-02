@@ -520,4 +520,28 @@ Anda hanya dapat memposting 1 acara pesta per hari. Apakah Anda ingin mengganti 
     <string name="update_dialog_message">Versi terbaru Camverz telah tersedia di Google Play dengan fitur terbaru dan peningkatan performa. Silakan perbarui untuk melanjutkan.</string>
     <string name="update_dialog_btn_update">Perbarui Sekarang</string>
     <string name="update_dialog_btn_later">Nanti</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ Hanya butuh 1 menit</string>
+    <string name="onboarding_complete_profile">Lengkapi Profil Anda</string>
+    <string name="onboarding_subtitle">Atur profil Anda untuk bertemu orang-orang nyata</string>
+    <string name="onboarding_name_label">Nama Lengkap</string>
+    <string name="onboarding_enter_name">Masukkan nama Anda</string>
+    <string name="onboarding_gender_label">Pilih Jenis Kelamin</string>
+    <string name="onboarding_gender_male">Pria</string>
+    <string name="onboarding_gender_female">Wanita</string>
+    <string name="onboarding_city_label">Kota Anda</string>
+    <string name="onboarding_city_hint">Masukkan kota atau deteksi</string>
+    <string name="onboarding_auto_detect">Deteksi</string>
+    <string name="onboarding_detecting_location">Mendeteksi GPS…</string>
+    <string name="onboarding_birthday_label">Tanggal Lahir (18+)</string>
+    <string name="onboarding_birthday_hint">Pilih Tanggal Lahir</string>
+    <string name="onboarding_age_years">%d tahun</string>
+    <string name="onboarding_age_warning">Harus berusia 18+ untuk bergabung</string>
+    <string name="onboarding_btn_start">Mulai Camverz 🚀</string>
+    <string name="onboarding_saving">Menyimpan profil…</string>
+    <string name="onboarding_error_name">Silakan masukkan nama Anda</string>
+    <string name="onboarding_error_gender">Silakan pilih jenis kelamin Anda</string>
+    <string name="onboarding_error_city">Silakan masukkan atau deteksi kota Anda</string>
+    <string name="onboarding_error_dob">Silakan pilih tanggal lahir Anda (wajib 18+)</string>
 </resources>

@@ -520,4 +520,28 @@ Du kannst nur 1 Party pro Tag veröffentlichen. Möchtest du dein vorheriges Eve
     <string name="update_dialog_message">Eine neuere Version von Camverz ist im Google Play Store mit den neuesten Funktionen und Leistungsverbesserungen verfügbar. Bitte aktualisieren Sie, um fortzufahren.</string>
     <string name="update_dialog_btn_update">Jetzt aktualisieren</string>
     <string name="update_dialog_btn_later">Später</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ Es dauert nur 1 Minute</string>
+    <string name="onboarding_complete_profile">Profil vervollständigen</string>
+    <string name="onboarding_subtitle">Richte dein Profil ein, um echte Menschen kennenzulernen</string>
+    <string name="onboarding_name_label">Vollständiger Name</string>
+    <string name="onboarding_enter_name">Name eingeben</string>
+    <string name="onboarding_gender_label">Geschlecht wählen</string>
+    <string name="onboarding_gender_male">Männlich</string>
+    <string name="onboarding_gender_female">Weiblich</string>
+    <string name="onboarding_city_label">Deine Stadt</string>
+    <string name="onboarding_city_hint">Stadt eingeben oder erkennen</string>
+    <string name="onboarding_auto_detect">Automatisch</string>
+    <string name="onboarding_detecting_location">GPS wird ermittelt…</string>
+    <string name="onboarding_birthday_label">Geburtsdatum (18+)</string>
+    <string name="onboarding_birthday_hint">Geburtsdatum wählen</string>
+    <string name="onboarding_age_years">%d Jahre alt</string>
+    <string name="onboarding_age_warning">Du musst mindestens 18 sein</string>
+    <string name="onboarding_btn_start">Camverz starten 🚀</string>
+    <string name="onboarding_saving">Profil wird gespeichert…</string>
+    <string name="onboarding_error_name">Bitte gib deinen Namen ein</string>
+    <string name="onboarding_error_gender">Bitte wähle dein Geschlecht</string>
+    <string name="onboarding_error_city">Bitte gib deine Stadt ein oder erkenne sie</string>
+    <string name="onboarding_error_dob">Bitte wähle dein Geburtsdatum (18+ erforderlich)</string>
 </resources>

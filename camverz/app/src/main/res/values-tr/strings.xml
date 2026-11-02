@@ -520,4 +520,28 @@ Günde yalnızca 1 parti etkinliği yayınlayabilirsiniz. Önceki etkinliğinizi
     <string name="update_dialog_message">Camverz\'in daha yeni bir sürümü en son özellikler ve performans iyileştirmeleriyle Google Play\'de mevcuttur. Devam etmek için lütfen güncelleyin.</string>
     <string name="update_dialog_btn_update">Şimdi Güncelle</string>
     <string name="update_dialog_btn_later">Daha sonra</string>
+
+    <!-- Unified Onboarding Strings -->
+    <string name="onboarding_time_badge">⏱️ Sadece 1 dakika sürecek</string>
+    <string name="onboarding_complete_profile">Profilinizi Tamamlayın</string>
+    <string name="onboarding_subtitle">Gerçek insanlarla tanışmak için profilinizi ayarlayın</string>
+    <string name="onboarding_name_label">Ad Soyad</string>
+    <string name="onboarding_enter_name">Adınızı girin</string>
+    <string name="onboarding_gender_label">Cinsiyet Seçin</string>
+    <string name="onboarding_gender_male">Erkek</string>
+    <string name="onboarding_gender_female">Kadın</string>
+    <string name="onboarding_city_label">Şehriniz</string>
+    <string name="onboarding_city_hint">Şehir girin veya tespit edin</string>
+    <string name="onboarding_auto_detect">Otomatik</string>
+    <string name="onboarding_detecting_location">GPS aranıyor…</string>
+    <string name="onboarding_birthday_label">Doğum Tarihi (18+)</string>
+    <string name="onboarding_birthday_hint">Doğum Tarihi Seçin</string>
+    <string name="onboarding_age_years">%d yaşında</string>
+    <string name="onboarding_age_warning">Katılmak için 18+ olmalısınız</string>
+    <string name="onboarding_btn_start">Camverz\'e Başla 🚀</string>
+    <string name="onboarding_saving">Profil kaydediliyor…</string>
+    <string name="onboarding_error_name">Lütfen adınızı girin</string>
+    <string name="onboarding_error_gender">Lütfen cinsiyetinizi seçin</string>
+    <string name="onboarding_error_city">Lütfen şehrinizi girin veya tespit edin</string>
+    <string name="onboarding_error_dob">Lütfen doğum tarihinizi seçin (18+ zorunlu)</string>
 </resources>

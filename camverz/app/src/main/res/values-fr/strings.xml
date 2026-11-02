@@ -517,4 +517,28 @@ Vous ne pouvez publier qu\'une seule soirée par jour. Souhaitez-vous remplacer 
     <string name="update_dialog_message">Une nouvelle version de Camverz est disponible sur Google Play avec les dernières fonctionnalités et améliorations de performances. Veuillez mettre à jour pour continuer.</string>
     <string name="update_dialog_btn_update">Mettre à jour</string>
     <string name="update_dialog_btn_later">Plus tard</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ Cela ne prendra qu\'une minute</string>
+    <string name="onboarding_complete_profile">Complétez votre profil</string>
+    <string name="onboarding_subtitle">Configurez votre profil pour rencontrer de vraies personnes</string>
+    <string name="onboarding_name_label">Nom complet</string>
+    <string name="onboarding_enter_name">Entrez votre nom</string>
+    <string name="onboarding_gender_label">Sélectionnez le genre</string>
+    <string name="onboarding_gender_male">Homme</string>
+    <string name="onboarding_gender_female">Femme</string>
+    <string name="onboarding_city_label">Votre ville</string>
+    <string name="onboarding_city_hint">Entrez la ville ou auto-détectez</string>
+    <string name="onboarding_auto_detect">Détecter</string>
+    <string name="onboarding_detecting_location">Détection GPS…</string>
+    <string name="onboarding_birthday_label">Date de naissance (18+)</string>
+    <string name="onboarding_birthday_hint">Sélectionnez la date de naissance</string>
+    <string name="onboarding_age_years">%d ans</string>
+    <string name="onboarding_age_warning">Vous devez avoir au moins 18 ans</string>
+    <string name="onboarding_btn_start">Démarrer Camverz 🚀</string>
+    <string name="onboarding_saving">Enregistrement du profil…</string>
+    <string name="onboarding_error_name">Veuillez entrer votre nom</string>
+    <string name="onboarding_error_gender">Veuillez sélectionner votre genre</string>
+    <string name="onboarding_error_city">Veuillez entrer ou détecter votre ville</string>
+    <string name="onboarding_error_dob">Veuillez sélectionner votre date de naissance (18+)</string>
 </resources>

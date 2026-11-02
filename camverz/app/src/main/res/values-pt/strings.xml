@@ -520,4 +520,28 @@ Você só pode publicar 1 festa por dia. Deseja substituir seu evento anterior?<
     <string name="update_dialog_message">Uma nova versão do Camverz está disponível no Google Play com os recursos mais recentes e melhorias de desempenho. Atualize para continuar.</string>
     <string name="update_dialog_btn_update">Atualizar agora</string>
     <string name="update_dialog_btn_later">Mais tarde</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ Levará apenas 1 minuto</string>
+    <string name="onboarding_complete_profile">Complete seu perfil</string>
+    <string name="onboarding_subtitle">Configure seu perfil para conhecer pessoas reais</string>
+    <string name="onboarding_name_label">Nome completo</string>
+    <string name="onboarding_enter_name">Digite seu nome</string>
+    <string name="onboarding_gender_label">Selecione o gênero</string>
+    <string name="onboarding_gender_male">Masculino</string>
+    <string name="onboarding_gender_female">Feminino</string>
+    <string name="onboarding_city_label">Sua cidade</string>
+    <string name="onboarding_city_hint">Digite a cidade ou detecte</string>
+    <string name="onboarding_auto_detect">Detectar</string>
+    <string name="onboarding_detecting_location">Detectando GPS…</string>
+    <string name="onboarding_birthday_label">Data de nascimento (18+)</string>
+    <string name="onboarding_birthday_hint">Selecione a data de nascimento</string>
+    <string name="onboarding_age_years">%d anos</string>
+    <string name="onboarding_age_warning">Você deve ter 18+ para entrar</string>
+    <string name="onboarding_btn_start">Iniciar Camverz 🚀</string>
+    <string name="onboarding_saving">Salvando perfil…</string>
+    <string name="onboarding_error_name">Por favor, digite seu nome</string>
+    <string name="onboarding_error_gender">Por favor, selecione seu gênero</string>
+    <string name="onboarding_error_city">Por favor, digite ou detecte sua cidade</string>
+    <string name="onboarding_error_dob">Por favor, selecione sua data de nascimento (18+)</string>
 </resources>

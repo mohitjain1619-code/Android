@@ -563,6 +563,18 @@ io.on("connection", (socket) => {
     }
     const targetSocket = await redisModule.getUserSocket(targetId);
     if (targetSocket) io.to(targetSocket).emit("private-call-cancelled");
+
+    // Also dispatch call_cancelled push to immediately dismiss ringing notification on sleeping/backgrounded device
+    try {
+      NotificationService.sendToUser(targetId, {
+        title: "Call Cancelled",
+        body: "Call cancelled by caller",
+        type: "call_cancelled",
+        channelId: "camverz_calls",
+        highPriority: true,
+        data: { type: "call_cancelled" },
+      });
+    } catch (e) {}
   });
 
   socket.on("end-private-call", async ({ targetId }) => {
@@ -577,6 +589,18 @@ io.on("connection", (socket) => {
     }
     const targetSocket = await redisModule.getUserSocket(targetId);
     if (targetSocket) io.to(targetSocket).emit("private-call-ended");
+
+    // Also dispatch call_ended push to clean up any active notification
+    try {
+      NotificationService.sendToUser(targetId, {
+        title: "Call Ended",
+        body: "Call ended",
+        type: "call_ended",
+        channelId: "camverz_calls",
+        highPriority: true,
+        data: { type: "call_ended" },
+      });
+    } catch (e) {}
   });
 
   socket.on("send-private-offer", async ({ targetId, offer, room }) => {

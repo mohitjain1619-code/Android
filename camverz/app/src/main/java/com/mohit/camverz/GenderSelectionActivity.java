@@ -16,13 +16,13 @@ public class GenderSelectionActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_gender);
-
-        userName = getIntent().getStringExtra("userName");
-
-        cardMale = findViewById(R.id.cardMale);
-        cardFemale = findViewById(R.id.cardFemale);
-        btnContinue = findViewById(R.id.btnContinue);
+        Intent forward = new Intent(this, OnboardingActivity.class);
+        if (getIntent() != null && getIntent().getExtras() != null) {
+            forward.putExtras(getIntent().getExtras());
+        }
+        startActivity(forward);
+        finish();
+    }
 
         cardMale.setOnClickListener(v -> selectGender("male"));
         cardFemale.setOnClickListener(v -> selectGender("female"));

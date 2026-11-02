@@ -511,4 +511,28 @@
     <string name="update_dialog_message">Google Play Store पर Camverz का नया वर्शन उपलब्ध है जिसमें नए फीचर्स और बेहतर परफॉर्मेंस शामिल हैं। जारी रखने के लिए कृपया अपडेट करें।</string>
     <string name="update_dialog_btn_update">अभी अपडेट करें</string>
     <string name="update_dialog_btn_later">बाद में</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ बस 1 मिनट लगेगा</string>
+    <string name="onboarding_complete_profile">अपनी प्रोफाइल पूरी करें</string>
+    <string name="onboarding_subtitle">असली लोगों से जुड़ने के लिए अपनी प्रोफाइल सेट करें</string>
+    <string name="onboarding_name_label">पूरा नाम</string>
+    <string name="onboarding_enter_name">अपना नाम दर्ज करें</string>
+    <string name="onboarding_gender_label">जेंडर चुनें</string>
+    <string name="onboarding_gender_male">पुरुष</string>
+    <string name="onboarding_gender_female">महिला</string>
+    <string name="onboarding_city_label">आपका शहर</string>
+    <string name="onboarding_city_hint">शहर दर्ज करें या ऑटो-डिटेक्ट करें</string>
+    <string name="onboarding_auto_detect">ऑटो डिटेक्ट</string>
+    <string name="onboarding_detecting_location">जीपीएस खोजा जा रहा है…</string>
+    <string name="onboarding_birthday_label">जन्म तिथि (18+)</string>
+    <string name="onboarding_birthday_hint">जन्म तिथि चुनें</string>
+    <string name="onboarding_age_years">%d वर्ष</string>
+    <string name="onboarding_age_warning">जुड़ने के लिए 18+ होना आवश्यक है</string>
+    <string name="onboarding_btn_start">Camverz शुरू करें 🚀</string>
+    <string name="onboarding_saving">प्रोफाइल सेव हो रही है…</string>
+    <string name="onboarding_error_name">कृपया अपना नाम दर्ज करें</string>
+    <string name="onboarding_error_gender">कृपया अपना जेंडर चुनें</string>
+    <string name="onboarding_error_city">कृपया अपना शहर दर्ज करें या ऑटो-डिटेक्ट करें</string>
+    <string name="onboarding_error_dob">कृपया अपनी जन्म तिथि चुनें (18+ अनिवार्य)</string>
 </resources>

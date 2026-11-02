@@ -168,6 +168,12 @@ public interface ApiService {
     @DELETE("chats/{id}")
     Call<JsonObject> deleteChat(@Path("id") String chatId);
 
+    @DELETE("chats/messages/{messageId}")
+    Call<JsonObject> deleteMessage(
+            @Path("messageId") String messageId,
+            @Query("forEveryone") boolean forEveryone
+    );
+
     @GET("chats/unread-count")
     Call<JsonObject> getUnreadCount();
 

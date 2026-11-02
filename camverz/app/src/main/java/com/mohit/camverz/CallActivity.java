@@ -262,15 +262,38 @@ public class CallActivity extends BaseActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
 
+        // Cancel any lingering ringing notification immediately
+        NotificationHelper.cancelIncomingCallNotification(this);
+
+        // Allow incoming call to wake screen and show over keyguard/lockscreen
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+            android.app.KeyguardManager km = (android.app.KeyguardManager) getSystemService(android.content.Context.KEYGUARD_SERVICE);
+            if (km != null) {
+                km.requestDismissKeyguard(this, null);
+            }
+        } else {
+            getWindow().addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            );
+        }
+
         api = ApiClient.getInstance(this).getApi();
         tokenManager = TokenManager.getInstance(this);
 
         peerId = getIntent().getStringExtra("peer");
-        if (peerId == null) {
+        if (peerId == null || peerId.isEmpty()) {
             peerId = getIntent().getStringExtra("targetUserId");
         }
-        if (peerId == null) {
+        if (peerId == null || peerId.isEmpty()) {
             peerId = getIntent().getStringExtra("callerId");
+        }
+        if (peerId == null || peerId.isEmpty()) {
+            peerId = getIntent().getStringExtra("userId");
         }
 
         isCaller = getIntent().getBooleanExtra("isCaller", false);
@@ -368,6 +391,12 @@ public class CallActivity extends BaseActivity {
         btnSwitchCamera.setOnClickListener(v -> switchCamera());
         btnEnd.setOnClickListener(v -> disconnect());
         btnToggleVideo.setOnClickListener(v -> toggleVideo());
+        if (followButton != null) {
+            followButton.setOnClickListener(v -> handleFollowClick());
+        }
+        if (followButtonCard != null) {
+            followButtonCard.setOnClickListener(v -> handleFollowClick());
+        }
         ImageButton btnReportCall = findViewById(R.id.btn_report_call);
         if (btnReportCall != null) {
             btnReportCall.setOnClickListener(v -> {
@@ -476,9 +505,17 @@ public class CallActivity extends BaseActivity {
 
     private void startCall() {
         CallManager.setCallActive(true);
+        NotificationHelper.cancelIncomingCallNotification(this);
         setupViews();
         initWebRTC();
         setupSocket();
+        try {
+            JSONObject regObj = new JSONObject();
+            regObj.put("uid", myUid);
+            socket.emit("register-user", regObj);
+        } catch (Exception e) {
+            Log.e(TAG, "Error registering user on socket in CallActivity", e);
+        }
         if (isPrivateCall && isCaller) {
             sendStartPrivateCall();
         }
@@ -712,6 +749,11 @@ public class CallActivity extends BaseActivity {
                         callConnectedTime = System.currentTimeMillis();
                         startLimitCountdown();
                         preloadPostCallDualBiddingAds();
+                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                            if (!isFinishing() && !isDestroyed()) {
+                                preloadPostCallDualBiddingAds();
+                            }
+                        }, 25000);
                     }
                 } else if (s == PeerConnection.IceConnectionState.FAILED) {
                     if (!turnFallbackAttempted) {
@@ -1562,6 +1604,7 @@ public class CallActivity extends BaseActivity {
         CallManager.setCallActive(false);
         timeoutHandler.removeCallbacks(timeoutRunnable);
         autoHideHandler.removeCallbacks(autoHideRunnable);
+        NotificationHelper.cancelIncomingCallNotification(this);
 
         // Reset AudioManager state when call disconnects
         try {
@@ -1728,6 +1771,7 @@ public class CallActivity extends BaseActivity {
     }
 
     private String friendStatus = "none";
+    private String friendRequestId = null;
 
     private void loadPeerUserInfo() {
         String passedName = getIntent().getStringExtra("peerName");
@@ -1799,6 +1843,9 @@ public class CallActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("status")) {
                         friendStatus = data.get("status").getAsString();
+                        if (data.has("requestId") && !data.get("requestId").isJsonNull()) {
+                            friendRequestId = data.get("requestId").getAsString();
+                        }
                         updateFollowButtonUI();
                     }
                 }
@@ -1831,38 +1878,80 @@ public class CallActivity extends BaseActivity {
     }
 
     private void handleFollowClick() {
-        if (isUpdatingFollow || myUid == null || peerId == null || peerId.isEmpty() || "Unknown User".equals(peerId)) return;
+        if (isUpdatingFollow) return;
+        if (myUid == null || peerId == null || peerId.isEmpty() || "Unknown User".equals(peerId)) {
+            Toast.makeText(this, "Connecting with user... please wait", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Log.d(TAG, "handleFollowClick triggered for peer: " + peerId + ", current status: " + friendStatus);
         
+        if ("friends".equalsIgnoreCase(friendStatus)) {
+            Toast.makeText(this, "You are already friends!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if ("sent".equalsIgnoreCase(friendStatus)) {
+            Toast.makeText(this, "Friend request already sent", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         isUpdatingFollow = true;
         followButton.setEnabled(false);
 
-        java.util.Map<String, String> body = new java.util.HashMap<>();
-        body.put("targetUserId", peerId);
-
-        api.sendFriendRequest(body).enqueue(new retrofit2.Callback<JsonObject>() {
-            @Override
-            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
-                isUpdatingFollow = false;
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject data = response.body();
-                    if (data.has("ok") && data.get("ok").getAsBoolean()) {
-                        friendStatus = "sent";
-                        updateFollowButtonUI();
-                        Toast.makeText(CallActivity.this, "Friend Request Sent!", Toast.LENGTH_SHORT).show();
-                        return;
+        if ("received".equalsIgnoreCase(friendStatus) && friendRequestId != null && !friendRequestId.isEmpty()) {
+            api.acceptFriendRequest(friendRequestId).enqueue(new retrofit2.Callback<JsonObject>() {
+                @Override
+                public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                    isUpdatingFollow = false;
+                    if (response.isSuccessful() && response.body() != null) {
+                        JsonObject data = response.body();
+                        if (data.has("ok") && data.get("ok").getAsBoolean()) {
+                            friendStatus = "friends";
+                            updateFollowButtonUI();
+                            Toast.makeText(CallActivity.this, "Friend Request Accepted! 🎉", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                     }
+                    followButton.setEnabled(true);
+                    Toast.makeText(CallActivity.this, "Failed to accept request", Toast.LENGTH_SHORT).show();
                 }
-                followButton.setEnabled(true);
-                Toast.makeText(CallActivity.this, "Friend request already sent or failed", Toast.LENGTH_SHORT).show();
-            }
 
-            @Override
-            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
-                isUpdatingFollow = false;
-                followButton.setEnabled(true);
-                Toast.makeText(CallActivity.this, "Network error", Toast.LENGTH_SHORT).show();
-            }
-        });
+                @Override
+                public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
+                    isUpdatingFollow = false;
+                    followButton.setEnabled(true);
+                    Toast.makeText(CallActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            java.util.Map<String, String> body = new java.util.HashMap<>();
+            body.put("targetUserId", peerId);
+
+            api.sendFriendRequest(body).enqueue(new retrofit2.Callback<JsonObject>() {
+                @Override
+                public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
+                    isUpdatingFollow = false;
+                    if (response.isSuccessful() && response.body() != null) {
+                        JsonObject data = response.body();
+                        if (data.has("ok") && data.get("ok").getAsBoolean()) {
+                            friendStatus = "sent";
+                            updateFollowButtonUI();
+                            Toast.makeText(CallActivity.this, "Friend Request Sent!", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
+                    followButton.setEnabled(true);
+                    Toast.makeText(CallActivity.this, "Friend request already sent or failed", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {
+                    isUpdatingFollow = false;
+                    followButton.setEnabled(true);
+                    Toast.makeText(CallActivity.this, "Network error", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private boolean isVpnActive() {
@@ -2046,11 +2135,50 @@ public class CallActivity extends BaseActivity {
         if (isFinishing() || isDestroyed()) return;
 
         String placement = isPrivateCall ? "private_call_rewarded" : "call_exit_rewarded";
-        Log.d(TAG, "🚀 [POST-CALL REWARDED] Requesting Rewarded ad on call exit (placement: " + placement + ")");
+        Log.d(TAG, "🚀 [POST-CALL DUAL-AUCTION] Requesting Dual-Auction ad on call exit (placement: " + placement + ", isPrivate: " + isPrivateCall + ")");
+
+        if (AdManager.getInstance().isDualBiddingReady()) {
+            executePostCallDualAdAndFinish(placement);
+        } else {
+            android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
+            progress.setMessage("Loading ad... Please wait");
+            progress.setCancelable(false);
+            try { progress.show(); } catch (Exception ignored) {}
+
+            AdManager.getInstance().preloadDualBiddingAds(this);
+
+            final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+            final Runnable[] checkRunnable = new Runnable[1];
+            final int[] attempts = new int[]{0};
+
+            checkRunnable[0] = new Runnable() {
+                @Override
+                public void run() {
+                    if (isFinishing() || isDestroyed()) {
+                        try { progress.dismiss(); } catch (Exception ignored) {}
+                        return;
+                    }
+                    if (AdManager.getInstance().isDualBiddingReady()) {
+                        try { progress.dismiss(); } catch (Exception ignored) {}
+                        executePostCallDualAdAndFinish(placement);
+                    } else if (++attempts[0] < 10) { // 2.5s timeout (10 * 250ms)
+                        handler.postDelayed(this, 250);
+                    } else {
+                        try { progress.dismiss(); } catch (Exception ignored) {}
+                        Log.w(TAG, "Dual bidding ad buffer timeout on call exit. Finishing call.");
+                        finish();
+                    }
+                }
+            };
+            handler.postDelayed(checkRunnable[0], 250);
+        }
+    }
+
+    private void executePostCallDualAdAndFinish(String placement) {
         AdManager.getInstance().showRewardedAd(this, placement, new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {
-                Log.d(TAG, "Post-call rewarded ad completed.");
+                Log.d(TAG, "Post-call dual-auction ad completed.");
             }
 
             @Override
@@ -2060,8 +2188,8 @@ public class CallActivity extends BaseActivity {
 
             @Override
             public void onAdFailed(String reason) {
-                Log.w(TAG, "Rewarded ad unavailable (" + reason + "), falling back to interstitial on call exit.");
-                showPostCallInterstitialAdAndFinish();
+                Log.w(TAG, "Post-call dual ad failed (" + reason + "). Finishing call.");
+                runOnUiThread(() -> finish());
             }
         });
     }

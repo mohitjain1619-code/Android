@@ -520,4 +520,28 @@
     <string name="update_dialog_message">В Google Play доступна новая версия Camverz с новейшими функциями и улучшенной производительностью. Пожалуйста, обновитесь для продолжения.</string>
     <string name="update_dialog_btn_update">Обновить сейчас</string>
     <string name="update_dialog_btn_later">Позже</string>
+
+    <!-- Unified Onboarding Strings -->
+    <string name="onboarding_time_badge">⏱️ Это займет всего 1 минуту</string>
+    <string name="onboarding_complete_profile">Заполните ваш профиль</string>
+    <string name="onboarding_subtitle">Настройте профиль, чтобы общаться с реальными людьми</string>
+    <string name="onboarding_name_label">Полное имя</string>
+    <string name="onboarding_enter_name">Введите ваше имя</string>
+    <string name="onboarding_gender_label">Выберите пол</string>
+    <string name="onboarding_gender_male">Мужской</string>
+    <string name="onboarding_gender_female">Женский</string>
+    <string name="onboarding_city_label">Ваш город</string>
+    <string name="onboarding_city_hint">Введите город или определите</string>
+    <string name="onboarding_auto_detect">Авто</string>
+    <string name="onboarding_detecting_location">Определение GPS…</string>
+    <string name="onboarding_birthday_label">Дата рождения (18+)</string>
+    <string name="onboarding_birthday_hint">Выберите дату рождения</string>
+    <string name="onboarding_age_years">%d лет</string>
+    <string name="onboarding_age_warning">Вам должно быть не менее 18 лет</string>
+    <string name="onboarding_btn_start">Начать Camverz 🚀</string>
+    <string name="onboarding_saving">Сохранение профиля…</string>
+    <string name="onboarding_error_name">Пожалуйста, введите ваше имя</string>
+    <string name="onboarding_error_gender">Пожалуйста, выберите ваш пол</string>
+    <string name="onboarding_error_city">Пожалуйста, укажите ваш город</string>
+    <string name="onboarding_error_dob">Пожалуйста, выберите дату рождения (18+)</string>
 </resources>

@@ -1517,6 +1517,7 @@ public class RealMeetActivity extends BaseActivity {
                 dialog.setCanceledOnTouchOutside(true);
                 btnPublish.setEnabled(true);
                 btnCancel.setVisibility(View.VISIBLE);
+                Toast.makeText(RealMeetActivity.this, "Post publish karne ke liye ad poora dekhna anivarya hai.", Toast.LENGTH_SHORT).show();
             };
 
             showRewardedAdBeforePost("realmeet_publish_post", onAdCancelledOrFailed, onAdSuccess);
@@ -1715,6 +1716,7 @@ public class RealMeetActivity extends BaseActivity {
                 dialog.setCanceledOnTouchOutside(true);
                 btnPublishParty.setEnabled(true);
                 btnCancelParty.setVisibility(View.VISIBLE);
+                Toast.makeText(RealMeetActivity.this, "Party publish karne ke liye ad poora dekhna anivarya hai.", Toast.LENGTH_SHORT).show();
             };
 
             showRewardedAdBeforePost("party_host_publish_post", onAdCancelledOrFailed, onAdSuccess);
@@ -1841,6 +1843,7 @@ public class RealMeetActivity extends BaseActivity {
                 dialog.setCanceledOnTouchOutside(true);
                 btnPublishFantasy.setEnabled(true);
                 btnCancelFantasy.setVisibility(View.VISIBLE);
+                Toast.makeText(RealMeetActivity.this, "Fantasy share karne ke liye ad poora dekhna anivarya hai.", Toast.LENGTH_SHORT).show();
             };
 
             showRewardedAdBeforePost("fantasy_publish_post", onAdCancelledOrFailed, onAdSuccess);

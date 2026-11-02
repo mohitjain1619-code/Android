@@ -84,6 +84,12 @@
             android:exported="false"
             android:windowSoftInputMode="adjustPan" />
 
+        <!-- Unified Onboarding Activity -->
+        <activity
+            android:name=".OnboardingActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- Gender Selection Activity -->
         <activity
             android:name=".GenderSelectionActivity"
@@ -136,7 +142,21 @@
         <activity
             android:name=".CallActivity"
             android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden" />
+
+        <!-- Notification Routing Activity (Handles OPEN_CAMVERZ_NOTIFICATION and push deep links) -->
+        <activity
+            android:name=".NotificationRoutingActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="OPEN_CAMVERZ_NOTIFICATION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
 
         <!-- Community Chat Activity -->
         <activity

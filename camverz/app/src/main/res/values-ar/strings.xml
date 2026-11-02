@@ -520,4 +520,28 @@
     <string name="update_dialog_message">يتوفر إصدار أحدث من Camverz على متجر Google Play مع ميزات جديدة وتحسينات في الأداء. يرجى التحديث للمتابعة.</string>
     <string name="update_dialog_btn_update">تحديث الآن</string>
     <string name="update_dialog_btn_later">لاحقاً</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ سيستغرق دقيقة واحدة فقط</string>
+    <string name="onboarding_complete_profile">أكمل ملفك الشخصي</string>
+    <string name="onboarding_subtitle">قم بإعداد ملفك الشخصي للتواصل مع أشخاص حقيقيين</string>
+    <string name="onboarding_name_label">الاسم الكامل</string>
+    <string name="onboarding_enter_name">أدخل اسمك</string>
+    <string name="onboarding_gender_label">حدد الجنس</string>
+    <string name="onboarding_gender_male">ذكر</string>
+    <string name="onboarding_gender_female">أنثى</string>
+    <string name="onboarding_city_label">مدينتك</string>
+    <string name="onboarding_city_hint">أدخل المدينة أو حدد تلقائياً</string>
+    <string name="onboarding_auto_detect">تحديد تلقائي</string>
+    <string name="onboarding_detecting_location">جارٍ تحديد الموقع…</string>
+    <string name="onboarding_birthday_label">تاريخ الميلاد (18+)</string>
+    <string name="onboarding_birthday_hint">اختر تاريخ الميلاد</string>
+    <string name="onboarding_age_years">%d سنة</string>
+    <string name="onboarding_age_warning">يجب أن يكون عمرك 18+ للانضمام</string>
+    <string name="onboarding_btn_start">ابدأ Camverz 🚀</string>
+    <string name="onboarding_saving">جارٍ حفظ الملف الشخصي…</string>
+    <string name="onboarding_error_name">يرجى إدخال اسمك</string>
+    <string name="onboarding_error_gender">يرجى تحديد الجنس</string>
+    <string name="onboarding_error_city">يرجى إدخال مدينتك أو تحديدها</string>
+    <string name="onboarding_error_dob">يرجى اختيار تاريخ ميلادك (18+ مطلوب)</string>
 </resources>

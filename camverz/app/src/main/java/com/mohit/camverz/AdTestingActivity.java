@@ -1,14 +1,12 @@
 package com.mohit.camverz;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -24,9 +22,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.mohit.camverz.api.TokenManager;
 
 import com.ironsource.mediationsdk.IronSource;
 import com.ironsource.mediationsdk.adunit.adapter.utility.AdInfo;
@@ -39,35 +36,35 @@ import com.ironsource.mediationsdk.logger.IronSourceError;
 import com.ironsource.mediationsdk.model.Placement;
 import com.ironsource.mediationsdk.sdk.LevelPlayInterstitialListener;
 import com.ironsource.mediationsdk.sdk.LevelPlayRewardedVideoListener;
+import com.mohit.camverz.api.TokenManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 /**
- * Pure Unity LevelPlay Mediation Ad Testing Dashboard.
- * Strictly adheres to official ironSource LevelPlay SDK documentation:
- * - Direct Interstitial Play (Google AdMob, Meta, Unity Ads bidding auction winner)
- * - Direct Rewarded Video Play (LevelPlay automatic background caching)
- * - Native Ads (LevelPlayNativeAd & LevelPlayNativeAdListener)
- * - Integration Validation (IntegrationHelper)
+ * Clean LevelPlay Dual-Auction Bidding Ad Dashboard.
+ * - Single direct "Watch Ad & Post" action powered by Dual-Auction (Highest eCPM)
+ * - Parallel auctions across Meta Audience Network, Google AdMob, Unity Ads, and ironSource
+ * - Real-time eCPM comparison & live mediation console
  */
 public class AdTestingActivity extends AppCompatActivity {
 
     private static final String TAG = "AdTestingActivity";
     public static final String LEVELPLAY_APP_KEY = "28890f0b5";
 
-    // UI Badges & Direct Action Buttons
+    // Dual-Auction Status Badges
     private TextView tvSdkStatus;
+    private TextView tvDualAuctionWinner;
     private TextView tvInterstitialStatus;
-    private Button btnPlayInterstitial;
-
     private TextView tvRewardedStatus;
-    private Button btnPlayRewarded;
+    private Button btnWatchAdAndPost;
 
+    // Native Ad UI
     private TextView tvNativeStatus;
     private Button btnLoadNative;
     private FrameLayout nativeAdContainer;
+    private LevelPlayNativeAd levelPlayNativeAd;
 
     // Log Console
     private TextView tvConsoleLog;
@@ -76,19 +73,17 @@ public class AdTestingActivity extends AppCompatActivity {
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    // Native Ad Instance
-    private LevelPlayNativeAd levelPlayNativeAd;
-
-    // Progress Dialog & Waiting Flags
+    // Tracking
     private ProgressDialog adProgressDialog;
-    private boolean isWaitingForInterstitialToShow = false;
-    private boolean isWaitingForRewardedToShow = false;
+    private boolean isWaitingForDualAdToShow = false;
+    private AdInfo cachedInterstitialAdInfo;
+    private AdInfo cachedRewardedAdInfo;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Build Modern Pure-Java UI (Isolated & Clean)
+        // Build Clean, Modern UI
         View rootView = buildDashboardUi();
         setContentView(rootView);
 
@@ -119,41 +114,36 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     /**
-     * LevelPlay SDK Initialization & Listener Attachment
+     * LevelPlay SDK Initialization & Parallel Auction Listeners
      */
     private void initLevelPlayMediation() {
         try {
-            // Keep pure device GAID for LevelPlay Test Devices matching
-            // (Do not call IronSource.setUserId here so dashboard test device matches by GAID)
+            // Test Suite mode for jainmohit8120@gmail.com
+            String email = TokenManager.getInstance(this).getUserEmail();
+            if (email != null && "jainmohit8120@gmail.com".equalsIgnoreCase(email.trim())) {
+                IronSource.setMetaData("is_test_suite", "enable");
+                try {
+                    com.facebook.ads.AdSettings.setTestMode(true);
+                    com.facebook.ads.AdSettings.turnOnSDKDebugger(this);
+                    AdManager.applyMetaTestDeviceHash(this);
+                } catch (Exception ignored) {}
+                appendLog("🧪 [TEST SUITE MODE] Enabled for jainmohit8120@gmail.com");
+            }
 
-            // Setup Listeners
+            // Setup Listeners for parallel auctions
             setupInterstitialListener();
             setupRewardedVideoListener();
 
             tvSdkStatus.setText("ACTIVE (v8.7.0)");
             tvSdkStatus.setTextColor(Color.parseColor("#34D399"));
-            appendLog("✅ [LEVELPLAY READY] Connected to LevelPlay Mediation (App Key: " + LEVELPLAY_APP_KEY + ")");
-            appendLog("🌐 [BIDDERS ACTIVE] Google AdMob, Meta Audience Network, Unity Ads, ironSource");
+            appendLog("✅ [LEVELPLAY READY] App Key: " + LEVELPLAY_APP_KEY);
+            appendLog("🌐 [BIDDERS ACTIVE] Meta Audience Network, Google AdMob, Unity Ads, ironSource");
 
-            // Check initial availability
-            if (IronSource.isInterstitialReady()) {
-                tvInterstitialStatus.setText("READY (Cached)");
-                tvInterstitialStatus.setTextColor(Color.parseColor("#34D399"));
-                appendLog("🟢 [INTERSTITIAL] Ad already cached & ready to show.");
-            } else {
-                tvInterstitialStatus.setText("PRELOADING IN BACKGROUND...");
-                tvInterstitialStatus.setTextColor(Color.parseColor("#FBBF24"));
-                IronSource.loadInterstitial();
-            }
+            // Initiate parallel bidding
+            IronSource.loadInterstitial();
+            AdManager.getInstance().preloadDualBiddingAds(this);
 
-            if (IronSource.isRewardedVideoAvailable()) {
-                tvRewardedStatus.setText("AVAILABLE (Cached)");
-                tvRewardedStatus.setTextColor(Color.parseColor("#34D399"));
-                appendLog("🟢 [REWARDED] Video already cached & ready to show.");
-            } else {
-                tvRewardedStatus.setText("AUTO-CACHING IN BACKGROUND...");
-                tvRewardedStatus.setTextColor(Color.parseColor("#FBBF24"));
-            }
+            updateDualAuctionStatusUi();
 
         } catch (Exception e) {
             Log.e(TAG, "Error in initLevelPlayMediation", e);
@@ -164,7 +154,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 1. DIRECT INTERSTITIAL ADS IMPLEMENTATION
+    // DUAL-AUCTION LISTENERS (INTERSTITIAL + REWARDED)
     // =========================================================================
 
     private void setupInterstitialListener() {
@@ -172,23 +162,18 @@ public class AdTestingActivity extends AppCompatActivity {
             @Override
             public void onAdReady(AdInfo adInfo) {
                 runOnUiThread(() -> {
-                    String network = adInfo != null && adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "Unknown Network";
+                    cachedInterstitialAdInfo = adInfo;
+                    String network = adInfo != null && adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "Meta/Mediation";
                     Double rev = adInfo != null ? adInfo.getRevenue() : null;
                     String revText = rev != null ? String.format(Locale.US, " ($%.4f)", rev) : "";
 
-                    tvInterstitialStatus.setText("READY: " + network + revText);
-                    tvInterstitialStatus.setTextColor(Color.parseColor("#34D399"));
-
                     appendLog("🟢 [INTERSTITIAL READY] Winner: " + network + revText);
-                    if (adInfo != null) {
-                        appendLog("   Auction ID: " + adInfo.getAuctionId());
-                    }
+                    updateDualAuctionStatusUi();
 
-                    if (isWaitingForInterstitialToShow) {
-                        isWaitingForInterstitialToShow = false;
+                    if (isWaitingForDualAdToShow) {
+                        isWaitingForDualAdToShow = false;
                         dismissProgress();
-                        appendLog("🎬 [PLAYING NOW] Showing winning bidding ad...");
-                        IronSource.showInterstitial();
+                        executeDualAuctionWatchAdAndPost();
                     }
                 });
             }
@@ -196,19 +181,11 @@ public class AdTestingActivity extends AppCompatActivity {
             @Override
             public void onAdLoadFailed(IronSourceError error) {
                 runOnUiThread(() -> {
-                    String msg = error != null ? error.getErrorMessage() : "Unknown error";
+                    cachedInterstitialAdInfo = null;
+                    String msg = error != null ? error.getErrorMessage() : "Unknown";
                     int code = error != null ? error.getErrorCode() : -1;
-
-                    tvInterstitialStatus.setText("FAILED (" + code + ")");
-                    tvInterstitialStatus.setTextColor(Color.parseColor("#EF4444"));
-
-                    appendLog("🔴 [INTERSTITIAL FAILED] " + msg + " [Code: " + code + "]");
-
-                    if (isWaitingForInterstitialToShow) {
-                        isWaitingForInterstitialToShow = false;
-                        dismissProgress();
-                        Toast.makeText(AdTestingActivity.this, "Interstitial Load Failed: " + msg, Toast.LENGTH_SHORT).show();
-                    }
+                    appendLog("⚠️ [INTERSTITIAL AUCTION] " + msg + " (Code: " + code + ")");
+                    updateDualAuctionStatusUi();
                 });
             }
 
@@ -217,13 +194,13 @@ public class AdTestingActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     dismissProgress();
                     String network = adInfo != null ? adInfo.getAdNetwork() : "Mediation";
-                    appendLog("👁️ [INTERSTITIAL OPENED] Ad displayed via " + network);
+                    appendLog("👁️ [AD OPENED] Displayed via " + network);
                 });
             }
 
             @Override
             public void onAdShowSucceeded(AdInfo adInfo) {
-                runOnUiThread(() -> appendLog("✅ [INTERSTITIAL SHOW] Ad playback started."));
+                runOnUiThread(() -> appendLog("✅ [AD SHOW] Playback started successfully."));
             }
 
             @Override
@@ -231,77 +208,43 @@ public class AdTestingActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     dismissProgress();
                     String msg = error != null ? error.getErrorMessage() : "Show error";
-                    appendLog("❌ [INTERSTITIAL SHOW FAILED] " + msg);
-                    Toast.makeText(AdTestingActivity.this, "Show Failed: " + msg, Toast.LENGTH_SHORT).show();
+                    appendLog("❌ [AD SHOW FAILED] " + msg);
                 });
             }
 
             @Override
             public void onAdClicked(AdInfo adInfo) {
-                runOnUiThread(() -> appendLog("🖱️ [INTERSTITIAL CLICK] User clicked the ad."));
+                runOnUiThread(() -> appendLog("🖱️ [AD CLICK] User clicked the ad."));
             }
 
             @Override
             public void onAdClosed(AdInfo adInfo) {
                 runOnUiThread(() -> {
-                    appendLog("🚪 [INTERSTITIAL CLOSED] Ad dismissed by user. Requesting next auction...");
-                    tvInterstitialStatus.setText("PRELOADING NEXT AD...");
-                    tvInterstitialStatus.setTextColor(Color.parseColor("#FBBF24"));
+                    appendLog("🚪 [AD CLOSED] User dismissed ad. Loading next auction...");
                     IronSource.loadInterstitial();
+                    updateDualAuctionStatusUi();
                 });
             }
         });
     }
-
-    private void playInterstitialDirect() {
-        if (IronSource.isInterstitialReady()) {
-            appendLog("🎬 [SHOWING INTERSTITIAL] Ad ready! Playing highest bidding winner now...");
-            IronSource.showInterstitial();
-        } else {
-            isWaitingForInterstitialToShow = true;
-            appendLog("📡 [BIDDING AUCTION STARTED] Requesting LevelPlay Interstitial auction (Meta, AdMob, Unity, ironSource)...");
-            tvInterstitialStatus.setText("LOADING AUCTION WINNER...");
-            tvInterstitialStatus.setTextColor(Color.parseColor("#FBBF24"));
-            showProgress("Running Header Bidding Auction... Please wait");
-            IronSource.loadInterstitial();
-
-            // Timeout safety after 6s
-            mainHandler.postDelayed(() -> {
-                if (isWaitingForInterstitialToShow) {
-                    isWaitingForInterstitialToShow = false;
-                    dismissProgress();
-                    appendLog("⚠️ [TIMEOUT] Interstitial auction took too long. Try again.");
-                    Toast.makeText(this, "Ad timeout. Please try again.", Toast.LENGTH_SHORT).show();
-                }
-            }, 6000);
-        }
-    }
-
-
-
-    // =========================================================================
-    // 2. DIRECT REWARDED VIDEO ADS IMPLEMENTATION
-    // =========================================================================
 
     private void setupRewardedVideoListener() {
         IronSource.setLevelPlayRewardedVideoListener(new LevelPlayRewardedVideoListener() {
             @Override
             public void onAdAvailable(AdInfo adInfo) {
                 runOnUiThread(() -> {
-                    String network = adInfo != null && adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "Network";
+                    cachedRewardedAdInfo = adInfo;
+                    String network = adInfo != null && adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "AdMob/Unity";
                     Double rev = adInfo != null ? adInfo.getRevenue() : null;
                     String revText = rev != null ? String.format(Locale.US, " ($%.4f)", rev) : "";
 
-                    tvRewardedStatus.setText("AVAILABLE: " + network + revText);
-                    tvRewardedStatus.setTextColor(Color.parseColor("#34D399"));
-
                     appendLog("🟢 [REWARDED AVAILABLE] Winner: " + network + revText);
+                    updateDualAuctionStatusUi();
 
-                    if (isWaitingForRewardedToShow) {
-                        isWaitingForRewardedToShow = false;
+                    if (isWaitingForDualAdToShow) {
+                        isWaitingForDualAdToShow = false;
                         dismissProgress();
-                        appendLog("🎬 [PLAYING NOW] Showing Rewarded Video...");
-                        IronSource.showRewardedVideo();
+                        executeDualAuctionWatchAdAndPost();
                     }
                 });
             }
@@ -309,9 +252,9 @@ public class AdTestingActivity extends AppCompatActivity {
             @Override
             public void onAdUnavailable() {
                 runOnUiThread(() -> {
-                    tvRewardedStatus.setText("UNAVAILABLE / NO FILL");
-                    tvRewardedStatus.setTextColor(Color.parseColor("#EF4444"));
-                    appendLog("🔴 [REWARDED UNAVAILABLE] LevelPlay reported no fill currently.");
+                    cachedRewardedAdInfo = null;
+                    appendLog("ℹ️ [REWARDED UNAVAILABLE] LevelPlay reported no fill for Rewarded Video currently.");
+                    updateDualAuctionStatusUi();
                 });
             }
 
@@ -330,79 +273,215 @@ public class AdTestingActivity extends AppCompatActivity {
                     dismissProgress();
                     String msg = error != null ? error.getErrorMessage() : "Show error";
                     appendLog("❌ [REWARDED SHOW FAILED] " + msg);
-                    Toast.makeText(AdTestingActivity.this, "Show Failed: " + msg, Toast.LENGTH_SHORT).show();
                 });
             }
 
             @Override
             public void onAdClicked(Placement placement, AdInfo adInfo) {
-                runOnUiThread(() -> appendLog("🖱️ [REWARDED CLICK] User clicked the rewarded ad."));
+                runOnUiThread(() -> appendLog("🖱️ [REWARDED CLICK] User clicked rewarded ad."));
             }
 
             @Override
             public void onAdRewarded(Placement placement, AdInfo adInfo) {
-                runOnUiThread(() -> {
-                    String rewardName = placement != null ? placement.getRewardName() : "Reward";
-                    int rewardAmount = placement != null ? placement.getRewardAmount() : 1;
-                    appendLog("🎁 [REWARD EARNED] User successfully completed video: " + rewardAmount + " " + rewardName);
-                    Toast.makeText(AdTestingActivity.this, "🎁 Reward Earned: " + rewardAmount + " " + rewardName, Toast.LENGTH_LONG).show();
-                });
+                runOnUiThread(() -> appendLog("🎁 [REWARD EARNED] Video reward unlocked for post publication!"));
             }
 
             @Override
             public void onAdClosed(AdInfo adInfo) {
                 runOnUiThread(() -> {
-                    appendLog("🚪 [REWARDED CLOSED] Video closed. LevelPlay automatically preloads next video.");
-                    tvRewardedStatus.setText("AUTO-CACHING NEXT VIDEO...");
-                    tvRewardedStatus.setTextColor(Color.parseColor("#FBBF24"));
+                    appendLog("🚪 [REWARDED CLOSED] Rewarded video closed. Preloading next...");
+                    updateDualAuctionStatusUi();
                 });
             }
         });
     }
 
-    private void playRewardedDirect() {
-        if (IronSource.isRewardedVideoAvailable()) {
-            appendLog("🎬 [SHOWING REWARDED] Rewarded video ready! Playing now...");
-            IronSource.showRewardedVideo();
-        } else {
-            isWaitingForRewardedToShow = true;
-            appendLog("📡 [WAITING FOR REWARDED] LevelPlay is fetching highest bid rewarded video in background...");
-            tvRewardedStatus.setText("FETCHING REWARDED AD...");
-            tvRewardedStatus.setTextColor(Color.parseColor("#FBBF24"));
-            showProgress("Fetching Rewarded Video... Please wait");
+    /**
+     * Live UI update for the Dual-Auction state
+     */
+    private void updateDualAuctionStatusUi() {
+        boolean interReady = IronSource.isInterstitialReady();
+        boolean rewReady = IronSource.isRewardedVideoAvailable();
 
-            // Check every 500ms for up to 6 seconds
-            Runnable pollRunnable = new Runnable() {
-                int attempts = 0;
-                @Override
-                public void run() {
-                    if (!isWaitingForRewardedToShow) return;
-                    if (IronSource.isRewardedVideoAvailable()) {
-                        isWaitingForRewardedToShow = false;
-                        dismissProgress();
-                        appendLog("🎬 [PLAYING NOW] Rewarded video ready! Playing now...");
-                        IronSource.showRewardedVideo();
-                    } else if (++attempts < 12) {
-                        mainHandler.postDelayed(this, 500);
-                    } else {
-                        isWaitingForRewardedToShow = false;
-                        dismissProgress();
-                        appendLog("⚠️ [REWARDED TIMEOUT] Rewarded video not ready yet.");
-                        Toast.makeText(AdTestingActivity.this, "Rewarded video not ready yet. Please try again in a few seconds.", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            };
-            mainHandler.postDelayed(pollRunnable, 500);
+        AdInfo interInfo = cachedInterstitialAdInfo != null ? cachedInterstitialAdInfo : AdManager.getInstance().getLatestInterstitialAdInfo();
+        AdInfo rewInfo = cachedRewardedAdInfo != null ? cachedRewardedAdInfo : AdManager.getInstance().getLatestRewardedAdInfo();
+
+        Double interRev = interInfo != null ? interInfo.getRevenue() : null;
+        String interNet = interInfo != null && interInfo.getAdNetwork() != null ? interInfo.getAdNetwork() : "Meta/Mediation";
+
+        Double rewRev = rewInfo != null ? rewInfo.getRevenue() : null;
+        String rewNet = rewInfo != null && rewInfo.getAdNetwork() != null ? rewInfo.getAdNetwork() : "AdMob/Unity";
+
+        // 1. Interstitial Status
+        if (interReady) {
+            String txt = "READY: " + interNet + (interRev != null ? String.format(Locale.US, " ($%.4f)", interRev) : "");
+            tvInterstitialStatus.setText("🎬 Interstitial: " + txt);
+            tvInterstitialStatus.setTextColor(Color.parseColor("#34D399"));
+        } else {
+            tvInterstitialStatus.setText("🎬 Interstitial: Preloading in background...");
+            tvInterstitialStatus.setTextColor(Color.parseColor("#FBBF24"));
+        }
+
+        // 2. Rewarded Status
+        if (rewReady) {
+            String txt = "READY: " + rewNet + (rewRev != null ? String.format(Locale.US, " ($%.4f)", rewRev) : "");
+            tvRewardedStatus.setText("🎁 Rewarded: " + txt);
+            tvRewardedStatus.setTextColor(Color.parseColor("#34D399"));
+        } else {
+            tvRewardedStatus.setText("🎁 Rewarded: Auto-caching / Unavailable");
+            tvRewardedStatus.setTextColor(Color.parseColor("#94A3B8"));
+        }
+
+        // 3. Leading Winner Badge
+        if (interReady && rewReady) {
+            double rVal = rewRev != null ? rewRev : 0.0;
+            double iVal = interRev != null ? interRev : 0.0;
+            if (iVal >= rVal) {
+                tvDualAuctionWinner.setText("🏆 HIGHEST BIDDER: " + interNet + " (Interstitial) $" + String.format(Locale.US, "%.4f", iVal));
+                tvDualAuctionWinner.setTextColor(Color.parseColor("#38BDF8"));
+            } else {
+                tvDualAuctionWinner.setText("🏆 HIGHEST BIDDER: " + rewNet + " (Rewarded) $" + String.format(Locale.US, "%.4f", rVal));
+                tvDualAuctionWinner.setTextColor(Color.parseColor("#38BDF8"));
+            }
+        } else if (interReady) {
+            tvDualAuctionWinner.setText("🏆 HIGHEST BIDDER: " + interNet + " (Interstitial" + (interRev != null ? " $" + String.format(Locale.US, "%.4f", interRev) : "") + ")");
+            tvDualAuctionWinner.setTextColor(Color.parseColor("#34D399"));
+        } else if (rewReady) {
+            tvDualAuctionWinner.setText("🏆 HIGHEST BIDDER: " + rewNet + " (Rewarded" + (rewRev != null ? " $" + String.format(Locale.US, "%.4f", rewRev) : "") + ")");
+            tvDualAuctionWinner.setTextColor(Color.parseColor("#34D399"));
+        } else {
+            tvDualAuctionWinner.setText("⏳ Running Dual Auction across all networks...");
+            tvDualAuctionWinner.setTextColor(Color.parseColor("#FBBF24"));
         }
     }
 
     // =========================================================================
-    // 3. NATIVE ADS IMPLEMENTATION
+    // DUAL-AUCTION CORE FLOW: "WATCH AD & POST"
+    // =========================================================================
+
+    private void handleWatchAdAndPostClick() {
+        appendLog("════════════════════════════════════════════");
+        appendLog("🎬 [USER ACTION] Tap 'Watch Ad & Post'");
+        appendLog("⚖️ [EVALUATING DUAL AUCTION] Comparing bids in real-time...");
+
+        boolean interReady = IronSource.isInterstitialReady();
+        boolean rewReady = IronSource.isRewardedVideoAvailable();
+
+        if (!interReady && !rewReady) {
+            appendLog("📡 Neither ad cached yet. Requesting parallel auctions...");
+            showProgress("Running Dual Auction (Meta vs AdMob vs Unity)...");
+            isWaitingForDualAdToShow = true;
+            IronSource.loadInterstitial();
+            AdManager.getInstance().preloadRewardedVideo();
+
+            // 6-second timeout safety
+            mainHandler.postDelayed(() -> {
+                if (isWaitingForDualAdToShow) {
+                    isWaitingForDualAdToShow = false;
+                    dismissProgress();
+                    appendLog("⚠️ [AUCTION TIMEOUT] Proceeding with post publish (Zero user block).");
+                    showPostPublishedDialog("Post Published (Auction Timeout)", false);
+                }
+            }, 6000);
+            return;
+        }
+
+        executeDualAuctionWatchAdAndPost();
+    }
+
+    private void executeDualAuctionWatchAdAndPost() {
+        boolean interReady = IronSource.isInterstitialReady();
+        boolean rewReady = IronSource.isRewardedVideoAvailable();
+
+        AdInfo interInfo = cachedInterstitialAdInfo != null ? cachedInterstitialAdInfo : AdManager.getInstance().getLatestInterstitialAdInfo();
+        AdInfo rewInfo = cachedRewardedAdInfo != null ? cachedRewardedAdInfo : AdManager.getInstance().getLatestRewardedAdInfo();
+
+        Double interRev = interInfo != null ? interInfo.getRevenue() : null;
+        String interNet = interInfo != null && interInfo.getAdNetwork() != null ? interInfo.getAdNetwork() : "Meta Audience Network";
+
+        Double rewRev = rewInfo != null ? rewInfo.getRevenue() : null;
+        String rewNet = rewInfo != null && rewInfo.getAdNetwork() != null ? rewInfo.getAdNetwork() : "Google AdMob / Unity";
+
+        String winnerFormat;
+        String winnerNet;
+        Double winnerRev;
+
+        if (interReady && rewReady) {
+            double rVal = rewRev != null ? rewRev : 0.0;
+            double iVal = interRev != null ? interRev : 0.0;
+            if (iVal >= rVal) {
+                winnerFormat = "Interstitial";
+                winnerNet = interNet;
+                winnerRev = interRev;
+            } else {
+                winnerFormat = "Rewarded Video";
+                winnerNet = rewNet;
+                winnerRev = rewRev;
+            }
+        } else if (interReady) {
+            winnerFormat = "Interstitial";
+            winnerNet = interNet;
+            winnerRev = interRev;
+        } else {
+            winnerFormat = "Rewarded Video";
+            winnerNet = rewNet;
+            winnerRev = rewRev;
+        }
+
+        String revStr = winnerRev != null ? String.format(Locale.US, "$%.5f", winnerRev) : "Standard Bid";
+        appendLog("🏆 [WINNER DETERMINED]");
+        appendLog("   Format:  " + winnerFormat);
+        appendLog("   Network: " + winnerNet);
+        appendLog("   eCPM:    " + revStr);
+        appendLog("▶️ Playing winning ad now...");
+
+        AdManager.getInstance().showHighestBidRewardAd(this, "dashboard_watch_ad_and_post", new AdManager.RewardedAdCallback() {
+            @Override
+            public void onRewardEarned() {
+                runOnUiThread(() -> appendLog("🎁 [REWARD EARNED] Full reward unlocked for post publication."));
+            }
+
+            @Override
+            public void onAdDismissed(boolean rewardGranted) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("🚪 [AD DISMISSED] Return to app. Post publication approved!");
+                    showPostPublishedDialog("Post Published Successfully! 🎉\n\n"
+                            + "Winner: " + winnerNet + " (" + winnerFormat + ")\n"
+                            + "Revenue: " + revStr + "\n"
+                            + "Reward Granted: " + rewardGranted, true);
+                    updateDualAuctionStatusUi();
+                });
+            }
+
+            @Override
+            public void onAdFailed(String error) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("❌ [AD FAILED] " + error + ". Publishing post fallback.");
+                    Toast.makeText(AdTestingActivity.this, "Ad playback notice: " + error, Toast.LENGTH_SHORT).show();
+                    showPostPublishedDialog("Post Published (Fallback)", false);
+                    updateDualAuctionStatusUi();
+                });
+            }
+        });
+    }
+
+    private void showPostPublishedDialog(String message, boolean isSuccess) {
+        new AlertDialog.Builder(this)
+                .setTitle(isSuccess ? "🎉 Post Published!" : "Post Status")
+                .setMessage(message)
+                .setPositiveButton("Awesome!", null)
+                .show();
+    }
+
+    // =========================================================================
+    // NATIVE AD IMPLEMENTATION
     // =========================================================================
 
     private void loadNativeAd() {
         try {
-            appendLog("📡 [REQUESTING NATIVE AD] Initializing LevelPlayNativeAd.Builder()...");
+            appendLog("📡 [REQUESTING NATIVE AD] Placement: " + AdManager.LEVELPLAY_NATIVE_ID);
             tvNativeStatus.setText("LOADING...");
             tvNativeStatus.setTextColor(Color.parseColor("#FBBF24"));
             btnLoadNative.setEnabled(false);
@@ -413,6 +492,8 @@ public class AdTestingActivity extends AppCompatActivity {
             }
 
             LevelPlayNativeAd.Builder builder = new LevelPlayNativeAd.Builder();
+            builder.withPlacementName(AdManager.LEVELPLAY_NATIVE_ID);
+            builder.withActivity(this);
             builder.withListener(new LevelPlayNativeAdListener() {
                 @Override
                 public void onAdLoaded(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
@@ -427,9 +508,8 @@ public class AdTestingActivity extends AppCompatActivity {
                         tvNativeStatus.setText("RENDERED: " + network + revText);
                         tvNativeStatus.setTextColor(Color.parseColor("#34D399"));
 
-                        appendLog("🟢 [NATIVE AD LOADED] Winner: " + network + revText);
+                        appendLog("🟢 [NATIVE LOADED] Winner: " + network + revText);
                         renderNativeAdView(nativeAd);
-                        Toast.makeText(AdTestingActivity.this, "Native Ad Rendered (" + network + ")", Toast.LENGTH_SHORT).show();
                     });
                 }
 
@@ -442,20 +522,18 @@ public class AdTestingActivity extends AppCompatActivity {
 
                         tvNativeStatus.setText("FAILED (" + code + ")");
                         tvNativeStatus.setTextColor(Color.parseColor("#EF4444"));
-
-                        appendLog("🔴 [NATIVE AD FAILED] " + msg + " [Code: " + code + "]");
-                        Toast.makeText(AdTestingActivity.this, "Native Ad Failed: " + msg, Toast.LENGTH_SHORT).show();
+                        appendLog("🔴 [NATIVE FAILED] " + msg + " (Code: " + code + ")");
                     });
                 }
 
                 @Override
                 public void onAdImpression(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
-                    runOnUiThread(() -> appendLog("👁️ [NATIVE IMPRESSION] LevelPlay Native ad impression logged."));
+                    runOnUiThread(() -> appendLog("👁️ [NATIVE IMPRESSION] Impression logged."));
                 }
 
                 @Override
                 public void onAdClicked(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
-                    runOnUiThread(() -> appendLog("🖱️ [NATIVE CLICK] User clicked the native ad."));
+                    runOnUiThread(() -> appendLog("🖱️ [NATIVE CLICK] Click logged."));
                 }
             });
 
@@ -466,17 +544,14 @@ public class AdTestingActivity extends AppCompatActivity {
             btnLoadNative.setEnabled(true);
             tvNativeStatus.setText("EXCEPTION");
             tvNativeStatus.setTextColor(Color.parseColor("#EF4444"));
-            appendLog("❌ [NATIVE EXCEPTION] " + e.getMessage());
-            Log.e(TAG, "Exception loading native ad", e);
+            appendLog("❌ [NATIVE ERROR] " + e.getMessage());
         }
     }
 
     private void renderNativeAdView(LevelPlayNativeAd nativeAd) {
         if (nativeAd == null || nativeAdContainer == null) return;
-
         try {
             nativeAdContainer.removeAllViews();
-
             NativeAdLayout nativeAdLayout = (NativeAdLayout) LayoutInflater.from(this)
                     .inflate(R.layout.layout_levelplay_native_ad, nativeAdContainer, false);
 
@@ -511,12 +586,10 @@ public class AdTestingActivity extends AppCompatActivity {
                 nativeAdLayout.setMediaView(mediaView);
             }
 
-            // Bind with LevelPlay Native Layout
             nativeAdLayout.registerNativeAdViews(nativeAd);
-
             nativeAdContainer.addView(nativeAdLayout);
             nativeAdContainer.setVisibility(View.VISIBLE);
-            appendLog("🖼️ [NATIVE BINDING] Assets bound & registered with NativeAdLayout.");
+            appendLog("🖼️ [NATIVE VIEW] Layout registered & rendered on screen.");
 
         } catch (Exception e) {
             Log.e(TAG, "Error rendering native ad", e);
@@ -525,47 +598,33 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // 4. INTEGRATION VALIDATION & TEST SUITE
+    // INTEGRATION VALIDATOR & TEST SUITE
     // =========================================================================
 
     private void runIntegrationValidator() {
-        appendLog("🩺 =========================================");
-        appendLog("🩺 [VALIDATING MEDIATION ADAPTERS & SDKs]");
-        appendLog("🩺 =========================================");
-
-        // 1. Check Meta (Facebook) Adapter & SDK
+        appendLog("🩺 [VALIDATING ADAPTERS & SDKs]");
         boolean metaSdkOk = checkClassExists("com.facebook.ads.AudienceNetworkAds");
         boolean metaAdapterOk = checkClassExists("com.ironsource.adapters.facebook.FacebookAdapter");
-        appendLog(metaSdkOk ? "  ✅ Meta SDK (AudienceNetworkAds): FOUND" : "  ❌ Meta SDK: MISSING");
-        appendLog(metaAdapterOk ? "  ✅ Meta LevelPlay Adapter (FacebookAdapter): FOUND" : "  ❌ Meta Adapter: MISSING");
+        appendLog(metaSdkOk ? "  ✅ Meta SDK: FOUND" : "  ❌ Meta SDK: MISSING");
+        appendLog(metaAdapterOk ? "  ✅ Meta Adapter (FacebookAdapter): FOUND" : "  ❌ Meta Adapter: MISSING");
 
-        // 2. Check Google AdMob Adapter & SDK
         boolean admobSdkOk = checkClassExists("com.google.android.gms.ads.MobileAds");
         boolean admobAdapterOk = checkClassExists("com.ironsource.adapters.admob.AdMobAdapter");
-        appendLog(admobSdkOk ? "  ✅ AdMob SDK (MobileAds): FOUND" : "  ❌ AdMob SDK: MISSING");
-        appendLog(admobAdapterOk ? "  ✅ AdMob LevelPlay Adapter (AdMobAdapter): FOUND" : "  ❌ AdMob Adapter: MISSING");
+        appendLog(admobSdkOk ? "  ✅ AdMob SDK: FOUND" : "  ❌ AdMob SDK: MISSING");
+        appendLog(admobAdapterOk ? "  ✅ AdMob Adapter: FOUND" : "  ❌ AdMob Adapter: MISSING");
 
-        // 3. Check Unity Ads Adapter & SDK
         boolean unitySdkOk = checkClassExists("com.unity3d.ads.UnityAds");
         boolean unityAdapterOk = checkClassExists("com.ironsource.adapters.unityads.UnityAdsAdapter");
-        appendLog(unitySdkOk ? "  ✅ Unity Ads SDK (UnityAds): FOUND" : "  ❌ Unity Ads SDK: MISSING");
-        appendLog(unityAdapterOk ? "  ✅ Unity LevelPlay Adapter (UnityAdsAdapter): FOUND" : "  ❌ Unity Adapter: MISSING");
+        appendLog(unitySdkOk ? "  ✅ Unity Ads SDK: FOUND" : "  ❌ Unity Ads SDK: MISSING");
+        appendLog(unityAdapterOk ? "  ✅ Unity Adapter: FOUND" : "  ❌ Unity Adapter: MISSING");
 
-        // 4. Check Mandatory Identifiers (GAID & AppSet)
-        boolean appsetOk = checkClassExists("com.google.android.gms.appset.AppSet");
-        boolean gaidOk = checkClassExists("com.google.android.gms.ads.identifier.AdvertisingIdClient");
-        appendLog(appsetOk ? "  ✅ Google AppSet ID Library: FOUND" : "  ⚠️ AppSet ID Library: MISSING");
-        appendLog(gaidOk ? "  ✅ Google AdvertisingId Library: FOUND" : "  ⚠️ AdvertisingId Library: MISSING");
-
-        // 5. Run official ironSource IntegrationHelper
         try {
             IntegrationHelper.validateIntegration(this);
             appendLog("🩺 [IntegrationHelper] Dispatched official LevelPlay validation.");
-            Toast.makeText(this, "Adapters Verified! All 3 adapters are compiled.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Adapters Verified! All adapters compiled.", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             appendLog("❌ [VALIDATION ERROR] " + e.getMessage());
         }
-        appendLog("🩺 =========================================");
     }
 
     private boolean checkClassExists(String className) {
@@ -577,7 +636,27 @@ public class AdTestingActivity extends AppCompatActivity {
         }
     }
 
+    private void showMetaHashInputDialog() {
+        String currentHash = getSharedPreferences("meta_ad_test", MODE_PRIVATE)
+                .getString("meta_hash_id", AdManager.META_TEST_DEVICE_HASH_ID);
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setHint("Paste Meta Test Device Hash ID");
+        input.setText(currentHash);
+        input.setPadding(dp(16), dp(12), dp(16), dp(12));
 
+        new AlertDialog.Builder(this)
+                .setTitle("Meta Test Device Hash ID")
+                .setMessage("Logcat mein tag 'AdSettings' search karke wahan se hash ID copy karke yahan paste karein:")
+                .setView(input)
+                .setPositiveButton("Save & Activate", (dialog, which) -> {
+                    String hash = input.getText().toString().trim();
+                    AdManager.setMetaTestDeviceHashId(this, hash);
+                    appendLog("📱 [META HASH SAVED] " + hash);
+                    Toast.makeText(this, "Meta Test Device Hash Activated!", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 
     // =========================================================================
     // LIFECYCLE MANAGEMENT
@@ -587,6 +666,7 @@ public class AdTestingActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         IronSource.onResume(this);
+        updateDualAuctionStatusUi();
     }
 
     @Override
@@ -606,16 +686,16 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     // =========================================================================
-    // UI BUILDER (Clean, Ultra-Modern Dark Theme with Direct Buttons)
+    // UI BUILDER (Ultra-Clean, Focused Modern Dark Theme)
     // =========================================================================
 
     private View buildDashboardUi() {
         LinearLayout root = new LinearLayout(this);
         root.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.parseColor("#0F172A")); // Deep Slate Dark
+        root.setBackgroundColor(Color.parseColor("#0F172A")); // Slate 900
 
-        // Top Bar
+        // 1. Top Bar
         LinearLayout topBar = new LinearLayout(this);
         topBar.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)));
         topBar.setOrientation(LinearLayout.HORIZONTAL);
@@ -632,7 +712,7 @@ public class AdTestingActivity extends AppCompatActivity {
         topBar.addView(btnBack);
 
         TextView tvTitle = new TextView(this);
-        tvTitle.setText("LevelPlay Bidding Ad Dashboard");
+        tvTitle.setText("Dual-Auction Ad Dashboard");
         tvTitle.setTextColor(Color.WHITE);
         tvTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 17);
         tvTitle.setTypeface(null, Typeface.BOLD);
@@ -640,7 +720,7 @@ public class AdTestingActivity extends AppCompatActivity {
 
         root.addView(topBar);
 
-        // Scrollable Content
+        // 2. Scrollable Content
         ScrollView scrollView = new ScrollView(this);
         scrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1.0f));
         scrollView.setFillViewport(true);
@@ -649,9 +729,9 @@ public class AdTestingActivity extends AppCompatActivity {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(16), dp(16), dp(16), dp(32));
 
-        // 1. SDK Status Card
+        // CARD 1: SDK Status & Tools
         LinearLayout cardStatus = createCard();
-        cardStatus.addView(createSectionHeader("Unity LevelPlay Status"));
+        cardStatus.addView(createSectionHeader("Unity LevelPlay Mediation"));
 
         LinearLayout rowSdk = new LinearLayout(this);
         rowSdk.setOrientation(LinearLayout.HORIZONTAL);
@@ -669,40 +749,54 @@ public class AdTestingActivity extends AppCompatActivity {
         cardStatus.addView(rowSdk);
 
         TextView tvNetworks = createSubText("Bidders: Google AdMob, Meta, Unity Ads, ironSource");
-        tvNetworks.setTextColor(Color.parseColor("#94A3B8"));
         cardStatus.addView(tvNetworks);
 
         Button btnValidate = createButton("🩺 Validate Adapters (IntegrationHelper)", "#3B82F6");
         btnValidate.setOnClickListener(v -> runIntegrationValidator());
         cardStatus.addView(btnValidate);
 
+        String activeEmail = TokenManager.getInstance(this).getUserEmail();
+        if (activeEmail != null && "jainmohit8120@gmail.com".equalsIgnoreCase(activeEmail.trim())) {
+            Button btnTestSuite = createButton("🚀 Launch LevelPlay Test Suite (Meta)", "#8B5CF6");
+            btnTestSuite.setOnClickListener(v -> AdManager.getInstance().launchTestSuite(this));
+            cardStatus.addView(btnTestSuite);
+
+            Button btnSetHash = createButton("📱 Set Meta Test Device Hash ID", "#0EA5E9");
+            btnSetHash.setOnClickListener(v -> showMetaHashInputDialog());
+            cardStatus.addView(btnSetHash);
+        }
         content.addView(cardStatus);
 
-        // 2. Interstitial Ad Card (1 Direct Button)
-        LinearLayout cardInterstitial = createCard();
-        cardInterstitial.addView(createSectionHeader("🎬 Interstitial Ad (Auction Winner)"));
-        tvInterstitialStatus = createStatusBadge("CHECKING...");
-        cardInterstitial.addView(tvInterstitialStatus);
+        // CARD 2: DUAL-AUCTION CORE (DIRECT BUTTON)
+        LinearLayout cardDualAuction = createCard();
+        cardDualAuction.addView(createSectionHeader("⚡ Dual-Auction Engine (Highest eCPM)"));
 
-        btnPlayInterstitial = createButton("🎬 Show LevelPlay Interstitial Ad", "#10B981");
-        btnPlayInterstitial.setOnClickListener(v -> playInterstitialDirect());
-        cardInterstitial.addView(btnPlayInterstitial);
+        TextView tvDualDesc = createSubText("Runs parallel bidding auctions across Interstitial and Rewarded formats. The network offering the highest real-time eCPM bid wins!");
+        cardDualAuction.addView(tvDualDesc);
 
-        content.addView(cardInterstitial);
+        tvDualAuctionWinner = createStatusBadge("🏆 HIGHEST BIDDER: Checking auctions...");
+        tvDualAuctionWinner.setTextColor(Color.parseColor("#38BDF8"));
+        cardDualAuction.addView(tvDualAuctionWinner);
 
-        // 3. Rewarded Video Ad Card (1 Direct Button)
-        LinearLayout cardRewarded = createCard();
-        cardRewarded.addView(createSectionHeader("🎁 Rewarded Video Ad"));
-        tvRewardedStatus = createStatusBadge("CHECKING...");
-        cardRewarded.addView(tvRewardedStatus);
+        tvInterstitialStatus = createStatusBadge("🎬 Interstitial: PRELOADING...");
+        cardDualAuction.addView(tvInterstitialStatus);
 
-        btnPlayRewarded = createButton("🎁 Show LevelPlay Rewarded Video Ad", "#F59E0B");
-        btnPlayRewarded.setOnClickListener(v -> playRewardedDirect());
-        cardRewarded.addView(btnPlayRewarded);
+        tvRewardedStatus = createStatusBadge("🎁 Rewarded: AUTO-CACHING...");
+        cardDualAuction.addView(tvRewardedStatus);
 
-        content.addView(cardRewarded);
+        // MAIN DIRECT BUTTON: "Watch Ad & Post"
+        btnWatchAdAndPost = createButton("🎬 Watch Ad & Post (Dual-Auction Winner)", "#10B981");
+        btnWatchAdAndPost.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        btnWatchAdAndPost.setOnClickListener(v -> handleWatchAdAndPostClick());
+        cardDualAuction.addView(btnWatchAdAndPost);
 
-        // 4. Native Ad Card
+        TextView tvButtonHint = createSubText("Simulates post publish: evaluates live bids, plays highest-paying ad, grants user reward, and publishes post!");
+        tvButtonHint.setPadding(0, dp(6), 0, 0);
+        cardDualAuction.addView(tvButtonHint);
+
+        content.addView(cardDualAuction);
+
+        // CARD 3: Native Ad Card
         LinearLayout cardNative = createCard();
         cardNative.addView(createSectionHeader("🖼️ LevelPlay Native Ad"));
         tvNativeStatus = createStatusBadge("NOT LOADED");
@@ -720,7 +814,7 @@ public class AdTestingActivity extends AppCompatActivity {
 
         content.addView(cardNative);
 
-        // 5. Real-Time Log Console Card
+        // CARD 4: Real-Time Console
         LinearLayout cardLogs = createCard();
         LinearLayout rowLogHeader = new LinearLayout(this);
         rowLogHeader.setOrientation(LinearLayout.HORIZONTAL);
@@ -743,15 +837,15 @@ public class AdTestingActivity extends AppCompatActivity {
         cardLogs.addView(rowLogHeader);
 
         logScrollView = new ScrollView(this);
-        logScrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
-        logScrollView.setBackgroundColor(Color.parseColor("#020617")); // Ultra dark slate
+        logScrollView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(180)));
+        logScrollView.setBackgroundColor(Color.parseColor("#020617")); // Slate 950
         logScrollView.setPadding(dp(10), dp(10), dp(10), dp(10));
 
         tvConsoleLog = new TextView(this);
         tvConsoleLog.setTextColor(Color.parseColor("#CBD5E1"));
         tvConsoleLog.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         tvConsoleLog.setTypeface(Typeface.MONOSPACE);
-        tvConsoleLog.setText("LevelPlay Bidding Console ready...\n");
+        tvConsoleLog.setText("Dual-Auction Mediation Console ready...\n");
         logScrollView.addView(tvConsoleLog);
 
         cardLogs.addView(logScrollView);
@@ -805,13 +899,13 @@ public class AdTestingActivity extends AppCompatActivity {
         tv.setTextColor(Color.parseColor("#9CA3AF"));
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         tv.setTypeface(null, Typeface.BOLD);
-        tv.setPadding(0, 0, 0, dp(12));
+        tv.setPadding(0, 0, 0, dp(6));
         return tv;
     }
 
     private Button createButton(String text, String hexColor) {
         Button btn = new Button(this);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(46));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48));
         lp.setMargins(0, dp(6), 0, 0);
         btn.setLayoutParams(lp);
         btn.setText(text);
@@ -826,8 +920,6 @@ public class AdTestingActivity extends AppCompatActivity {
 
         return btn;
     }
-
-
 
     private void appendLog(String message) {
         runOnUiThread(() -> {

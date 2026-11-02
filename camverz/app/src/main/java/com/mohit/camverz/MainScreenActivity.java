@@ -89,7 +89,7 @@ public class MainScreenActivity extends BaseActivity {
             if (!tokenManager.isLoggedIn()) {
                 intent = new Intent(this, LoginActivity.class);
             } else {
-                intent = new Intent(this, GenderSelectionActivity.class);
+                intent = new Intent(this, OnboardingActivity.class);
             }
             startActivity(intent);
             finish();
@@ -114,6 +114,9 @@ public class MainScreenActivity extends BaseActivity {
 
         // Initialize production-grade push notifications & FCM channels
         setupPushNotifications();
+
+        // Enable LevelPlay Integration Test Suite and Meta test mode if logged in as jainmohit8120@gmail.com
+        AdManager.getInstance().checkAndEnableTestSuiteForTester(this);
 
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {
@@ -394,9 +397,20 @@ public class MainScreenActivity extends BaseActivity {
         PopupMenu popup = new PopupMenu(wrapper, view);
         popup.getMenuInflater().inflate(R.menu.top_menu, popup.getMenu());
 
+        if (tokenManager != null && "jainmohit8120@gmail.com".equalsIgnoreCase(tokenManager.getUserEmail())) {
+            popup.getMenu().add(0, 9998, 0, "📊 Ad Testing Dashboard");
+            popup.getMenu().add(0, 9999, 0, "🛠️ LevelPlay Test Suite (Meta)");
+        }
+
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == R.id.action_logout) {
+            if (itemId == 9998) {
+                startActivity(new Intent(this, AdTestingActivity.class));
+                return true;
+            } else if (itemId == 9999) {
+                AdManager.getInstance().launchTestSuite(this);
+                return true;
+            } else if (itemId == R.id.action_logout) {
                 logout();
                 return true;
             } else if (itemId == R.id.action_change_language) {
@@ -506,6 +520,7 @@ public class MainScreenActivity extends BaseActivity {
         }
         checkPreferenceSelection();
         fetchActiveStories();
+        AdManager.getInstance().preloadNativeAd(this);
     }
 
     @Override
@@ -762,6 +777,9 @@ public class MainScreenActivity extends BaseActivity {
     private void showWatchAdsDialog(Runnable onPassed) {
         if (isFinishing() || isDestroyed()) return;
 
+        // Preload parallel Dual-Auction (Interstitial & Rewarded) in background immediately
+        AdManager.getInstance().preloadDualBiddingAds(this);
+
         int watched = CallLimitManager.getRewardedAdsWatched(this);
         int currentTier = CallLimitManager.getRewardedTier(this);
         String title = currentTier == 1 ? "Free Call Time Completed" : "Second Limit Completed";
@@ -774,61 +792,101 @@ public class MainScreenActivity extends BaseActivity {
             .setMessage(message)
             .setCancelable(false)
             .setPositiveButton("Watch Ad", (dialog, which) -> {
-                AdManager.getInstance().preloadRewardedVideo();
-
                 final boolean[] rewardGranted = new boolean[]{false};
 
-                AdManager.getInstance().showRewardedAd(MainScreenActivity.this, "call_limit_rewarded", new AdManager.RewardedAdCallback() {
-                    @Override
-                    public void onRewardEarned() {
-                        rewardGranted[0] = true;
-                    }
+                if (AdManager.getInstance().isDualBiddingReady()) {
+                    playCallLimitDualAd(rewardGranted, currentTier, onPassed);
+                } else {
+                    android.app.ProgressDialog progress = new android.app.ProgressDialog(MainScreenActivity.this);
+                    progress.setMessage("Loading highest-paying ad... Please wait");
+                    progress.setCancelable(false);
+                    try { progress.show(); } catch (Exception ignored) {}
 
-                    @Override
-                    public void onAdDismissed(boolean rewarded) {
-                        runOnUiThread(() -> {
-                            if (rewardGranted[0] || rewarded) {
-                                CallLimitManager.incrementRewardedAdsWatched(MainScreenActivity.this);
-                                int newWatched = CallLimitManager.getRewardedAdsWatched(MainScreenActivity.this);
-                                if (newWatched >= 3) {
-                                    int nextTier = currentTier + 1; // Tier 1 -> Tier 2, Tier 2 -> Tier 3
-                                    CallLimitManager.setRewardedTier(MainScreenActivity.this, nextTier);
-                                    CallLimitManager.addFreeSeconds(MainScreenActivity.this, 300); // 5 minutes
-                                    CallLimitManager.resetRewardedAdsWatched(MainScreenActivity.this);
+                    AdManager.getInstance().preloadDualBiddingAds(MainScreenActivity.this);
 
-                                    new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
-                                        .setTitle("Call Time Unlocked! 🎉")
-                                        .setMessage(currentTier == 1 
-                                            ? "Badhai ho! Aapko agle 5 minute ka call time mil gaya hai. Aap calling jari rakh sakte hain." 
-                                            : "Badhai ho! Aapko iss session ka aakhri 5 minute call time mil gaya hai. Aap calling jari rakh sakte hain.")
-                                        .setPositiveButton("Start Calling", (d, w) -> onPassed.run())
-                                        .show();
-                                } else {
-                                    Toast.makeText(MainScreenActivity.this, "Ad watched! (" + newWatched + "/3)", Toast.LENGTH_SHORT).show();
-                                    showWatchAdsDialog(onPassed);
-                                }
-                            } else {
-                                new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
-                                    .setTitle("Ad Incomplete ⚠️")
-                                    .setMessage("Aapne video ad poora nahi dekha ya beech me band kar diya! Call time paane ke liye poora ad dekhna anivarya hai. Ye ad count nahi hua.")
-                                    .setPositiveButton("Try Again", (d, w) -> showWatchAdsDialog(onPassed))
-                                    .setNegativeButton("Cancel", null)
-                                    .show();
+                    final android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+                    final Runnable[] checkRunnable = new Runnable[1];
+                    final int[] attempts = new int[]{0};
+
+                    checkRunnable[0] = new Runnable() {
+                        @Override
+                        public void run() {
+                            if (isFinishing() || isDestroyed()) {
+                                try { progress.dismiss(); } catch (Exception ignored) {}
+                                return;
                             }
-                        });
-                    }
-
-                    @Override
-                    public void onAdFailed(String reason) {
-                        runOnUiThread(() -> {
-                            Toast.makeText(MainScreenActivity.this, "Video ad load ho raha hai, kripya kuch second baad punah koshish karein.", Toast.LENGTH_SHORT).show();
-                            showWatchAdsDialog(onPassed);
-                        });
-                    }
-                });
+                            if (AdManager.getInstance().isDualBiddingReady()) {
+                                try { progress.dismiss(); } catch (Exception ignored) {}
+                                playCallLimitDualAd(rewardGranted, currentTier, onPassed);
+                            } else if (++attempts[0] < 12) { // 3 seconds timeout (12 * 250ms)
+                                handler.postDelayed(this, 250);
+                            } else {
+                                try { progress.dismiss(); } catch (Exception ignored) {}
+                                Toast.makeText(MainScreenActivity.this, "Ad load ho raha hai, kripya 2 second baad punah koshish karein.", Toast.LENGTH_SHORT).show();
+                                showWatchAdsDialog(onPassed);
+                            }
+                        }
+                    };
+                    handler.postDelayed(checkRunnable[0], 250);
+                }
             })
             .setNegativeButton("Cancel", null)
             .show();
+    }
+
+    private void playCallLimitDualAd(boolean[] rewardGranted, int currentTier, Runnable onPassed) {
+        AdManager.getInstance().showRewardedAd(MainScreenActivity.this, "call_limit_rewarded", new AdManager.RewardedAdCallback() {
+            @Override
+            public void onRewardEarned() {
+                rewardGranted[0] = true;
+            }
+
+            @Override
+            public void onAdDismissed(boolean rewarded) {
+                runOnUiThread(() -> {
+                    // Preload immediately for the NEXT ad (2/3 or 3/3)
+                    AdManager.getInstance().preloadDualBiddingAds(MainScreenActivity.this);
+
+                    if (rewardGranted[0] || rewarded) {
+                        CallLimitManager.incrementRewardedAdsWatched(MainScreenActivity.this);
+                        int newWatched = CallLimitManager.getRewardedAdsWatched(MainScreenActivity.this);
+                        if (newWatched >= 3) {
+                            int nextTier = currentTier + 1; // Tier 1 -> Tier 2, Tier 2 -> Tier 3
+                            CallLimitManager.setRewardedTier(MainScreenActivity.this, nextTier);
+                            CallLimitManager.addFreeSeconds(MainScreenActivity.this, 300); // 5 minutes
+                            CallLimitManager.resetRewardedAdsWatched(MainScreenActivity.this);
+
+                            new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
+                                .setTitle("Call Time Unlocked! 🎉")
+                                .setMessage(currentTier == 1 
+                                    ? "Badhai ho! Aapko agle 5 minute ka call time mil gaya hai. Aap calling jari rakh sakte hain." 
+                                    : "Badhai ho! Aapko iss session ka aakhri 5 minute call time mil gaya hai. Aap calling jari rakh sakte hain.")
+                                .setPositiveButton("Start Calling", (d, w) -> onPassed.run())
+                                .show();
+                        } else {
+                            Toast.makeText(MainScreenActivity.this, "Ad watched! (" + newWatched + "/3)", Toast.LENGTH_SHORT).show();
+                            showWatchAdsDialog(onPassed);
+                        }
+                    } else {
+                        new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
+                            .setTitle("Ad Incomplete ⚠️")
+                            .setMessage("Aapne video ad poora nahi dekha ya beech me band kar diya! Call time paane ke liye poora ad dekhna anivarya hai. Ye ad count nahi hua.")
+                            .setPositiveButton("Try Again", (d, w) -> showWatchAdsDialog(onPassed))
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                    }
+                });
+            }
+
+            @Override
+            public void onAdFailed(String reason) {
+                runOnUiThread(() -> {
+                    AdManager.getInstance().preloadDualBiddingAds(MainScreenActivity.this);
+                    Toast.makeText(MainScreenActivity.this, "Video ad load ho raha hai, kripya kuch second baad punah koshish karein.", Toast.LENGTH_SHORT).show();
+                    showWatchAdsDialog(onPassed);
+                });
+            }
+        });
     }
 
     private void fetchActiveStories() {

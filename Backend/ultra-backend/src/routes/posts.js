@@ -103,7 +103,7 @@ router.post("/", async (req, res) => {
     // Delete expired posts physically from the database before checking cooldown
     await query("DELETE FROM posts WHERE expiry_at <= NOW()");
 
-    // 7 minutes cooldown check using PostgreSQL NOW() and INTERVAL (fully timezone independent)
+    // 1 minute cooldown check using PostgreSQL NOW() and INTERVAL (fully timezone independent)
     const lastPost = await queryOne(
       `SELECT EXTRACT(EPOCH FROM (NOW() - created_at)) AS elapsed_seconds 
        FROM posts 
@@ -114,15 +114,15 @@ router.post("/", async (req, res) => {
     
     if (lastPost && lastPost.elapsed_seconds !== null) {
       const elapsedSeconds = parseFloat(lastPost.elapsed_seconds);
-      const cooldownSeconds = 7 * 60; // 420 seconds
+      const cooldownSeconds = 60; // 1 minute (60 seconds)
       if (elapsedSeconds < cooldownSeconds) {
-        const remainingMin = Math.ceil((cooldownSeconds - elapsedSeconds) / 60);
-        return res.status(429).json({ error: `You can only post once every 7 minutes. Please wait ${remainingMin} more minutes.` });
+        const remainingSec = Math.ceil(cooldownSeconds - elapsedSeconds);
+        return res.status(429).json({ error: `You can only post once every 1 minute. Please wait ${remainingSec} more seconds.` });
       }
     }
 
-    // 7 minutes expiry
-    const expiryAt = new Date(Date.now() + 7 * 60 * 1000);
+    // 1 day (24 hours) expiry
+    const expiryAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const normalizedCategory = (category || "all").toLowerCase().trim();
 

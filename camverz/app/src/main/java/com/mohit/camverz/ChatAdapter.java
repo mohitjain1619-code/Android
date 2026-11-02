@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -114,13 +115,80 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         }
     }
 
+    public interface OnMessageDeleteListener {
+        void onDeleteMessage(Message message, int position, boolean forEveryone);
+    }
+
+    private OnMessageDeleteListener onMessageDeleteListener;
+
+    public void setOnMessageDeleteListener(OnMessageDeleteListener listener) {
+        this.onMessageDeleteListener = listener;
+    }
+
     private void showDeleteDialog(final Message message, final int position) {
-        // Individual message deletion is currently not supported by the backend API.
-        // Alert the user.
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(context.getString(R.string.delete_message_title));
-        builder.setMessage(context.getString(R.string.delete_message_not_supported));
-        builder.setPositiveButton(context.getString(R.string.ok), (dialog, which) -> dialog.dismiss());
-        builder.show();
+        if (context == null || message == null) return;
+
+        try {
+            com.google.android.material.bottomsheet.BottomSheetDialog bottomSheetDialog =
+                    new com.google.android.material.bottomsheet.BottomSheetDialog(context);
+            View sheetView = LayoutInflater.from(context).inflate(R.layout.dialog_delete_message_bottomsheet, null);
+            bottomSheetDialog.setContentView(sheetView);
+
+            // Make background transparent so custom top rounded corners show properly
+            if (bottomSheetDialog.getWindow() != null) {
+                View designBottomSheet = bottomSheetDialog.getWindow().findViewById(com.google.android.material.R.id.design_bottom_sheet);
+                if (designBottomSheet != null) {
+                    designBottomSheet.setBackgroundResource(android.R.color.transparent);
+                }
+            }
+
+            View btnDeleteForEveryone = sheetView.findViewById(R.id.btn_delete_for_everyone);
+            View btnDeleteForMe = sheetView.findViewById(R.id.btn_delete_for_me);
+            TextView tvDeleteForMeTitle = sheetView.findViewById(R.id.tv_delete_for_me_title);
+            ImageView ivDeleteForMeIcon = sheetView.findViewById(R.id.iv_delete_for_me_icon);
+            View btnCancelDelete = sheetView.findViewById(R.id.btn_cancel_delete);
+
+            String currentUserId = tokenManager.getUserId();
+            boolean isMe = currentUserId != null && currentUserId.equals(message.getSenderId());
+
+            if (isMe) {
+                btnDeleteForEveryone.setVisibility(View.VISIBLE);
+                if (tvDeleteForMeTitle != null) {
+                    tvDeleteForMeTitle.setTextColor(android.graphics.Color.parseColor("#F1F5F9"));
+                }
+                if (ivDeleteForMeIcon != null) {
+                    ivDeleteForMeIcon.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#CBD5E1")));
+                }
+            } else {
+                // For received message, only Delete for Me is available
+                btnDeleteForEveryone.setVisibility(View.GONE);
+                if (tvDeleteForMeTitle != null) {
+                    tvDeleteForMeTitle.setTextColor(android.graphics.Color.parseColor("#FF4B72"));
+                }
+                if (ivDeleteForMeIcon != null) {
+                    ivDeleteForMeIcon.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF4B72")));
+                }
+            }
+
+            btnDeleteForEveryone.setOnClickListener(v -> {
+                bottomSheetDialog.dismiss();
+                if (onMessageDeleteListener != null) {
+                    onMessageDeleteListener.onDeleteMessage(message, position, true);
+                }
+            });
+
+            btnDeleteForMe.setOnClickListener(v -> {
+                bottomSheetDialog.dismiss();
+                if (onMessageDeleteListener != null) {
+                    onMessageDeleteListener.onDeleteMessage(message, position, false);
+                }
+            });
+
+            btnCancelDelete.setOnClickListener(v -> bottomSheetDialog.dismiss());
+
+            bottomSheetDialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

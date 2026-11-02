@@ -78,7 +78,13 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
                 }
             }
 
-            // 2. CALL SUPPRESSION CHECK: If user is already inside a live call
+            // 2. CALL SUPPRESSION & CANCELLATION CHECK
+            if ("call_cancelled".equalsIgnoreCase(type) || "call_ended".equalsIgnoreCase(type)) {
+                Log.d(TAG, "Incoming call cancelled/ended push received. Cancelling notification banner.");
+                NotificationHelper.cancelIncomingCallNotification(this);
+                return;
+            }
+
             if ("call".equalsIgnoreCase(type) && isCallScreenActive) {
                 Log.d(TAG, "User currently in an active call. Suppressing incoming call push.");
                 return;
@@ -89,7 +95,9 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
 
             // Build Target Deep Link Intent
             Intent intent = createTargetIntent(type, data);
-            int notificationId = notificationCounter.incrementAndGet();
+            int notificationId = "call".equalsIgnoreCase(type)
+                    ? NotificationHelper.INCOMING_CALL_NOTIFICATION_ID
+                    : notificationCounter.incrementAndGet();
 
             PendingIntent pendingIntent = PendingIntent.getActivity(
                     this,
@@ -137,7 +145,6 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
                 if (soundUri != null) {
                     builder.setSound(soundUri);
                 }
-                builder.setOngoing(true);
                 builder.setVibrate(new long[]{0, 800, 300, 800, 300, 800});
                 builder.setFullScreenIntent(pendingIntent, true);
             }
@@ -196,24 +203,53 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
         Intent intent;
         if ("chat".equalsIgnoreCase(type)) {
             intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("targetUserId", data.get("targetUserId"));
-            intent.putExtra("targetUserName", data.get("targetUserName"));
-            intent.putExtra("targetUserAvatar", data.get("targetUserAvatar"));
-            intent.putExtra("chatId", data.get("chatId"));
+            String uid = data.containsKey("userId") ? data.get("userId") : data.get("targetUserId");
+            if (uid == null) uid = data.get("senderId");
+            String name = data.containsKey("userName") ? data.get("userName") : data.get("targetUserName");
+            if (name == null) name = data.get("senderName");
+            String avatar = data.containsKey("userAvatar") ? data.get("userAvatar") : data.get("targetUserAvatar");
+            if (avatar == null) avatar = data.get("senderAvatar");
+            String chatId = data.get("chatId");
+
+            intent.putExtra("userId", uid);
+            intent.putExtra("targetUserId", uid);
+            intent.putExtra("userName", name);
+            intent.putExtra("targetUserName", name);
+            intent.putExtra("userAvatar", avatar);
+            intent.putExtra("targetUserAvatar", avatar);
+            intent.putExtra("chatId", chatId);
         } else if ("call".equalsIgnoreCase(type)) {
             intent = new Intent(this, CallActivity.class);
-            intent.putExtra("targetUserId", data.get("callerId"));
-            intent.putExtra("targetUserName", data.get("callerName"));
-            intent.putExtra("targetUserAvatar", data.get("callerAvatar"));
-            intent.putExtra("isVideoCall", Boolean.parseBoolean(data.get("isVideo")));
+            String callerId = data.containsKey("callerId") ? data.get("callerId") : data.get("targetUserId");
+            if (callerId == null) callerId = data.get("peer");
+            String callerName = data.containsKey("callerName") ? data.get("callerName") : data.get("targetUserName");
+            String callerAvatar = data.containsKey("callerAvatar") ? data.get("callerAvatar") : data.get("targetUserAvatar");
+            String room = data.containsKey("roomName") ? data.get("roomName") : data.get("room");
+            boolean isVideo = true;
+            if (data.containsKey("isVideo")) isVideo = Boolean.parseBoolean(data.get("isVideo"));
+            if (data.containsKey("isVideoCall")) isVideo = Boolean.parseBoolean(data.get("isVideoCall"));
+
+            intent.putExtra("peer", callerId);
+            intent.putExtra("callerId", callerId);
+            intent.putExtra("targetUserId", callerId);
+            intent.putExtra("peerName", callerName);
+            intent.putExtra("callerName", callerName);
+            intent.putExtra("targetUserName", callerName);
+            intent.putExtra("peerAvatar", callerAvatar);
+            intent.putExtra("callerAvatar", callerAvatar);
+            intent.putExtra("targetUserAvatar", callerAvatar);
+            intent.putExtra("isVideoCall", isVideo);
             intent.putExtra("isCaller", false);
             intent.putExtra("isPrivateCall", true);
-            intent.putExtra("roomName", data.get("roomName"));
+            intent.putExtra("roomName", room);
         } else if ("realmeet_request".equalsIgnoreCase(type) || "realmeet_accepted".equalsIgnoreCase(type)) {
             intent = new Intent(this, RealMeetActivity.class);
         } else if ("friend_request".equalsIgnoreCase(type)) {
             intent = new Intent(this, ProfileActivity.class);
-            intent.putExtra("targetUserId", data.get("fromUserId"));
+            String fromUserId = data.get("fromUserId");
+            if (fromUserId == null) fromUserId = data.get("triggeringUserId");
+            intent.putExtra("userId", fromUserId);
+            intent.putExtra("targetUserId", fromUserId);
         } else {
             // General / Social / Marketing default opens Main Screen
             intent = new Intent(this, MainScreenActivity.class);

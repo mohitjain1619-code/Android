@@ -522,4 +522,28 @@ You can only post 1 Party event per day. Would you like to replace your previous
     <string name="update_dialog_message">A newer version of Camverz is available on Google Play with latest features and performance improvements. Please update to continue.</string>
     <string name="update_dialog_btn_update">Update Now</string>
     <string name="update_dialog_btn_later">Later</string>
+
+    <!-- Single-Page Unified Onboarding -->
+    <string name="onboarding_time_badge">⏱️ It will take only 1 min.</string>
+    <string name="onboarding_complete_profile">Complete Your Profile</string>
+    <string name="onboarding_subtitle">Just 1 minute to setup your profile and start meeting real people</string>
+    <string name="onboarding_name_label">Full Name</string>
+    <string name="onboarding_enter_name">Enter your name</string>
+    <string name="onboarding_gender_label">Select Gender</string>
+    <string name="onboarding_gender_male">Male</string>
+    <string name="onboarding_gender_female">Female</string>
+    <string name="onboarding_city_label">Your City</string>
+    <string name="onboarding_city_hint">Enter city or auto-detect</string>
+    <string name="onboarding_auto_detect">Auto Detect</string>
+    <string name="onboarding_detecting_location">Detecting GPS…</string>
+    <string name="onboarding_birthday_label">Date of Birth (18+)</string>
+    <string name="onboarding_birthday_hint">Select Date of Birth</string>
+    <string name="onboarding_age_years">%d years old</string>
+    <string name="onboarding_age_warning">Must be 18+ to join</string>
+    <string name="onboarding_btn_start">Start Camverz 🚀</string>
+    <string name="onboarding_saving">Saving Profile…</string>
+    <string name="onboarding_error_name">Please enter your name</string>
+    <string name="onboarding_error_gender">Please select your gender</string>
+    <string name="onboarding_error_city">Please enter or detect your city</string>
+    <string name="onboarding_error_dob">Please select your birth date (18+ required)</string>
 </resources>

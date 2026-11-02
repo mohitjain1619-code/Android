@@ -51,30 +51,13 @@ public class BaseActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (isAdShowing) {
+                if (isAdShowing || AdManager.getInstance().isAdWatchPending(BaseActivity.this)) {
                     Log.d(TAG, "🚫 Back press blocked because an ad is currently playing.");
                     return;
                 }
-                setEnabled(false);
-                getOnBackPressedDispatcher().onBackPressed();
+                finish();
             }
         });
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            try {
-                getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
-                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
-                    () -> {
-                        if (isAdShowing) {
-                            Log.d(TAG, "🚫 Predictive back gesture blocked in BaseActivity (isAdShowing = true)");
-                            return;
-                        }
-                    }
-                );
-            } catch (Exception e) {
-                Log.e(TAG, "Error registering OnBackInvokedCallback in BaseActivity", e);
-            }
-        }
 
         try {
             // Enable edge-to-edge window insets

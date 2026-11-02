@@ -274,7 +274,8 @@ public class ConnectingActivity extends BaseActivity {
             if (isFinishing() || isDestroyed()) return;
             transitionToCall(peerId, peerName, peerAvatar);
         };
-        countdownHandler.postDelayed(countdownRunnable, 300);
+        // 1.5s delay gives enough time for match state feedback and for native ad impression to register
+        countdownHandler.postDelayed(countdownRunnable, 1500);
     }
 
     private void transitionToCall(String peerId, String peerName, String peerAvatar) {
@@ -295,19 +296,40 @@ public class ConnectingActivity extends BaseActivity {
     // =========================================================================
 
     private void loadBiddingNativeAd() {
-        try {
-            if (levelPlayNativeAd != null) {
-                levelPlayNativeAd.destroyAd();
-                levelPlayNativeAd = null;
-            }
+        if (isFinishing() || isDestroyed()) return;
 
-            Log.d(TAG, "📡 Requesting LevelPlay Bidding Native Ad...");
+        if (tokenManager != null && tokenManager.isVideoCallAdFree()) {
+            Log.d(TAG, "User has video call ad-free pass. Skipping native ad.");
+            if (nativeAdContainer != null) {
+                nativeAdContainer.setVisibility(View.GONE);
+            }
+            return;
+        }
+
+        // 1. Check if AdManager already has a preloaded Native Ad cached in memory
+        LevelPlayNativeAd cached = AdManager.getInstance().consumePreloadedNativeAd();
+        if (cached != null) {
+            Log.d(TAG, "⚡ [LEVELPLAY INSTANT] Using Preloaded Native Ad from memory cache (0ms latency)!");
+            destroyNativeAd();
+            levelPlayNativeAd = cached;
+            renderNativeAdView(cached);
+            // Preload next one in background
+            AdManager.getInstance().preloadNativeAd(this);
+            return;
+        }
+
+        try {
+            destroyNativeAd();
+
+            Log.d(TAG, "📡 [LEVELPLAY] Requesting Bidding Native Ad (Placement: " + AdManager.LEVELPLAY_NATIVE_ID + ")...");
             LevelPlayNativeAd.Builder builder = new LevelPlayNativeAd.Builder();
+            builder.withPlacementName(AdManager.LEVELPLAY_NATIVE_ID);
+            builder.withActivity(this);
             builder.withListener(new LevelPlayNativeAdListener() {
                 @Override
                 public void onAdLoaded(LevelPlayNativeAd nativeAd, AdInfo adInfo) {
                     runOnUiThread(() -> {
-                        if (isFinishing() || isDestroyed() || !isWaiting) {
+                        if (isFinishing() || isDestroyed()) {
                             if (nativeAd != null) {
                                 nativeAd.destroyAd();
                             }
@@ -315,7 +337,7 @@ public class ConnectingActivity extends BaseActivity {
                         }
                         levelPlayNativeAd = nativeAd;
                         String network = adInfo != null && adInfo.getAdNetwork() != null ? adInfo.getAdNetwork() : "Bidding Winner";
-                        Log.d(TAG, "🟢 LevelPlay Bidding Native Ad Loaded! Winner: " + network);
+                        Log.d(TAG, "🟢 [LEVELPLAY NATIVE LOADED] Winner: " + network);
                         renderNativeAdView(nativeAd);
                     });
                 }
@@ -325,7 +347,7 @@ public class ConnectingActivity extends BaseActivity {
                     runOnUiThread(() -> {
                         String msg = error != null ? error.getErrorMessage() : "Unknown error";
                         int code = error != null ? error.getErrorCode() : -1;
-                        Log.w(TAG, "🔴 LevelPlay Bidding Native Ad Failed: " + msg + " [Code: " + code + "]");
+                        Log.w(TAG, "🔴 [LEVELPLAY NATIVE FAILED] " + msg + " [Code: " + code + "]");
                         if (nativeAdContainer != null) {
                             nativeAdContainer.setVisibility(View.GONE);
                         }
@@ -347,6 +369,9 @@ public class ConnectingActivity extends BaseActivity {
             levelPlayNativeAd.loadAd();
         } catch (Exception e) {
             Log.e(TAG, "Exception initializing LevelPlay Native Ad", e);
+            if (nativeAdContainer != null) {
+                nativeAdContainer.setVisibility(View.GONE);
+            }
         }
     }
 

@@ -218,6 +218,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         builder.setCancelable(false);
         
         builder.setPositiveButton("Accept", (dialog, which) -> {
+            NotificationHelper.cancelIncomingCallNotification(appContext != null ? appContext : currentActivity);
             // Verify call is still valid before accepting
             if (!CallManager.isIncomingCallPending() || pendingCallerId == null) {
                 Log.w(TAG, "Call was already cancelled, not opening CallActivity");
@@ -241,6 +242,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         });
         
         builder.setNegativeButton("Reject", (dialog, which) -> {
+            NotificationHelper.cancelIncomingCallNotification(appContext != null ? appContext : currentActivity);
             rejectPendingCall();
         });
 
@@ -292,6 +294,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
     }
 
     private void dismissIncomingDialog() {
+        NotificationHelper.cancelIncomingCallNotification(appContext);
         if (currentIncomingDialog != null && currentIncomingDialog.isShowing()) {
             try {
                 currentIncomingDialog.dismiss();

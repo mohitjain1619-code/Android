@@ -15,9 +15,9 @@ router.get("/", async (req, res) => {
       `SELECT c.*,
               CASE WHEN c.user1_id = $1 THEN c.user2_id ELSE c.user1_id END as other_user_id,
               CASE WHEN c.user1_id = $1 THEN c.user1_deleted ELSE c.user2_deleted END as deleted_by_me,
-              (SELECT COUNT(*) FROM messages m WHERE m.chat_id = c.id AND m.sender_id != $1 AND m.read = false) as unread_count,
-              (SELECT m.text FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) as last_message,
-              (SELECT m.created_at FROM messages m WHERE m.chat_id = c.id ORDER BY m.created_at DESC LIMIT 1) as last_message_at
+              (SELECT COUNT(*) FROM messages m WHERE m.chat_id = c.id AND m.sender_id != $1 AND m.read = false AND NOT ($1 = ANY(COALESCE(m.deleted_for, '{}')))) as unread_count,
+              (SELECT m.text FROM messages m WHERE m.chat_id = c.id AND NOT ($1 = ANY(COALESCE(m.deleted_for, '{}'))) ORDER BY m.created_at DESC LIMIT 1) as last_message,
+              (SELECT m.created_at FROM messages m WHERE m.chat_id = c.id AND NOT ($1 = ANY(COALESCE(m.deleted_for, '{}'))) ORDER BY m.created_at DESC LIMIT 1) as last_message_at
        FROM chats c
        WHERE (c.user1_id = $1 OR c.user2_id = $1)
          AND CASE WHEN c.user1_id = $1 THEN c.user1_deleted ELSE c.user2_deleted END = false
@@ -79,12 +79,12 @@ router.get("/:id/messages", async (req, res) => {
       SELECT m.*, u.name as sender_name, u.avatar as sender_avatar
       FROM messages m
       JOIN users u ON u.id = m.sender_id
-      WHERE m.chat_id = $1
+      WHERE m.chat_id = $1 AND NOT ($2 = ANY(COALESCE(m.deleted_for, '{}')))
     `;
-    const params = [resolvedChatId];
+    const params = [resolvedChatId, req.user.userId];
 
     if (before) {
-      sql += ` AND m.created_at < $2`;
+      sql += ` AND m.created_at < $3`;
       params.push(before);
     }
 
@@ -251,6 +251,93 @@ router.put("/:id/read", async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     console.error("Mark read error:", err);
+    return res.status(500).json({ error: "Internal error" });
+  }
+});
+
+// ============================================
+// DELETE /chats/messages/:messageId — Delete single message
+// Query / Body: ?forEveryone=true|false
+// ============================================
+router.delete("/messages/:messageId", async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const forEveryone = req.query.forEveryone === "true" || req.body?.forEveryone === true;
+
+    // Retrieve message along with chat participants
+    const message = await queryOne(
+      `SELECT m.*, c.user1_id, c.user2_id 
+       FROM messages m 
+       JOIN chats c ON c.id = m.chat_id 
+       WHERE m.id = $1`,
+      [messageId]
+    );
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    // Verify user is a participant of the chat
+    if (message.user1_id !== req.user.userId && message.user2_id !== req.user.userId) {
+      return res.status(403).json({ error: "Unauthorized to access this message" });
+    }
+
+    const otherUserId = message.user1_id === req.user.userId ? message.user2_id : message.user1_id;
+
+    if (forEveryone) {
+      // "Delete for everyone": Only the sender can unsend
+      if (message.sender_id !== req.user.userId) {
+        return res.status(403).json({ error: "You can only delete your own messages for everyone" });
+      }
+
+      await query("DELETE FROM messages WHERE id = $1", [messageId]);
+
+      // Emit real-time socket event to both users
+      try {
+        const io = req.app.get("io");
+        const redisModule = req.app.get("redisModule");
+        if (io && redisModule) {
+          const payload = {
+            messageId: message.id,
+            chatId: message.chat_id,
+            forEveryone: true,
+          };
+          const targetSocket = await redisModule.getUserSocket(otherUserId);
+          if (targetSocket) {
+            io.to(targetSocket).emit("message_deleted", payload);
+          }
+          const mySocket = await redisModule.getUserSocket(req.user.userId);
+          if (mySocket) {
+            io.to(mySocket).emit("message_deleted", payload);
+          }
+        }
+      } catch (sockErr) {
+        console.error("Socket emit error for message_deleted:", sockErr);
+      }
+
+      return res.json({ ok: true, messageId: message.id, forEveryone: true });
+    } else {
+      // "Delete for me": Soft-delete for the requesting user only
+      await query(
+        `UPDATE messages 
+         SET deleted_for = array_append(COALESCE(deleted_for, '{}'), $1::uuid) 
+         WHERE id = $2 AND NOT ($1::uuid = ANY(COALESCE(deleted_for, '{}')))`,
+        [req.user.userId, messageId]
+      );
+
+      // If both participants deleted the message for themselves, permanently purge it
+      await query(
+        `DELETE FROM messages 
+         WHERE id = $1 
+           AND $2::uuid = ANY(COALESCE(deleted_for, '{}')) 
+           AND $3::uuid = ANY(COALESCE(deleted_for, '{}'))`,
+        [messageId, message.user1_id, message.user2_id]
+      );
+
+      return res.json({ ok: true, messageId: message.id, forEveryone: false });
+    }
+  } catch (err) {
+    console.error("Delete message error:", err);
     return res.status(500).json({ error: "Internal error" });
   }
 });

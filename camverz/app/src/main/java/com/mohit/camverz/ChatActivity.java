@@ -75,8 +75,28 @@ public class ChatActivity extends BaseActivity {
         
         chatId = getIntent().getStringExtra("chatId");
         receiverId = getIntent().getStringExtra("userId");
+        if (receiverId == null || receiverId.isEmpty()) {
+            receiverId = getIntent().getStringExtra("targetUserId");
+        }
+        if (receiverId == null || receiverId.isEmpty()) {
+            receiverId = getIntent().getStringExtra("senderId");
+        }
+
         receiverName = getIntent().getStringExtra("userName");
+        if (receiverName == null || receiverName.isEmpty()) {
+            receiverName = getIntent().getStringExtra("targetUserName");
+        }
+        if (receiverName == null || receiverName.isEmpty()) {
+            receiverName = getIntent().getStringExtra("senderName");
+        }
+
         receiverAvatar = getIntent().getStringExtra("userAvatar");
+        if (receiverAvatar == null || receiverAvatar.isEmpty()) {
+            receiverAvatar = getIntent().getStringExtra("targetUserAvatar");
+        }
+        if (receiverAvatar == null || receiverAvatar.isEmpty()) {
+            receiverAvatar = getIntent().getStringExtra("senderAvatar");
+        }
         String receiverPhotoUrl = getIntent().getStringExtra("userPhotoUrl");
 
         View toolbar = findViewById(R.id.toolbar);
@@ -178,6 +198,9 @@ public class ChatActivity extends BaseActivity {
 
         messages = new ArrayList<>();
         chatAdapter = new ChatAdapter(this, messages, receiverAvatar, receiverPhotoUrl);
+        chatAdapter.setOnMessageDeleteListener((message, position, forEveryone) -> {
+            performDeleteMessage(message, position, forEveryone);
+        });
         recyclerView.setAdapter(chatAdapter);
 
         setupSocket();
@@ -226,6 +249,20 @@ public class ChatActivity extends BaseActivity {
                 }
             } catch (JSONException e) {
                 Log.e(TAG, "Error handling new_message event", e);
+            }
+        });
+
+        socket.on("message_deleted", args -> {
+            try {
+                JSONObject data = (JSONObject) args[0];
+                String deletedMsgId = data.getString("messageId");
+                String msgChatId = data.has("chatId") ? data.getString("chatId") : null;
+                if (chatId != null && msgChatId != null && !chatId.equals(msgChatId)) {
+                    return;
+                }
+                runOnUiThread(() -> removeMessageById(deletedMsgId));
+            } catch (JSONException e) {
+                Log.e(TAG, "Error handling message_deleted socket event", e);
             }
         });
     }
@@ -459,7 +496,46 @@ public class ChatActivity extends BaseActivity {
         }
     }
     
-    // deleteMessage methods omitted for brevity, can be added later if needed via API
+    private void performDeleteMessage(Message message, int position, boolean forEveryone) {
+        if (message == null || message.getMessageId() == null || message.getMessageId().isEmpty()) {
+            Toast.makeText(this, "Message identifier not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        api.deleteMessage(message.getMessageId(), forEveryone).enqueue(new Callback<JsonObject>() {
+            @Override
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    JsonObject data = response.body();
+                    if (data.has("ok") && data.get("ok").getAsBoolean()) {
+                        removeMessageById(message.getMessageId());
+                        Toast.makeText(ChatActivity.this,
+                                forEveryone ? "Message deleted for everyone" : "Message deleted for you",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                Toast.makeText(ChatActivity.this, "Failed to delete message", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Call<JsonObject> call, Throwable t) {
+                Log.e(TAG, "deleteMessage network failure", t);
+                Toast.makeText(ChatActivity.this, getString(R.string.network_error), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void removeMessageById(String messageId) {
+        if (messageId == null || messages == null || messages.isEmpty()) return;
+        for (int i = 0; i < messages.size(); i++) {
+            if (messageId.equals(messages.get(i).getMessageId())) {
+                messages.remove(i);
+                chatAdapter.notifyItemRemoved(i);
+                break;
+            }
+        }
+    }
 
     private void navigateToProfileDirectly() {
         Intent intent = new Intent(ChatActivity.this, ProfileActivity.class);
@@ -485,6 +561,7 @@ public class ChatActivity extends BaseActivity {
             ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
         }
         socket.off("new_message");
+        socket.off("message_deleted");
     }
 
 }

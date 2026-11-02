@@ -22,6 +22,8 @@ public class NotificationHelper {
     public static final String CHANNEL_SOCIAL = "camverz_social";
     public static final String CHANNEL_MARKETING = "camverz_marketing";
 
+    public static final int INCOMING_CALL_NOTIFICATION_ID = 8888;
+
     public static void createNotificationChannels(Context context) {
         if (context == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return;
@@ -94,6 +96,32 @@ public class NotificationHelper {
             Log.d(TAG, "✅ All 4 Camverz Notification Channels initialized successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error creating notification channels", e);
+        }
+    }
+
+    public static void cancelIncomingCallNotification(Context context) {
+        if (context == null) return;
+        try {
+            androidx.core.app.NotificationManagerCompat manager = androidx.core.app.NotificationManagerCompat.from(context);
+            manager.cancel(INCOMING_CALL_NOTIFICATION_ID);
+
+            NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(INCOMING_CALL_NOTIFICATION_ID);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    android.service.notification.StatusBarNotification[] active = nm.getActiveNotifications();
+                    if (active != null) {
+                        for (android.service.notification.StatusBarNotification sbn : active) {
+                            if (CHANNEL_CALLS.equals(sbn.getNotification().getChannelId())) {
+                                nm.cancel(sbn.getId());
+                            }
+                        }
+                    }
+                }
+            }
+            Log.d(TAG, "🔕 Cancelled active incoming call notifications");
+        } catch (Exception e) {
+            Log.e(TAG, "Error cancelling call notification", e);
         }
     }
 }

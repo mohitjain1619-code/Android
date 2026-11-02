@@ -330,7 +330,15 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_users_fcm_token ON users(fcm_token) WHERE fcm_token IS NOT NULL;
     `);
 
-    console.log("✅ Database migrations, FCM columns, and speed indexing applied successfully!");
+    // 18. Add deleted_for column to messages table for per-user soft delete ("Delete for me")
+    await pool.query(`
+      ALTER TABLE messages 
+      ADD COLUMN IF NOT EXISTS deleted_for UUID[] DEFAULT '{}';
+
+      CREATE INDEX IF NOT EXISTS idx_messages_deleted_for ON messages USING GIN (deleted_for);
+    `);
+
+    console.log("✅ Database migrations, FCM columns, message deleted_for, and speed indexing applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations or indexes:", err.message);
   }

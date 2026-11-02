@@ -25,9 +25,10 @@ public class NameActivity extends BaseActivity {
                 return;
             }
 
-            Intent i = new Intent(NameActivity.this, GenderSelectionActivity.class);
+            Intent i = new Intent(NameActivity.this, OnboardingActivity.class);
             i.putExtra("userName", name);
             startActivity(i);
+            finish();
         });
     }
 }

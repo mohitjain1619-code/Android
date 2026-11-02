@@ -186,6 +186,7 @@ public class CreatePostActivity extends BaseActivity {
                     } else {
                         isPosting = false;
                         postButton.setEnabled(true);
+                        Toast.makeText(CreatePostActivity.this, "Post upload karne ke liye ad dekhna anivarya hai.", Toast.LENGTH_SHORT).show();
                     }
                     AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
                 });

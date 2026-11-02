@@ -60,50 +60,26 @@ public class WindowBackBlocker {
 
     public static void blockBack(Activity activity) {
         if (activity == null) return;
-        boolean isAd = isAdActivity(activity) || BaseActivity.isAdShowing || AdManager.getInstance().isAdWatchPending(activity);
+        boolean isAd = isAdActivity(activity);
 
-        // 1. Wrap Window.Callback to capture KEYCODE_BACK at the absolute lowest system level
-        blockBack(activity.getWindow(), isAd);
-
-        try {
-            // 2. Disable Predictive Back Gestures on Android 13+ (API 33+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
-                    OnBackInvokedDispatcher.PRIORITY_OVERLAY,
-                    new OnBackInvokedCallback() {
-                        @Override
-                        public void onBackInvoked() {
-                            if (isAd || BaseActivity.isAdShowing || AdManager.getInstance().isAdWatchPending(activity)) {
-                                Log.d(TAG, "🚫 Predictive back gesture blocked on " + activity.getClass().getSimpleName());
-                            }
-                        }
-                    }
-                );
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error registering OnBackInvokedCallback", e);
+        // If it's a regular app activity and no ad is playing, do NOT block back!
+        if (!isAd && !BaseActivity.isAdShowing && !AdManager.getInstance().isAdWatchPending(activity)) {
+            return;
         }
 
-        try {
-            // 3. AndroidX ComponentActivity OnBackPressedCallback
-            if (activity instanceof ComponentActivity) {
-                ((ComponentActivity) activity).getOnBackPressedDispatcher().addCallback(
-                    (ComponentActivity) activity,
-                    new OnBackPressedCallback(true) {
-                        @Override
-                        public void handleOnBackPressed() {
-                            if (isAd || BaseActivity.isAdShowing || AdManager.getInstance().isAdWatchPending(activity)) {
-                                Log.d(TAG, "🚫 ComponentActivity back press blocked on " + activity.getClass().getSimpleName());
-                            } else {
-                                setEnabled(false);
-                                ((ComponentActivity) activity).getOnBackPressedDispatcher().onBackPressed();
-                            }
-                        }
-                    }
+        // 1. Wrap Window.Callback to capture KEYCODE_BACK for ad activity or active ad
+        blockBack(activity.getWindow(), isAd);
+
+        // 2. Disable Predictive Back Gestures on Android 13+ (API 33+) ONLY for actual Ad activities
+        if (isAd && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_OVERLAY,
+                    () -> Log.d(TAG, "🚫 Predictive back gesture blocked on ad activity: " + activity.getClass().getSimpleName())
                 );
+            } catch (Exception e) {
+                Log.e(TAG, "Error registering OnBackInvokedCallback on ad activity", e);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error adding OnBackPressedCallback", e);
         }
     }
 }
