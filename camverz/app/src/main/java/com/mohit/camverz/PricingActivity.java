@@ -70,7 +70,7 @@ public class PricingActivity extends BaseActivity {
             @Override
             public void onLoaded(Map<String, ProductDetails> detailsMap) {
                 runOnUiThread(() -> {
-                    updatePriceLabel(tvPriceWeeklyVip, BillingManager.SUB_WEEKLY_VIP, "₹299/wk");
+                    updatePriceLabel(tvPriceWeeklyVip, BillingManager.SUB_WEEKLY_VIP, "₹379/wk");
                     updatePriceLabel(tvPriceMonthlyVip, BillingManager.SUB_MONTHLY_VIP, "₹499/mo");
                     updatePriceLabel(tvPrice1DayVip, BillingManager.PASS_1DAY_VIP, "₹170");
                 });

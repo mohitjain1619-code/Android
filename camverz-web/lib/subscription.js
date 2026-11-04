@@ -1,6 +1,6 @@
 // ==============================================================================
 // CAMVERZ SUBSCRIPTION & VIP PASS TRACKING SYSTEM
-// Handles 1 Day, 10 Days, and 1 Month Pass tracking, expiry calculation,
+// Handles 1 Day, 7 Days, 10 Days, and 1 Month Pass tracking, expiry calculation,
 // region pricing, and ad-free status checks across Web & App.
 // ==============================================================================
 
@@ -24,6 +24,24 @@ export const PRICING_MATRIX = {
     international: {
       with_ads: { price: 5.00, currency: '$', displayPrice: '$5.00', link: 'https://rzp.io/rzp/m7lJpaEG' },
       no_ads: { price: 7.00, currency: '$', displayPrice: '$7.00', link: 'https://rzp.io/rzp/RUN9vJe1' }
+    }
+  },
+  '7-days': {
+    id: '7-days',
+    title: '7 Days Weekly Pass',
+    durationDays: 7,
+    durationHours: 168,
+    india: {
+      with_ads: { price: 249, currency: '₹', displayPrice: '₹249', link: 'https://rzp.io/rzp/eHos15KW' },
+      no_ads: { price: 379, currency: '₹', displayPrice: '₹379', link: 'https://rzp.io/rzp/rujZOejh' }
+    },
+    regional: {
+      with_ads: { price: 2.49, currency: '$', displayPrice: '$2.49', link: 'https://rzp.io/rzp/qMiXZMKm' },
+      no_ads: { price: 3.79, currency: '$', displayPrice: '$3.79', link: 'https://rzp.io/rzp/BEBATwU' }
+    },
+    international: {
+      with_ads: { price: 9.99, currency: '$', displayPrice: '$9.99', link: 'https://rzp.io/rzp/KmjPHDFw' },
+      no_ads: { price: 11.99, currency: '$', displayPrice: '$11.99', link: 'https://rzp.io/rzp/amIBKn1E' }
     }
   },
   '10-days': {
