@@ -74,6 +74,11 @@ public class CallActivity extends BaseActivity {
     private static final String TAG = "CALL_ACTIVITY";
     private static final int PERMISSION_REQ = 101;
 
+    // Optimized 360p portrait video configuration to minimize data usage, bandwidth & server costs
+    private static final int VIDEO_WIDTH = 360;
+    private static final int VIDEO_HEIGHT = 640;
+    private static final int VIDEO_FPS = 30;
+
     private SurfaceViewRenderer localView, remoteView;
     private ImageButton btnMute, btnSwitchCamera, btnEnd, btnToggleVideo, btnSpeaker;
     private RelativeLayout controlsContainer, callContainer;
@@ -347,7 +352,7 @@ public class CallActivity extends BaseActivity {
         CamverzFirebaseMessagingService.isCallScreenActive = true;
         if (videoCapturer != null) {
             try {
-                videoCapturer.startCapture(720, 1280, 30);
+                videoCapturer.startCapture(VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -611,7 +616,7 @@ public class CallActivity extends BaseActivity {
                 VideoSource videoSource = factory.createVideoSource(videoCapturer.isScreencast());
 
                 videoCapturer.initialize(surfaceTextureHelper, getApplicationContext(), videoSource.getCapturerObserver());
-                videoCapturer.startCapture(720, 1280, 30);
+                videoCapturer.startCapture(VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS);
 
                 localVideoTrack = factory.createVideoTrack("VIDEO", videoSource);
                 localVideoTrack.addSink(localView);

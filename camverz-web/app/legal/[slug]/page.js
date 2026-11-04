@@ -92,8 +92,13 @@ const legalDocs = {
         <h2>3. 24/7 Moderation & Instant Hardware Bans</h2>
         <p>Camverz moderators and AI monitoring systems operate 24/7 to enforce community standards. We reserve the absolute right to suspend accounts, revoke access, and issue permanent IP and hardware bans to any user who violates these Terms.</p>
 
-        <h2>4. Platform Purchases & Digital Passes</h2>
-        <p>Purchases of digital VIP passes or credit packages on the platform are processed through secure payment gateways. All passes are non-transferable, one-time purchases, and governed by our strict Refund Policy.</p>
+        <h2>4. Platform Purchases, Subscriptions & Auto-Renewal</h2>
+        <p>Camverz offers both one-time digital passes and auto-renewing subscriptions (such as the 7 Days Weekly VIP Pass and 1 Month VIP Package) for video calling and premium features:</p>
+        <ul>
+          <li><strong>Google Play In-App Subscriptions:</strong> Subscriptions purchased via Google Play Billing automatically renew at the end of each billing cycle (e.g. every 7 days or every month) at the specified rate unless cancelled at least 24 hours before the end of the current billing period.</li>
+          <li><strong>Subscription Cancellation & Management:</strong> Users can cancel or manage their Google Play subscriptions anytime by visiting the Google Play Store app &gt; Profile icon &gt; <strong>Payments &amp; subscriptions &gt; Subscriptions</strong>. Upon cancellation, your VIP privileges will remain active until the end of your current paid billing period.</li>
+          <li><strong>Web Digital Passes:</strong> Digital passes purchased directly on the web platform are non-recurring, one-time payments providing access for the specified duration.</li>
+        </ul>
       </>
     )
   },
@@ -109,8 +114,13 @@ const legalDocs = {
         <h2>1. Strict 100% No Refunds Policy</h2>
         <p>All sales and purchases of digital VIP access passes (1 Day Pass, 10 Days Package, 1 Month VIP Package) on Camverz are final, instant, and non-refundable. Once a pass is purchased, digital access benefits are granted instantly to your account and cannot be returned, cancelled, or refunded.</p>
 
-        <h2>2. Instant Digital Activation & One-Time Payment</h2>
-        <p>All purchases are one-time payments for the chosen duration. There are no recurring subscriptions, hidden fees, or automatic renewals. Because digital benefits are delivered immediately upon payment completion, no partial or pro-rated refunds will be issued.</p>
+        <h2>2. Google Play Subscriptions & Cancellation Terms</h2>
+        <p>For purchases and subscriptions completed through Google Play Billing (such as 7 Days Weekly VIP and 1 Month VIP passes):</p>
+        <ul>
+          <li>You may cancel your subscription at any time via <strong>Google Play Store &gt; Payments &amp; subscriptions</strong>. You will retain access to premium features until the end of the current billing cycle.</li>
+          <li>Refund requests for purchases made through Google Play are processed in accordance with Google Play Refund Policies via Google Play Customer Support.</li>
+          <li>Web passes purchased on the website are one-time digital delivery passes and non-refundable once activated.</li>
+        </ul>
 
         <h2>3. Technical Support & Inquiries</h2>
         <p>In the rare event of a technical glitch where payment succeeded but digital pass benefits failed to activate, please contact our support desk at <strong>support@camverz.com</strong> with your transaction ID and registered email for instant manual activation.</p>

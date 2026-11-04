@@ -27,7 +27,9 @@ public class SocketManager {
                 options.forceNew = false;
                 options.reconnection = true;
                 options.reconnectionAttempts = 99999;
-                options.reconnectionDelay = 500;
+                options.reconnectionDelay = 1000;
+                options.reconnectionDelayMax = 10000;
+                options.randomizationFactor = 0.5;
                 options.timeout = 5000;
 
                 mSocket = IO.socket(SOCKET_URL, options);

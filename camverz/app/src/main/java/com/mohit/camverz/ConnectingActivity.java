@@ -468,7 +468,12 @@ public class ConnectingActivity extends BaseActivity {
                 .setTitle("Daily Limit Reached")
                 .setMessage("You have reached your daily free video call limit.\n\nSupport Camverz! Rate us 5 Stars on Play Store to get another free call instantly, or upgrade to premium for unlimited calls!")
                 .setCancelable(false)
-                .setPositiveButton("Rate 5 Stars ⭐", (dialog, which) -> {
+                .setPositiveButton("Get VIP Pass ⚡", (dialog, which) -> {
+                    leaveQueue();
+                    startActivity(new Intent(ConnectingActivity.this, PricingActivity.class));
+                    finish();
+                })
+                .setNeutralButton("Rate 5 Stars ⭐", (dialog, which) -> {
                     redirectToPlayStoreAndReward();
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> {

@@ -119,14 +119,14 @@ function PricingContent() {
       ],
     },
     {
-      id: '10-days',
-      title: '10 Days Package',
+      id: '7-days',
+      title: '7 Days Weekly Pass',
       icon: Sparkles,
       badge: 'Most Popular 🔥',
       badgeClass: styles.badgePurple,
       isPopularSection: true,
-      description: 'Our most popular choice! 10 full days of uninterrupted video chatting with real people.',
-      durationLabel: '/ 10 Days',
+      description: 'Our most popular choice! 7 full days of uninterrupted video chatting with auto-renewal.',
+      durationLabel: '/ Week (7 Days)',
       tiers: [
         {
           type: 'With Ads',
@@ -135,7 +135,7 @@ function PricingContent() {
           tagClass: styles.tagWithAds,
           isFeatured: false,
           features: [
-            'Unlimited Video Calls (10 Days)',
+            'Unlimited Video Calls (7 Days)',
             'Global Live Matching',
             'Gender & Region Filters',
             'Standard Video Quality',
@@ -150,7 +150,7 @@ function PricingContent() {
           tagClass: styles.tagNoAds,
           isFeatured: true,
           features: [
-            'Unlimited Ultra-HD Video Calls (10 Days)',
+            'Unlimited Video Calls (7 Days)',
             '100% Zero Ads Guarantee',
             'Instant 2X Speed Matching Queue',
             'Unlimited Direct Messaging',

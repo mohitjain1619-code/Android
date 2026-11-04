@@ -261,8 +261,7 @@ public class MainScreenActivity extends BaseActivity {
         if (chipWebsiteHub != null) {
             chipWebsiteHub.setOnClickListener(v -> {
                 try {
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com"));
-                    startActivity(browserIntent);
+                    startActivity(new Intent(MainScreenActivity.this, PricingActivity.class));
                 } catch (Exception e) {
                     Toast.makeText(MainScreenActivity.this, "Could not open website", Toast.LENGTH_SHORT).show();
                 }
@@ -767,10 +766,10 @@ public class MainScreenActivity extends BaseActivity {
             .setTitle(title)
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("OK", (dialog, which) -> {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://camverz.com"));
-                startActivity(browserIntent);
+            .setPositiveButton("Upgrade to VIP ⚡", (dialog, which) -> {
+                startActivity(new Intent(MainScreenActivity.this, PricingActivity.class));
             })
+            .setNegativeButton("OK", null)
             .show();
     }
 

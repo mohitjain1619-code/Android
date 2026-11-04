@@ -79,7 +79,7 @@ public class ApiClient {
         };
 
         OkHttpClient client = new OkHttpClient.Builder()
-                .protocols(java.util.Collections.singletonList(okhttp3.Protocol.HTTP_1_1))
+                .protocols(java.util.Arrays.asList(okhttp3.Protocol.HTTP_2, okhttp3.Protocol.HTTP_1_1))
                 .addInterceptor(authInterceptor)
                 .addInterceptor(unauthorizedInterceptor)
                 .addInterceptor(logging)

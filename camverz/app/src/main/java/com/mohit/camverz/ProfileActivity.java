@@ -153,6 +153,11 @@ public class ProfileActivity extends BaseActivity {
         subscriptionCardLayout = findViewById(R.id.subscription_card_layout);
         tvCardPlanName = findViewById(R.id.tv_card_plan_name);
         tvCardPlanExpiry = findViewById(R.id.tv_card_plan_expiry);
+        if (subscriptionCardLayout != null) {
+            subscriptionCardLayout.setOnClickListener(v -> {
+                startActivity(new Intent(ProfileActivity.this, PricingActivity.class));
+            });
+        }
 
         ScrollView profileScrollView = findViewById(R.id.profileScrollView);
         if (bio != null && profileScrollView != null) {

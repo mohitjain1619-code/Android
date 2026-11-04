@@ -21,8 +21,8 @@ android {
         applicationId = "com.mohit.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.0.15"
+        versionCode = 22
+        versionName = "1.0.22"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
@@ -96,6 +96,7 @@ dependencies {
     implementation libs.play.services.auth
     implementation libs.play.services.location
     implementation libs.play.app.update
+    implementation libs.play.billing
 
     // Retrofit & OkHttp (Networking)
     implementation libs.retrofit
