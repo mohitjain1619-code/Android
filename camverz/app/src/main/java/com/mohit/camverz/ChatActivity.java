@@ -49,6 +49,11 @@ public class ChatActivity extends BaseActivity {
     private List<Message> messages;
     private EditText messageEditText;
     private Button sendButton;
+    private View replyPreviewLayout;
+    private TextView tvReplyName;
+    private TextView tvReplyText;
+    private ImageView btnCancelReply;
+    private Message replyingToMessage = null;
     private String chatId;
     private String currentUserId;
     private String receiverId;
@@ -178,6 +183,14 @@ public class ChatActivity extends BaseActivity {
 
         messageEditText = findViewById(R.id.message_edit_text);
         sendButton = findViewById(R.id.send_button);
+        replyPreviewLayout = findViewById(R.id.reply_preview_layout);
+        tvReplyName = findViewById(R.id.tv_reply_name);
+        tvReplyText = findViewById(R.id.tv_reply_text);
+        btnCancelReply = findViewById(R.id.btn_cancel_reply);
+
+        if (btnCancelReply != null) {
+            btnCancelReply.setOnClickListener(v -> cancelReply());
+        }
 
         sendButton.setOnClickListener(v -> {
             if (isBlocked) {
@@ -200,6 +213,9 @@ public class ChatActivity extends BaseActivity {
         chatAdapter = new ChatAdapter(this, messages, receiverAvatar, receiverPhotoUrl);
         chatAdapter.setOnMessageDeleteListener((message, position, forEveryone) -> {
             performDeleteMessage(message, position, forEveryone);
+        });
+        chatAdapter.setOnMessageReplyListener((message, position) -> {
+            startReplyingTo(message);
         });
         recyclerView.setAdapter(chatAdapter);
 
@@ -340,9 +356,50 @@ public class ChatActivity extends BaseActivity {
                 .show();
     }
 
+    private void startReplyingTo(Message message) {
+        if (message == null) return;
+        replyingToMessage = message;
+        if (replyPreviewLayout != null) {
+            replyPreviewLayout.setVisibility(View.VISIBLE);
+        }
+        if (tvReplyName != null) {
+            boolean isMe = currentUserId != null && currentUserId.equals(message.getSenderId());
+            tvReplyName.setText(isMe ? "Replying to yourself" : ("Replying to " + (receiverName != null ? receiverName : "user")));
+        }
+        if (tvReplyText != null) {
+            tvReplyText.setText(message.getMessage());
+        }
+        if (messageEditText != null) {
+            messageEditText.requestFocus();
+            android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(messageEditText, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            }
+        }
+    }
+
+    private void cancelReply() {
+        replyingToMessage = null;
+        if (replyPreviewLayout != null) {
+            replyPreviewLayout.setVisibility(View.GONE);
+        }
+    }
+
     private void sendMessage(String msg) {
         Map<String, String> body = new HashMap<>();
         body.put("text", msg);
+        
+        if (replyingToMessage != null) {
+            if (replyingToMessage.getMessageId() != null) {
+                body.put("replyToId", replyingToMessage.getMessageId());
+            }
+            if (replyingToMessage.getMessage() != null) {
+                body.put("replyToText", replyingToMessage.getMessage());
+            }
+            boolean isMe = currentUserId != null && currentUserId.equals(replyingToMessage.getSenderId());
+            body.put("replyToSenderName", isMe ? "You" : (receiverName != null ? receiverName : "User"));
+            cancelReply();
+        }
         
         api.sendMessage(receiverId, body).enqueue(new Callback<JsonObject>() {
             @Override
@@ -432,6 +489,15 @@ public class ChatActivity extends BaseActivity {
                                     m.setReceiverId(currentUserId);
                                 }
                                 m.setMessage(msgObj.has("text") ? msgObj.get("text").getAsString() : "");
+                                if (msgObj.has("replyToId") && !msgObj.get("replyToId").isJsonNull()) {
+                                    m.setReplyToId(msgObj.get("replyToId").getAsString());
+                                }
+                                if (msgObj.has("replyToText") && !msgObj.get("replyToText").isJsonNull()) {
+                                    m.setReplyToText(msgObj.get("replyToText").getAsString());
+                                }
+                                if (msgObj.has("replyToSenderName") && !msgObj.get("replyToSenderName").isJsonNull()) {
+                                    m.setReplyToSenderName(msgObj.get("replyToSenderName").getAsString());
+                                }
                                 // Parse createdAt ISO string to epoch millis
                                 m.setTimestamp(parseIsoTimestamp(msgObj));
                                 m.setSeen(msgObj.has("read") && msgObj.get("read").getAsBoolean());

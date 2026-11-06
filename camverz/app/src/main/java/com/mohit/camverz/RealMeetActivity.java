@@ -320,13 +320,13 @@ public class RealMeetActivity extends BaseActivity {
                 new androidx.appcompat.app.AlertDialog.Builder(this)
                         .setTitle(getString(R.string.access_required_title))
                         .setMessage(getString(R.string.access_required_msg))
-                        .setPositiveButton("OK", (dialog, which) -> {
+                        .setPositiveButton("Get Pass ⚡", (dialog, which) -> {
                             try {
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW,
-                                        android.net.Uri.parse("https://camverz.com"));
-                                startActivity(browserIntent);
+                                Intent intent = new Intent(this, PricingActivity.class);
+                                intent.putExtra("default_tab", "realmeet");
+                                startActivity(intent);
                             } catch (Exception e) {
-                                Toast.makeText(this, getString(R.string.could_not_open_browser), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(this, "Could not open pricing", Toast.LENGTH_SHORT).show();
                             }
                         })
                         .setNegativeButton("Cancel", null)

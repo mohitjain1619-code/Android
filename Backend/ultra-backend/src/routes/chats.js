@@ -105,6 +105,9 @@ router.get("/:id/messages", async (req, res) => {
         read: m.read,
         createdAt: m.created_at,
         isMe: m.sender_id === req.user.userId,
+        replyToId: m.reply_to_id || null,
+        replyToText: m.reply_to_text || null,
+        replyToSenderName: m.reply_to_sender_name || null,
       })),
     });
   } catch (err) {
@@ -118,7 +121,7 @@ router.get("/:id/messages", async (req, res) => {
 // ============================================
 router.post("/:targetUserId/messages", async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, replyToId, replyToText, replyToSenderName } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ error: "Message text is required" });
     }
@@ -157,10 +160,18 @@ router.post("/:targetUserId/messages", async (req, res) => {
       await query(`UPDATE chats SET ${field} = false WHERE id = $1`, [chat.id]);
     }
 
-    // Insert message
+    // Insert message with optional reply-to references
     const message = await queryOne(
-      `INSERT INTO messages (chat_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *`,
-      [chat.id, req.user.userId, text.trim()]
+      `INSERT INTO messages (chat_id, sender_id, text, reply_to_id, reply_to_text, reply_to_sender_name) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [
+        chat.id,
+        req.user.userId,
+        text.trim(),
+        replyToId || null,
+        replyToText ? replyToText.trim() : null,
+        replyToSenderName ? replyToSenderName.trim() : null,
+      ]
     );
 
     // Update last_message_at
@@ -171,26 +182,25 @@ router.post("/:targetUserId/messages", async (req, res) => {
       const io = req.app.get("io");
       const redisModule = req.app.get("redisModule");
       if (io && redisModule) {
+        const msgPayload = {
+          senderId: req.user.userId,
+          chatId: chat.id,
+          text: text.trim(),
+          messageId: message.id,
+          createdAt: message.created_at,
+          replyToId: message.reply_to_id || null,
+          replyToText: message.reply_to_text || null,
+          replyToSenderName: message.reply_to_sender_name || null,
+        };
+
         const targetSocket = await redisModule.getUserSocket(targetId);
         if (targetSocket) {
-          io.to(targetSocket).emit("new_message", {
-            senderId: req.user.userId,
-            chatId: chat.id,
-            text: text.trim(),
-            messageId: message.id,
-            createdAt: message.created_at,
-          });
+          io.to(targetSocket).emit("new_message", msgPayload);
         }
         // Also emit to sender for multi-device sync
         const senderSocket = await redisModule.getUserSocket(req.user.userId);
         if (senderSocket) {
-          io.to(senderSocket).emit("new_message", {
-            senderId: req.user.userId,
-            chatId: chat.id,
-            text: text.trim(),
-            messageId: message.id,
-            createdAt: message.created_at,
-          });
+          io.to(senderSocket).emit("new_message", msgPayload);
         }
       }
     } catch (socketErr) {
@@ -203,7 +213,7 @@ router.post("/:targetUserId/messages", async (req, res) => {
         const sender = await queryOne("SELECT name, avatar FROM users WHERE id = $1", [req.user.userId]);
         NotificationService.sendToUser(targetId, {
           title: sender ? sender.name : "New Message",
-          body: text.trim(),
+          body: replyToText ? `Replying to "${replyToText.substring(0, 30)}...": ${text.trim()}` : text.trim(),
           type: "chat",
           channelId: "camverz_chats",
           highPriority: true,
@@ -213,6 +223,9 @@ router.post("/:targetUserId/messages", async (req, res) => {
             targetUserAvatar: sender ? (sender.avatar || "") : "",
             chatId: chat.id,
             messageId: message.id,
+            replyToId: message.reply_to_id || "",
+            replyToText: message.reply_to_text || "",
+            replyToSenderName: message.reply_to_sender_name || "",
           },
         });
       } catch (fcmErr) {
@@ -228,6 +241,9 @@ router.post("/:targetUserId/messages", async (req, res) => {
         chatId: message.chat_id,
         senderId: message.sender_id,
         text: message.text,
+        replyToId: message.reply_to_id || null,
+        replyToText: message.reply_to_text || null,
+        replyToSenderName: message.reply_to_sender_name || null,
         read: message.read,
         createdAt: message.created_at,
         isMe: true,

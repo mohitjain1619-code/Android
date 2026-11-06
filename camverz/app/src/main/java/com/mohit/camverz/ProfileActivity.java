@@ -1116,8 +1116,10 @@ public class ProfileActivity extends BaseActivity {
                                 tokenManager.saveHasActivePlan(false);
                                 tokenManager.savePlanIsAdFree(false);
 
-                                if (subscriptionCardLayout != null) {
-                                    subscriptionCardLayout.setVisibility(View.GONE);
+                                if (subscriptionCardLayout != null && tvCardPlanName != null && tvCardPlanExpiry != null) {
+                                    subscriptionCardLayout.setVisibility(View.VISIBLE);
+                                    tvCardPlanName.setText("👑 Camverz VIP Club");
+                                    tvCardPlanExpiry.setText("100% Ad-Free Video Calls & Community Pass • Tap to Join");
                                 }
                             }
                         } else {

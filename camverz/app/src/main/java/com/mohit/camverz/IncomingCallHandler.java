@@ -176,6 +176,8 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
             Log.d(TAG, "Private call cancelled by caller");
             mainHandler.post(() -> {
                 dismissIncomingDialog();
+                CallRingtoneManager.getInstance().stop();
+                NotificationHelper.cancelIncomingCallNotification(appContext);
                 CallManager.setIncomingCallPending(false);
                 pendingCallerId = null;
             });
@@ -195,9 +197,19 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
 
     private void showIncomingCallDialog() {
         if (currentActivity == null || currentActivity.isFinishing() || currentActivity.isDestroyed()) {
-            Log.w(TAG, "No foreground activity to show incoming call dialog");
-            // Auto-reject since we can't show UI
-            rejectPendingCall();
+            Log.d(TAG, "No foreground activity to show dialog. Dispatching heads-up call notification with ringtone.");
+            // Do NOT auto-reject! Dispatch full heads-up notification with incoming ringtone
+            Context ctx = appContext != null ? appContext : CamverzApp.getInstance();
+            if (ctx != null) {
+                NotificationHelper.showIncomingCallNotification(
+                        ctx,
+                        pendingCallerId,
+                        pendingCallerName,
+                        pendingCallerAvatar,
+                        pendingIsVideo,
+                        pendingRoomName
+                );
+            }
             return;
         }
 
@@ -210,6 +222,9 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
 
         dismissIncomingDialog(); // Dismiss any previous dialog
 
+        // Play incoming ringtone immediately while dialog is shown
+        CallRingtoneManager.getInstance().startIncomingRinging(currentActivity);
+
         String callType = pendingIsVideo ? "Video Call" : "Voice Call";
         
         AlertDialog.Builder builder = new AlertDialog.Builder(currentActivity);
@@ -218,6 +233,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         builder.setCancelable(false);
         
         builder.setPositiveButton("Accept", (dialog, which) -> {
+            CallRingtoneManager.getInstance().stop();
             NotificationHelper.cancelIncomingCallNotification(appContext != null ? appContext : currentActivity);
             // Verify call is still valid before accepting
             if (!CallManager.isIncomingCallPending() || pendingCallerId == null) {
@@ -242,6 +258,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
         });
         
         builder.setNegativeButton("Reject", (dialog, which) -> {
+            CallRingtoneManager.getInstance().stop();
             NotificationHelper.cancelIncomingCallNotification(appContext != null ? appContext : currentActivity);
             rejectPendingCall();
         });
@@ -280,6 +297,8 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
     }
 
     private void rejectPendingCall() {
+        CallRingtoneManager.getInstance().stop();
+        NotificationHelper.cancelIncomingCallNotification(appContext);
         if (pendingCallerId != null && socket != null) {
             try {
                 JSONObject reject = new JSONObject();
@@ -294,6 +313,7 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
     }
 
     private void dismissIncomingDialog() {
+        CallRingtoneManager.getInstance().stop();
         NotificationHelper.cancelIncomingCallNotification(appContext);
         if (currentIncomingDialog != null && currentIncomingDialog.isShowing()) {
             try {

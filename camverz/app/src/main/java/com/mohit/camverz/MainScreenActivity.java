@@ -781,10 +781,8 @@ public class MainScreenActivity extends BaseActivity {
 
         int watched = CallLimitManager.getRewardedAdsWatched(this);
         int currentTier = CallLimitManager.getRewardedTier(this);
-        String title = currentTier == 1 ? "Free Call Time Completed" : "Second Limit Completed";
-        String message = currentTier == 1 
-            ? "Aapka 5 minute ka free call time poora ho chuka hai.\n\n3 short video ads dekhkar agle 5 minute ka call time unlock karein!\n\nAds Watched: " + watched + "/3"
-            : "Aapka dusra 5 minute ka call time bhi poora ho chuka hai.\n\n3 aur short video ads dekhkar iss session ka aakhri 5 minute call time unlock karein!\n\nAds Watched: " + watched + "/3";
+        String title = "Time Up! ⏱️";
+        String message = "Aapka call time poora ho chuka hai.\n\nTiming badhane ke liye 3 short video ads dekh lein!\n\nAds Watched: " + watched + "/3";
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
@@ -856,10 +854,8 @@ public class MainScreenActivity extends BaseActivity {
                             CallLimitManager.resetRewardedAdsWatched(MainScreenActivity.this);
 
                             new androidx.appcompat.app.AlertDialog.Builder(MainScreenActivity.this)
-                                .setTitle("Call Time Unlocked! 🎉")
-                                .setMessage(currentTier == 1 
-                                    ? "Badhai ho! Aapko agle 5 minute ka call time mil gaya hai. Aap calling jari rakh sakte hain." 
-                                    : "Badhai ho! Aapko iss session ka aakhri 5 minute call time mil gaya hai. Aap calling jari rakh sakte hain.")
+                                .setTitle("Timing Extended! 🎉")
+                                .setMessage("Badhai ho! Aapka call timing badha diya gaya hai. Aap calling jari rakh sakte hain.")
                                 .setPositiveButton("Start Calling", (d, w) -> onPassed.run())
                                 .show();
                         } else {

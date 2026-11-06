@@ -1,12 +1,12 @@
 // ==============================================================================
 // CAMVERZ SUBSCRIPTION & VIP PASS TRACKING SYSTEM
-// Handles 1 Day, 7 Days, 10 Days, and 1 Month Pass tracking, expiry calculation,
+// Handles 1 Day, 7 Days, and 1 Month Pass tracking, expiry calculation,
 // region pricing, and ad-free status checks across Web & App.
 // ==============================================================================
 
-export const REGIONAL_COUNTRIES = ['pakistan', 'bangladesh', 'thailand', 'pk', 'bd', 'th', 'np', 'lk', 'ph', 'id', 'vn'];
+export const REGIONAL_COUNTRIES = ['pakistan', 'bangladesh', 'taiwan', 'thailand', 'sri lanka', 'philippines', 'indonesia', 'vietnam', 'pk', 'bd', 'tw', 'th', 'lk', 'ph', 'id', 'vn'];
 
-// Master Pricing Matrix (Exact match for India, Regional, International)
+// Master Pricing Matrix (Exact match for India, Regional, International across App & Web)
 export const PRICING_MATRIX = {
   '1-day': {
     id: '1-day',
@@ -22,8 +22,8 @@ export const PRICING_MATRIX = {
       no_ads: { price: 1.70, currency: '$', displayPrice: '$1.70', link: 'https://rzp.io/rzp/U4o0bEP' }
     },
     international: {
-      with_ads: { price: 5.00, currency: '$', displayPrice: '$5.00', link: 'https://rzp.io/rzp/m7lJpaEG' },
-      no_ads: { price: 7.00, currency: '$', displayPrice: '$7.00', link: 'https://rzp.io/rzp/RUN9vJe1' }
+      with_ads: { price: 4.99, currency: '$', displayPrice: '$4.99', link: 'https://rzp.io/rzp/m7lJpaEG' },
+      no_ads: { price: 6.99, currency: '$', displayPrice: '$6.99', link: 'https://rzp.io/rzp/RUN9vJe1' }
     }
   },
   '7-days': {
@@ -44,24 +44,6 @@ export const PRICING_MATRIX = {
       no_ads: { price: 11.99, currency: '$', displayPrice: '$11.99', link: 'https://rzp.io/rzp/amIBKn1E' }
     }
   },
-  '10-days': {
-    id: '10-days',
-    title: '10 Days Package',
-    durationDays: 10,
-    durationHours: 240,
-    india: {
-      with_ads: { price: 299, currency: '₹', displayPrice: '₹299', link: 'https://rzp.io/rzp/eHos15KW' },
-      no_ads: { price: 379, currency: '₹', displayPrice: '₹379', link: 'https://rzp.io/rzp/rujZOejh' }
-    },
-    regional: {
-      with_ads: { price: 2.99, currency: '$', displayPrice: '$2.99', link: 'https://rzp.io/rzp/qMiXZMKm' },
-      no_ads: { price: 3.79, currency: '$', displayPrice: '$3.79', link: 'https://rzp.io/rzp/BEBATwU' }
-    },
-    international: {
-      with_ads: { price: 10.00, currency: '$', displayPrice: '$10.00', link: 'https://rzp.io/rzp/KmjPHDFw' },
-      no_ads: { price: 12.00, currency: '$', displayPrice: '$12.00', link: 'https://rzp.io/rzp/amIBKn1E' }
-    }
-  },
   '1-month': {
     id: '1-month',
     title: '1 Month VIP Package',
@@ -76,8 +58,8 @@ export const PRICING_MATRIX = {
       no_ads: { price: 4.99, currency: '$', displayPrice: '$4.99', link: 'https://rzp.io/rzp/SBKqmutM' }
     },
     international: {
-      with_ads: { price: 15.00, currency: '$', displayPrice: '$15.00', link: 'https://rzp.io/rzp/70W31XiP' },
-      no_ads: { price: 20.00, currency: '$', displayPrice: '$20.00', link: 'https://rzp.io/rzp/ySfZ6If' }
+      with_ads: { price: 14.99, currency: '$', displayPrice: '$14.99', link: 'https://rzp.io/rzp/70W31XiP' },
+      no_ads: { price: 19.99, currency: '$', displayPrice: '$19.99', link: 'https://rzp.io/rzp/ySfZ6If' }
     }
   },
   'community-7-days': {
@@ -94,8 +76,8 @@ export const PRICING_MATRIX = {
       no_ads: { price: 8.50, currency: '$', displayPrice: '$8.50', link: 'https://rzp.io/rzp/uYltJep' }
     },
     international: {
-      with_ads: { price: 12.00, currency: '$', displayPrice: '$12.00', link: 'https://rzp.io/rzp/yy6Jwq6' },
-      no_ads: { price: 15.00, currency: '$', displayPrice: '$15.00', link: 'https://rzp.io/rzp/OuK9DpQ' }
+      with_ads: { price: 11.99, currency: '$', displayPrice: '$11.99', link: 'https://rzp.io/rzp/yy6Jwq6' },
+      no_ads: { price: 14.99, currency: '$', displayPrice: '$14.99', link: 'https://rzp.io/rzp/OuK9DpQ' }
     }
   },
   'community-1-month': {
@@ -112,8 +94,8 @@ export const PRICING_MATRIX = {
       no_ads: { price: 13.99, currency: '$', displayPrice: '$13.99', link: 'https://rzp.io/rzp/2b6EuHqV' }
     },
     international: {
-      with_ads: { price: 20.00, currency: '$', displayPrice: '$20.00', link: 'https://rzp.io/rzp/58Utuxto' },
-      no_ads: { price: 28.00, currency: '$', displayPrice: '$28.00', link: 'https://rzp.io/rzp/wpdDVW0' }
+      with_ads: { price: 19.99, currency: '$', displayPrice: '$19.99', link: 'https://rzp.io/rzp/58Utuxto' },
+      no_ads: { price: 27.99, currency: '$', displayPrice: '$27.99', link: 'https://rzp.io/rzp/wpdDVW0' }
     }
   }
 };
@@ -124,137 +106,98 @@ export const PRICING_MATRIX = {
 export function calculatePlanExpiry(durationKey) {
   const now = new Date();
   const startedAt = now.toISOString();
-  
+
   let hoursToAdd = 24;
   if (durationKey === 'community-7-days' || durationKey === '7-days') hoursToAdd = 168;
-  if (durationKey === '10-days') hoursToAdd = 240;
   if (durationKey === '1-month' || durationKey === 'community-1-month') hoursToAdd = 720;
-  
+
   const expiresAtDate = new Date(now.getTime() + hoursToAdd * 60 * 60 * 1000);
   const expiresAt = expiresAtDate.toISOString();
-  
-  return { startedAt, expiresAt, hoursAdded: hoursToAdd };
+
+  return { startedAt, expiresAt, hoursToAdd };
 }
 
 /**
- * Evaluates a user's subscription status, active state, time remaining, and ad status.
+ * Determines whether user belongs to India, Regional tier, or International
  */
-export function getSubscriptionStatus(userData) {
-  if (!userData) {
-    return {
-      hasActivePlan: false,
-      isAdFree: false,
-      tierType: 'free',
-      planName: 'Free Account',
-      remainingText: 'No Active Pass',
-      badgeText: 'Free User',
-      badgeColor: '#94A3B8',
-      daysLeft: 0,
-      hoursLeft: 0,
-      minutesLeft: 0,
-      percentRemaining: 0,
-    };
+  export function getRegion(country) {
+    if (!country) return 'india';
+    const c = country.toLowerCase().trim();
+    if (c === 'india' || c === 'in') return 'india';
+    if (REGIONAL_COUNTRIES.includes(c)) return 'regional';
+    return 'international';
   }
 
-  const sub = userData.subscription || {};
-  const expiresAtStr = sub.expiresAt || userData.planExpiresAt;
-  const startedAtStr = sub.startedAt || userData.planStartedAt;
+  /**
+   * Resolves accurate Razorpay checkout link based on Duration, Tier (with/without ads) & Region
+   */
+  export function getPaymentUrl(durationKey, isAdFree, country) {
+    const region = getRegion(country);
+    const pkg = PRICING_MATRIX[durationKey];
+    if (!pkg) return 'https://rzp.io/rzp/0hqC5wl'; // Safe 1 Day fallback
 
-  if (!expiresAtStr) {
-    return {
-      hasActivePlan: false,
-      isAdFree: false,
-      tierType: 'free',
-      planName: 'Free Member',
-      remainingText: 'No Active Pass',
-      badgeText: 'Free User',
-      badgeColor: '#94A3B8',
-      daysLeft: 0,
-      hoursLeft: 0,
-      minutesLeft: 0,
-      percentRemaining: 0,
-    };
+    const tierKey = isAdFree ? 'no_ads' : 'with_ads';
+    const regionData = pkg[region] || pkg['india'];
+    const tierData = regionData[tierKey];
+
+    return tierData ? tierData.link : 'https://rzp.io/rzp/0hqC5wl';
   }
 
-  const nowMs = Date.now();
-  const expiresMs = new Date(expiresAtStr).getTime();
-  const startedMs = startedAtStr ? new Date(startedAtStr).getTime() : nowMs - (24 * 60 * 60 * 1000);
+    /**
+     * Comprehensive Subscription & Ad-Free status validator
+     */
+    export function getSubscriptionStatus(user) {
+      if (!user) {
+        return {
+          hasActivePlan: false,
+          isAdFree: false,
+          planName: 'Free Member',
+          expiresAt: null,
+          daysLeft: 0,
+          hoursLeft: 0
+        };
+      }
 
-  if (isNaN(expiresMs) || nowMs >= expiresMs) {
-    return {
-      hasActivePlan: false,
-      isAdFree: false,
-      tierType: 'expired',
-      planName: sub.planName || 'Expired VIP Pass',
-      remainingText: 'Pass Expired',
-      badgeText: 'Pass Expired',
-      badgeColor: '#EF4444',
-      daysLeft: 0,
-      hoursLeft: 0,
-      minutesLeft: 0,
-      percentRemaining: 0,
-    };
-  }
+      // 1. Direct explicit ad-free flag check
+      const isExplicitAdFree = Boolean(user.plan_is_ad_free || user.planIsAdFree);
 
-  // Calculate detailed remaining time
-  const totalDiffMs = expiresMs - nowMs;
-  const totalDurationMs = Math.max(1, expiresMs - startedMs);
-  const percentRemaining = Math.min(100, Math.max(0, Math.round((totalDiffMs / totalDurationMs) * 100)));
+      // 2. Plan name normalization
+      const rawPlanName = user.plan_name || user.planName || 'Free Member';
+      const planLower = rawPlanName.toLowerCase();
 
-  const totalMinutes = Math.floor(totalDiffMs / (1000 * 60));
-  const totalHours = Math.floor(totalMinutes / 60);
-  const daysLeft = Math.floor(totalHours / 24);
-  const hoursLeft = totalHours % 24;
-  const minutesLeft = totalMinutes % 60;
+      // 3. Expiry check
+      const expiresAtStr = user.plan_expires_at || user.planExpiresAt;
+      let hasActivePlan = false;
+      let isAdFree = false;
+      let daysLeft = 0;
+      let hoursLeft = 0;
 
-  let remainingText = '';
-  if (daysLeft > 0) {
-    remainingText = `${daysLeft}d ${hoursLeft}h remaining`;
-  } else if (hoursLeft > 0) {
-    remainingText = `${hoursLeft}h ${minutesLeft}m remaining`;
-  } else {
-    remainingText = `${minutesLeft}m remaining`;
-  }
+        if (expiresAtStr) {
+          const expiryDate = new Date(expiresAtStr);
+          const now = new Date();
 
-  const isAdFree = sub.isAdFree === true || sub.tierType === 'no_ads' || (sub.planId && sub.planId.includes('noads'));
-  const planName = sub.planName || (isAdFree ? 'VIP Ad-Free Pass' : 'VIP Pass (With Ads)');
+          if (expiryDate > now) {
+            hasActivePlan = true;
+            const diffMs = expiryDate.getTime() - now.getTime();
+            hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
+            daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-  return {
-    hasActivePlan: true,
-    isAdFree,
-    tierType: isAdFree ? 'no_ads' : 'with_ads',
-    planName,
-    remainingText,
-    badgeText: isAdFree ? '🚫 100% Ad-Free VIP' : '📺 VIP Standard (Ads)',
-    badgeColor: isAdFree ? '#00E5FF' : '#BD00FF',
-    daysLeft,
-    hoursLeft,
-    minutesLeft,
-    percentRemaining,
-    startedAt: startedAtStr,
-    expiresAt: expiresAtStr,
-  };
-}
+            // Determine ad-free status:
+            // True if explicit flag is true OR plan name does NOT indicate "with ads"
+            if (isExplicitAdFree) {
+              isAdFree = true;
+            } else if (!planLower.includes('with ads') && !planLower.includes('with_ads') && !planLower.includes('standard')) {
+              isAdFree = true;
+            }
+          }
+        }
 
-/**
- * Returns exact payment URL for a given package, region, and user details
- */
-export function getPaymentUrl(pkgId, isAdFree, regionMode, userEmail = '', userName = '') {
-  const pkg = PRICING_MATRIX[pkgId];
-  if (!pkg) return null;
-  
-  const regionConfig = pkg[regionMode] || pkg.international;
-  const tierKey = isAdFree ? 'no_ads' : 'with_ads';
-  const planDetails = regionConfig[tierKey];
-
-  if (!planDetails || !planDetails.link) return null;
-
-  const url = new URL(planDetails.link);
-  if (userEmail) url.searchParams.set('email', userEmail);
-  if (userName) url.searchParams.set('name', userName);
-  url.searchParams.set('pkgId', pkgId);
-  url.searchParams.set('adFree', isAdFree ? 'true' : 'false');
-  url.searchParams.set('region', regionMode);
-
-  return url.toString();
-}
+        return {
+          hasActivePlan,
+          isAdFree,
+          planName: rawPlanName,
+          expiresAt: expiresAtStr,
+          daysLeft,
+          hoursLeft
+        };
+      }

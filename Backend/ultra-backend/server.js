@@ -135,21 +135,38 @@ app.get("/api/webrtc/ice", (req, res) => {
   const iceServers = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    // Robust Global OpenRelay TURN Servers for NAT Traversal on Mobile Networks (Jio, Airtel, Vi, 4G/5G)
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ];
 
-  const useTurn = req.query.useTurn === "true" || process.env.TURN_ENABLED === "true";
-
-  if (useTurn && process.env.TURN_USER && process.env.TURN_PASS) {
-    // Self-hosted Coturn
-    const turnHost = process.env.DOMAIN || "localhost";
+  // If dedicated custom TURN is configured in environment, append it as well
+  if (process.env.TURN_HOST && process.env.TURN_USER && process.env.TURN_PASS) {
+    const host = process.env.TURN_HOST;
+    const port = process.env.TURN_PORT || 3478;
     iceServers.push(
       {
-        urls: `turn:${turnHost}:${process.env.TURN_PORT || 3478}`,
+        urls: `turn:${host}:${port}`,
         username: process.env.TURN_USER,
         credential: process.env.TURN_PASS,
       },
       {
-        urls: `turn:${turnHost}:${process.env.TURN_PORT || 3478}?transport=tcp`,
+        urls: `turn:${host}:${port}?transport=tcp`,
         username: process.env.TURN_USER,
         credential: process.env.TURN_PASS,
       }
@@ -205,6 +222,26 @@ io.on("connection", (socket) => {
     socket.currentRoom = null;
     await redisModule.setUserOnline(uid, socket.id);
     console.log("✅ User registered:", uid, "→", socket.id);
+
+    // Check for pending incoming private call session (e.g. device just woke up via FCM push)
+    try {
+      const pendingSessionRaw = await redisModule.redis.get(`camverz:call_session:${uid}`);
+      if (pendingSessionRaw) {
+        const pendingSession = JSON.parse(pendingSessionRaw);
+        if (pendingSession && pendingSession.status === "ringing" && pendingSession.targetId === uid) {
+          console.log("🔔 Delivering pending incoming call to newly registered socket:", uid);
+          socket.emit("incoming-private-call", {
+            callerId: pendingSession.callerId,
+            callerName: pendingSession.callerName || "Unknown",
+            callerAvatar: pendingSession.callerAvatar || "",
+            isVideo: pendingSession.isVideo,
+            room: pendingSession.room,
+          });
+        }
+      }
+    } catch (pendErr) {
+      console.error("Error delivering pending call session:", pendErr);
+    }
   });
 
   // JOIN QUEUE (Optimized, O(1) atomic matching)
@@ -470,15 +507,22 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // Always track active ringing session in Redis with 60s TTL
+    const sessionData = JSON.stringify({
+      callerId,
+      targetId,
+      room,
+      isVideo,
+      status: "ringing",
+      callerName: callerName || "Unknown",
+      callerAvatar: callerAvatar || "",
+    });
+    await redisModule.redis.set(`camverz:call_session:${callerId}`, sessionData, "EX", 60);
+    await redisModule.redis.set(`camverz:call_session:${targetId}`, sessionData, "EX", 60);
+    await redisModule.redis.set(`camverz:call_socket:${socket.id}`, JSON.stringify({ callerId, targetId, room }), "EX", 60);
+
     const targetSocket = await redisModule.getUserSocket(targetId);
     if (targetSocket) {
-      // Track active ringing session in Redis with 60s TTL (auto-cleanup)
-      const sessionData = JSON.stringify({ callerId, targetId, room, isVideo, status: "ringing" });
-      await redisModule.redis.set(`camverz:call_session:${callerId}`, sessionData, "EX", 60);
-      await redisModule.redis.set(`camverz:call_session:${targetId}`, sessionData, "EX", 60);
-      // Track which socket is the caller for disconnect cleanup
-      await redisModule.redis.set(`camverz:call_socket:${socket.id}`, JSON.stringify({ callerId, targetId, room }), "EX", 60);
-
       io.to(targetSocket).emit("incoming-private-call", {
         callerId,
         callerName: callerName || "Unknown",
@@ -486,11 +530,13 @@ io.on("connection", (socket) => {
         isVideo,
         room,
       });
-      console.log("✅ Incoming call sent to", targetId);
+      console.log("✅ Incoming call sent directly to active socket:", targetId);
     } else {
-      console.log("❌ Target user", targetId, "not connected");
-      socket.emit("call-failed", { reason: "User offline" });
+      console.log("📱 Target socket not active, ringing target device via high-priority FCM push:", targetId);
     }
+
+    // Notify caller that call is ringing
+    socket.emit("private-call-ringing", { targetId, isPush: !targetSocket });
 
     // Always dispatch urgent high-priority call push notification (wakes up sleeping/backgrounded devices)
     try {

@@ -147,6 +147,8 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
                 }
                 builder.setVibrate(new long[]{0, 800, 300, 800, 300, 800});
                 builder.setFullScreenIntent(pendingIntent, true);
+                builder.setOngoing(true);
+                CallRingtoneManager.getInstance().startIncomingRinging(this);
             }
 
             // Asynchronously load avatar if provided, otherwise dispatch immediately

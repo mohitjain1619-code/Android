@@ -269,6 +269,7 @@ public class CallActivity extends BaseActivity {
 
         // Cancel any lingering ringing notification immediately
         NotificationHelper.cancelIncomingCallNotification(this);
+        CallRingtoneManager.getInstance().stop();
 
         // Allow incoming call to wake screen and show over keyguard/lockscreen
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
@@ -511,6 +512,7 @@ public class CallActivity extends BaseActivity {
     private void startCall() {
         CallManager.setCallActive(true);
         NotificationHelper.cancelIncomingCallNotification(this);
+        CallRingtoneManager.getInstance().stop();
         setupViews();
         initWebRTC();
         setupSocket();
@@ -565,6 +567,8 @@ public class CallActivity extends BaseActivity {
             if (connectionStatus != null) {
                 connectionStatus.setText("Calling...");
             }
+            // Start outgoing dial tone while waiting for receiver to pick up
+            CallRingtoneManager.getInstance().startOutgoingRinging();
             timeoutHandler.postDelayed(timeoutRunnable, 45000); // 45s ringing timeout for caller
         } else {
             if (connectionStatus != null) {
@@ -606,6 +610,9 @@ public class CallActivity extends BaseActivity {
         audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googEchoCancellation", "true"));
         audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googNoiseSuppression", "true"));
         audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googAutoGainControl", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googHighpassFilter", "true"));
+        audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("googTypingNoiseDetection", "true"));
+        audioConstraints.optional.add(new MediaConstraints.KeyValuePair("googAudioMirroring", "false"));
         AudioSource audioSource = factory.createAudioSource(audioConstraints);
         localAudioTrack = factory.createAudioTrack("AUDIO", audioSource);
 
@@ -708,6 +715,11 @@ public class CallActivity extends BaseActivity {
         isRemoteDescriptionSet = false;
         pendingIceCandidates.clear();
         
+        if (isFinishing() || isDestroyed() || factory == null) {
+            Log.w(TAG, "Activity finishing/destroyed or factory is null in initializePeerConnection, skipping");
+            return;
+        }
+
         peerConnection = factory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
@@ -810,7 +822,7 @@ public class CallActivity extends BaseActivity {
     }
 
     private void fetchIceServersAndStartCall() {
-        fetchIceServersWithTurn(false);
+        fetchIceServersWithTurn(true);
     }
 
     private void fetchTurnServersAndReconnect() {
@@ -903,11 +915,29 @@ public class CallActivity extends BaseActivity {
         iceServers.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
         iceServers.add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer());
         iceServers.add(PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer());
+
+        // Always append OpenRelay TURN servers for mobile carrier NAT traversal (Jio, Airtel, Vi 4G/5G)
+        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
+                .setUsername("openrelayproject")
+                .setPassword("openrelayproject")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443")
+                .setUsername("openrelayproject")
+                .setPassword("openrelayproject")
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443?transport=tcp")
+                .setUsername("openrelayproject")
+                .setPassword("openrelayproject")
+                .createIceServer());
         
         return iceServers;
     }
 
     private void startCallWithIceServers(List<PeerConnection.IceServer> iceServers) {
+        if (isFinishing() || isDestroyed() || factory == null) {
+            Log.w(TAG, "Activity finishing/destroyed or factory is null, skipping startCallWithIceServers");
+            return;
+        }
         if (peerConnection != null) {
             peerConnection.close();
             peerConnection.dispose();
@@ -1203,7 +1233,8 @@ public class CallActivity extends BaseActivity {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String offerSdp = data.getString("offer");
-                SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, offerSdp);
+                String tunedOffer = tuneOpusSdp(offerSdp);
+                SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, tunedOffer);
                 if (peerConnection != null) {
                     peerConnection.setRemoteDescription(new SimpleSdp("RemoteOffer", true), sdp);
                     createAnswer();
@@ -1218,7 +1249,8 @@ public class CallActivity extends BaseActivity {
             try {
                 JSONObject data = (JSONObject) args[0];
                 String answerSdp = data.getString("answer");
-                SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, answerSdp);
+                String tunedAnswer = tuneOpusSdp(answerSdp);
+                SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, tunedAnswer);
                 if (peerConnection != null) {
                     peerConnection.setRemoteDescription(new SimpleSdp("RemoteAnswer", true), sdp);
                 }
@@ -1254,7 +1286,8 @@ public class CallActivity extends BaseActivity {
                 try {
                     JSONObject data = (JSONObject) args[0];
                     String offerSdp = data.getString("offer");
-                    SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, offerSdp);
+                    String tunedOffer = tuneOpusSdp(offerSdp);
+                    SessionDescription sdp = new SessionDescription(SessionDescription.Type.OFFER, tunedOffer);
                     if (peerConnection != null) {
                         peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateOffer", true), sdp);
                         createAnswer();
@@ -1269,7 +1302,8 @@ public class CallActivity extends BaseActivity {
                 try {
                     JSONObject data = (JSONObject) args[0];
                     String answerSdp = data.getString("answer");
-                    SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, answerSdp);
+                    String tunedAnswer = tuneOpusSdp(answerSdp);
+                    SessionDescription sdp = new SessionDescription(SessionDescription.Type.ANSWER, tunedAnswer);
                     if (peerConnection != null) {
                         peerConnection.setRemoteDescription(new SimpleSdp("RemotePrivateAnswer", true), sdp);
                     }
@@ -1303,6 +1337,8 @@ public class CallActivity extends BaseActivity {
             privateCallAcceptedListener = args -> runOnUiThread(() -> {
                 Log.d(TAG, "private-call-accepted received");
                 isCallAccepted = true;
+                CallRingtoneManager.getInstance().stop();
+                NotificationHelper.cancelIncomingCallNotification(CallActivity.this);
                 timeoutHandler.removeCallbacks(timeoutRunnable);
                 // Start 15s connection timeout
                 timeoutHandler.postDelayed(timeoutRunnable, 15000);
@@ -1317,25 +1353,40 @@ public class CallActivity extends BaseActivity {
             });
             socket.on("private-call-accepted", privateCallAcceptedListener);
 
+            socket.on("private-call-ringing", args -> runOnUiThread(() -> {
+                Log.d(TAG, "private-call-ringing received from server");
+                if (connectionStatus != null) {
+                    connectionStatus.setText("Ringing...");
+                }
+            }));
+
             privateCallRejectedListener = args -> runOnUiThread(() -> {
+                CallRingtoneManager.getInstance().stop();
+                NotificationHelper.cancelIncomingCallNotification(CallActivity.this);
                 Toast.makeText(CallActivity.this, "Call was rejected.", Toast.LENGTH_SHORT).show();
                 disconnect();
             });
             socket.on("private-call-rejected", privateCallRejectedListener);
 
             privateCallCancelledListener = args -> runOnUiThread(() -> {
+                CallRingtoneManager.getInstance().stop();
+                NotificationHelper.cancelIncomingCallNotification(CallActivity.this);
                 Toast.makeText(CallActivity.this, "Call cancelled by caller.", Toast.LENGTH_SHORT).show();
                 disconnect();
             });
             socket.on("private-call-cancelled", privateCallCancelledListener);
 
             privateCallEndedListener = args -> runOnUiThread(() -> {
+                CallRingtoneManager.getInstance().stop();
+                NotificationHelper.cancelIncomingCallNotification(CallActivity.this);
                 Toast.makeText(CallActivity.this, "Call ended by the other user.", Toast.LENGTH_SHORT).show();
                 disconnect();
             });
             socket.on("private-call-ended", privateCallEndedListener);
 
             callFailedListener = args -> runOnUiThread(() -> {
+                CallRingtoneManager.getInstance().stop();
+                NotificationHelper.cancelIncomingCallNotification(CallActivity.this);
                 try {
                     JSONObject data = (JSONObject) args[0];
                     String reason = data.optString("reason", "Call failed.");
@@ -1377,6 +1428,45 @@ public class CallActivity extends BaseActivity {
         socket.on("call-control", callControlListener);
     }
 
+    /**
+     * Munges SDP to enable Opus Forward Error Correction (FEC), disable DTX,
+     * and enforce 10ms frame packets for crystal-clear voice on mobile cellular networks (Jio/Airtel 4G/5G).
+     */
+    private static String tuneOpusSdp(String sdpDescription) {
+        if (sdpDescription == null) return null;
+        try {
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("a=rtpmap:(\\d+) opus/48000/2");
+            java.util.regex.Matcher matcher = pattern.matcher(sdpDescription);
+            if (matcher.find()) {
+                String opusPayload = matcher.group(1);
+                String fmtpPrefix = "a=fmtp:" + opusPayload;
+                int fmtpIndex = sdpDescription.indexOf(fmtpPrefix);
+                if (fmtpIndex != -1) {
+                    int endLine = sdpDescription.indexOf("\r\n", fmtpIndex);
+                    if (endLine == -1) endLine = sdpDescription.indexOf("\n", fmtpIndex);
+                    if (endLine != -1) {
+                        String existingFmtp = sdpDescription.substring(fmtpIndex, endLine);
+                        if (!existingFmtp.contains("useinbandfec=1")) {
+                            String tunedFmtp = existingFmtp + ";useinbandfec=1;usedtx=0;minptime=10;maxaveragebitrate=32000";
+                            return sdpDescription.substring(0, fmtpIndex) + tunedFmtp + sdpDescription.substring(endLine);
+                        }
+                    }
+                } else {
+                    int rtpmapEnd = matcher.end();
+                    int endLine = sdpDescription.indexOf("\r\n", rtpmapEnd);
+                    if (endLine == -1) endLine = sdpDescription.indexOf("\n", rtpmapEnd);
+                    if (endLine != -1) {
+                        String newFmtp = "\r\na=fmtp:" + opusPayload + " minptime=10;useinbandfec=1;usedtx=0;maxaveragebitrate=32000";
+                        return sdpDescription.substring(0, endLine) + newFmtp + sdpDescription.substring(endLine);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error tuning Opus SDP: " + e.getMessage());
+        }
+        return sdpDescription;
+    }
+
     private void createOffer() {
         if (peerConnection == null) return;
         MediaConstraints sdpMediaConstraints = new MediaConstraints();
@@ -1388,8 +1478,10 @@ public class CallActivity extends BaseActivity {
             public void onCreateSuccess(SessionDescription sdp) {
                 super.onCreateSuccess(sdp);
                 if (peerConnection != null) {
-                    peerConnection.setLocalDescription(new SimpleSdp("LocalOffer", false), sdp);
-                    sendOffer(sdp);
+                    String tunedDesc = tuneOpusSdp(sdp.description);
+                    SessionDescription tunedSdp = new SessionDescription(sdp.type, tunedDesc);
+                    peerConnection.setLocalDescription(new SimpleSdp("LocalOffer", false), tunedSdp);
+                    sendOffer(tunedSdp);
                 }
             }
         }, sdpMediaConstraints);
@@ -1406,8 +1498,10 @@ public class CallActivity extends BaseActivity {
             public void onCreateSuccess(SessionDescription sdp) {
                 super.onCreateSuccess(sdp);
                 if (peerConnection != null) {
-                    peerConnection.setLocalDescription(new SimpleSdp("LocalAnswer", false), sdp);
-                    sendAnswer(sdp);
+                    String tunedDesc = tuneOpusSdp(sdp.description);
+                    SessionDescription tunedSdp = new SessionDescription(sdp.type, tunedDesc);
+                    peerConnection.setLocalDescription(new SimpleSdp("LocalAnswer", false), tunedSdp);
+                    sendAnswer(tunedSdp);
                 }
             }
         }, sdpMediaConstraints);
@@ -1610,6 +1704,7 @@ public class CallActivity extends BaseActivity {
         timeoutHandler.removeCallbacks(timeoutRunnable);
         autoHideHandler.removeCallbacks(autoHideRunnable);
         NotificationHelper.cancelIncomingCallNotification(this);
+        CallRingtoneManager.getInstance().stop();
 
         // Reset AudioManager state when call disconnects
         try {
@@ -2138,6 +2233,11 @@ public class CallActivity extends BaseActivity {
 
     private void showPostCallRewardAdAndFinish() {
         if (isFinishing() || isDestroyed()) return;
+        // Strictly prevent any ad display while the call is still ongoing
+        if (!callEnded) {
+            Log.w(TAG, "Call is still active. Blocking ad from interrupting live call.");
+            return;
+        }
 
         String placement = isPrivateCall ? "private_call_rewarded" : "call_exit_rewarded";
         Log.d(TAG, "🚀 [POST-CALL DUAL-AUCTION] Requesting Dual-Auction ad on call exit (placement: " + placement + ", isPrivate: " + isPrivateCall + ")");
@@ -2201,6 +2301,11 @@ public class CallActivity extends BaseActivity {
 
     private void showPostCallInterstitialAdAndFinish() {
         if (isFinishing() || isDestroyed()) return;
+        // Strictly prevent any ad display while the call is still ongoing
+        if (!callEnded) {
+            Log.w(TAG, "Call is still active. Blocking interstitial ad from interrupting live call.");
+            return;
+        }
 
         String placement = isPrivateCall ? "private_call_exit" : "call_exit";
         Log.d(TAG, "🚀 [POST-CALL INTERSTITIAL] Requesting interstitial ad for placement: " + placement);

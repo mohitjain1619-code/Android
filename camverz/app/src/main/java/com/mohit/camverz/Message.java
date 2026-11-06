@@ -11,6 +11,9 @@ public class Message {
     private long timestamp;
     private boolean seen;
     private List<String> deletedFor;
+    private String replyToId;
+    private String replyToText;
+    private String replyToSenderName;
 
     public Message() {
         // Default constructor required for calls to DataSnapshot.getValue(Message.class)
@@ -25,6 +28,48 @@ public class Message {
         this.timestamp = timestamp;
         this.seen = false;
         this.deletedFor = new ArrayList<>();
+    }
+
+    public Message(String messageId, String senderId, String receiverId, String message, long timestamp,
+                   String replyToId, String replyToText, String replyToSenderName) {
+        this.messageId = messageId;
+        this.senderId = senderId;
+        this.receiverId = receiverId;
+        this.message = message;
+        this.timestamp = timestamp;
+        this.seen = false;
+        this.deletedFor = new ArrayList<>();
+        this.replyToId = replyToId;
+        this.replyToText = replyToText;
+        this.replyToSenderName = replyToSenderName;
+    }
+
+    public String getReplyToId() {
+        return replyToId;
+    }
+
+    public void setReplyToId(String replyToId) {
+        this.replyToId = replyToId;
+    }
+
+    public String getReplyToText() {
+        return replyToText;
+    }
+
+    public void setReplyToText(String replyToText) {
+        this.replyToText = replyToText;
+    }
+
+    public String getReplyToSenderName() {
+        return replyToSenderName;
+    }
+
+    public void setReplyToSenderName(String replyToSenderName) {
+        this.replyToSenderName = replyToSenderName;
+    }
+
+    public boolean hasReply() {
+        return replyToText != null && !replyToText.trim().isEmpty();
     }
 
     public String getMessageId() {

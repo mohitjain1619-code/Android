@@ -209,42 +209,63 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_feature_chip"
-                        android:orientation="vertical"
-                        android:padding="16dp"
-                        android:visibility="gone">
+                        android:background="@drawable/bg_card_vip_glossy"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="16dp">
 
                         <LinearLayout
-                            android:layout_width="match_parent"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                            <ImageView
-                                android:layout_width="22dp"
-                                android:layout_height="22dp"
-                                android:src="@drawable/ic_verified_badge"
-                                app:tint="#FFD700" />
-
-                            <TextView
-                                android:id="@+id/tv_card_plan_name"
+                            <LinearLayout
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:textColor="#FFFFFF"
-                                android:textSize="15sp"
-                                android:textStyle="bold"
-                                android:text="@string/premium_vip_pass" />
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="👑"
+                                    android:textSize="18sp" />
+
+                                <TextView
+                                    android:id="@+id/tv_card_plan_name"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"
+                                    android:text="Camverz VIP Club"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+
+                            <TextView
+                                android:id="@+id/tv_card_plan_expiry"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="100% Ad-Free Video Calls &amp; Community Pass • Tap to Join"
+                                android:textColor="#E2E8F0"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <TextView
-                            android:id="@+id/tv_card_plan_expiry"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:textColor="#E2E8F0"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="10dp"
+                            android:background="@drawable/bg_btn_vip_glossy"
+                            android:gravity="center"
+                            android:paddingHorizontal="14dp"
+                            android:text="GO VIP ⚡"
+                            android:textColor="#FFFFFF"
                             android:textSize="12sp"
-                            android:text="@string/loading_plan_status" />
+                            android:textStyle="bold" />
                     </LinearLayout>
 
                     <!-- Stats Section Pills -->

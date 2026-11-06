@@ -112,7 +112,7 @@ const legalDocs = {
         <p>This policy details the refund and cancellation terms for all digital VIP access passes and feature packages purchased on the Camverz Web Platform.</p>
 
         <h2>1. Strict 100% No Refunds Policy</h2>
-        <p>All sales and purchases of digital VIP access passes (1 Day Pass, 10 Days Package, 1 Month VIP Package) on Camverz are final, instant, and non-refundable. Once a pass is purchased, digital access benefits are granted instantly to your account and cannot be returned, cancelled, or refunded.</p>
+        <p>All sales and purchases of digital VIP access passes (1 Day Pass, 7 Days Pass, 1 Month VIP Package) on Camverz are final, instant, and non-refundable. Once a pass is purchased, digital access benefits are granted instantly to your account and cannot be returned, cancelled, or refunded.</p>
 
         <h2>2. Google Play Subscriptions & Cancellation Terms</h2>
         <p>For purchases and subscriptions completed through Google Play Billing (such as 7 Days Weekly VIP and 1 Month VIP passes):</p>

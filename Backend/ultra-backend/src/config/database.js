@@ -338,7 +338,17 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_messages_deleted_for ON messages USING GIN (deleted_for);
     `);
 
-    console.log("✅ Database migrations, FCM columns, message deleted_for, and speed indexing applied successfully!");
+    // 19. Add Reply-To message support
+    await pool.query(`
+      ALTER TABLE messages 
+      ADD COLUMN IF NOT EXISTS reply_to_id UUID,
+      ADD COLUMN IF NOT EXISTS reply_to_text TEXT,
+      ADD COLUMN IF NOT EXISTS reply_to_sender_name TEXT;
+
+      CREATE INDEX IF NOT EXISTS idx_messages_reply_to_id ON messages(reply_to_id) WHERE reply_to_id IS NOT NULL;
+    `);
+
+    console.log("✅ Database migrations, FCM columns, message deleted_for, reply-to support, and speed indexing applied successfully!");
   } catch (err) {
     console.error("❌ Failed to apply database migrations or indexes:", err.message);
   }

@@ -48,10 +48,37 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         return new ViewHolder(view);
     }
 
+    public interface OnMessageReplyListener {
+        void onReplyMessage(Message message, int position);
+    }
+
+    private OnMessageReplyListener onMessageReplyListener;
+
+    public void setOnMessageReplyListener(OnMessageReplyListener listener) {
+        this.onMessageReplyListener = listener;
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Message message = messages.get(position);
         holder.messageText.setText(message.getMessage());
+
+        // Bind Quoted Reply if present
+        if (message.hasReply()) {
+            if (holder.layoutQuotedReply != null) {
+                holder.layoutQuotedReply.setVisibility(View.VISIBLE);
+                if (holder.tvQuotedSender != null) {
+                    holder.tvQuotedSender.setText(message.getReplyToSenderName() != null ? message.getReplyToSenderName() : "Quoted");
+                }
+                if (holder.tvQuotedText != null) {
+                    holder.tvQuotedText.setText(message.getReplyToText());
+                }
+            }
+        } else {
+            if (holder.layoutQuotedReply != null) {
+                holder.layoutQuotedReply.setVisibility(View.GONE);
+            }
+        }
 
         if (message.getTimestamp() > 0) {
             SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
@@ -83,6 +110,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             showDeleteDialog(message, position);
             return true;
         });
+
+        // Tap on bubble to also show reply/actions
+        holder.itemView.setOnClickListener(v -> {
+            showDeleteDialog(message, position);
+        });
     }
 
     @Override
@@ -95,6 +127,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         public TextView timestamp;
         public TextView seenStatus;
         public CircleImageView profileImage;
+        public View layoutQuotedReply;
+        public TextView tvQuotedSender;
+        public TextView tvQuotedText;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -102,6 +137,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
             timestamp = itemView.findViewById(R.id.text_message_time);
             seenStatus = itemView.findViewById(R.id.text_message_seen);
             profileImage = itemView.findViewById(R.id.image_message_profile);
+            layoutQuotedReply = itemView.findViewById(R.id.layout_quoted_reply);
+            tvQuotedSender = itemView.findViewById(R.id.tv_quoted_sender);
+            tvQuotedText = itemView.findViewById(R.id.tv_quoted_text);
         }
     }
 
@@ -142,11 +180,21 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
                 }
             }
 
+            View btnReplyMessage = sheetView.findViewById(R.id.btn_reply_message);
             View btnDeleteForEveryone = sheetView.findViewById(R.id.btn_delete_for_everyone);
             View btnDeleteForMe = sheetView.findViewById(R.id.btn_delete_for_me);
             TextView tvDeleteForMeTitle = sheetView.findViewById(R.id.tv_delete_for_me_title);
             ImageView ivDeleteForMeIcon = sheetView.findViewById(R.id.iv_delete_for_me_icon);
             View btnCancelDelete = sheetView.findViewById(R.id.btn_cancel_delete);
+
+            if (btnReplyMessage != null) {
+                btnReplyMessage.setOnClickListener(v -> {
+                    bottomSheetDialog.dismiss();
+                    if (onMessageReplyListener != null) {
+                        onMessageReplyListener.onReplyMessage(message, position);
+                    }
+                });
+            }
 
             String currentUserId = tokenManager.getUserId();
             boolean isMe = currentUserId != null && currentUserId.equals(message.getSenderId());

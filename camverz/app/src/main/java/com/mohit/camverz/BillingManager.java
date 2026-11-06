@@ -45,38 +45,53 @@ import retrofit2.Response;
 /**
  * Production-Grade BillingManager for Camverz utilizing Google Play Billing Library 8.x.
  * 
- * Supports:
- * 1. Auto-Renewing Subscriptions (SUBS): Weekly VIP (7 Days) and Monthly VIP (30 Days).
- * 2. One-Time Passes (INAPP): 1 Day VIP Pass and repurchasable passes.
- * 3. Acknowledges recurring subscriptions (prevents automatic Google refunds).
- * 4. Consumes one-time passes (allows repeated purchases).
- * 5. Instant Backend Sync (/api/users/me) and local TokenManager VIP activation.
+ * Exact Product IDs & Base Plan IDs matched to Google Play Console:
+ * 1. Video 7 Days: "camverz_sub_weekly_vip" -> "weekly-vip-base" & "camverz-7-days-vip"
+ * 2. Video 1 Month: "camverz_sub_monthly_package" -> "1-month-with-ads" & "1-month-without-ads"
+ * 3. Community 1 Month: "camverz_community_1_month_pass" -> "realmeet-1-month-with-ads" & "realmeet-1-month-without-ads"
+ * 4. 1 Day: "camverz_pass_1day_ads" & "camverz_pass_1day_vip"
  */
 public class BillingManager implements PurchasesUpdatedListener {
 
     private static final String TAG = "BillingManager";
 
     // =========================================================================
-    // PRODUCT IDS (Must match Google Play Console Subscriptions & In-App Products)
+    // EXACT PRODUCT IDS (Matched to Google Play Console Screenshots)
     // =========================================================================
-    // Subscriptions (Auto-Pay)
-    public static final String SUB_WEEKLY_VIP = "camverz_sub_weekly_vip";    // 7 Days Weekly Auto-Renewing
-    public static final String SUB_MONTHLY_VIP = "camverz_sub_monthly_vip";  // 1 Month Auto-Renewing
+    // 1. 7 Days Weekly Video Call Subscription
+    public static final String SUB_WEEKLY_VIP = "camverz_sub_weekly_vip";
+    public static final String BASE_PLAN_7DAYS_WITH_ADS = "weekly-vip-base";
+    public static final String BASE_PLAN_7DAYS_NO_ADS = "camverz-7-days-vip";
 
-    // One-Time Passes (Consumable)
-    public static final String PASS_1DAY_VIP = "camverz_pass_1day_vip";       // 24 Hours Pass
-    public static final String PASS_7DAYS_VIP = "camverz_pass_7days_vip";     // One-time 7 Days
-    public static final String PASS_1MONTH_VIP = "camverz_pass_1month_vip";   // One-time 1 Month
+    // 2. 1 Month Video Call Subscription
+    public static final String SUB_MONTHLY_PACKAGE = "camverz_sub_monthly_package";
+    public static final String BASE_PLAN_1MONTH_WITH_ADS = "1-month-with-ads";
+    public static final String BASE_PLAN_1MONTH_NO_ADS = "1-month-without-ads";
+
+    // 3. Community RealMeet 1 Month Subscription
+    public static final String SUB_COMMUNITY_1MONTH = "camverz_community_1_month_pass";
+    public static final String BASE_PLAN_COMMUNITY_1MONTH_WITH_ADS = "realmeet-1-month-with-ads";
+    public static final String BASE_PLAN_COMMUNITY_1MONTH_NO_ADS = "realmeet-1-month-without-ads";
+
+    // 4. Community RealMeet 7 Days Subscription (fallback / optional)
+    public static final String SUB_COMMUNITY_7DAYS = "camverz_community_7days";
+    public static final String BASE_PLAN_COMMUNITY_7DAYS_WITH_ADS = "7-days-realmeethub-with-ads";
+    public static final String BASE_PLAN_COMMUNITY_7DAYS_NO_ADS = "7-days-realmeethub-without-ads";
+
+    // 5. 1 Day One-Time Passes
+    public static final String PASS_1DAY_ADS = "camverz_pass_1day_ads";
+    public static final String PASS_1DAY_VIP = "camverz_pass_1day_vip";
 
     public static final List<String> SUBSCRIPTION_PRODUCTS = Collections.unmodifiableList(Arrays.asList(
             SUB_WEEKLY_VIP,
-            SUB_MONTHLY_VIP
+            SUB_MONTHLY_PACKAGE,
+            SUB_COMMUNITY_1MONTH,
+            SUB_COMMUNITY_7DAYS
     ));
 
     public static final List<String> INAPP_PRODUCTS = Collections.unmodifiableList(Arrays.asList(
-            PASS_1DAY_VIP,
-            PASS_7DAYS_VIP,
-            PASS_1MONTH_VIP
+            PASS_1DAY_ADS,
+            PASS_1DAY_VIP
     ));
 
     private static volatile BillingManager instance;
@@ -90,8 +105,8 @@ public class BillingManager implements PurchasesUpdatedListener {
     private boolean isConnected = false;
     private int reconnectRetryCount = 0;
 
-    // Active purchase callback for the caller activity
     private BillingPurchaseCallback currentPurchaseCallback;
+    private String pendingBasePlanId = null;
 
     public interface BillingPurchaseCallback {
         void onSuccess(String productId, String planName, boolean isAdFree);
@@ -116,9 +131,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         return instance;
     }
 
-    /**
-     * Build and configure the Google Play BillingClient (PBL 8.x compliant)
-     */
     private void initializeBillingClient() {
         billingClient = BillingClient.newBuilder(appContext)
                 .setListener(this)
@@ -128,9 +140,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         startConnection(null);
     }
 
-    /**
-     * Start connection to Google Play with exponential backoff on failure
-     */
     public synchronized void startConnection(@Nullable Runnable onConnectedAction) {
         if (billingClient == null || isConnected || isConnecting) {
             if (isConnected && onConnectedAction != null) {
@@ -151,7 +160,6 @@ public class BillingManager implements PurchasesUpdatedListener {
                     reconnectRetryCount = 0;
                     Log.d(TAG, "Google Play Billing Service Connected Successfully!");
 
-                    // Query product details and active subscriptions automatically
                     queryProductDetails(null);
                     restoreActivePurchases();
 
@@ -177,9 +185,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         });
     }
 
-    /**
-     * Query both Subscriptions (SUBS) and One-time products (INAPP) from Google Play (PBL 8.x)
-     */
     public void queryProductDetails(@Nullable ProductDetailsCallback callback) {
         if (!isConnected) {
             startConnection(() -> queryProductDetails(callback));
@@ -202,7 +207,6 @@ public class BillingManager implements PurchasesUpdatedListener {
                     .build());
         }
 
-        // 1. Query Subscriptions
         QueryProductDetailsParams subParams = QueryProductDetailsParams.newBuilder()
                 .setProductList(subProducts)
                 .build();
@@ -218,7 +222,6 @@ public class BillingManager implements PurchasesUpdatedListener {
                 }
             }
 
-            // 2. Query In-App Passes
             QueryProductDetailsParams inappParams = QueryProductDetailsParams.newBuilder()
                     .setProductList(inappProducts)
                     .build();
@@ -241,18 +244,26 @@ public class BillingManager implements PurchasesUpdatedListener {
         });
     }
 
-    /**
-     * Returns formatted price string for a product ID (e.g. "₹299.00" or "$2.99")
-     */
-    public String getFormattedPrice(String productId, String fallback) {
+    public String getFormattedPrice(String productId, @Nullable String basePlanId, String fallback) {
         ProductDetails details = productDetailsMap.get(productId);
         if (details != null) {
             if (BillingClient.ProductType.SUBS.equals(details.getProductType())) {
                 List<ProductDetails.SubscriptionOfferDetails> offers = details.getSubscriptionOfferDetails();
                 if (offers != null && !offers.isEmpty()) {
-                    ProductDetails.SubscriptionOfferDetails offer = offers.get(0);
-                    if (offer.getPricingPhases() != null && !offer.getPricingPhases().getPricingPhaseList().isEmpty()) {
-                        return offer.getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice();
+                    ProductDetails.SubscriptionOfferDetails matchedOffer = null;
+                    if (basePlanId != null) {
+                        for (ProductDetails.SubscriptionOfferDetails offer : offers) {
+                            if (basePlanId.equals(offer.getBasePlanId())) {
+                                matchedOffer = offer;
+                                break;
+                            }
+                        }
+                    }
+                    if (matchedOffer == null) {
+                        matchedOffer = offers.get(0);
+                    }
+                    if (matchedOffer.getPricingPhases() != null && !matchedOffer.getPricingPhases().getPricingPhaseList().isEmpty()) {
+                        return matchedOffer.getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice();
                     }
                 }
             } else if (details.getOneTimePurchaseOfferDetails() != null) {
@@ -262,14 +273,12 @@ public class BillingManager implements PurchasesUpdatedListener {
         return fallback;
     }
 
-    /**
-     * Launches the Google Play Purchase / Subscription Flow
-     */
-    public void launchPurchaseFlow(@NonNull Activity activity, @NonNull String productId, @Nullable BillingPurchaseCallback callback) {
+    public void launchPurchaseFlow(@NonNull Activity activity, @NonNull String productId, @Nullable String targetBasePlanId, @Nullable BillingPurchaseCallback callback) {
         this.currentPurchaseCallback = callback;
+        this.pendingBasePlanId = targetBasePlanId;
 
         if (!isConnected) {
-            startConnection(() -> launchPurchaseFlow(activity, productId, callback));
+            startConnection(() -> launchPurchaseFlow(activity, productId, targetBasePlanId, callback));
             return;
         }
 
@@ -280,7 +289,7 @@ public class BillingManager implements PurchasesUpdatedListener {
                 public void onLoaded(Map<String, ProductDetails> detailsMap) {
                     ProductDetails fetched = detailsMap.get(productId);
                     if (fetched != null) {
-                        executeBillingFlow(activity, fetched);
+                        executeBillingFlow(activity, fetched, targetBasePlanId);
                     } else if (callback != null) {
                         callback.onError(BillingClient.BillingResponseCode.ITEM_UNAVAILABLE, "Product currently unavailable in Google Play Store.");
                     }
@@ -294,19 +303,30 @@ public class BillingManager implements PurchasesUpdatedListener {
             return;
         }
 
-        executeBillingFlow(activity, details);
+        executeBillingFlow(activity, details, targetBasePlanId);
     }
 
-    private void executeBillingFlow(Activity activity, ProductDetails details) {
+    private void executeBillingFlow(Activity activity, ProductDetails details, @Nullable String targetBasePlanId) {
         List<BillingFlowParams.ProductDetailsParams> productDetailsParamsList = new ArrayList<>();
         BillingFlowParams.ProductDetailsParams.Builder paramBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
                 .setProductDetails(details);
 
-        // Required for Google Play Billing Subscriptions: offerToken
         if (BillingClient.ProductType.SUBS.equals(details.getProductType())) {
             List<ProductDetails.SubscriptionOfferDetails> offers = details.getSubscriptionOfferDetails();
             if (offers != null && !offers.isEmpty()) {
-                paramBuilder.setOfferToken(offers.get(0).getOfferToken());
+                String selectedOfferToken = null;
+                if (targetBasePlanId != null) {
+                    for (ProductDetails.SubscriptionOfferDetails offer : offers) {
+                        if (targetBasePlanId.equals(offer.getBasePlanId())) {
+                            selectedOfferToken = offer.getOfferToken();
+                            break;
+                        }
+                    }
+                }
+                if (selectedOfferToken == null) {
+                    selectedOfferToken = offers.get(0).getOfferToken();
+                }
+                paramBuilder.setOfferToken(selectedOfferToken);
             } else {
                 Log.e(TAG, "No subscription offers found for: " + details.getProductId());
                 if (currentPurchaseCallback != null) {
@@ -351,12 +371,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         }
     }
 
-    /**
-     * Processes verified purchase:
-     * - Subscriptions: Acknowledges purchase (prevents cancellation)
-     * - One-time passes: Consumes purchase (allows repurchase)
-     * - Syncs to backend and unlocks local TokenManager VIP privileges
-     */
     private void handlePurchaseFulfillment(Purchase purchase) {
         if (purchase.getPurchaseState() != Purchase.PurchaseState.PURCHASED) {
             Log.w(TAG, "Purchase state is not PURCHASED: " + purchase.getPurchaseState());
@@ -369,36 +383,29 @@ public class BillingManager implements PurchasesUpdatedListener {
         String productId = products.get(0);
         Log.d(TAG, "Processing fulfilled purchase for Product ID: " + productId + " (Order ID: " + purchase.getOrderId() + ")");
 
-        // 1. Calculate Plan Details (Name, Ad-Free status, Expiration timestamp)
-        PlanDetails plan = calculatePlanDetails(productId);
+        PlanDetails plan = calculatePlanDetails(productId, pendingBasePlanId);
 
-        // 2. Sync to Backend via REST API
         syncPurchaseToBackend(purchase, plan, () -> {
-            // 3. Update TokenManager for immediate UI unlocking
             TokenManager tokenManager = TokenManager.getInstance(appContext);
             tokenManager.savePlanName(plan.planName);
             tokenManager.savePlanIsAdFree(plan.isAdFree);
             tokenManager.saveHasActivePlan(true);
 
-            // 4. Acknowledge (SUBS) or Consume (INAPP)
-            boolean isSubscription = SUBSCRIPTION_PRODUCTS.contains(productId) || productId.contains("sub");
+            boolean isSubscription = SUBSCRIPTION_PRODUCTS.contains(productId) || productId.contains("sub") || productId.contains("community");
             if (isSubscription) {
                 acknowledgeSubscription(purchase);
             } else {
                 consumePurchase(purchase);
             }
 
-            // 5. Notify UI Callback
             if (currentPurchaseCallback != null) {
                 currentPurchaseCallback.onSuccess(productId, plan.planName, plan.isAdFree);
                 currentPurchaseCallback = null;
             }
+            pendingBasePlanId = null;
         });
     }
 
-    /**
-     * Acknowledges a subscription so Google Play does not refund/cancel it after 3 days.
-     */
     private void acknowledgeSubscription(Purchase purchase) {
         if (!purchase.isAcknowledged()) {
             AcknowledgePurchaseParams acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
@@ -415,9 +422,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         }
     }
 
-    /**
-     * Consumes one-time purchase so it can be bought repeatedly
-     */
     private void consumePurchase(Purchase purchase) {
         ConsumeParams consumeParams = ConsumeParams.newBuilder()
                 .setPurchaseToken(purchase.getPurchaseToken())
@@ -432,9 +436,6 @@ public class BillingManager implements PurchasesUpdatedListener {
         });
     }
 
-    /**
-     * Syncs purchase information to the Camverz Ultra Backend (/api/users/me)
-     */
     private void syncPurchaseToBackend(Purchase purchase, PlanDetails plan, Runnable onSynced) {
         try {
             ApiService api = ApiClient.getInstance(appContext).getApi();
@@ -471,13 +472,9 @@ public class BillingManager implements PurchasesUpdatedListener {
         }
     }
 
-    /**
-     * Checks active subscriptions & unconsumed purchases on app startup
-     */
     public void restoreActivePurchases() {
         if (!isConnected) return;
 
-        // 1. Check Subscriptions
         billingClient.queryPurchasesAsync(
                 QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(),
                 (billingResult, purchases) -> {
@@ -492,7 +489,6 @@ public class BillingManager implements PurchasesUpdatedListener {
                 }
         );
 
-        // 2. Check In-App Passes
         billingClient.queryPurchasesAsync(
                 QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
                 (billingResult, purchases) -> {
@@ -524,47 +520,60 @@ public class BillingManager implements PurchasesUpdatedListener {
         }
     }
 
-    private PlanDetails calculatePlanDetails(String productId) {
+    private PlanDetails calculatePlanDetails(String productId, @Nullable String basePlanId) {
         long nowMs = System.currentTimeMillis();
         SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         isoFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         String startedAt = isoFormat.format(new Date(nowMs));
-        long hoursToAdd = 168; // Default to 7 days
-        String planName = "7 Days Weekly VIP Pass";
-        boolean isAdFree = true;
+        long hoursToAdd = 168;
+        String planName = "Camverz Pass";
+        boolean isAdFree = false;
 
-        switch (productId) {
-            case SUB_WEEKLY_VIP:
-            case PASS_7DAYS_VIP:
-                hoursToAdd = 168; // 7 days (7 * 24h)
-                planName = "7 Days Weekly VIP Pass";
+        if (SUB_WEEKLY_VIP.equals(productId)) {
+            hoursToAdd = 168;
+            if (BASE_PLAN_7DAYS_NO_ADS.equals(basePlanId)) {
+                planName = "7 Days Weekly VIP Pass (Zero Ads)";
                 isAdFree = true;
-                break;
-            case SUB_MONTHLY_VIP:
-            case PASS_1MONTH_VIP:
-                hoursToAdd = 720; // 30 days
-                planName = "1 Month VIP Package";
+            } else {
+                planName = "7 Days Weekly Pass (With Ads)";
+                isAdFree = false;
+            }
+        } else if (SUB_MONTHLY_PACKAGE.equals(productId)) {
+            hoursToAdd = 720;
+            if (BASE_PLAN_1MONTH_NO_ADS.equals(basePlanId)) {
+                planName = "1 Month VIP Package (Zero Ads)";
                 isAdFree = true;
-                break;
-            case PASS_1DAY_VIP:
-                hoursToAdd = 24;
-                planName = "1 Day VIP Pass";
+            } else {
+                planName = "1 Month Pass (With Ads)";
+                isAdFree = false;
+            }
+        } else if (SUB_COMMUNITY_1MONTH.equals(productId)) {
+            hoursToAdd = 720;
+            if (BASE_PLAN_COMMUNITY_1MONTH_NO_ADS.equals(basePlanId)) {
+                planName = "Community 1 Month VIP (Zero Ads)";
                 isAdFree = true;
-                break;
-            default:
-                if (productId.contains("month")) {
-                    hoursToAdd = 720;
-                    planName = "1 Month VIP Package";
-                } else if (productId.contains("week") || productId.contains("7day")) {
-                    hoursToAdd = 168;
-                    planName = "7 Days Weekly VIP Pass";
-                } else {
-                    hoursToAdd = 24;
-                    planName = "1 Day VIP Pass";
-                }
+            } else {
+                planName = "Community 1 Month Pass (With Ads)";
+                isAdFree = false;
+            }
+        } else if (SUB_COMMUNITY_7DAYS.equals(productId)) {
+            hoursToAdd = 168;
+            if (BASE_PLAN_COMMUNITY_7DAYS_NO_ADS.equals(basePlanId)) {
+                planName = "Community 7 Days VIP (Zero Ads)";
                 isAdFree = true;
-                break;
+            } else {
+                planName = "Community 7 Days Pass (With Ads)";
+                isAdFree = false;
+            }
+        } else if (PASS_1DAY_VIP.equals(productId)) {
+            hoursToAdd = 24;
+            planName = "1 Day VIP Pass (Zero Ads)";
+            isAdFree = true;
+        } else if (PASS_1DAY_ADS.equals(productId)) {
+            hoursToAdd = 24;
+            planName = "1 Day Pass (With Ads)";
+            isAdFree = false;
         }
 
         long expiresMs = nowMs + (hoursToAdd * 3600 * 1000);

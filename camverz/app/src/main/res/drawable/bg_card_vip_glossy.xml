@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Glowing Border -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:startColor="#EC4899"
+                android:endColor="#8B5CF6"
+                android:type="linear" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+    <!-- Card Surface with Subtle Inset -->
+    <item
+        android:left="1.5dp"
+        android:top="1.5dp"
+        android:right="1.5dp"
+        android:bottom="1.5dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#221833"
+                android:endColor="#141120"
+                android:type="linear" />
+            <corners android:radius="17dp" />
+        </shape>
+    </item>
+    <!-- Top Gloss Shimmer -->
+    <item
+        android:left="8dp"
+        android:right="8dp"
+        android:top="2dp"
+        android:height="1.5dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#40FFFFFF" />
+            <corners android:radius="1dp" />
+        </shape>
+    </item>
+</layer-list>
+

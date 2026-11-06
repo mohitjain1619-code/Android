@@ -920,16 +920,16 @@ router.post("/webhook/razorpay", async (req, res) => {
       // IMPORTANT: Check longer matches first to avoid '1-day' matching inside '10-days'
       if (planKey.includes("1-month") || planKey.includes("1month") || planKey.includes("community-1-month")) {
         durationDays = 30;
-      } else if (planKey.includes("10-days") || planKey.includes("10days")) {
-        durationDays = 10;
       } else if (planKey.includes("7-days") || planKey.includes("7days") || planKey.includes("community-7-days") || planKey.includes("week")) {
         durationDays = 7;
+      } else if (planKey.includes("10-days") || planKey.includes("10days")) {
+        durationDays = 10;
       } else if (planKey.includes("1-day") || planKey.includes("1day") || planKey.includes("daily")) {
         durationDays = 1;
       } else {
         // Fallback: amount-based guess
         if (amountInr >= 400) durationDays = 30;
-        else if (amountInr >= 200) durationDays = 10;
+        else if (amountInr >= 200) durationDays = 7;
         else durationDays = 1;
         console.warn(`[Webhook] Could not detect plan duration from planKey="${planKey}", guessing ${durationDays} days from amount ₹${amountInr}`);
       }

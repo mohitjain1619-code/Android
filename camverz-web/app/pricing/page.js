@@ -32,17 +32,17 @@ function PricingContent() {
     let countryStr = (userData?.country || '').trim().toLowerCase();
 
     // Robust check for India
-    const isIndia = countryStr.includes('india') || countryStr === 'in' || 
-                    cityStr.includes('india') || cityStr === 'in' ||
-                    cityStr.includes('gwalior') || cityStr.includes('delhi') || 
-                    cityStr.includes('mumbai') || cityStr.includes('bangalore') ||
-                    cityStr.includes('madhya pradesh');
+    const isIndia = countryStr.includes('india') || countryStr === 'in' ||
+      cityStr.includes('india') || cityStr === 'in' ||
+      cityStr.includes('gwalior') || cityStr.includes('delhi') ||
+      cityStr.includes('mumbai') || cityStr.includes('bangalore') ||
+      cityStr.includes('madhya pradesh');
 
     if (isIndia) {
       setRegionMode('india');
       setDetectedLocation('Location: India (INR ₹ Pricing) 🇮🇳');
     } else if (
-      REGIONAL_COUNTRIES.some(c => countryStr.includes(c)) || 
+      REGIONAL_COUNTRIES.some(c => countryStr.includes(c)) ||
       (userData?.city && REGIONAL_COUNTRIES.some(c => cityStr.includes(c)))
     ) {
       setRegionMode('regional');
@@ -125,7 +125,7 @@ function PricingContent() {
       badge: 'Most Popular 🔥',
       badgeClass: styles.badgePurple,
       isPopularSection: true,
-      description: 'Our most popular choice! 7 full days of uninterrupted video chatting with auto-renewal.',
+      description: 'Our most popular choice! 7 full days of uninterrupted video chatting.',
       durationLabel: '/ Week (7 Days)',
       tiers: [
         {

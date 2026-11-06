@@ -22,7 +22,7 @@
         android:id="@+id/tv_delete_dialog_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Delete message?"
+        android:text="Message Options"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -32,10 +32,55 @@
         android:id="@+id/tv_delete_dialog_subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Choose how you want to delete this message."
+        android:text="Reply, quote, or delete this message."
         android:textColor="#94A3B8"
         android:textSize="13sp"
-        android:layout_marginBottom="18dp" />
+        android:layout_marginBottom="16dp" />
+
+    <!-- Reply Option (Always available) -->
+    <LinearLayout
+        android:id="@+id/btn_reply_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_glass_card_luxury"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="14dp"
+        android:layout_marginBottom="10dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_reply"
+            app:tint="@color/accent_primary"
+            android:layout_marginEnd="14dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reply"
+                android:textColor="#F1F5F9"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Quote and reply to this message"
+                android:textColor="#94A3B8"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <!-- Delete for Everyone Option (only visible for user's own sent messages) -->
     <LinearLayout

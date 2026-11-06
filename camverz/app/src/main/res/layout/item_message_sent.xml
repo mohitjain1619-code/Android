@@ -1,33 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_message_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp">
+    android:padding="6dp">
 
-    <TextView
-        android:id="@+id/text_message_body"
+    <LinearLayout
+        android:id="@+id/bubble_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:background="@drawable/bg_message_sent"
-        android:paddingHorizontal="14dp"
-        android:paddingVertical="10dp"
-        android:text="Hello"
-        android:textSize="15sp"
-        android:textColor="@color/text_white"
-        android:maxWidth="260dp"
-        app:backgroundTint="@null" />
+        android:orientation="vertical"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:maxWidth="280dp">
+
+        <!-- Quoted Reply Container (Visible only when message is a reply) -->
+        <LinearLayout
+            android:id="@+id/layout_quoted_reply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_quoted_reply_sent"
+            android:orientation="horizontal"
+            android:padding="6dp"
+            android:visibility="gone">
+
+            <!-- Accent line -->
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="#A78BFA"
+                android:layout_marginEnd="6dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_quoted_sender"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="User"
+                    android:textColor="#E9D5FF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tv_quoted_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Quoted text"
+                    android:textColor="#F3E8FF"
+                    android:textSize="12sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/text_message_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hello"
+            android:textSize="15sp"
+            android:textColor="@color/text_white" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/text_message_time"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/text_message_body"
-        android:layout_alignEnd="@+id/text_message_body"
-        android:layout_marginTop="4dp"
+        android:layout_below="@+id/bubble_container"
+        android:layout_alignEnd="@+id/bubble_container"
+        android:layout_marginTop="2dp"
         android:textColor="@color/text_muted"
-        android:textSize="11sp"
+        android:textSize="10.5sp"
         android:text="11:40" />
 
     <TextView
@@ -35,10 +90,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/text_message_time"
-        android:layout_alignEnd="@+id/text_message_body"
-        android:layout_marginTop="2dp"
+        android:layout_alignEnd="@+id/bubble_container"
+        android:layout_marginTop="1dp"
         android:textColor="@color/accent_primary"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:text="Seen"
         android:visibility="gone" />
 

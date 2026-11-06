@@ -99,9 +99,63 @@ public class NotificationHelper {
         }
     }
 
+    public static void showIncomingCallNotification(Context context, String callerId, String callerName, String callerAvatar, boolean isVideo, String roomName) {
+        if (context == null) return;
+        try {
+            createNotificationChannels(context);
+
+            Intent callIntent = new Intent(context, CallActivity.class);
+            callIntent.putExtra("targetUserId", callerId);
+            callIntent.putExtra("callerId", callerId);
+            callIntent.putExtra("peer", callerId);
+            callIntent.putExtra("targetUserName", callerName);
+            callIntent.putExtra("callerName", callerName);
+            callIntent.putExtra("peerName", callerName);
+            callIntent.putExtra("targetUserAvatar", callerAvatar);
+            callIntent.putExtra("callerAvatar", callerAvatar);
+            callIntent.putExtra("peerAvatar", callerAvatar);
+            callIntent.putExtra("isVideoCall", isVideo);
+            callIntent.putExtra("isCaller", false);
+            callIntent.putExtra("isPrivateCall", true);
+            callIntent.putExtra("roomName", roomName);
+            callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0);
+            PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(context, INCOMING_CALL_NOTIFICATION_ID, callIntent, flags);
+
+            String callType = isVideo ? "Video Call" : "Voice Call";
+            String title = "Incoming " + callType;
+            String body = (callerName != null && !callerName.isEmpty() ? callerName : "Someone") + " is calling you...";
+
+            androidx.core.app.NotificationCompat.Builder builder = new androidx.core.app.NotificationCompat.Builder(context, CHANNEL_CALLS)
+                    .setSmallIcon(R.drawable.ic_notification_bell)
+                    .setContentTitle(title)
+                    .setContentText(body)
+                    .setPriority(androidx.core.app.NotificationCompat.PRIORITY_MAX)
+                    .setCategory(androidx.core.app.NotificationCompat.CATEGORY_CALL)
+                    .setAutoCancel(true)
+                    .setOngoing(true)
+                    .setContentIntent(fullScreenPendingIntent)
+                    .setFullScreenIntent(fullScreenPendingIntent, true)
+                    .setColor(androidx.core.content.ContextCompat.getColor(context, R.color.accent_primary));
+
+            androidx.core.app.NotificationManagerCompat manager = androidx.core.app.NotificationManagerCompat.from(context);
+            manager.notify(INCOMING_CALL_NOTIFICATION_ID, builder.build());
+
+            // Start ringing & vibration
+            CallRingtoneManager.getInstance().startIncomingRinging(context);
+            Log.d(TAG, "📲 Dispatched heads-up incoming call notification for caller: " + callerId);
+        } catch (Exception e) {
+            Log.e(TAG, "Error displaying incoming call notification", e);
+        }
+    }
+
     public static void cancelIncomingCallNotification(Context context) {
         if (context == null) return;
         try {
+            // Instantly stop audio ringtone
+            CallRingtoneManager.getInstance().stop();
+
             androidx.core.app.NotificationManagerCompat manager = androidx.core.app.NotificationManagerCompat.from(context);
             manager.cancel(INCOMING_CALL_NOTIFICATION_ID);
 
@@ -119,7 +173,7 @@ public class NotificationHelper {
                     }
                 }
             }
-            Log.d(TAG, "🔕 Cancelled active incoming call notifications");
+            Log.d(TAG, "🔕 Cancelled active incoming call notifications and ringtone");
         } catch (Exception e) {
             Log.e(TAG, "Error cancelling call notification", e);
         }
