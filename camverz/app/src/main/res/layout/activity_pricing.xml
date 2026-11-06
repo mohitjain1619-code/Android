@@ -58,9 +58,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="14dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="28dp">
+            android:paddingHorizontal="@dimen/screen_padding_horizontal"
+            android:paddingTop="@dimen/screen_padding_top"
+            android:paddingBottom="@dimen/screen_padding_bottom">
 
             <!-- ============================================================== -->
             <!-- 2 TOP LUXURY TABS (Random Video Call vs RealMeet Community)     -->

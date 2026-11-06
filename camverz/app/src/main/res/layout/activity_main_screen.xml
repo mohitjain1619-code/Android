@@ -18,9 +18,9 @@
         android:layout_above="@id/banner_ad_container"
         android:layout_below="@id/top_nav_bar"
         android:clipToPadding="false"
-        android:paddingStart="20dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="20dp"
+        android:paddingStart="@dimen/screen_padding_horizontal"
+        android:paddingTop="@dimen/screen_padding_top"
+        android:paddingEnd="@dimen/screen_padding_horizontal"
         android:scrollbars="none">
 
         <LinearLayout

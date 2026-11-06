@@ -80,4 +80,24 @@ public class CamverzApp extends Application {
             }
         });
     }
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        try {
+            com.bumptech.glide.Glide.get(this).trimMemory(level);
+        } catch (Exception e) {
+            Log.w(TAG, "Error trimming Glide memory: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        try {
+            com.bumptech.glide.Glide.get(this).clearMemory();
+        } catch (Exception e) {
+            Log.w(TAG, "Error clearing Glide memory on low-memory: " + e.getMessage());
+        }
+    }
 }

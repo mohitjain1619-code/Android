@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen Layout & Margins for Standard Phones (Small to Large) -->
+    <dimen name="screen_padding_horizontal">16dp</dimen>
+    <dimen name="screen_padding_top">16dp</dimen>
+    <dimen name="screen_padding_bottom">24dp</dimen>
+    <dimen name="max_content_width">480dp</dimen>
+    <dimen name="card_corner_radius">16dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+
+    <!-- Hero & Headers -->
+    <dimen name="hero_title_size">26sp</dimen>
+    <dimen name="hero_subtitle_size">14sp</dimen>
+    <dimen name="hero_logo_size">96dp</dimen>
+    <dimen name="button_height_primary">52dp</dimen>
+    <dimen name="button_text_size">15sp</dimen>
+
+    <!-- Chat Bubbles & Call Views -->
+    <dimen name="chat_bubble_max_width">280dp</dimen>
+    <dimen name="pip_video_width">110dp</dimen>
+    <dimen name="pip_video_height">150dp</dimen>
+</resources>

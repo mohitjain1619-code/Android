@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen Layout & Margins for Tablets & Foldables (sw600dp+) -->
+    <dimen name="screen_padding_horizontal">32dp</dimen>
+    <dimen name="screen_padding_top">24dp</dimen>
+    <dimen name="screen_padding_bottom">32dp</dimen>
+    <dimen name="max_content_width">560dp</dimen>
+    <dimen name="card_corner_radius">20dp</dimen>
+    <dimen name="card_padding">24dp</dimen>
+
+    <!-- Hero & Headers -->
+    <dimen name="hero_title_size">30sp</dimen>
+    <dimen name="hero_subtitle_size">16sp</dimen>
+    <dimen name="hero_logo_size">112dp</dimen>
+    <dimen name="button_height_primary">56dp</dimen>
+    <dimen name="button_text_size">17sp</dimen>
+
+    <!-- Chat Bubbles & Call Views -->
+    <dimen name="chat_bubble_max_width">420dp</dimen>
+    <dimen name="pip_video_width">160dp</dimen>
+    <dimen name="pip_video_height">220dp</dimen>
+</resources>

@@ -8,6 +8,10 @@ import android.widget.Toast;
 import android.widget.TextView;
 import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -41,6 +45,9 @@ public class LoginActivity extends BaseActivity {
     private android.view.View loadingOverlay;
     private Button getStartedButton;
     private AppUpdateHelper appUpdateHelper;
+    private ActivityResultLauncher<Intent> googleSignInLauncher;
+    private final android.os.Handler watchdogHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable watchdogRunnable;
 
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
@@ -63,6 +70,16 @@ public class LoginActivity extends BaseActivity {
 
         tokenManager = TokenManager.getInstance(this);
         api = ApiClient.getInstance(this).getApi();
+
+        // Modern ActivityResultLauncher for Google Sign-In (API 24 to API 36 resilient across activity recreation)
+        googleSignInLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    isSigningIn = false;
+                    cancelWatchdog();
+                    handleGoogleSignInIntentResult(result.getData());
+                }
+        );
 
         if (getIntent().getBooleanExtra("account_deleted", false)) {
             Toast.makeText(this, "⚠️ Account deleted or session reset. Please sign in again.", Toast.LENGTH_LONG).show();
@@ -250,8 +267,27 @@ public class LoginActivity extends BaseActivity {
             Log.d(TAG, "Sign in already in progress, ignoring extra click.");
             return;
         }
+
+        // Check Google Play Services availability (critical for low-end / custom ROM devices)
+        try {
+            GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+            int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+            if (resultCode != ConnectionResult.SUCCESS) {
+                if (apiAvailability.isUserResolvableError(resultCode)) {
+                    apiAvailability.getErrorDialog(this, resultCode, 9000).show();
+                } else {
+                    Toast.makeText(this, "Google Play Services is not supported on this device.", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "GooglePlayServices check warning: " + e.getMessage());
+        }
+
         isSigningIn = true;
         showLoadingState();
+        startWatchdog();
+
         try {
             if (mGoogleSignInClient == null) {
                 GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -261,12 +297,37 @@ public class LoginActivity extends BaseActivity {
                 mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
             }
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-            startActivityForResult(signInIntent, RC_SIGN_IN);
+            if (googleSignInLauncher != null) {
+                googleSignInLauncher.launch(signInIntent);
+            } else {
+                startActivityForResult(signInIntent, RC_SIGN_IN);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error starting Google Sign-In intent", e);
+            cancelWatchdog();
             isSigningIn = false;
             hideLoadingState();
             Toast.makeText(this, "Google Sign-In initialization error. Please try again.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void startWatchdog() {
+        cancelWatchdog();
+        watchdogRunnable = () -> {
+            if (isSigningIn) {
+                Log.w(TAG, "Sign-in watchdog timeout hit (25s). Resetting loading overlay.");
+                isSigningIn = false;
+                hideLoadingState();
+                Toast.makeText(LoginActivity.this, "Sign-in timed out. Please check connection and try again.", Toast.LENGTH_SHORT).show();
+            }
+        };
+        watchdogHandler.postDelayed(watchdogRunnable, 25000L);
+    }
+
+    private void cancelWatchdog() {
+        if (watchdogRunnable != null) {
+            watchdogHandler.removeCallbacks(watchdogRunnable);
+            watchdogRunnable = null;
         }
     }
 
@@ -284,29 +345,61 @@ public class LoginActivity extends BaseActivity {
         }
 
         if (requestCode == RC_SIGN_IN) {
-            isSigningIn = false;
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-            try {
-                GoogleSignInAccount account = task.getResult(ApiException.class);
-                if (account != null && account.getIdToken() != null) {
-                    Log.d(TAG, "✅ Google Sign In successful");
-                    authenticateWithBackend(account.getIdToken());
-                } else {
-                    hideLoadingState();
-                }
-            } catch (ApiException e) {
-                Log.w(TAG, "❌ Google sign in status code: " + e.getStatusCode(), e);
+            handleGoogleSignInIntentResult(data);
+        }
+    }
+
+    private void handleGoogleSignInIntentResult(Intent data) {
+        cancelWatchdog();
+        isSigningIn = false;
+        if (data == null) {
+            hideLoadingState();
+            return;
+        }
+        Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+        try {
+            GoogleSignInAccount account = task.getResult(ApiException.class);
+            if (account != null && account.getIdToken() != null) {
+                Log.d(TAG, "✅ Google Sign In successful");
+                authenticateWithBackend(account.getIdToken());
+            } else {
                 hideLoadingState();
-                if (e.getStatusCode() == 12501) {
-                    // SIGN_IN_CANCELLED: User dismissed the account selection dialog — dismiss spinner silently
-                    Log.d(TAG, "User dismissed Google Sign In picker dialog.");
-                } else if (e.getStatusCode() == 7) {
-                    Toast.makeText(LoginActivity.this, "Network error. Please check your internet connection.", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(LoginActivity.this, "Sign in cancelled or unavailable (Error " + e.getStatusCode() + ").", Toast.LENGTH_SHORT).show();
-                }
+            }
+        } catch (ApiException e) {
+            Log.w(TAG, "❌ Google sign in status code: " + e.getStatusCode(), e);
+            hideLoadingState();
+            if (e.getStatusCode() == 12501) {
+                // SIGN_IN_CANCELLED: User dismissed the account selection dialog — dismiss spinner silently
+                Log.d(TAG, "User dismissed Google Sign In picker dialog.");
+            } else if (e.getStatusCode() == 7) {
+                Toast.makeText(LoginActivity.this, "Network error. Please check your internet connection.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(LoginActivity.this, "Sign in cancelled or unavailable (Error " + e.getStatusCode() + ").", Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("is_signing_in", isSigningIn);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        isSigningIn = savedInstanceState.getBoolean("is_signing_in", false);
+        if (isSigningIn) {
+            // Activity was killed and recreated during sign-in attempt; reset safely
+            isSigningIn = false;
+            hideLoadingState();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        cancelWatchdog();
     }
 
     /**
@@ -345,7 +438,16 @@ public class LoginActivity extends BaseActivity {
 
         // Include device locale country code as fallback for GeoIP
         try {
-            java.util.Locale currentLocale = getResources().getConfiguration().getLocales().get(0);
+            java.util.Locale currentLocale = null;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                android.os.LocaleList locales = getResources().getConfiguration().getLocales();
+                if (locales != null && !locales.isEmpty()) {
+                    currentLocale = locales.get(0);
+                }
+            }
+            if (currentLocale == null) {
+                currentLocale = java.util.Locale.getDefault();
+            }
             if (currentLocale != null && currentLocale.getCountry() != null && !currentLocale.getCountry().trim().isEmpty()) {
                 body.put("countryCode", currentLocale.getCountry().trim());
                 Log.d(TAG, "Sending countryCode: " + currentLocale.getCountry());
