@@ -922,8 +922,6 @@ router.post("/webhook/razorpay", async (req, res) => {
         durationDays = 30;
       } else if (planKey.includes("7-days") || planKey.includes("7days") || planKey.includes("community-7-days") || planKey.includes("week")) {
         durationDays = 7;
-      } else if (planKey.includes("10-days") || planKey.includes("10days")) {
-        durationDays = 10;
       } else if (planKey.includes("1-day") || planKey.includes("1day") || planKey.includes("daily")) {
         durationDays = 1;
       } else {
