@@ -77,56 +77,62 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.postTextView.setText(post.getText());
         holder.timestampTextView.setText(getFormattedTimestamp(post.getCreatedAt()));
 
-        // --- Like Button Logic ---
+        // --- Like Button Logic (Generous touch target on whole likeContainer) ---
         holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
 
-        if (tokenManager.isLoggedIn()) {
+        View.OnClickListener likeClickListener = v -> {
+            String postId = post.getId();
+            if (postId == null || postId.isEmpty()) return;
+
+            boolean wasLiked = post.isLikedByMe();
+
+            // Optimistic UI update (direct view modification)
+            post.setLikedByMe(!wasLiked);
+            post.setLikeCount(wasLiked ? post.getLikeCount() - 1 : post.getLikeCount() + 1);
             holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+            holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
 
-            holder.likeButton.setOnClickListener(v -> {
-                String postId = post.getId();
-                if (postId == null || postId.isEmpty()) return;
+            // Bounce micro-animation
+            holder.likeButton.setScaleX(0.7f);
+            holder.likeButton.setScaleY(0.7f);
+            holder.likeButton.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
 
-                boolean wasLiked = post.isLikedByMe();
-                
-                // Optimistic UI update (direct view modification)
-                post.setLikedByMe(!wasLiked);
-                post.setLikeCount(wasLiked ? post.getLikeCount() - 1 : post.getLikeCount() + 1);
-                holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
-                holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
-
-                // Bounce micro-animation
-                holder.likeButton.setScaleX(0.7f);
-                holder.likeButton.setScaleY(0.7f);
-                holder.likeButton.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
-
-                api.toggleLike(postId).enqueue(new Callback<JsonObject>() {
-                    @Override
-                    public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                        if (!response.isSuccessful()) {
-                            // Revert on failure
-                            post.setLikedByMe(wasLiked);
-                            post.setLikeCount(wasLiked ? post.getLikeCount() + 1 : post.getLikeCount() - 1);
-                            holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
-                            holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
-                        }
-                    }
-                    @Override
-                    public void onFailure(Call<JsonObject> call, Throwable t) {
+            api.toggleLike(postId).enqueue(new Callback<JsonObject>() {
+                @Override
+                public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                    if (!response.isSuccessful()) {
                         // Revert on failure
                         post.setLikedByMe(wasLiked);
                         post.setLikeCount(wasLiked ? post.getLikeCount() + 1 : post.getLikeCount() - 1);
                         holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
                         holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
                     }
-                });
+                }
+                @Override
+                public void onFailure(Call<JsonObject> call, Throwable t) {
+                    // Revert on failure
+                    post.setLikedByMe(wasLiked);
+                    post.setLikeCount(wasLiked ? post.getLikeCount() + 1 : post.getLikeCount() - 1);
+                    holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+                    holder.likeCountTextView.setText(String.valueOf(post.getLikeCount()));
+                }
             });
+        };
+
+        if (tokenManager.isLoggedIn()) {
+            holder.likeButton.setImageResource(post.isLikedByMe() ? R.drawable.ic_like_filled : R.drawable.ic_like_outline);
+            if (holder.likeContainer != null) holder.likeContainer.setOnClickListener(likeClickListener);
+            holder.likeButton.setOnClickListener(likeClickListener);
+            holder.likeCountTextView.setOnClickListener(likeClickListener);
         } else {
             holder.likeButton.setImageResource(R.drawable.ic_like_outline);
-            holder.likeButton.setOnClickListener(v -> Toast.makeText(context, "You need to be logged in to like posts", Toast.LENGTH_SHORT).show());
+            View.OnClickListener loginPrompt = v -> Toast.makeText(context, "You need to be logged in to like posts", Toast.LENGTH_SHORT).show();
+            if (holder.likeContainer != null) holder.likeContainer.setOnClickListener(loginPrompt);
+            holder.likeButton.setOnClickListener(loginPrompt);
+            holder.likeCountTextView.setOnClickListener(loginPrompt);
         }
 
-        // --- Click Post Box to Open Comments ---
+        // --- Click Post Text / Comment Button to Open Comments ---
         View.OnClickListener commentClickListener = v -> {
             Intent intent = new Intent(context, CommentsActivity.class);
             intent.putExtra("postId", post.getId());
@@ -135,9 +141,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.itemView.setOnClickListener(commentClickListener);
         holder.postTextView.setOnClickListener(commentClickListener);
 
-        // --- Comment Button Logic ---
+        // --- Comment Button & Container Logic ---
         holder.commentCountTextView.setText(String.valueOf(post.getCommentCount()));
+        if (holder.commentContainer != null) holder.commentContainer.setOnClickListener(commentClickListener);
         holder.commentButton.setOnClickListener(commentClickListener);
+        holder.commentCountTextView.setOnClickListener(commentClickListener);
 
         // --- Post Menu Logic ---
         if (tokenManager.isLoggedIn() && tokenManager.getUserId().equals(post.getUserId())) {
@@ -235,8 +243,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         TextView timestampTextView;
         TextView postTextView;
         ImageView postMenuButton;
+        View likeContainer;
         ImageView likeButton;
         TextView likeCountTextView;
+        View commentContainer;
         ImageView commentButton;
         TextView commentCountTextView;
 
@@ -248,8 +258,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             timestampTextView = itemView.findViewById(R.id.timestamp_text_view);
             postTextView = itemView.findViewById(R.id.post_text_view);
             postMenuButton = itemView.findViewById(R.id.post_menu_button);
+            likeContainer = itemView.findViewById(R.id.like_container);
             likeButton = itemView.findViewById(R.id.like_button);
             likeCountTextView = itemView.findViewById(R.id.like_count_text_view);
+            commentContainer = itemView.findViewById(R.id.comment_container);
             commentButton = itemView.findViewById(R.id.comment_button);
             commentCountTextView = itemView.findViewById(R.id.comment_count_text_view);
         }

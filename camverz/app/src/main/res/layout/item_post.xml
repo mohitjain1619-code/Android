@@ -77,28 +77,34 @@
         android:textSize="15sp"
         tools:text="This is a sample post text showing how clean typography and generous whitespace feel premium." />
 
-    <!-- Action Bar -->
+    <!-- Action Bar (Instagram-style generous touch targets) -->
     <LinearLayout
+        android:id="@+id/post_action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/post_text_view"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="16dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Prominent Like Pill Container (44dp touch target) -->
         <LinearLayout
+            android:id="@+id/like_container"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="44dp"
+            android:minWidth="68dp"
             android:background="@drawable/bg_glass_input"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp">
+            android:paddingHorizontal="14dp">
 
             <ImageView
                 android:id="@+id/like_button"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="Like"
                 android:src="@drawable/ic_like_outline"
                 app:tint="@color/accent_rose" />
 
@@ -106,27 +112,32 @@
                 android:id="@+id/like_count_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="8dp"
                 android:textColor="@color/text_primary"
-                android:textSize="13sp"
+                android:textSize="13.5sp"
                 android:textStyle="bold"
                 tools:text="12" />
         </LinearLayout>
 
+        <!-- Prominent Comment Pill Container (44dp touch target) -->
         <LinearLayout
+            android:id="@+id/comment_container"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:layout_height="44dp"
+            android:minWidth="68dp"
+            android:layout_marginStart="14dp"
             android:background="@drawable/bg_glass_input"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp">
+            android:paddingHorizontal="14dp">
 
             <ImageView
                 android:id="@+id/comment_button"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="Comment"
                 android:src="@drawable/ic_comment"
                 app:tint="@color/accent_cyan" />
 
@@ -134,9 +145,9 @@
                 android:id="@+id/comment_count_text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="8dp"
                 android:textColor="@color/text_primary"
-                android:textSize="13sp"
+                android:textSize="13.5sp"
                 android:textStyle="bold"
                 tools:text="5" />
         </LinearLayout>
@@ -145,8 +156,6 @@
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />
-
-
 
     </LinearLayout>
 

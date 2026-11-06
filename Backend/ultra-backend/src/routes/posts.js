@@ -307,14 +307,27 @@ router.post("/:id/comments", async (req, res) => {
       return res.status(400).json({ error: "Comment text is required" });
     }
 
+    // Verify post exists before inserting comment
+    const post = await queryOne("SELECT user_id FROM posts WHERE id = $1", [req.params.id]);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    let validParentId = null;
+    if (parentId && typeof parentId === "string" && parentId.trim()) {
+      const parentComment = await queryOne("SELECT id FROM comments WHERE id = $1", [parentId.trim()]);
+      if (parentComment) {
+        validParentId = parentComment.id;
+      }
+    }
+
     const comment = await queryOne(
       `INSERT INTO comments (post_id, user_id, text, parent_id) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [req.params.id, req.user.userId, text.trim(), parentId || null]
+      [req.params.id, req.user.userId, text.trim(), validParentId]
     );
 
     // Notification for post owner
-    const post = await queryOne("SELECT user_id FROM posts WHERE id = $1", [req.params.id]);
-    if (post && post.user_id !== req.user.userId) {
+    if (post.user_id !== req.user.userId) {
       await query(
         `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id)
          VALUES ($1, 'comment', $2, $3, $4)`,
@@ -381,9 +394,9 @@ router.post("/:id/comments", async (req, res) => {
         postId: comment.post_id,
         userId: comment.user_id,
         parentId: comment.parent_id,
-        username: user.name,
-        userAvatar: user.avatar,
-        userPhotoUrl: user.photo_url,
+        username: user ? (user.name || "User") : "User",
+        userAvatar: user ? (user.avatar || "") : "",
+        userPhotoUrl: user ? (user.photo_url || user.avatar || "") : "",
         text: comment.text,
         likeCount: 0,
         likedByMe: false,

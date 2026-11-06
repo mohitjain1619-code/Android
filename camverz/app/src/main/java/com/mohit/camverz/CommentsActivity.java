@@ -230,7 +230,17 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
                         return;
                     }
                 }
-                Toast.makeText(CommentsActivity.this, "Failed to post comment", Toast.LENGTH_SHORT).show();
+                String errorMsg = "Failed to post comment";
+                try {
+                    if (response.errorBody() != null) {
+                        String errStr = response.errorBody().string();
+                        JsonObject errObj = com.google.gson.JsonParser.parseString(errStr).getAsJsonObject();
+                        if (errObj.has("error")) {
+                            errorMsg = errObj.get("error").getAsString();
+                        }
+                    }
+                } catch (Exception ignored) {}
+                Toast.makeText(CommentsActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
             }
 
             @Override

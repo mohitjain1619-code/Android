@@ -100,3 +100,4 @@ public class DeviceCompatibilityEdgeCaseTest {
         return Math.min(delay, maxMs);
     }
 }
+
