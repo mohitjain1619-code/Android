@@ -13,17 +13,32 @@ const COUNTRY_NAME_MAP = {
   IN: "India", US: "United States", CA: "Canada", GB: "United Kingdom", AU: "Australia",
   DE: "Germany", FR: "France", AE: "UAE", NP: "Nepal", BD: "Bangladesh", PK: "Pakistan",
   SG: "Singapore", MY: "Malaysia", ID: "Indonesia", BR: "Brazil", MX: "Mexico", ES: "Spain",
-  IT: "Italy", NL: "Netherlands", RU: "Russia", JP: "Japan", KR: "South Korea", CN: "China"
+  IT: "Italy", NL: "Netherlands", RU: "Russia", JP: "Japan", KR: "South Korea", CN: "China",
+  AM: "Armenia", GE: "Georgia", AZ: "Azerbaijan", KZ: "Kazakhstan", UZ: "Uzbekistan",
+  UA: "Ukraine", BY: "Belarus", TR: "Turkey", SA: "Saudi Arabia", EG: "Egypt",
+  NG: "Nigeria", ZA: "South Africa", PH: "Philippines", VN: "Vietnam", TH: "Thailand"
 };
+
+function getCountryName(code) {
+  if (!code) return null;
+  const clean = code.trim().toUpperCase();
+  if (COUNTRY_NAME_MAP[clean]) return COUNTRY_NAME_MAP[clean];
+  try {
+    const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
+    const name = regionNames.of(clean);
+    if (name) return name;
+  } catch (e) {}
+  return clean;
+}
 
 function getCountryFromReq(req) {
   const cfCountry = (req.headers["cf-ipcountry"] || req.headers["x-country"] || req.headers["x-geoip-country"] || "").trim().toUpperCase();
   if (cfCountry && cfCountry !== "XX" && cfCountry !== "T1") {
-    return COUNTRY_NAME_MAP[cfCountry] || cfCountry;
+    return getCountryName(cfCountry);
   }
   const bodyCountry = (req.body && (req.body.countryCode || req.body.country) || "").trim().toUpperCase();
   if (bodyCountry && bodyCountry.length >= 2) {
-    return COUNTRY_NAME_MAP[bodyCountry] || bodyCountry;
+    return getCountryName(bodyCountry);
   }
   return null;
 }
@@ -116,26 +131,52 @@ router.post("/google", async (req, res) => {
     let isNewUser = false;
 
     if (user) {
-      if (!user.google_id || user.photo_url !== photoUrl || (detectedCountry && user.country !== detectedCountry)) {
-        await query(
-          "UPDATE users SET google_id = $1, photo_url = COALESCE(NULLIF($2, ''), photo_url), country = COALESCE($3, country) WHERE id = $4",
-          [googleId, photoUrl, detectedCountry || null, user.id]
-        );
-        if (detectedCountry) user.country = detectedCountry;
-      }
-      console.log(`✅ Existing user logged in: ${user.id} (${email}) | Country: ${user.country || 'Global'}`);
+      const safeCountry = detectedCountry || user.country || 'India';
+      const safeCity = user.city || safeCountry;
+      const safeGender = (user.gender && user.gender.trim() && user.gender.toLowerCase() !== 'unspecified') ? user.gender : 'male';
+      const safeDob = (user.dob && user.dob.trim()) ? user.dob : '15/06/2002';
+      const safeSexPref = (user.sex_preference && user.sex_preference.trim()) ? user.sex_preference : 'Straight';
+
+      await query(
+        `UPDATE users SET 
+           google_id = $1, 
+           photo_url = COALESCE(NULLIF($2, ''), photo_url), 
+           country = COALESCE($3, country, 'India'),
+           city = COALESCE(NULLIF(city, ''), $4),
+           gender = COALESCE(NULLIF(gender, ''), $5),
+           dob = COALESCE(NULLIF(dob, ''), $6),
+           sex_preference = COALESCE(NULLIF(sex_preference, ''), $7)
+         WHERE id = $8`,
+        [googleId, photoUrl, detectedCountry || null, safeCity, safeGender, safeDob, safeSexPref, user.id]
+      );
+      if (detectedCountry) user.country = detectedCountry;
+      user.city = safeCity;
+      user.gender = safeGender;
+      user.dob = safeDob;
+      console.log(`✅ Existing user logged in: ${user.id} (${email}) | Country: ${user.country || 'Global'} | City: ${user.city}`);
     } else {
-      // Create new user
+      // Create new user with safe production fallbacks so they never stay as uninitialized ghost profiles
       isNewUser = true;
+      const safeCountry = detectedCountry || 'India';
+      const safeCity = safeCountry;
+      const safeGender = 'male';
+      const safeDob = '15/06/2002';
+      const safeSexPref = 'Straight';
 
       user = await queryOne(
-        `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial, country)
-         VALUES ($1, $2, $3, $4, $5, true, $6)
-         ON CONFLICT (email) DO UPDATE SET google_id = EXCLUDED.google_id, country = COALESCE(users.country, EXCLUDED.country)
+        `INSERT INTO users (google_id, email, name, photo_url, custom_id, has_free_trial, country, city, gender, dob, sex_preference)
+         VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8, $9, $10)
+         ON CONFLICT (email) DO UPDATE SET 
+            google_id = EXCLUDED.google_id, 
+            country = COALESCE(users.country, EXCLUDED.country),
+            city = COALESCE(users.city, EXCLUDED.city),
+            gender = COALESCE(NULLIF(users.gender, ''), EXCLUDED.gender),
+            dob = COALESCE(NULLIF(users.dob, ''), EXCLUDED.dob),
+            sex_preference = COALESCE(NULLIF(users.sex_preference, ''), EXCLUDED.sex_preference)
          RETURNING *`,
-        [googleId, email, name, photoUrl, googleId.substring(0, 8), detectedCountry || null]
+        [googleId, email, name, photoUrl, googleId.substring(0, 8), safeCountry, safeCity, safeGender, safeDob, safeSexPref]
       );
-      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'}`);
+      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'} | City: ${user.city}`);
     }
 
       // Track affiliate signup if referred

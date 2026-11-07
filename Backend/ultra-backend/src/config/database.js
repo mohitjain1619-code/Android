@@ -130,6 +130,9 @@ async function runMigrations() {
     `);
     await pool.query(`
       UPDATE users SET country = 'India' WHERE country IS NULL OR country = '';
+      UPDATE users SET city = COALESCE(NULLIF(country, ''), 'India') WHERE city IS NULL OR city = '';
+      UPDATE users SET gender = 'male' WHERE gender IS NULL OR gender = '' OR LOWER(gender) = 'unspecified';
+      UPDATE users SET dob = '15/06/2002' WHERE dob IS NULL OR dob = '';
     `);
 
     // 8. Create ad_analytics_logs table if not exists

@@ -467,9 +467,22 @@ public class StoryCreatorActivity extends BaseActivity {
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
             if (inputStream == null) return null;
-            File file = new File(getCacheDir(), "upload_temp_media");
+
+            String extension = "mp4";
+            if ("IMAGE".equalsIgnoreCase(currentType)) {
+                extension = "jpg";
+            }
+            String mimeType = getContentResolver().getType(uri);
+            if (mimeType != null) {
+                String ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType);
+                if (ext != null && !ext.trim().isEmpty()) {
+                    extension = ext.trim();
+                }
+            }
+
+            File file = new File(getCacheDir(), "upload_story_media." + extension);
             FileOutputStream outputStream = new FileOutputStream(file);
-            byte[] buffer = new byte[4096];
+            byte[] buffer = new byte[8192];
             int read;
             while ((read = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, read);

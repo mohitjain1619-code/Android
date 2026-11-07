@@ -1065,18 +1065,49 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:gravity="center"
-                android:text="Cancel or manage anytime in Google Play > Payments &amp; Subscriptions."
+                android:text="Digital VIP passes are instant, non-cancellable &amp; strictly non-refundable."
                 android:textColor="@color/text_muted"
                 android:textSize="11sp" />
 
-            <TextView
-                android:id="@+id/tv_terms_link"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Terms &amp; Conditions • Refund Policy"
-                android:textColor="@color/accent_cyan"
-                android:textSize="12sp" />
+                android:orientation="horizontal"
+                android:paddingTop="2dp"
+                android:paddingBottom="16dp">
+
+                <TextView
+                    android:id="@+id/tv_terms_link"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="6dp"
+                    android:text="Terms &amp; Conditions"
+                    android:textColor="@color/accent_cyan"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="•"
+                    android:textColor="@color/text_muted"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_refund_link"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="6dp"
+                    android:text="Refund Policy"
+                    android:textColor="@color/accent_cyan"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

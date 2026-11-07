@@ -123,8 +123,25 @@ public class PricingActivity extends BaseActivity {
         View termsLink = findViewById(R.id.tv_terms_link);
         if (termsLink != null) {
             termsLink.setOnClickListener(v -> {
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://camverz.com/legal/terms-and-conditions"));
-                startActivity(browserIntent);
+                try {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://camverz.com/legal/terms-and-conditions"));
+                    startActivity(browserIntent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error opening terms link", e);
+                }
+            });
+        }
+
+        // Refund policy link
+        View refundLink = findViewById(R.id.tv_refund_link);
+        if (refundLink != null) {
+            refundLink.setOnClickListener(v -> {
+                try {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://camverz.com/legal/refund-policy"));
+                    startActivity(browserIntent);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error opening refund link", e);
+                }
             });
         }
     }

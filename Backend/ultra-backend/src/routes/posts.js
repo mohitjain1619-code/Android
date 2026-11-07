@@ -49,7 +49,7 @@ router.get("/", async (req, res) => {
              (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count,
              EXISTS(SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = $1) as liked_by_me
       FROM posts p
-      JOIN users u ON u.id = p.user_id
+      LEFT JOIN users u ON u.id = p.user_id
       WHERE p.expiry_at > NOW()
     `;
     const params = [req.user.userId];
@@ -111,7 +111,7 @@ router.post("/", async (req, res) => {
        ORDER BY created_at DESC LIMIT 1`,
       [req.user.userId]
     );
-    
+
     if (lastPost && lastPost.elapsed_seconds !== null) {
       const elapsedSeconds = parseFloat(lastPost.elapsed_seconds);
       const cooldownSeconds = 60; // 1 minute (60 seconds)
@@ -481,20 +481,20 @@ function formatPost(p) {
   return {
     id: p.id,
     userId: p.user_id,
-    text: p.text,
-    category: p.category,
+    text: p.text || "",
+    category: p.category || "all",
     type: "text",
-    username: p.username,
-    userAvatar: p.user_avatar,
-    userPhotoUrl: p.user_photo_url,
-    verified: p.verified || false,
+    username: p.username || "Anonymous",
+    userAvatar: p.user_avatar || "av1",
+    userPhotoUrl: p.user_photo_url || "",
+    verified: Boolean(p.verified),
     gender: p.gender || "male",
     sexPreference: p.sex_preference || "Straight",
-    likeCount: parseInt(p.like_count || "0"),
-    commentCount: parseInt(p.comment_count || "0"),
-    likedByMe: p.liked_by_me || false,
+    likeCount: parseInt(p.like_count || "0", 10) || 0,
+    commentCount: parseInt(p.comment_count || "0", 10) || 0,
+    likedByMe: Boolean(p.liked_by_me),
     expiryAt: p.expiry_at,
-    createdAt: p.created_at,
+    createdAt: p.created_at ? new Date(p.created_at).toISOString() : new Date().toISOString(),
   };
 }
 

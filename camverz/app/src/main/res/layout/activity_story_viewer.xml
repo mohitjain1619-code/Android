@@ -38,6 +38,16 @@
             android:textStyle="bold"
             android:visibility="gone" />
 
+        <!-- Center Loading Indicator -->
+        <ProgressBar
+            android:id="@+id/pbStoryLoading"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateTint="#FFFFFF"
+            android:visibility="gone" />
+
         <!-- Overlay Text (For Image/Video Stories) -->
         <TextView
             android:id="@+id/tvStoryOverlayText"

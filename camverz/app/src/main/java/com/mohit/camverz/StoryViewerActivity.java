@@ -43,6 +43,7 @@ public class StoryViewerActivity extends BaseActivity {
     private VideoView vvStoryVideo;
     private TextView tvStoryTextOnly;
     private TextView tvStoryOverlayText;
+    private ProgressBar pbStoryLoading;
 
     private View navLeftClick, navRightClick;
     private LinearLayout progressBarsLayout;
@@ -118,6 +119,7 @@ public class StoryViewerActivity extends BaseActivity {
         vvStoryVideo = findViewById(R.id.vvStoryVideo);
         tvStoryTextOnly = findViewById(R.id.tvStoryTextOnly);
         tvStoryOverlayText = findViewById(R.id.tvStoryOverlayText);
+        pbStoryLoading = findViewById(R.id.pbStoryLoading);
 
         navLeftClick = findViewById(R.id.navLeftClick);
         navRightClick = findViewById(R.id.navRightClick);
@@ -241,8 +243,20 @@ public class StoryViewerActivity extends BaseActivity {
         });
 
         String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
+        String mediaUrl = story.getMediaUrl();
+        String fullUrl;
+        if (mediaUrl == null || mediaUrl.trim().isEmpty()) {
+            fullUrl = "";
+        } else if (mediaUrl.startsWith("http://") || mediaUrl.startsWith("https://")) {
+            fullUrl = mediaUrl;
+        } else {
+            String cleanBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+            String cleanPath = mediaUrl.startsWith("/") ? mediaUrl : "/" + mediaUrl;
+            fullUrl = cleanBase + cleanPath;
+        }
 
         if ("TEXT".equalsIgnoreCase(story.getType())) {
+            if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
             tvStoryTextOnly.setVisibility(View.VISIBLE);
             tvStoryTextOnly.setText(story.getTextContent());
             applyTextStoryTheme(story.getBgGradient(), story.getTextColor());
@@ -251,13 +265,28 @@ public class StoryViewerActivity extends BaseActivity {
         } else if ("IMAGE".equalsIgnoreCase(story.getType())) {
             ivStoryImage.setVisibility(View.VISIBLE);
             storyViewerCanvas.setBackgroundColor(Color.BLACK);
+            if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.VISIBLE);
 
-            String fullUrl = baseUrl + story.getMediaUrl();
-            
-            // Caching enabled for image load optimization
             Glide.with(this)
                     .load(fullUrl)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                        @Override
+                        public boolean onLoadFailed(@androidx.annotation.Nullable com.bumptech.glide.load.engine.GlideException e, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, boolean isFirstResource) {
+                            runOnUiThread(() -> {
+                                if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                            });
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
+                            runOnUiThread(() -> {
+                                if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                            });
+                            return false;
+                        }
+                    })
                     .into(ivStoryImage);
 
             if (story.getTextContent() != null && !story.getTextContent().isEmpty()) {
@@ -270,46 +299,61 @@ public class StoryViewerActivity extends BaseActivity {
         } else if ("VIDEO".equalsIgnoreCase(story.getType())) {
             vvStoryVideo.setVisibility(View.VISIBLE);
             storyViewerCanvas.setBackgroundColor(Color.BLACK);
-
-            String fullUrl = baseUrl + story.getMediaUrl();
-            vvStoryVideo.setVideoURI(Uri.parse(fullUrl));
+            if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.VISIBLE);
 
             if (story.getTextContent() != null && !story.getTextContent().isEmpty()) {
                 tvStoryOverlayText.setVisibility(View.VISIBLE);
                 tvStoryOverlayText.setText(story.getTextContent());
             }
 
+            // CRITICAL: Set listeners BEFORE setVideoURI to catch all player lifecycle events
             vvStoryVideo.setOnPreparedListener(mp -> {
-                isVideoPrepared = true;
-                storyDurationMs = mp.getDuration() > 0 ? mp.getDuration() : 5000;
-                int videoWidth = mp.getVideoWidth();
-                int videoHeight = mp.getVideoHeight();
-                if (videoWidth > 0 && videoHeight > 0) {
-                    float videoAspect = (float) videoWidth / videoHeight;
-                    int containerWidth = storyViewerCanvas.getWidth();
-                    int containerHeight = storyViewerCanvas.getHeight();
-                    if (containerWidth > 0 && containerHeight > 0) {
-                        float containerAspect = (float) containerWidth / containerHeight;
-                        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) vvStoryVideo.getLayoutParams();
-                        if (videoAspect > containerAspect) {
-                            lp.width = containerWidth;
-                            lp.height = (int) (containerWidth / videoAspect);
-                        } else {
-                            lp.height = containerHeight;
-                            lp.width = (int) (containerHeight * videoAspect);
+                runOnUiThread(() -> {
+                    if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                    isVideoPrepared = true;
+                    storyDurationMs = mp.getDuration() > 0 ? mp.getDuration() : 5000;
+                    int videoWidth = mp.getVideoWidth();
+                    int videoHeight = mp.getVideoHeight();
+                    if (videoWidth > 0 && videoHeight > 0) {
+                        float videoAspect = (float) videoWidth / videoHeight;
+                        int containerWidth = storyViewerCanvas.getWidth();
+                        int containerHeight = storyViewerCanvas.getHeight();
+                        if (containerWidth > 0 && containerHeight > 0) {
+                            float containerAspect = (float) containerWidth / containerHeight;
+                            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) vvStoryVideo.getLayoutParams();
+                            if (videoAspect > containerAspect) {
+                                lp.width = containerWidth;
+                                lp.height = (int) (containerWidth / videoAspect);
+                            } else {
+                                lp.height = containerHeight;
+                                lp.width = (int) (containerHeight * videoAspect);
+                            }
+                            lp.gravity = android.view.Gravity.CENTER;
+                            vvStoryVideo.setLayoutParams(lp);
                         }
-                        lp.gravity = android.view.Gravity.CENTER;
-                        vvStoryVideo.setLayoutParams(lp);
                     }
-                }
-                vvStoryVideo.start();
+                    vvStoryVideo.start();
+                });
             });
 
             vvStoryVideo.setOnErrorListener((mp, what, extra) -> {
-                Toast.makeText(this, "Failed to load video", Toast.LENGTH_SHORT).show();
-                showNextStory();
+                runOnUiThread(() -> {
+                    if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                    android.util.Log.e("StoryViewerActivity", "Video load error: what=" + what + ", extra=" + extra + " url=" + fullUrl);
+                    Toast.makeText(this, "Failed to load video", Toast.LENGTH_SHORT).show();
+                    showNextStory();
+                });
                 return true;
             });
+
+            vvStoryVideo.setOnCompletionListener(mp -> {
+                showNextStory();
+            });
+
+            java.util.Map<String, String> headers = new java.util.HashMap<>();
+            headers.put("Bypass-Tunnel-Reminder", "true");
+            headers.put("localtunnel-bypass", "true");
+            vvStoryVideo.setVideoURI(Uri.parse(fullUrl), headers);
 
             startProgressCountdown();
         }

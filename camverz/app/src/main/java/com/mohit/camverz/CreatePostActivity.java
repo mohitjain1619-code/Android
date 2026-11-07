@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.ironsource.mediationsdk.IronSource;
 import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
 import com.mohit.camverz.api.ApiService;
@@ -96,6 +97,13 @@ public class CreatePostActivity extends BaseActivity {
         AdManager.getInstance().preloadDualBiddingAds(this);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Ensure auctions are actively preloading in background the instant screen is visible
+        AdManager.getInstance().preloadDualBiddingAds(this);
+    }
+
     private void uploadPost() {
         String text = postText.getText().toString().trim();
         int selectedCategoryId = categoryGroup.getCheckedRadioButtonId();
@@ -127,49 +135,64 @@ public class CreatePostActivity extends BaseActivity {
     private void proceedWithRewardedAd() {
         isPosting = true;
         postButton.setEnabled(false);
+        postButton.setText("Please wait...");
 
+        // If ad is already cached (preloaded in background while user types), show immediately with ZERO delay!
         if (AdManager.getInstance().isDualBiddingReady()) {
+            postButton.setText("Post");
             showDualBiddingAd();
-        } else {
-            isWaitingForAd = true;
-            AdManager.getInstance().preloadDualBiddingAds(this);
+            return;
+        }
 
-            if (adTimeoutRunnable != null) {
-                adHandler.removeCallbacks(adTimeoutRunnable);
-            }
-            adTimeoutRunnable = () -> {
-                if (isWaitingForAd) {
-                    isWaitingForAd = false;
+        // If user typed very fast and ad is still loading, wait up to 3.5s in background
+        isWaitingForAd = true;
+        AdManager.getInstance().preloadDualBiddingAds(this);
+
+        if (adTimeoutRunnable != null) {
+            adHandler.removeCallbacks(adTimeoutRunnable);
+        }
+        adTimeoutRunnable = () -> {
+            if (isWaitingForAd) {
+                isWaitingForAd = false;
+                postButton.setText("Post");
+                if (AdManager.getInstance().isDualBiddingReady()) {
                     showDualBiddingAd();
+                } else {
+                    isPosting = false;
+                    postButton.setEnabled(true);
+                    Toast.makeText(CreatePostActivity.this, "Ad load ho raha hai, kripya 1 second baad dubara Post dabayein.", Toast.LENGTH_SHORT).show();
+                    AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
                 }
-            };
-            adHandler.postDelayed(adTimeoutRunnable, 1500);
+            }
+        };
+        adHandler.postDelayed(adTimeoutRunnable, 3500);
 
-            // Active check every 250ms: if ad loads before timeout, show immediately!
-            Runnable fastCheckRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (isWaitingForAd) {
-                        if (AdManager.getInstance().isDualBiddingReady()) {
-                            isWaitingForAd = false;
-                            if (adTimeoutRunnable != null) {
-                                adHandler.removeCallbacks(adTimeoutRunnable);
-                            }
-                            showDualBiddingAd();
-                        } else {
-                            adHandler.postDelayed(this, 250);
+        // Check every 100ms: the moment ad is ready, fire immediately without waiting for full 3.5s!
+        Runnable fastCheckRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isWaitingForAd) {
+                    if (AdManager.getInstance().isDualBiddingReady()) {
+                        isWaitingForAd = false;
+                        if (adTimeoutRunnable != null) {
+                            adHandler.removeCallbacks(adTimeoutRunnable);
                         }
+                        postButton.setText("Post");
+                        showDualBiddingAd();
+                    } else {
+                        adHandler.postDelayed(this, 100);
                     }
                 }
-            };
-            adHandler.postDelayed(fastCheckRunnable, 250);
-        }
+            }
+        };
+        adHandler.postDelayed(fastCheckRunnable, 100);
     }
 
     private void showDualBiddingAd() {
         dismissAdLoadingDialog();
         isWaitingForAd = false;
         isRewardEarned = false;
+        postButton.setText("Post");
 
         AdManager.getInstance().showRewardedAd(this, PLACEMENT, new AdManager.RewardedAdCallback() {
             @Override
@@ -181,6 +204,7 @@ public class CreatePostActivity extends BaseActivity {
             public void onAdDismissed(boolean rewarded) {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
+                    postButton.setText("Post");
                     if (rewarded || isRewardEarned) {
                         executePostUpload(pendingPostText, pendingCategory);
                     } else {
@@ -196,8 +220,11 @@ public class CreatePostActivity extends BaseActivity {
             public void onAdFailed(String reason) {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
-                    Log.w(TAG, "Ad display failed (" + reason + "), proceeding with post publication.");
-                    executePostUpload(pendingPostText, pendingCategory);
+                    isPosting = false;
+                    postButton.setEnabled(true);
+                    postButton.setText("Post");
+                    Log.w(TAG, "Ad display failed (" + reason + ")");
+                    Toast.makeText(CreatePostActivity.this, "Ad load ho raha hai, kripya 1 second baad dubara tap karein.", Toast.LENGTH_SHORT).show();
                     AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
                 });
             }
@@ -205,7 +232,7 @@ public class CreatePostActivity extends BaseActivity {
     }
 
     private void showAdLoadingDialog() {
-        // Disabled: Clean, silent ad buffering without intrusive popup prompt
+        // Disabled: Clean, silent background preloading without any popup dialog
     }
 
     private void dismissAdLoadingDialog() {

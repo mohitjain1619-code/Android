@@ -195,6 +195,15 @@ export default function AffiliatePage() {
     if (c.includes('nepal') || c === 'np') return '🇳🇵 Nepal';
     if (c.includes('bangladesh') || c === 'bd') return '🇧🇩 Bangladesh';
     if (c.includes('pakistan') || c === 'pk') return '🇵🇰 Pakistan';
+    if (c.includes('armenia') || c === 'am') return '🇦🇲 Armenia';
+    if (c.includes('russia') || c === 'ru') return '🇷🇺 Russia';
+    if (c.includes('georgia') || c === 'ge') return '🇬🇪 Georgia';
+    if (c.includes('azerbaijan') || c === 'az') return '🇦🇿 Azerbaijan';
+    if (c.includes('kazakhstan') || c === 'kz') return '🇰🇿 Kazakhstan';
+    if (c.includes('turkey') || c === 'tr') return '🇹🇷 Turkey';
+    if (c.includes('brazil') || c === 'br') return '🇧🇷 Brazil';
+    if (c.includes('indonesia') || c === 'id') return '🇮🇩 Indonesia';
+    if (c.includes('philippines') || c === 'ph') return '🇵🇭 Philippines';
     if (c === 'global') return '🌐 Global';
     return `🌍 ${country}`;
   };

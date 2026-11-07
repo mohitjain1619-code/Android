@@ -101,6 +101,10 @@ public class TokenManager {
         return prefs.getString(KEY_USER_GENDER, "");
     }
 
+    public String getGender() {
+        return getUserGender();
+    }
+
     public String getUserAvatar() {
         return prefs.getString(KEY_USER_AVATAR, "");
     }

@@ -61,15 +61,15 @@ public class LegalTexts {
             "<h3>4. SERVICES TERMINATION</h3>" +
             "<p>We reserve the right to suspend or terminate your account at our sole discretion, without warning or liability, if you violate any provision of these terms.</p>";
 
-    public static final String REFUND_POLICY = "<h2>STRICT NO-REFUND POLICY</h2>" +
+    public static final String REFUND_POLICY = "<h2>STRICT NO-REFUND &amp; NO-CANCELLATION POLICY</h2>" +
             "<p><b>Effective Date: August 20, 2026</b></p>" +
-            "<p>All transactions processed on the Camverz website or via the app (including VIP Passes, 7 Days and 1 Month packages, and Video Calling Packages) are final and <b>completely non-refundable.</b></p>" +
-            "<h3>1. IMMEDIATE BENEFIT DELIVERY</h3>" +
-            "<p>Because digital features, ad-free access, visibility boosts, and video calling tokens are unlocked on your account immediately upon successful payment capture, we do not support refund requests, chargebacks, or pro-rated credits.</p>" +
+            "<p>All transactions processed on Camverz (including VIP Passes, 7 Days and 1 Month packages, and RealMeet Passes) are final, non-cancellable, and <b>strictly non-refundable under any circumstances.</b></p>" +
+            "<h3>1. IMMEDIATE BENEFIT DELIVERY &amp; ZERO CANCELLATION</h3>" +
+            "<p>Because digital features, priority video matching, ad-free access, and visibility tokens are unlocked immediately upon payment confirmation, orders cannot be cancelled, reversed, or refunded once placed. We do not support cancellations, chargebacks, or pro-rated credits.</p>" +
             "<h3>2. ACCOUNT SUSPENSION POLICY</h3>" +
-            "<p>If your account is suspended or banned due to a violation of our Terms of Service (such as harassment or minor exploitation), you will forfeit all remaining time, premium passes, and tokens. No refunds will be provided for banned accounts.</p>" +
+            "<p>If your account is suspended or banned due to a violation of our Terms of Service (such as harassment or minor exploitation), you will forfeit all remaining time, premium passes, and tokens. No refunds or cancellations will be provided for banned accounts.</p>" +
             "<h3>3. CONTACT SUPPORT</h3>" +
-            "<p>For billing queries, transactional discrepancies, or payment failures, contact support at <b>mohitjain1619@gmail.com</b> before initiating any external claims.</p>";
+            "<p>For transactional discrepancies or technical pass activation inquiries, contact support at <b>support@camverz.com</b>.</p>";
 
     public static final String COOKIE_POLICY = "<h2>COOKIE & TRACKING TOKENS POLICY</h2>" +
             "<p><b>Effective Date: August 20, 2026</b></p>" +

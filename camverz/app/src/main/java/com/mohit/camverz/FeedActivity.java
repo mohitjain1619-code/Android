@@ -48,6 +48,7 @@ public class FeedActivity extends BaseActivity {
     private TextView tvEmptyMessage;
     private View btnRetryFetch;
     private ProfileUpdateManager.OnProfileUpdatedListener profileUpdateListener;
+    private boolean isFetching = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +66,7 @@ public class FeedActivity extends BaseActivity {
 
         // Create Post Button
         findViewById(R.id.fab_create_post).setOnClickListener(v -> {
+            AdManager.getInstance().preloadDualBiddingAds(this);
             startActivity(new Intent(this, CreatePostActivity.class));
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
@@ -124,7 +126,7 @@ public class FeedActivity extends BaseActivity {
         swipeRefreshLayout.setOnRefreshListener(this::fetchPosts);
 
         updateFilterButtons();
-        fetchPosts();
+        // fetchPosts is triggered automatically by onResume()
 
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {
@@ -154,6 +156,7 @@ public class FeedActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        AdManager.getInstance().preloadDualBiddingAds(this);
         fetchPosts();
     }
 
@@ -169,9 +172,47 @@ public class FeedActivity extends BaseActivity {
         filterFemale.setSelected("female".equals(currentCategory));
     }
 
+    private String optString(JsonObject obj, String key, String fallback) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return fallback;
+        }
+        try {
+            return obj.get(key).getAsString();
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private int optInt(JsonObject obj, String key, int fallback) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return fallback;
+        }
+        try {
+            return obj.get(key).getAsInt();
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
+    private boolean optBoolean(JsonObject obj, String key, boolean fallback) {
+        if (obj == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return fallback;
+        }
+        try {
+            return obj.get(key).getAsBoolean();
+        } catch (Exception e) {
+            return fallback;
+        }
+    }
+
     private void fetchPosts() {
+        if (isFetching) {
+            return;
+        }
+        isFetching = true;
+
         if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(true));
+            swipeRefreshLayout.setRefreshing(true);
         }
 
         // Use API to fetch posts
@@ -180,43 +221,49 @@ public class FeedActivity extends BaseActivity {
         api.getPosts(queryCategory, null, 50, 0).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
+                isFetching = false;
                 if (swipeRefreshLayout != null) {
-                    swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(false));
+                    swipeRefreshLayout.setRefreshing(false);
                 }
                 if (response.isSuccessful() && response.body() != null) {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         postList.clear();
-                        if (data.has("posts")) {
+                        if (data.has("posts") && !data.get("posts").isJsonNull()) {
                             JsonArray postsArray = data.getAsJsonArray("posts");
                             for (JsonElement element : postsArray) {
-                                JsonObject postObj = element.getAsJsonObject();
-                                Post post = new Post();
-                                post.setId(postObj.has("id") ? postObj.get("id").getAsString() : "");
-                                post.setText(postObj.has("text") ? postObj.get("text").getAsString() : "");
-                                post.setCategory(postObj.has("category") ? postObj.get("category").getAsString() : "");
-                                post.setUserId(postObj.has("userId") ? postObj.get("userId").getAsString() : "");
-                                post.setUsername(postObj.has("username") ? postObj.get("username").getAsString() : "");
-                                post.setUserAvatar(postObj.has("userAvatar") ? postObj.get("userAvatar").getAsString() : "");
-                                post.setLikeCount(postObj.has("likeCount") ? postObj.get("likeCount").getAsInt() : 0);
-                                post.setCommentCount(postObj.has("commentCount") ? postObj.get("commentCount").getAsInt() : 0);
-                                post.setLikedByMe(postObj.has("likedByMe") && postObj.get("likedByMe").getAsBoolean());
-                                post.setCreatedAt(postObj.has("createdAt") ? postObj.get("createdAt").getAsString() : "");
-                                post.setVerified(postObj.has("verified") && postObj.get("verified").getAsBoolean());
-                                post.setGender(postObj.has("gender") && !postObj.get("gender").isJsonNull() ? postObj.get("gender").getAsString() : "male");
-                                post.setSexPreference(postObj.has("sexPreference") && !postObj.get("sexPreference").isJsonNull() ? postObj.get("sexPreference").getAsString() : "Straight");
+                                try {
+                                    if (element == null || !element.isJsonObject()) continue;
+                                    JsonObject postObj = element.getAsJsonObject();
+                                    Post post = new Post();
+                                    post.setId(optString(postObj, "id", ""));
+                                    post.setText(optString(postObj, "text", ""));
+                                    post.setCategory(optString(postObj, "category", "all"));
+                                    post.setUserId(optString(postObj, "userId", ""));
+                                    post.setUsername(optString(postObj, "username", "Anonymous"));
+                                    post.setUserAvatar(optString(postObj, "userAvatar", "av1"));
+                                    post.setLikeCount(optInt(postObj, "likeCount", 0));
+                                    post.setCommentCount(optInt(postObj, "commentCount", 0));
+                                    post.setLikedByMe(optBoolean(postObj, "likedByMe", false));
+                                    post.setCreatedAt(optString(postObj, "createdAt", ""));
+                                    post.setVerified(optBoolean(postObj, "verified", false));
+                                    post.setGender(optString(postObj, "gender", "male"));
+                                    post.setSexPreference(optString(postObj, "sexPreference", "Straight"));
 
-                                // Enforce post privacy based on current user's gender
-                                String postCat = post.getCategory();
-                                String myGender = tokenManager.getUserGender();
-                                if ("male".equalsIgnoreCase(myGender) && "female".equalsIgnoreCase(postCat)) {
-                                    continue;
-                                }
-                                if ("female".equalsIgnoreCase(myGender) && "male".equalsIgnoreCase(postCat)) {
-                                    continue;
-                                }
+                                    // Enforce post privacy based on current user's gender
+                                    String postCat = post.getCategory();
+                                    String myGender = tokenManager.getUserGender();
+                                    if ("male".equalsIgnoreCase(myGender) && "female".equalsIgnoreCase(postCat)) {
+                                        continue;
+                                    }
+                                    if ("female".equalsIgnoreCase(myGender) && "male".equalsIgnoreCase(postCat)) {
+                                        continue;
+                                    }
 
-                                postList.add(post);
+                                    postList.add(post);
+                                } catch (Throwable itemEx) {
+                                    Log.e(TAG, "Error parsing post item, skipping", itemEx);
+                                }
                             }
                         }
                         adapter.notifyDataSetChanged();
@@ -229,8 +276,9 @@ public class FeedActivity extends BaseActivity {
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
+                isFetching = false;
                 if (swipeRefreshLayout != null) {
-                    swipeRefreshLayout.post(() -> swipeRefreshLayout.setRefreshing(false));
+                    swipeRefreshLayout.setRefreshing(false);
                 }
                 Log.e(TAG, "Failed to load posts", t);
                 updateEmptyState(true, getString(R.string.network_error_retry));
@@ -243,9 +291,6 @@ public class FeedActivity extends BaseActivity {
             if (emptyView != null) {
                 emptyView.setVisibility(View.VISIBLE);
             }
-            if (postsRecyclerView != null) {
-                postsRecyclerView.setVisibility(View.GONE);
-            }
             if (tvEmptyMessage != null) {
                 if (errorMessage != null) {
                     tvEmptyMessage.setText(errorMessage);
@@ -257,9 +302,9 @@ public class FeedActivity extends BaseActivity {
             if (emptyView != null) {
                 emptyView.setVisibility(View.GONE);
             }
-            if (postsRecyclerView != null) {
-                postsRecyclerView.setVisibility(View.VISIBLE);
-            }
+        }
+        if (postsRecyclerView != null) {
+            postsRecyclerView.setVisibility(View.VISIBLE);
         }
     }
 

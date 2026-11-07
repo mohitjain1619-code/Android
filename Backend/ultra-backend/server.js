@@ -121,10 +121,39 @@ app.use("/api", adsRoutes);
 
 // Optimized Static Media Serving (Stories, verification, profile attachments)
 const path = require("path");
+
+app.use("/uploads/stories", (req, res, next) => {
+  const ext = path.extname(req.path);
+  if (!ext) {
+    const fullPath = path.join(__dirname, "uploads/stories", req.path);
+    if (fs.existsSync(fullPath)) {
+      try {
+        const buffer = Buffer.alloc(16);
+        const fd = fs.openSync(fullPath, "r");
+        fs.readSync(fd, buffer, 0, 16, 0);
+        fs.closeSync(fd);
+        if (buffer.toString("utf8", 4, 8) === "ftyp") {
+          res.setHeader("Content-Type", "video/mp4");
+        } else if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+          res.setHeader("Content-Type", "image/jpeg");
+        } else if (buffer[0] === 0x89 && buffer[1] === 0x50) {
+          res.setHeader("Content-Type", "image/png");
+        }
+      } catch (err) {}
+    }
+  }
+  next();
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
   maxAge: "365d",
-  setHeaders: (res, path) => {
+  setHeaders: (res, filePath) => {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    if (filePath && filePath.endsWith(".mp4")) {
+      res.setHeader("Content-Type", "video/mp4");
+      res.setHeader("Accept-Ranges", "bytes");
+    }
   }
 }));
 

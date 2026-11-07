@@ -307,7 +307,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="✓ Registered on Meta Monetization Manager:\n • r: b94e5118-43fc-4881-b07b-0ecf44bbb6ee\n • samsung: 1e278238-70d2-418a-acc3-10ca1ad1abe1"
+                    android:text="Production Live Bidding &amp; Direct Inventory"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
 

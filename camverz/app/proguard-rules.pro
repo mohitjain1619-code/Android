@@ -54,8 +54,14 @@
 # Google ML Kit & Component Discovery / Registrars
 # ==============================================================================
 -dontwarn com.google.mlkit.**
--keepnames class * implements com.google.mlkit.common.sdkinternal.ComponentRegistrar
--keepnames class * implements com.google.firebase.components.ComponentRegistrar
+-keep class * implements com.google.mlkit.common.sdkinternal.ComponentRegistrar {
+    <init>();
+}
+-keep class * implements com.google.firebase.components.ComponentRegistrar {
+    <init>();
+}
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
 -keepnames class com.google.mlkit.vision.face.internal.FaceRegistrar
 -keepnames class com.google.mlkit.common.internal.CommonComponentRegistrar
 -keepnames class com.google.mlkit.vision.common.internal.VisionCommonRegistrar
@@ -107,6 +113,12 @@
 # ==============================================================================
 -dontwarn sun.misc.**
 -dontwarn com.google.gson.**
+-keep class com.google.gson.** { *; }
+-keepclassmembers class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapterFactory { *; }
+-keep class * implements com.google.gson.JsonSerializer { *; }
+-keep class * implements com.google.gson.JsonDeserializer { *; }
+-keep class * implements com.google.gson.InstanceCreator { *; }
 -keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
@@ -179,6 +191,10 @@
 # ==============================================================================
 -dontwarn com.ironsource.**
 -dontwarn com.unity3d.mediation.**
+-keep class com.ironsource.** { *; }
+-keepclassmembers class com.ironsource.** { *; }
+-keep class com.unity3d.mediation.** { *; }
+-keepclassmembers class com.unity3d.mediation.** { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.RewardedVideoAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.InterstitialAdapterApi { *; }
 -keepclassmembers class * implements com.ironsource.mediationsdk.sdk.BannerAdapterApi { *; }
@@ -195,17 +211,35 @@
 -keeppackagenames com.facebook.*
 
 # ==============================================================================
-# Google Mobile Ads (AdMob)
+# Google Mobile Ads (AdMob) & Mediation Adapters
 # ==============================================================================
 -dontwarn com.google.android.gms.ads.**
 -keep public class com.google.android.gms.ads.** { public protected *; }
+-dontwarn com.google.ads.mediation.facebook.**
+-keep class com.google.ads.mediation.facebook.** { *; }
+-keepclassmembers class com.google.ads.mediation.facebook.** { *; }
 
 # ==============================================================================
-# Unity Ads SDK & InMobi
+# Unity Ads SDK, Protobuf & Gateway Protocol
 # ==============================================================================
 -dontwarn com.unity3d.ads.**
 -dontwarn com.unity3d.services.**
+-dontwarn com.unity3d.**
 -dontwarn com.inmobi.**
+-dontwarn gatewayprotocol.**
+-dontwarn com.google.protobuf.**
+-keep class com.unity3d.** { *; }
+-keepclassmembers class com.unity3d.** { *; }
+-keep class gatewayprotocol.** { *; }
+-keepclassmembers class gatewayprotocol.** { *; }
+-keep class com.google.protobuf.** { *; }
+-keepclassmembers class com.google.protobuf.** { *; }
+
+# Keep JavascriptInterface required for Unity Ads & In-App WebView
+-keepattributes JavascriptInterface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
 # ==============================================================================
 # Google Tink Crypto & Transitive Warnings

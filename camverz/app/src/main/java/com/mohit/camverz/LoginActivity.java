@@ -52,7 +52,8 @@ public class LoginActivity extends BaseActivity {
 
     @Override
     protected void attachBaseContext(android.content.Context newBase) {
-        super.attachBaseContext(LocaleHelper.applyLocale(newBase));
+        android.content.Context contextWithLocale = newBase != null ? LocaleHelper.applyLocale(newBase) : null;
+        super.attachBaseContext(contextWithLocale != null ? contextWithLocale : newBase);
     }
 
     @Override
@@ -527,7 +528,7 @@ public class LoginActivity extends BaseActivity {
                             goToMainScreen();
                         } else {
                             tokenManager.setOnboardingComplete(false);
-                            goToGenderSelection();
+                            goToGenderSelection(userName, gender, city, dob);
                         }
                     } else {
                         Log.w(TAG, "❌ Backend auth response not ok");
@@ -617,8 +618,15 @@ public class LoginActivity extends BaseActivity {
     }
 
     private void goToGenderSelection() {
+        goToGenderSelection(tokenManager.getUserName(), null, null, null);
+    }
+
+    private void goToGenderSelection(String name, String gender, String city, String dob) {
         Intent intent = new Intent(LoginActivity.this, OnboardingActivity.class);
-        intent.putExtra("userName", tokenManager.getUserName());
+        intent.putExtra("userName", (name != null && !name.trim().isEmpty()) ? name : tokenManager.getUserName());
+        if (gender != null && !gender.trim().isEmpty()) intent.putExtra("gender", gender);
+        if (city != null && !city.trim().isEmpty()) intent.putExtra("city", city);
+        if (dob != null && !dob.trim().isEmpty()) intent.putExtra("dob", dob);
         startActivity(intent);
         finish();
     }

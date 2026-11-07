@@ -31,6 +31,42 @@ public class CamverzApp extends Application {
     public void onCreate() {
         super.onCreate();
         instance = this;
+
+        // Install top-level crash logger to guarantee instant crashes never fail silently
+        final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            Log.e("FATAL_CAMVERZ_CRASH", "💥 CRASH ON THREAD [" + thread.getName() + "]: " + throwable.getMessage(), throwable);
+            try {
+                java.io.File file = new java.io.File(getFilesDir(), "last_crash.txt");
+                java.io.FileWriter writer = new java.io.FileWriter(file);
+                writer.write("Timestamp: " + new java.util.Date() + "\n");
+                writer.write("Thread: " + thread.getName() + "\n");
+                writer.write("Exception: " + throwable.getClass().getName() + " -> " + throwable.getMessage() + "\n");
+                java.io.PrintWriter pw = new java.io.PrintWriter(writer);
+                throwable.printStackTrace(pw);
+                pw.flush();
+                writer.close();
+            } catch (Throwable ignored) {}
+
+            if (defaultHandler != null) {
+                defaultHandler.uncaughtException(thread, throwable);
+            }
+        });
+
+        try {
+            java.io.File crashFile = new java.io.File(getFilesDir(), "last_crash.txt");
+            if (crashFile.exists()) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(crashFile));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                reader.close();
+                Log.e("PREVIOUS_SESSION_CRASH", "🚨 Found previous session crash:\n" + sb.toString());
+            }
+        } catch (Throwable ignored) {}
+
         Log.d(TAG, "🚀 CamverzApp onCreate - Registering global lifecycle back-blocker");
 
         // Initialize Google Play Billing Client globally & restore purchases

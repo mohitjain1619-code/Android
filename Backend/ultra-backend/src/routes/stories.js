@@ -20,7 +20,18 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
+    let ext = path.extname(file.originalname || "");
+    if (!ext || ext.length === 0) {
+      if (file.mimetype === "video/mp4" || (file.mimetype && file.mimetype.startsWith("video/"))) {
+        ext = ".mp4";
+      } else if (file.mimetype === "image/png") {
+        ext = ".png";
+      } else if (file.mimetype === "image/webp") {
+        ext = ".webp";
+      } else {
+        ext = ".jpg";
+      }
+    }
     cb(null, `story-${uniqueSuffix}${ext}`);
   }
 });
@@ -42,7 +53,7 @@ router.get("/active", async (req, res) => {
   try {
     // Reviewer Sandbox: keep stories pristine and clean during review
     if (req.user && req.user.isReviewer) {
-      return res.json({ ok: true, stories: [] });
+      return res.json({ ok: true, usersWithStories: [], stories: [] });
     }
 
     const currentUserId = req.user ? req.user.userId : null;

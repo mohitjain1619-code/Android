@@ -85,8 +85,7 @@ public class AdManager {
     public static final String ADMOB_INTERSTITIAL_AD_UNIT = "ca-app-pub-6992986179206821/9362140189";
     public static final String ADMOB_REWARDED_AD_UNIT = "ca-app-pub-6992986179206821/2063439948";
 
-    // Meta Audience Network Test Device Hash ID (e.g. printed in Logcat by Meta SDK)
-    public static String META_TEST_DEVICE_HASH_ID = "aa297c15-3bdb-4745-9540-e5799cded71b";
+    public static String META_TEST_DEVICE_HASH_ID = "";
 
     public static final String PREFS_AD_TIMER = "camverz_ad_timer";
     public static final String KEY_LAST_INTERSTITIAL_TIME = "last_interstitial_time";
@@ -185,9 +184,8 @@ public class AdManager {
 
         // 2. Initialize Meta Audience Network SDK for bidding & direct fallback
         try {
-            applyMetaTestDeviceHash(appContext);
             AudienceNetworkAds.initialize(appContext);
-            Log.d(TAG, "✅ Meta Audience Network SDK Initialized with Test Device");
+            Log.d(TAG, "✅ Meta Audience Network SDK Initialized");
         } catch (Exception e) {
             Log.e(TAG, "Error initializing Meta Audience Network", e);
         }
@@ -214,10 +212,6 @@ public class AdManager {
             } catch (Exception e) {
                 Log.e(TAG, "Error setting IronSource userId", e);
             }
-
-            // Enable Integration Test Suite (Unity LevelPlay) & Meta Test Mode strictly for jainmohit8120@gmail.com
-            // Per documentation: must call setMetaData("is_test_suite", "enable") before init
-            checkAndEnableTestSuiteForTester(appContext);
 
             IronSource.init(activity, IRONSOURCE_APP_KEY, () -> {
                 isLevelPlayReady = true;
@@ -265,88 +259,21 @@ public class AdManager {
      * and activates Meta Audience Network test mode, SDK debugger, and test device hash.
      */
     public void checkAndEnableTestSuiteForTester(Context context) {
-        if (context == null) return;
-        try {
-            String email = TokenManager.getInstance(context).getUserEmail();
-            if (email != null && "jainmohit8120@gmail.com".equalsIgnoreCase(email.trim())) {
-                // Official LevelPlay Integration Test Suite pre-init flag
-                IronSource.setMetaData("is_test_suite", "enable");
-
-                // 1. Force LevelPlay adapter verbose debugging so FacebookAdapter prints every error
-                try {
-                    IronSource.setAdaptersDebug(true);
-                } catch (Exception ignored) {}
-
-                // 2. Enable Meta Audience Network Test Mode & Debugger strictly for this tester
-                try {
-                    com.facebook.ads.AdSettings.setTestMode(true);
-                    com.facebook.ads.AdSettings.turnOnSDKDebugger(context.getApplicationContext());
-
-                    // Register Meta Test Device Hash if provided or saved in prefs
-                    applyMetaTestDeviceHash(context);
-                } catch (Exception e) {
-                    Log.w(TAG, "Notice setting Meta test mode: " + e.getMessage());
-                }
-
-                // 3. Register LevelPlay LogListener to capture all mediation adapter failures
-                try {
-                    IronSource.setLogListener((adUnit, message, logLevel) -> {
-                        if (logLevel >= 3 || message.toLowerCase().contains("error") || message.toLowerCase().contains("facebook") || message.toLowerCase().contains("fail")) {
-                            Log.e("LEVELPLAY_DIAGNOSTICS", "🚨 [" + adUnit + "] " + message);
-                        }
-                    });
-                } catch (Exception ignored) {}
-
-                Log.d(TAG, "🧪 [LEVELPLAY TEST SUITE] Enabled for jainmohit8120@gmail.com (Meta Test Mode Active)");
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error checking tester email for Test Suite", e);
-        }
+        // Test mode & test devices removed - clean production traffic
     }
 
-
-
     /**
-     * Applies Meta test device hash from constant or preferences to Meta AdSettings.
+     * Applies Meta test device hash for registered Realme & test devices.
      */
     public static void applyMetaTestDeviceHash(Context context) {
-        try {
-            // Always register both Meta SDK Hash ID and AAID from dashboard
-            com.facebook.ads.AdSettings.addTestDevice("aa297c15-3bdb-4745-9540-e5799cded71b");
-            com.facebook.ads.AdSettings.addTestDevice("b94e5118-43fc-4881-b07b-0ecf44bbb6ee");
-
-            String hashToUse = META_TEST_DEVICE_HASH_ID != null ? META_TEST_DEVICE_HASH_ID.trim() : "";
-            if (hashToUse.isEmpty() && context != null) {
-                hashToUse = context.getSharedPreferences("meta_ad_test", Context.MODE_PRIVATE)
-                        .getString("meta_hash_id", "").trim();
-            }
-            if (!hashToUse.isEmpty()) {
-                com.facebook.ads.AdSettings.addTestDevice(hashToUse);
-                Log.d(TAG, "📱 [META TEST DEVICE] Registered via AdSettings.addTestDevice: " + hashToUse);
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "Error applying Meta test device hash: " + e.getMessage());
-        }
+        // Clean production mode - no hardcoded test devices
     }
 
     /**
-     * Sets or updates Meta test device hash at runtime and persists it.
+     * Sets or updates Meta test device hash (Disabled for clean live traffic).
      */
     public static void setMetaTestDeviceHashId(Context context, String hashId) {
-        if (hashId == null) return;
-        META_TEST_DEVICE_HASH_ID = hashId.trim();
-        if (context != null) {
-            context.getSharedPreferences("meta_ad_test", Context.MODE_PRIVATE)
-                    .edit().putString("meta_hash_id", META_TEST_DEVICE_HASH_ID).apply();
-        }
-        if (!META_TEST_DEVICE_HASH_ID.isEmpty()) {
-            try {
-                com.facebook.ads.AdSettings.addTestDevice(META_TEST_DEVICE_HASH_ID);
-                Log.d(TAG, "📱 Meta Test Device Hash Registered: " + META_TEST_DEVICE_HASH_ID);
-            } catch (Exception e) {
-                Log.e(TAG, "Error registering Meta test device hash", e);
-            }
-        }
+        META_TEST_DEVICE_HASH_ID = "";
     }
 
     /**
@@ -361,14 +288,6 @@ public class AdManager {
                 Toast.makeText(activity, "⚠️ LevelPlay Test Suite is only allowed for jainmohit8120@gmail.com", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            // Ensure flag is active
-            IronSource.setMetaData("is_test_suite", "enable");
-            try {
-                com.facebook.ads.AdSettings.setTestMode(true);
-                com.facebook.ads.AdSettings.turnOnSDKDebugger(activity.getApplicationContext());
-                applyMetaTestDeviceHash(activity);
-            } catch (Exception ignored) {}
 
             Log.d(TAG, "🚀 Launching LevelPlay Integration Test Suite for " + email);
             IronSource.launchTestSuite(activity);
@@ -481,13 +400,13 @@ public class AdManager {
             return;
         }
 
-        if (now - lastInterstitialFailTime < 3000) {
-            Log.d(TAG, "LevelPlay Interstitial failed recently. Debounce active (3s).");
+        if (now - lastInterstitialFailTime < 2000) {
+            Log.d(TAG, "LevelPlay Interstitial failed recently. Debounce active (2s).");
             return;
         }
 
-        if (now - lastInterstitialRequestTime < 4000) {
-            Log.d(TAG, "LevelPlay Interstitial request throttled (<4s interval).");
+        if (now - lastInterstitialRequestTime < 2000) {
+            Log.d(TAG, "LevelPlay Interstitial request throttled (<2s interval).");
             return;
         }
 
@@ -516,11 +435,11 @@ public class AdManager {
         }
 
         long now = System.currentTimeMillis();
-        if (now - lastRewardedFailTime < 3000) {
+        if (now - lastRewardedFailTime < 2000) {
             return;
         }
 
-        if (now - lastRewardedRequestTime < 4000) {
+        if (now - lastRewardedRequestTime < 2000) {
             return;
         }
 
@@ -665,13 +584,25 @@ public class AdManager {
             return;
         }
 
+        // Strictly block any interstitial ad if a call is actively ongoing
+        if (CallManager.isCallActive()) {
+            Log.w(TAG, "🚫 [AD BLOCKED] Interstitial ad blocked because a live call is active! placement: " + placement);
+            if (callback != null)
+                callback.onAdDismissed(false);
+            return;
+        }
+
         final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement
                 : LEVELPLAY_INTERSTITIAL_ID;
 
         // LevelPlay Interstitial (Header Bidding Auction Winner: Google AdMob + Meta + ironSource)
         if (IronSource.isInterstitialReady()) {
-            Log.d(TAG,
-                    "🏆 Showing LevelPlay Interstitial (Highest Bid Auction Winner: " + finalPlacement + ")");
+            rebindLevelPlayListeners();
+            String winnerNet = (latestInterstitialAdInfo != null && latestInterstitialAdInfo.getAdNetwork() != null)
+                    ? latestInterstitialAdInfo.getAdNetwork() : "LevelPlay Bidding Winner";
+            Double rev = (latestInterstitialAdInfo != null) ? latestInterstitialAdInfo.getRevenue() : null;
+            Log.d(TAG, "🏆 [INTERSTITIAL WINNER: " + winnerNet + (rev != null ? " ($" + rev + ")" : "")
+                    + "] Showing LevelPlay Interstitial for placement: " + finalPlacement);
             this.currentInterstitialCallback = callback;
             this.currentPlacement = finalPlacement;
             BaseActivity.isAdShowing = true;
@@ -721,10 +652,21 @@ public class AdManager {
         showHighestBidRewardAd(activity, placement, callback);
     }
 
-    public void showHighestBidRewardAd(Activity activity, String placement, RewardedAdCallback callback) {
+    /**
+     * Strictly plays LevelPlay Rewarded Video Bidding ONLY (bypasses Interstitial comparison).
+     */
+    public void showLevelPlayPureRewardedAd(Activity activity, String placement, RewardedAdCallback callback) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             if (callback != null)
                 callback.onAdFailed("ACTIVITY_DESTROYED");
+            return;
+        }
+
+        // Strictly block any rewarded ad if a call is actively ongoing
+        if (CallManager.isCallActive()) {
+            Log.w(TAG, "🚫 [AD BLOCKED] Pure Rewarded ad blocked because a live call is active! placement: " + placement);
+            if (callback != null)
+                callback.onAdFailed("CALL_ACTIVE_BLOCKED");
             return;
         }
 
@@ -732,6 +674,91 @@ public class AdManager {
         this.currentPlacement = finalPlacement;
         this.currentRewardedCallback = callback;
         this.rewardGrantedInCurrentSession = false;
+        rebindLevelPlayListeners();
+
+        boolean isRewardReady = IronSource.isRewardedVideoAvailable();
+        Log.d(TAG, "🎁 [LEVELPLAY PURE REWARDED] Available: " + isRewardReady);
+
+        if (isRewardReady) {
+            String winnerNet = (latestRewardedAdInfo != null && latestRewardedAdInfo.getAdNetwork() != null)
+                    ? latestRewardedAdInfo.getAdNetwork() : "LevelPlay Bidding Winner";
+            Double rev = (latestRewardedAdInfo != null) ? latestRewardedAdInfo.getRevenue() : null;
+            Log.d(TAG, "🎁 [LEVELPLAY PURE REWARDED] Playing via " + winnerNet + (rev != null ? " ($" + rev + ")" : ""));
+            showLevelPlayRewardedVideo(finalPlacement);
+        } else {
+            Log.w(TAG, "⚠️ [LEVELPLAY PURE REWARDED] Rewarded video not available. Triggering preload...");
+            preloadRewardedVideo();
+            if (callback != null) {
+                callback.onAdFailed("REWARDED_NOT_AVAILABLE");
+            }
+        }
+    }
+
+    /**
+     * Strictly plays LevelPlay Interstitial Bidding ONLY (Direct Header Bidding Winner: Meta, Unity, ironSource).
+     */
+    public void showLevelPlayPureInterstitialAd(Activity activity, String placement, AdCallback callback) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            if (callback != null)
+                callback.onAdDismissed(false);
+            return;
+        }
+
+        // Strictly block any interstitial ad if a call is actively ongoing
+        if (CallManager.isCallActive()) {
+            Log.w(TAG, "🚫 [AD BLOCKED] Pure Interstitial ad blocked because a live call is active! placement: " + placement);
+            if (callback != null)
+                callback.onAdDismissed(false);
+            return;
+        }
+
+        final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement : LEVELPLAY_INTERSTITIAL_ID;
+        this.currentPlacement = finalPlacement;
+        this.currentInterstitialCallback = callback;
+        rebindLevelPlayListeners();
+
+        boolean isReady = IronSource.isInterstitialReady();
+        Log.d(TAG, "🎬 [LEVELPLAY PURE INTERSTITIAL] Available: " + isReady);
+
+        if (isReady) {
+            String winnerNet = (latestInterstitialAdInfo != null && latestInterstitialAdInfo.getAdNetwork() != null)
+                    ? latestInterstitialAdInfo.getAdNetwork() : "LevelPlay Bidding Winner";
+            Double rev = (latestInterstitialAdInfo != null) ? latestInterstitialAdInfo.getRevenue() : null;
+            Log.d(TAG, "🎬 [LEVELPLAY PURE INTERSTITIAL] Playing via " + winnerNet + (rev != null ? " ($" + rev + ")" : ""));
+            BaseActivity.isAdShowing = true;
+            WindowBackBlocker.blockBack(activity);
+            setAdWatchPending(true);
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "interstitial", "ironsource", "DELIVERED", "", "", finalPlacement);
+            showLevelPlayInterstitial(finalPlacement);
+        } else {
+            Log.w(TAG, "⚠️ [LEVELPLAY PURE INTERSTITIAL] Interstitial not available. Triggering preload...");
+            preloadInterstitial(activity);
+            if (callback != null) {
+                callback.onAdDismissed(false);
+            }
+        }
+    }
+
+    public void showHighestBidRewardAd(Activity activity, String placement, RewardedAdCallback callback) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            if (callback != null)
+                callback.onAdFailed("ACTIVITY_DESTROYED");
+            return;
+        }
+
+        // Strictly block any reward ad if a call is actively ongoing
+        if (CallManager.isCallActive()) {
+            Log.w(TAG, "🚫 [AD BLOCKED] Dual Auction Reward ad blocked because a live call is active! placement: " + placement);
+            if (callback != null)
+                callback.onAdFailed("CALL_ACTIVE_BLOCKED");
+            return;
+        }
+
+        final String finalPlacement = (placement != null && !placement.isEmpty()) ? placement : LEVELPLAY_REWARDED_ID;
+        this.currentPlacement = finalPlacement;
+        this.currentRewardedCallback = callback;
+        this.rewardGrantedInCurrentSession = false;
+        rebindLevelPlayListeners();
 
         boolean isRewardReady = IronSource.isRewardedVideoAvailable();
         boolean isInterstitialReady = IronSource.isInterstitialReady();
@@ -825,6 +852,11 @@ public class AdManager {
     }
 
     private void showLevelPlayInterstitial(String placement) {
+        if (CallManager.isCallActive()) {
+            Log.w(TAG, "🚫 [AD BLOCKED] showLevelPlayInterstitial aborted: Call is currently active!");
+            return;
+        }
+        rebindLevelPlayListeners();
         try {
             if (placement != null && !placement.isEmpty() && !placement.equals("default")
                     && !placement.equals(LEVELPLAY_INTERSTITIAL_ID) && !placement.equals(LEVELPLAY_REWARDED_ID)) {
@@ -842,6 +874,11 @@ public class AdManager {
     }
 
     private void showLevelPlayRewardedVideo(String placement) {
+        if (CallManager.isCallActive()) {
+            Log.w(TAG, "🚫 [AD BLOCKED] showLevelPlayRewardedVideo aborted: Call is currently active!");
+            return;
+        }
+        rebindLevelPlayListeners();
         try {
             if (placement != null && !placement.isEmpty() && !placement.equals("default")
                     && !placement.equals(LEVELPLAY_INTERSTITIAL_ID) && !placement.equals(LEVELPLAY_REWARDED_ID)) {
@@ -1002,6 +1039,40 @@ public class AdManager {
         }
     };
 
+    public interface DebugAdListener {
+        void onInterstitialReady(AdInfo adInfo);
+        void onInterstitialLoadFailed(IronSourceError error);
+        void onInterstitialOpened(AdInfo adInfo);
+        void onInterstitialShowSucceeded(AdInfo adInfo);
+        void onInterstitialShowFailed(IronSourceError error, AdInfo adInfo);
+        void onInterstitialClicked(AdInfo adInfo);
+        void onInterstitialClosed(AdInfo adInfo);
+
+        void onRewardedAvailable(AdInfo adInfo);
+        void onRewardedUnavailable();
+        void onRewardedOpened(AdInfo adInfo);
+        void onRewardedShowFailed(IronSourceError error, AdInfo adInfo);
+        void onRewardedClicked(Placement placement, AdInfo adInfo);
+        void onRewardedAdRewarded(Placement placement, AdInfo adInfo);
+        void onRewardedClosed(AdInfo adInfo);
+    }
+
+    private DebugAdListener debugAdListener = null;
+
+    public void setDebugAdListener(DebugAdListener listener) {
+        this.debugAdListener = listener;
+    }
+
+    public void rebindLevelPlayListeners() {
+        try {
+            IronSource.setLevelPlayInterstitialListener(interstitialListener);
+            IronSource.setLevelPlayRewardedVideoListener(rewardedVideoListener);
+            Log.d(TAG, "🔄 LevelPlay listeners attached and verified");
+        } catch (Exception e) {
+            Log.w(TAG, "Error rebinding LevelPlay listeners: " + e.getMessage());
+        }
+    }
+
     private final LevelPlayInterstitialListener interstitialListener = new LevelPlayInterstitialListener() {
         @Override
         public void onAdReady(AdInfo adInfo) {
@@ -1010,6 +1081,9 @@ public class AdManager {
             Log.d(TAG, "✅ LevelPlay Interstitial ready (Network: "
                     + (adInfo != null ? adInfo.getAdNetwork() : "unknown") + ")");
             logAdRevenue("Interstitial", "onAdReady", adInfo);
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialReady(adInfo); } catch (Exception ignored) {}
+            }
         }
 
         @Override
@@ -1023,6 +1097,9 @@ public class AdManager {
                 AdAnalyticsTracker.trackEvent(appContext, "FAILED", "interstitial", "ironsource", "FAILED",
                         String.valueOf(errCode), errMsg, currentPlacement);
             }
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialLoadFailed(error); } catch (Exception ignored) {}
+            }
         }
 
         @Override
@@ -1031,12 +1108,18 @@ public class AdManager {
             setAdWatchPending(true);
             Log.d(TAG, "▶️ LevelPlay Interstitial opened");
             logAdRevenue("Interstitial", "onAdOpened", adInfo);
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialOpened(adInfo); } catch (Exception ignored) {}
+            }
         }
 
         @Override
         public void onAdShowSucceeded(AdInfo adInfo) {
             Log.d(TAG, "LevelPlay Interstitial show succeeded");
             logAdRevenue("Interstitial", "onAdShowSucceeded", adInfo);
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialShowSucceeded(adInfo); } catch (Exception ignored) {}
+            }
         }
 
         @Override
@@ -1064,6 +1147,10 @@ public class AdManager {
                 rCb.onAdFailed(errMsg);
             }
 
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialShowFailed(error, adInfo); } catch (Exception ignored) {}
+            }
+
             mainHandler.postDelayed(() -> {
                 preloadInterstitial(appContext);
                 preloadRewardedVideo();
@@ -1076,6 +1163,9 @@ public class AdManager {
             if (appContext != null) {
                 AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "interstitial", "ironsource", "DELIVERED", "", "",
                         currentPlacement);
+            }
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialClicked(adInfo); } catch (Exception ignored) {}
             }
         }
 
@@ -1105,6 +1195,10 @@ public class AdManager {
                 rCb.onAdDismissed(true);
             }
 
+            if (debugAdListener != null) {
+                try { debugAdListener.onInterstitialClosed(adInfo); } catch (Exception ignored) {}
+            }
+
             mainHandler.postDelayed(() -> {
                 preloadInterstitial(appContext);
                 preloadRewardedVideo();
@@ -1120,6 +1214,9 @@ public class AdManager {
             Log.d(TAG, "✅ LevelPlay Rewarded Video available (Network: "
                     + (adInfo != null ? adInfo.getAdNetwork() : "unknown") + ")");
             logAdRevenue("Rewarded Video", "onAdAvailable", adInfo);
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedAvailable(adInfo); } catch (Exception ignored) {}
+            }
         }
 
         @Override
@@ -1127,6 +1224,9 @@ public class AdManager {
             isRewardedVideoLoading = false;
             lastRewardedFailTime = System.currentTimeMillis();
             Log.d(TAG, "LevelPlay Rewarded Video unavailable");
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedUnavailable(); } catch (Exception ignored) {}
+            }
         }
 
         @Override
@@ -1136,6 +1236,9 @@ public class AdManager {
             setAdWatchPending(true);
             Log.d(TAG, "▶️ LevelPlay Rewarded Video opened");
             logAdRevenue("Rewarded Video", "onAdOpened", adInfo);
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedOpened(adInfo); } catch (Exception ignored) {}
+            }
         }
 
         @Override
@@ -1162,6 +1265,11 @@ public class AdManager {
                 currentRewardedCallback = null;
                 rCb.onAdFailed(errMsg);
             }
+
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedShowFailed(error, adInfo); } catch (Exception ignored) {}
+            }
+
             mainHandler.postDelayed(() -> {
                 preloadInterstitial(appContext);
                 preloadRewardedVideo();
@@ -1174,6 +1282,9 @@ public class AdManager {
             if (appContext != null) {
                 AdAnalyticsTracker.trackEvent(appContext, "CLICKED", "rewarded", "ironsource", "DELIVERED", "", "",
                         currentPlacement);
+            }
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedClicked(placement, adInfo); } catch (Exception ignored) {}
             }
         }
 
@@ -1188,6 +1299,9 @@ public class AdManager {
             }
             if (currentRewardedCallback != null) {
                 currentRewardedCallback.onRewardEarned();
+            }
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedAdRewarded(placement, adInfo); } catch (Exception ignored) {}
             }
         }
 
@@ -1215,6 +1329,11 @@ public class AdManager {
                 currentRewardedCallback = null;
                 rCb.onAdDismissed(rewardGrantedInCurrentSession);
             }
+
+            if (debugAdListener != null) {
+                try { debugAdListener.onRewardedClosed(adInfo); } catch (Exception ignored) {}
+            }
+
             mainHandler.postDelayed(() -> {
                 preloadInterstitial(appContext);
                 preloadRewardedVideo();

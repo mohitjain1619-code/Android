@@ -58,29 +58,45 @@ public class LocaleHelper {
 
     public static Context applyLocale(Context context) {
         if (context == null) return null;
-        String language = getLanguage(context);
-        return applyLocale(context, language);
+        try {
+            String language = getLanguage(context);
+            return applyLocale(context, language);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error resolving locale in applyLocale(context)", t);
+            return context;
+        }
     }
 
     public static Context applyLocale(Context context, String languageCode) {
         if (context == null) return null;
-        Locale locale = new Locale(languageCode);
-        Locale.setDefault(locale);
+        try {
+            if (languageCode == null || languageCode.trim().isEmpty()) {
+                languageCode = DEFAULT_LANGUAGE;
+            }
+            Locale locale = new Locale(languageCode);
+            Locale.setDefault(locale);
 
-        Resources resources = context.getResources();
-        Configuration configuration = new Configuration(resources.getConfiguration());
+            Resources resources = context.getResources();
+            if (resources == null) return context;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            configuration.setLocale(locale);
-            LocaleList localeList = new LocaleList(locale);
-            LocaleList.setDefault(localeList);
-            configuration.setLocales(localeList);
-            configuration.setLayoutDirection(locale);
-            return context.createConfigurationContext(configuration);
-        } else {
-            configuration.locale = locale;
-            configuration.setLayoutDirection(locale);
-            resources.updateConfiguration(configuration, resources.getDisplayMetrics());
+            Configuration configuration = new Configuration(resources.getConfiguration());
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                configuration.setLocale(locale);
+                LocaleList localeList = new LocaleList(locale);
+                LocaleList.setDefault(localeList);
+                configuration.setLocales(localeList);
+                configuration.setLayoutDirection(locale);
+                Context configContext = context.createConfigurationContext(configuration);
+                return configContext != null ? configContext : context;
+            } else {
+                configuration.locale = locale;
+                configuration.setLayoutDirection(locale);
+                resources.updateConfiguration(configuration, resources.getDisplayMetrics());
+                return context;
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error applying locale to configuration", t);
             return context;
         }
     }

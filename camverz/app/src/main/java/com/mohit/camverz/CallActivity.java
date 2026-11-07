@@ -2,6 +2,7 @@ package com.mohit.camverz;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -151,6 +152,37 @@ public class CallActivity extends BaseActivity {
         }
     }
 
+    private android.os.PowerManager.WakeLock wakeLock = null;
+
+    private void acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                android.os.PowerManager pm = (android.os.PowerManager) getSystemService(android.content.Context.POWER_SERVICE);
+                if (pm != null) {
+                    wakeLock = pm.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "Camverz:CallWakeLock");
+                    wakeLock.setReferenceCounted(false);
+                }
+            }
+            if (wakeLock != null && !wakeLock.isHeld()) {
+                wakeLock.acquire(60 * 60 * 1000L); // 1 hour safety timeout
+                Log.d(TAG, "🔒 Call WakeLock acquired");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error acquiring WakeLock", e);
+        }
+    }
+
+    private void releaseWakeLock() {
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
+                Log.d(TAG, "🔓 Call WakeLock released");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error releasing WakeLock", e);
+        }
+    }
+
     private void drainRemoteIceCandidates() {
         synchronized (pendingIceCandidates) {
             Log.d(TAG, "Draining " + pendingIceCandidates.size() + " remote ICE candidates");
@@ -223,6 +255,11 @@ public class CallActivity extends BaseActivity {
     private Runnable autoHideRunnable;
     private final Runnable timeoutRunnable = () -> {
         if (!callEnded) {
+            // If call is actively established, never let a connection timeout cut the call!
+            if (callConnectedTime > 0) {
+                Log.d(TAG, "Call is already actively connected. Ignoring connection timeout.");
+                return;
+            }
             Toast.makeText(CallActivity.this, "Call Timed Out!", Toast.LENGTH_SHORT).show();
             disconnect();
         }
@@ -267,6 +304,10 @@ public class CallActivity extends BaseActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
         }
 
+        // Ensure screen remains ON and awake throughout any call (regardless of Android version)
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        acquireWakeLock();
+
         // Cancel any lingering ringing notification immediately
         NotificationHelper.cancelIncomingCallNotification(this);
         CallRingtoneManager.getInstance().stop();
@@ -283,7 +324,6 @@ public class CallActivity extends BaseActivity {
             getWindow().addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                 WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
             );
         }
@@ -338,11 +378,15 @@ public class CallActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         CamverzFirebaseMessagingService.isCallScreenActive = false;
-        if (videoCapturer != null) {
-            try {
-                videoCapturer.stopCapture();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        // Only stop videoCapturer when actually finishing or call ended
+        // This avoids destroying camera session during temporary pauses, incoming notifications, or lockscreen events
+        if (isFinishing() || callEnded) {
+            if (videoCapturer != null) {
+                try {
+                    videoCapturer.stopCapture();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error stopping video capturer: " + e.getMessage());
+                }
             }
         }
     }
@@ -350,12 +394,38 @@ public class CallActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if (callContainer != null) {
+            callContainer.setKeepScreenOn(true);
+        }
+        acquireWakeLock();
         CamverzFirebaseMessagingService.isCallScreenActive = true;
-        if (videoCapturer != null) {
+        if (videoCapturer != null && isVideoCall && !isVideoOff) {
             try {
                 videoCapturer.startCapture(VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error resuming video capturer: " + e.getMessage());
+            }
+        }
+        // Ensure WebRTC surfaces re-render smoothly if screen was unlocked
+        if (remoteView != null) {
+            remoteView.setKeepScreenOn(true);
+            remoteView.requestLayout();
+            if (remoteVideoTrack != null) {
+                try {
+                    remoteVideoTrack.removeSink(remoteView);
+                    remoteVideoTrack.addSink(remoteView);
+                } catch (Exception ignored) {}
+            }
+        }
+        if (localView != null) {
+            localView.setKeepScreenOn(true);
+            localView.requestLayout();
+            if (localVideoTrack != null && isVideoCall && !isVideoOff) {
+                try {
+                    localVideoTrack.removeSink(localView);
+                    localVideoTrack.addSink(localView);
+                } catch (Exception ignored) {}
             }
         }
     }
@@ -370,6 +440,15 @@ public class CallActivity extends BaseActivity {
         btnSpeaker = findViewById(R.id.btnSpeaker);
         controlsContainer = findViewById(R.id.controls_container);
         callContainer = findViewById(R.id.call_container);
+        if (callContainer != null) {
+            callContainer.setKeepScreenOn(true);
+        }
+        if (remoteView != null) {
+            remoteView.setKeepScreenOn(true);
+        }
+        if (localView != null) {
+            localView.setKeepScreenOn(true);
+        }
         localViewContainer = findViewById(R.id.local_view_container);
         bottomControls = findViewById(R.id.bottom_controls);
         topUserInfoBar = findViewById(R.id.top_user_info_bar);
@@ -765,12 +844,6 @@ public class CallActivity extends BaseActivity {
                     if (callConnectedTime == 0) {
                         callConnectedTime = System.currentTimeMillis();
                         startLimitCountdown();
-                        preloadPostCallDualBiddingAds();
-                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
-                            if (!isFinishing() && !isDestroyed()) {
-                                preloadPostCallDualBiddingAds();
-                            }
-                        }, 25000);
                     }
                 } else if (s == PeerConnection.IceConnectionState.FAILED) {
                     if (!turnFallbackAttempted) {
@@ -1399,7 +1472,10 @@ public class CallActivity extends BaseActivity {
             socket.on("call-failed", callFailedListener);
         }
 
-        peerDisconnectedListener = args -> runOnUiThread(this::disconnect);
+        peerDisconnectedListener = args -> runOnUiThread(() -> {
+            Toast.makeText(CallActivity.this, "Other user ended the call.", Toast.LENGTH_SHORT).show();
+            disconnect();
+        });
         socket.on("peer-disconnected", peerDisconnectedListener);
 
         callControlListener = args -> {
@@ -1694,6 +1770,14 @@ public class CallActivity extends BaseActivity {
         if (callEnded) return;
         callEnded = true;
 
+        releaseWakeLock();
+        try {
+            getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (callContainer != null) {
+                callContainer.setKeepScreenOn(false);
+            }
+        } catch (Exception ignored) {}
+
         if (limitCountdownHandler != null && limitCountdownRunnable != null) {
             limitCountdownHandler.removeCallbacks(limitCountdownRunnable);
             limitCountdownHandler = null;
@@ -1843,21 +1927,18 @@ public class CallActivity extends BaseActivity {
                     Log.d(TAG, "Private call lasted >= 30s (" + durationSec + "s). Triggering post-call Rewarded ad.");
                     showPostCallRewardAdAndFinish();
                 } else if (!isPrivateCall) {
-                    if (durationSec >= 120) {
-                        Log.d(TAG, "Random call lasted >= 2 min (" + durationSec + "s). Triggering 1 post-call Rewarded ad.");
-                        showPostCallRewardAdAndFinish();
-                    } else if (callConnectedTime > 0) {
-                        // Short call (< 2 min) — increment short call counter, show interstitial every 2 calls
+                    if (callConnectedTime > 0) {
+                        // Random calls: show quick, skippable interstitial ad every 2 completed calls
                         android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
-                        int shortCalls = statsPrefs.getInt("short_call_count", 0);
-                        shortCalls++;
-                        Log.d(TAG, "Short call count: " + shortCalls);
-                        if (shortCalls >= 2) {
-                            statsPrefs.edit().putInt("short_call_count", 0).apply();
-                            Log.d(TAG, "Short call threshold reached (every 2 calls). Triggering post-call Interstitial ad.");
+                        int randomCallCount = statsPrefs.getInt("random_call_count", 0);
+                        randomCallCount++;
+                        Log.d(TAG, "Random call completed count: " + randomCallCount);
+                        if (randomCallCount >= 2) {
+                            statsPrefs.edit().putInt("random_call_count", 0).apply();
+                            Log.d(TAG, "Random call threshold reached (every 2 calls). Triggering post-call Interstitial ad.");
                             showPostCallInterstitialAdAndFinish();
                         } else {
-                            statsPrefs.edit().putInt("short_call_count", shortCalls).apply();
+                            statsPrefs.edit().putInt("random_call_count", randomCallCount).apply();
                             finish();
                         }
                     } else {
@@ -2205,6 +2286,7 @@ public class CallActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         CamverzFirebaseMessagingService.isCallScreenActive = false;
+        releaseWakeLock();
         disconnect();
         try {
             unregisterReceiver(headsetReceiver);
@@ -2319,6 +2401,6 @@ public class CallActivity extends BaseActivity {
         if (tokenManager != null && tokenManager.isVideoCallAdFree()) return;
         if (isFinishing() || isDestroyed()) return;
 
-        AdManager.getInstance().preloadDualBiddingAds(this);
+        AdManager.getInstance().preloadDualBiddingAds(getApplicationContext());
     }
 }

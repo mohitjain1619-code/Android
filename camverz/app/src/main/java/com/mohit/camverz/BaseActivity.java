@@ -37,7 +37,8 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void attachBaseContext(Context newBase) {
-        super.attachBaseContext(LocaleHelper.applyLocale(newBase));
+        Context contextWithLocale = newBase != null ? LocaleHelper.applyLocale(newBase) : null;
+        super.attachBaseContext(contextWithLocale != null ? contextWithLocale : newBase);
     }
 
     public static void initializeIronSource(android.app.Activity activity) {

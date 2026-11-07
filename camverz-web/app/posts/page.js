@@ -51,7 +51,7 @@ export default function PostsPage() {
     try {
       const response = await getFeedPosts(filter);
       if (response.ok) {
-        setPosts(response.posts);
+        setPosts(response.posts || []);
       }
     } catch (err) {
       console.error('Error fetching posts:', err);

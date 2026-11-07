@@ -115,9 +115,6 @@ public class MainScreenActivity extends BaseActivity {
         // Initialize production-grade push notifications & FCM channels
         setupPushNotifications();
 
-        // Enable LevelPlay Integration Test Suite and Meta test mode if logged in as jainmohit8120@gmail.com
-        AdManager.getInstance().checkAndEnableTestSuiteForTester(this);
-
         profileUpdateListener = (userId, newName, newAvatar) -> {
             runOnUiThread(() -> {
                 if (userId != null && userId.equals(tokenManager.getUserId())) {
