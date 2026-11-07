@@ -1,19 +1,49 @@
 package com.mohit.camverz;
 
+import androidx.annotation.Keep;
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 
+@Keep
 public class StoryItem implements Serializable {
+
+    @SerializedName("id")
     private String id;
+
+    @SerializedName("userId")
     private String userId;
+
+    @SerializedName("type")
     private String type; // TEXT, IMAGE, VIDEO
+
+    @SerializedName("mediaUrl")
     private String mediaUrl;
+
+    @SerializedName("textContent")
     private String textContent;
+
+    @SerializedName("textColor")
     private String textColor;
+
+    @SerializedName("bgGradient")
     private String bgGradient;
+
+    @SerializedName("createdAt")
     private long createdAt;
+
+    @SerializedName("expiresAt")
     private long expiresAt;
+
+    @SerializedName("viewsCount")
     private int viewsCount;
+
+    @SerializedName("hasViewed")
     private boolean hasViewed;
+
+    public StoryItem() {
+        // Required empty no-arg constructor for Gson reflection
+    }
 
     public int getViewsCount() {
         return viewsCount;

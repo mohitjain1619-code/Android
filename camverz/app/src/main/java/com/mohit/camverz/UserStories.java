@@ -1,15 +1,36 @@
 package com.mohit.camverz;
 
+import androidx.annotation.Keep;
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
+@Keep
 public class UserStories implements Serializable {
+
+    @SerializedName("userId")
     private String userId;
+
+    @SerializedName("userName")
     private String userName;
+
+    @SerializedName("userAvatar")
     private String userAvatar;
+
+    @SerializedName("userPhotoUrl")
     private String userPhotoUrl;
+
+    @SerializedName("userEmail")
     private String userEmail;
-    private List<StoryItem> stories;
+
+    @SerializedName("stories")
+    private List<StoryItem> stories = new ArrayList<>();
+
+    public UserStories() {
+        // Required empty no-arg constructor for Gson reflection
+    }
 
     public String getUserId() {
         return userId;
@@ -52,6 +73,9 @@ public class UserStories implements Serializable {
     }
 
     public List<StoryItem> getStories() {
+        if (stories == null) {
+            stories = new ArrayList<>();
+        }
         return stories;
     }
 

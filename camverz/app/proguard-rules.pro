@@ -112,23 +112,23 @@
 }
 
 # Preserve model class fields for JSON deserialization
--keepclassmembers class com.mohit.camverz.User { <fields>; }
--keepclassmembers class com.mohit.camverz.Post { <fields>; }
--keepclassmembers class com.mohit.camverz.Comment { <fields>; }
--keepclassmembers class com.mohit.camverz.Message { <fields>; }
--keepclassmembers class com.mohit.camverz.Conversation { <fields>; }
--keepclassmembers class com.mohit.camverz.Notification { <fields>; }
--keepclassmembers class com.mohit.camverz.VerificationSession { <fields>; }
--keepclassmembers class com.mohit.camverz.RealMeetPost { <fields>; }
--keepclassmembers class com.mohit.camverz.RealMeetRequest { <fields>; }
--keepclassmembers class com.mohit.camverz.PartyPost { <fields>; }
--keepclassmembers class com.mohit.camverz.FantasyPost { <fields>; }
--keepclassmembers class com.mohit.camverz.RealMeetStore { <fields>; }
--keepclassmembers class com.mohit.camverz.StoryItem { <fields>; }
--keepclassmembers class com.mohit.camverz.UserStories { <fields>; }
--keepclassmembers class com.mohit.camverz.CommunityNotification { <fields>; }
--keepclassmembers class com.mohit.camverz.LanguageModel { <fields>; }
--keepclassmembers class com.mohit.camverz.api.** { <fields>; }
+-keep class com.mohit.camverz.User { *; }
+-keep class com.mohit.camverz.Post { *; }
+-keep class com.mohit.camverz.Comment { *; }
+-keep class com.mohit.camverz.Message { *; }
+-keep class com.mohit.camverz.Conversation { *; }
+-keep class com.mohit.camverz.Notification { *; }
+-keep class com.mohit.camverz.VerificationSession { *; }
+-keep class com.mohit.camverz.RealMeetPost { *; }
+-keep class com.mohit.camverz.RealMeetRequest { *; }
+-keep class com.mohit.camverz.PartyPost { *; }
+-keep class com.mohit.camverz.FantasyPost { *; }
+-keep class com.mohit.camverz.RealMeetStore { *; }
+-keep class com.mohit.camverz.StoryItem { *; }
+-keep class com.mohit.camverz.UserStories { *; }
+-keep class com.mohit.camverz.CommunityNotification { *; }
+-keep class com.mohit.camverz.LanguageModel { *; }
+-keep class com.mohit.camverz.api.** { *; }
 
 # ==============================================================================
 # Socket.IO & Engine.IO

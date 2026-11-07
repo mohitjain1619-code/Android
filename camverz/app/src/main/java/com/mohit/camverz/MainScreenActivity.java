@@ -890,21 +890,32 @@ public class MainScreenActivity extends BaseActivity {
             @Override
             public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    JsonObject data = response.body();
-                    if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("usersWithStories")) {
-                        com.google.gson.JsonArray arr = data.getAsJsonArray("usersWithStories");
-                        List<UserStories> activeStories = new java.util.ArrayList<>();
-                        com.google.gson.Gson gson = new com.google.gson.Gson();
-                        for (com.google.gson.JsonElement el : arr) {
-                            activeStories.add(gson.fromJson(el, UserStories.class));
-                        }
-                        runOnUiThread(() -> {
-                            userStoriesList.clear();
-                            userStoriesList.addAll(activeStories);
-                            if (storiesAdapter != null) {
-                                storiesAdapter.notifyDataSetChanged();
+                    try {
+                        JsonObject data = response.body();
+                        if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("usersWithStories")) {
+                            com.google.gson.JsonArray arr = data.getAsJsonArray("usersWithStories");
+                            List<UserStories> activeStories = new java.util.ArrayList<>();
+                            com.google.gson.Gson gson = new com.google.gson.Gson();
+                            for (com.google.gson.JsonElement el : arr) {
+                                try {
+                                    UserStories us = gson.fromJson(el, UserStories.class);
+                                    if (us != null) {
+                                        activeStories.add(us);
+                                    }
+                                } catch (Throwable parseEx) {
+                                    Log.e("MainScreenActivity", "Skipping malformed story item", parseEx);
+                                }
                             }
-                        });
+                            runOnUiThread(() -> {
+                                userStoriesList.clear();
+                                userStoriesList.addAll(activeStories);
+                                if (storiesAdapter != null) {
+                                    storiesAdapter.notifyDataSetChanged();
+                                }
+                            });
+                        }
+                    } catch (Throwable t) {
+                        Log.e("MainScreenActivity", "Error processing active stories payload", t);
                     }
                 }
             }
