@@ -16,7 +16,12 @@ import java.lang.ref.WeakReference;
  */
 public class CamverzApp extends Application {
     private static final String TAG = "CamverzApp";
+    private static CamverzApp instance;
     private static WeakReference<Activity> currentActivityRef = new WeakReference<>(null);
+
+    public static CamverzApp getInstance() {
+        return instance;
+    }
 
     public static Activity getCurrentActivity() {
         return currentActivityRef != null ? currentActivityRef.get() : null;
@@ -25,6 +30,7 @@ public class CamverzApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
         Log.d(TAG, "🚀 CamverzApp onCreate - Registering global lifecycle back-blocker");
 
         // Initialize Google Play Billing Client globally & restore purchases

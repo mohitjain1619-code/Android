@@ -8,6 +8,7 @@ import android.widget.Toast;
 import android.widget.TextView;
 import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import com.google.android.gms.common.ConnectionResult;
@@ -759,10 +760,5 @@ public class LoginActivity extends BaseActivity {
         if (appUpdateHelper != null) {
             appUpdateHelper.checkUpdateInProgress();
         }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 }
