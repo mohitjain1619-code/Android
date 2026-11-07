@@ -120,84 +120,84 @@ export function calculatePlanExpiry(durationKey) {
 /**
  * Determines whether user belongs to India, Regional tier, or International
  */
-  export function getRegion(country) {
-    if (!country) return 'india';
-    const c = country.toLowerCase().trim();
-    if (c === 'india' || c === 'in') return 'india';
-    if (REGIONAL_COUNTRIES.includes(c)) return 'regional';
-    return 'international';
+export function getRegion(country) {
+  if (!country) return 'india';
+  const c = country.toLowerCase().trim();
+  if (c === 'india' || c === 'in') return 'india';
+  if (REGIONAL_COUNTRIES.includes(c)) return 'regional';
+  return 'international';
+}
+
+/**
+ * Resolves accurate Razorpay checkout link based on Duration, Tier (with/without ads) & Region
+ */
+export function getPaymentUrl(durationKey, isAdFree, country) {
+  const region = getRegion(country);
+  const pkg = PRICING_MATRIX[durationKey];
+  if (!pkg) return 'https://rzp.io/rzp/0hqC5wl'; // Safe 1 Day fallback
+
+  const tierKey = isAdFree ? 'no_ads' : 'with_ads';
+  const regionData = pkg[region] || pkg['india'];
+  const tierData = regionData[tierKey];
+
+  return tierData ? tierData.link : 'https://rzp.io/rzp/0hqC5wl';
+}
+
+/**
+ * Comprehensive Subscriptions & Ad-Free status validator
+ */
+export function getSubscriptionStatus(user) {
+  if (!user) {
+    return {
+      hasActivePlan: false,
+      isAdFree: false,
+      planName: 'Free Member',
+      expiresAt: null,
+      daysLeft: 0,
+      hoursLeft: 0
+    };
   }
 
-  /**
-   * Resolves accurate Razorpay checkout link based on Duration, Tier (with/without ads) & Region
-   */
-  export function getPaymentUrl(durationKey, isAdFree, country) {
-    const region = getRegion(country);
-    const pkg = PRICING_MATRIX[durationKey];
-    if (!pkg) return 'https://rzp.io/rzp/0hqC5wl'; // Safe 1 Day fallback
+  // 1. Direct explicit ad-free flag check
+  const isExplicitAdFree = Boolean(user.plan_is_ad_free || user.planIsAdFree);
 
-    const tierKey = isAdFree ? 'no_ads' : 'with_ads';
-    const regionData = pkg[region] || pkg['india'];
-    const tierData = regionData[tierKey];
+  // 2. Plan name normalization
+  const rawPlanName = user.plan_name || user.planName || 'Free Member';
+  const planLower = rawPlanName.toLowerCase();
 
-    return tierData ? tierData.link : 'https://rzp.io/rzp/0hqC5wl';
+  // 3. Expiry check
+  const expiresAtStr = user.plan_expires_at || user.planExpiresAt;
+  let hasActivePlan = false;
+  let isAdFree = false;
+  let daysLeft = 0;
+  let hoursLeft = 0;
+
+  if (expiresAtStr) {
+    const expiryDate = new Date(expiresAtStr);
+    const now = new Date();
+
+    if (expiryDate > now) {
+      hasActivePlan = true;
+      const diffMs = expiryDate.getTime() - now.getTime();
+      hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
+      daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      // Determine ad-free status:
+      // True if explicit flag is true OR plan name does NOT indicate "with ads"
+      if (isExplicitAdFree) {
+        isAdFree = true;
+      } else if (!planLower.includes('with ads') && !planLower.includes('with_ads') && !planLower.includes('standard')) {
+        isAdFree = true;
+      }
+    }
   }
 
-    /**
-     * Comprehensive Subscription & Ad-Free status validator
-     */
-    export function getSubscriptionStatus(user) {
-      if (!user) {
-        return {
-          hasActivePlan: false,
-          isAdFree: false,
-          planName: 'Free Member',
-          expiresAt: null,
-          daysLeft: 0,
-          hoursLeft: 0
-        };
-      }
-
-      // 1. Direct explicit ad-free flag check
-      const isExplicitAdFree = Boolean(user.plan_is_ad_free || user.planIsAdFree);
-
-      // 2. Plan name normalization
-      const rawPlanName = user.plan_name || user.planName || 'Free Member';
-      const planLower = rawPlanName.toLowerCase();
-
-      // 3. Expiry check
-      const expiresAtStr = user.plan_expires_at || user.planExpiresAt;
-      let hasActivePlan = false;
-      let isAdFree = false;
-      let daysLeft = 0;
-      let hoursLeft = 0;
-
-        if (expiresAtStr) {
-          const expiryDate = new Date(expiresAtStr);
-          const now = new Date();
-
-          if (expiryDate > now) {
-            hasActivePlan = true;
-            const diffMs = expiryDate.getTime() - now.getTime();
-            hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
-            daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-            // Determine ad-free status:
-            // True if explicit flag is true OR plan name does NOT indicate "with ads"
-            if (isExplicitAdFree) {
-              isAdFree = true;
-            } else if (!planLower.includes('with ads') && !planLower.includes('with_ads') && !planLower.includes('standard')) {
-              isAdFree = true;
-            }
-          }
-        }
-
-        return {
-          hasActivePlan,
-          isAdFree,
-          planName: rawPlanName,
-          expiresAt: expiresAtStr,
-          daysLeft,
-          hoursLeft
-        };
-      }
+  return {
+    hasActivePlan,
+    isAdFree,
+    planName: rawPlanName,
+    expiresAt: expiresAtStr,
+    daysLeft,
+    hoursLeft
+  };
+}
