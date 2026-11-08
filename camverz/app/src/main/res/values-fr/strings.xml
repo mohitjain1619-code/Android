@@ -541,4 +541,12 @@ Vous ne pouvez publier qu\'une seule soirée par jour. Souhaitez-vous remplacer 
     <string name="onboarding_error_gender">Veuillez sélectionner votre genre</string>
     <string name="onboarding_error_city">Veuillez entrer ou détecter votre ville</string>
     <string name="onboarding_error_dob">Veuillez sélectionner votre date de naissance (18+)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Appel déconnecté ⏱️</string>
+    <string name="call_limit_disconnected_msg">Votre temps d\'appel gratuit est écoulé.\n\nRegardez des vidéos pour ajouter du temps ou obtenez un Pass VIP pour des appels illimités !</string>
+    <string name="call_limit_over_title">Limite d\'appel atteinte ⏱️</string>
+    <string name="call_limit_wait_msg">Votre limite d\'appels est atteinte.\n\nTemps d\'attente restant : %1$s\n\nObtenez un Pass VIP pour passer des appels illimités immédiatement.</string>
+    <string name="call_limit_watch_ads_msg">Votre limite d\'appels est atteinte.\n\nRegardez des vidéos pour ajouter du temps ou passez au Pass VIP !\n\nPublicités regardées : %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Passer à VIP ⚡</string>
+    <string name="watch_ads_btn">Regarder des pubs</string>
 </resources>

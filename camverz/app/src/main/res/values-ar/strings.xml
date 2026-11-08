@@ -544,4 +544,12 @@
     <string name="onboarding_error_gender">يرجى تحديد الجنس</string>
     <string name="onboarding_error_city">يرجى إدخال مدينتك أو تحديدها</string>
     <string name="onboarding_error_dob">يرجى اختيار تاريخ ميلادك (18+ مطلوب)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">تم قطع المكالمة ⏱️</string>
+    <string name="call_limit_disconnected_msg">انتهى وقت مكالمتك المجانية.\n\nشاهد إعلانات الفيديو لإضافة المزيد من الوقت، أو احصل على باقة VIP لمكالمات غير محدودة!</string>
+    <string name="call_limit_over_title">انتهى حد المكالمات ⏱️</string>
+    <string name="call_limit_wait_msg">تم الوصول إلى الحد الأقصى للمكالمات.\n\nوقت الانتظار المتبقي: %1$s\n\nاحصل على باقة VIP لإجراء مكالمات غير محدودة فوراً.</string>
+    <string name="call_limit_watch_ads_msg">تم الوصول إلى الحد الأقصى للمكالمات.\n\nشاهد إعلانات الفيديو لإضافة المزيد من الوقت، أو قم بالترقية إلى VIP!\n\nالإعلانات المشاهدة: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">الترقية إلى VIP ⚡</string>
+    <string name="watch_ads_btn">مشاهدة الإعلانات</string>
 </resources>

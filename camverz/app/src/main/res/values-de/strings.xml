@@ -544,4 +544,12 @@ Du kannst nur 1 Party pro Tag veröffentlichen. Möchtest du dein vorheriges Eve
     <string name="onboarding_error_gender">Bitte wähle dein Geschlecht</string>
     <string name="onboarding_error_city">Bitte gib deine Stadt ein oder erkenne sie</string>
     <string name="onboarding_error_dob">Bitte wähle dein Geburtsdatum (18+ erforderlich)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Anruf beendet ⏱️</string>
+    <string name="call_limit_disconnected_msg">Deine kostenlose Gesprächszeit ist abgelaufen.\n\nSieh dir Video-Werbung an, um mehr Zeit zu erhalten, oder hol dir den VIP-Pass für unbegrenzte Anrufe!</string>
+    <string name="call_limit_over_title">Anruflimit erreicht ⏱️</string>
+    <string name="call_limit_wait_msg">Dein Anruflimit wurde erreicht.\n\nVerbleibende Wartezeit: %1$s\n\nHol dir einen VIP-Pass, um sofort unbegrenzt zu telefonieren.</string>
+    <string name="call_limit_watch_ads_msg">Dein Anruflimit wurde erreicht.\n\nSieh dir Video-Werbung an, um mehr Zeit zu erhalten, oder hol dir den VIP-Pass!\n\nAngesehene Werbung: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Auf VIP upgraden ⚡</string>
+    <string name="watch_ads_btn">Werbung ansehen</string>
 </resources>

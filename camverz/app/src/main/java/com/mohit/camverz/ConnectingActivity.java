@@ -117,12 +117,17 @@ public class ConnectingActivity extends BaseActivity {
         }
 
         try {
+            if (myUid != null && !myUid.isEmpty()) {
+                JSONObject regObj = new JSONObject();
+                regObj.put("uid", myUid);
+                socket.emit("register-user", regObj);
+            }
             JSONObject obj = new JSONObject();
             obj.put("uid", myUid);
             obj.put("gender", userGender);
             obj.put("category", category);
 
-            Log.d(TAG, "📤 join-queue (category: " + category + ")");
+            Log.d(TAG, "📤 join-queue (category: " + category + ", uid: " + myUid + ", gender: " + userGender + ")");
             socket.emit("join-queue", obj);
         } catch (Exception e) {
             Log.e(TAG, "join-queue failed: " + e.getMessage());
@@ -287,6 +292,8 @@ public class ConnectingActivity extends BaseActivity {
         if (peerName != null && !peerName.isEmpty()) i.putExtra("peerName", peerName);
         if (peerAvatar != null && !peerAvatar.isEmpty()) i.putExtra("peerAvatar", peerAvatar);
         i.putExtra("category", category);
+        String deterministicRoom = myUid.compareTo(peerId) < 0 ? myUid + "_" + peerId : peerId + "_" + myUid;
+        i.putExtra("roomName", deterministicRoom);
         startActivity(i);
         finish();
     }

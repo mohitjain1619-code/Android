@@ -544,4 +544,12 @@ Günde yalnızca 1 parti etkinliği yayınlayabilirsiniz. Önceki etkinliğinizi
     <string name="onboarding_error_gender">Lütfen cinsiyetinizi seçin</string>
     <string name="onboarding_error_city">Lütfen şehrinizi girin veya tespit edin</string>
     <string name="onboarding_error_dob">Lütfen doğum tarihinizi seçin (18+ zorunlu)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Arama Sonlandırıldı ⏱️</string>
+    <string name="call_limit_disconnected_msg">Ücretsiz arama süreniz doldu.\n\nDaha fazla süre kazanmak için video reklamları izleyin veya sınırsız arama için VIP Kart alın!</string>
+    <string name="call_limit_over_title">Arama Limiti Doldu ⏱️</string>
+    <string name="call_limit_wait_msg">Arama limitinize ulaşıldı.\n\nKalan bekleme süresi: %1$s\n\nHemen sınırsız arama yapmak için VIP Kart alın.</string>
+    <string name="call_limit_watch_ads_msg">Arama limitinize ulaşıldı.\n\nDaha fazla süre kazanmak için video reklamları izleyin veya VIP Karta yükseltin!\n\nİzlenen Reklamlar: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">VIP\'ye Yükselt ⚡</string>
+    <string name="watch_ads_btn">Reklam İzle</string>
 </resources>

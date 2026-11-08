@@ -517,6 +517,11 @@ public class MainScreenActivity extends BaseActivity {
         checkPreferenceSelection();
         fetchActiveStories();
         AdManager.getInstance().preloadNativeAd(this);
+
+        if (CallLimitManager.isDisconnectedDueToLimit(this)) {
+            CallLimitManager.setDisconnectedDueToLimit(this, false);
+            showCallLimitDisconnectedDialog();
+        }
     }
 
     @Override
@@ -739,34 +744,37 @@ public class MainScreenActivity extends BaseActivity {
         onPassed.run();
     }
 
+    private void showCallLimitDisconnectedDialog() {
+        if (isFinishing() || isDestroyed()) return;
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.call_limit_disconnected_title)
+            .setMessage(R.string.call_limit_disconnected_msg)
+            .setCancelable(false)
+            .setPositiveButton(R.string.upgrade_to_vip_btn, (dialog, which) -> {
+                startActivity(new Intent(MainScreenActivity.this, PricingActivity.class));
+            })
+            .setNegativeButton(R.string.watch_ads_btn, (dialog, which) -> {
+                showWatchAdsDialog(() -> {});
+            })
+            .show();
+    }
+
     private void showExceededBlockDialog() {
         if (isFinishing() || isDestroyed()) return;
 
-        int level = CallLimitManager.getBlockLevel(this);
         String remainingTime = CallLimitManager.getFormattedRemainingBlockTime(this);
-
-        String title;
-        String message;
-
-        if (level == 1) {
-            title = "Call Limit Reached (30-Min Cooldown)";
-            message = "Aapne session ke poore 15 minute call time use kar liye hain.\n\nAgla 15 minute ka session unlock karne ke liye kripya 30 minute wait karein.\n\nBacha hua samay: " + remainingTime;
-        } else if (level == 2) {
-            title = "Call Limit Reached (8-Hour Cooldown)";
-            message = "Aapne dusre session ke bhi poore 15 minute call time use kar liye hain.\n\nAgla 15 minute ka session unlock karne ke liye kripya 8 ghante baad aayein.\n\nBacha hua samay: " + remainingTime;
-        } else {
-            title = "Call Limit Reached (12-Hour Cooldown)";
-            message = "Aapne teesre session ke bhi poore 15 minute call time use kar liye hain.\n\nAgla 15 minute ka session unlock karne ke liye kripya 12 ghante baad aayein.\n\nBacha hua samay: " + remainingTime;
-        }
+        String title = getString(R.string.call_limit_over_title);
+        String message = getString(R.string.call_limit_wait_msg, remainingTime);
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("Upgrade to VIP ⚡", (dialog, which) -> {
+            .setPositiveButton(R.string.upgrade_to_vip_btn, (dialog, which) -> {
                 startActivity(new Intent(MainScreenActivity.this, PricingActivity.class));
             })
-            .setNegativeButton("OK", null)
+            .setNegativeButton(android.R.string.ok, null)
             .show();
     }
 
@@ -778,14 +786,14 @@ public class MainScreenActivity extends BaseActivity {
 
         int watched = CallLimitManager.getRewardedAdsWatched(this);
         int currentTier = CallLimitManager.getRewardedTier(this);
-        String title = "Time Up! ⏱️";
-        String message = "Aapka call time poora ho chuka hai.\n\nTiming badhane ke liye 3 short video ads dekh lein!\n\nAds Watched: " + watched + "/3";
+        String title = getString(R.string.call_limit_over_title);
+        String message = getString(R.string.call_limit_watch_ads_msg, watched);
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("Watch Ad", (dialog, which) -> {
+            .setPositiveButton(R.string.watch_ads_btn, (dialog, which) -> {
                 final boolean[] rewardGranted = new boolean[]{false};
 
                 if (AdManager.getInstance().isDualBiddingReady()) {
@@ -816,7 +824,7 @@ public class MainScreenActivity extends BaseActivity {
                                 handler.postDelayed(this, 250);
                             } else {
                                 try { progress.dismiss(); } catch (Exception ignored) {}
-                                Toast.makeText(MainScreenActivity.this, "Ad load ho raha hai, kripya 2 second baad punah koshish karein.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainScreenActivity.this, "Ad is loading, please try again in a few seconds.", Toast.LENGTH_SHORT).show();
                                 showWatchAdsDialog(onPassed);
                             }
                         }
@@ -874,7 +882,7 @@ public class MainScreenActivity extends BaseActivity {
             public void onAdFailed(String reason) {
                 runOnUiThread(() -> {
                     AdManager.getInstance().preloadDualBiddingAds(MainScreenActivity.this);
-                    Toast.makeText(MainScreenActivity.this, "Video ad load ho raha hai, kripya kuch second baad punah koshish karein.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainScreenActivity.this, "Video ad is loading, please try again in a few seconds.", Toast.LENGTH_SHORT).show();
                     showWatchAdsDialog(onPassed);
                 });
             }

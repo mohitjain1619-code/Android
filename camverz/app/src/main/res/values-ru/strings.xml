@@ -544,4 +544,12 @@
     <string name="onboarding_error_gender">Пожалуйста, выберите ваш пол</string>
     <string name="onboarding_error_city">Пожалуйста, укажите ваш город</string>
     <string name="onboarding_error_dob">Пожалуйста, выберите дату рождения (18+)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Звонок завершен ⏱️</string>
+    <string name="call_limit_disconnected_msg">Ваше бесплатное время разговора закончилось.\n\nПосмотрите видеорекламу, чтобы добавить время, или приобретите VIP-пропуск для неограниченных звонков!</string>
+    <string name="call_limit_over_title">Лимит звонков исчерпан ⏱️</string>
+    <string name="call_limit_wait_msg">Ваш лимит звонков исчерпан.\n\nОставшееся время ожидания: %1$s\n\nПолучите VIP-пропуск, чтобы звонить без ограничений прямо сейчас.</string>
+    <string name="call_limit_watch_ads_msg">Ваш лимит звонков исчерпан.\n\nПосмотрите видеорекламу, чтобы добавить время, или перейдите на VIP-пропуск!\n\nПросмотрено рекламы: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Перейти на VIP ⚡</string>
+    <string name="watch_ads_btn">Смотреть рекламу</string>
 </resources>

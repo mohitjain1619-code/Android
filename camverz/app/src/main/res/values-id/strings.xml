@@ -544,4 +544,12 @@ Anda hanya dapat memposting 1 acara pesta per hari. Apakah Anda ingin mengganti 
     <string name="onboarding_error_gender">Silakan pilih jenis kelamin Anda</string>
     <string name="onboarding_error_city">Silakan masukkan atau deteksi kota Anda</string>
     <string name="onboarding_error_dob">Silakan pilih tanggal lahir Anda (wajib 18+)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Panggilan Terputus ⏱️</string>
+    <string name="call_limit_disconnected_msg">Waktu panggilan gratis Anda telah habis.\n\nTonton iklan video untuk menambah waktu, atau dapatkan Tiket VIP untuk panggilan tanpa batas!</string>
+    <string name="call_limit_over_title">Batas Panggilan Habis ⏱️</string>
+    <string name="call_limit_wait_msg">Batas panggilan Anda telah tercapai.\n\nSisa waktu tunggu: %1$s\n\nDapatkan Tiket VIP untuk langsung melakukan panggilan tanpa batas.</string>
+    <string name="call_limit_watch_ads_msg">Batas panggilan Anda telah tercapai.\n\nTonton iklan video untuk menambah waktu, atau tingkatkan ke Tiket VIP!\n\nIklan Dilihat: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Upgrade ke VIP ⚡</string>
+    <string name="watch_ads_btn">Tonton Iklan</string>
 </resources>

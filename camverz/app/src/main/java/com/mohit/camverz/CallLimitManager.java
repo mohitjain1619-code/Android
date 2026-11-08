@@ -10,6 +10,17 @@ public class CallLimitManager {
     private static final String KEY_REWARDED_TIER = "rewarded_tier";
     private static final String KEY_LIMIT_BLOCKED_TIME = "limit_blocked_time";
     private static final String KEY_BLOCK_LEVEL = "block_level";
+    private static final String KEY_DISCONNECTED_DUE_TO_LIMIT = "disconnected_due_to_limit";
+
+    public static void setDisconnectedDueToLimit(Context context, boolean value) {
+        if (context == null) return;
+        getPrefs(context).edit().putBoolean(KEY_DISCONNECTED_DUE_TO_LIMIT, value).apply();
+    }
+
+    public static boolean isDisconnectedDueToLimit(Context context) {
+        if (context == null) return false;
+        return getPrefs(context).getBoolean(KEY_DISCONNECTED_DUE_TO_LIMIT, false);
+    }
 
     private static final long INITIAL_FREE_SECONDS = 300; // 5 minutes
 

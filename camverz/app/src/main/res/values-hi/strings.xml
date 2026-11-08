@@ -535,4 +535,12 @@
     <string name="onboarding_error_gender">कृपया अपना जेंडर चुनें</string>
     <string name="onboarding_error_city">कृपया अपना शहर दर्ज करें या ऑटो-डिटेक्ट करें</string>
     <string name="onboarding_error_dob">कृपया अपनी जन्म तिथि चुनें (18+ अनिवार्य)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">कॉल डिस्कनेक्ट हो गई ⏱️</string>
+    <string name="call_limit_disconnected_msg">आपका फ्री कॉल समय समाप्त हो गया है।\n\nकॉल समय बढ़ाने के लिए वीडियो विज्ञापन देखें, या अनलिमिटेड कॉल्स के लिए VIP पास लें!</string>
+    <string name="call_limit_over_title">कॉल लिमिट समाप्त ⏱️</string>
+    <string name="call_limit_wait_msg">आपकी कॉल लिमिट समाप्त हो गई है।\n\nशेष प्रतीक्षा समय: %1$s\n\nतुरंत अनलिमिटेड कॉल करने के लिए VIP पास लें।</string>
+    <string name="call_limit_watch_ads_msg">आपकी कॉल लिमिट समाप्त हो गई है।\n\nकॉल समय बढ़ाने के लिए वीडियो विज्ञापन देखें, या VIP पास लें!\n\nदेखे गए विज्ञापन: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">VIP में अपग्रेड करें ⚡</string>
+    <string name="watch_ads_btn">विज्ञापन देखें</string>
 </resources>

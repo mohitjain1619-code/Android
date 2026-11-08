@@ -544,4 +544,12 @@ Você só pode publicar 1 festa por dia. Deseja substituir seu evento anterior?<
     <string name="onboarding_error_gender">Por favor, selecione seu gênero</string>
     <string name="onboarding_error_city">Por favor, digite ou detecte sua cidade</string>
     <string name="onboarding_error_dob">Por favor, selecione sua data de nascimento (18+)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Chamada desconectada ⏱️</string>
+    <string name="call_limit_disconnected_msg">O seu tempo de chamada gratuita acabou.\n\nAssista a anúncios em vídeo para adicionar mais tempo ou adquira um Passe VIP para chamadas ilimitadas!</string>
+    <string name="call_limit_over_title">Limite de chamadas atingido ⏱️</string>
+    <string name="call_limit_wait_msg">O seu limite de chamadas foi atingido.\n\nTempo de espera restante: %1$s\n\nAdquira um Passe VIP para fazer chamadas ilimitadas imediatamente.</string>
+    <string name="call_limit_watch_ads_msg">O seu limite de chamadas foi atingido.\n\nAssista a anúncios em vídeo para adicionar mais tempo ou faça upgrade para o Passe VIP!\n\nAnúncios assistidos: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Upgrade para VIP ⚡</string>
+    <string name="watch_ads_btn">Ver anúncios</string>
 </resources>

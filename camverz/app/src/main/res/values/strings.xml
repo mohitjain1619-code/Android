@@ -546,4 +546,12 @@ You can only post 1 Party event per day. Would you like to replace your previous
     <string name="onboarding_error_gender">Please select your gender</string>
     <string name="onboarding_error_city">Please enter or detect your city</string>
     <string name="onboarding_error_dob">Please select your birth date (18+ required)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Call Disconnected ⏱️</string>
+    <string name="call_limit_disconnected_msg">Your free call time is over.\n\nWatch video ads to add more call time, or get a VIP Pass for unlimited calls!</string>
+    <string name="call_limit_over_title">Call Limit Over ⏱️</string>
+    <string name="call_limit_wait_msg">Your call limit has been reached.\n\nRemaining wait time: %1$s\n\nGet a VIP Pass to make unlimited calls immediately.</string>
+    <string name="call_limit_watch_ads_msg">Your call limit has been reached.\n\nWatch video ads to add more call time, or upgrade to a VIP Pass!\n\nAds Watched: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Upgrade to VIP ⚡</string>
+    <string name="watch_ads_btn">Watch Ads</string>
 </resources>

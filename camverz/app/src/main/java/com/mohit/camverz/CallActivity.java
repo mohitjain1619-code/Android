@@ -105,6 +105,7 @@ public class CallActivity extends BaseActivity {
     private boolean isVideoCall = true;
     private boolean connectionAnimationActive = true;
     private boolean isCallAccepted = false;
+    private boolean isCameraCapturing = false;
 
     private final List<IceCandidate> pendingIceCandidates = java.util.Collections.synchronizedList(new ArrayList<>());
     private boolean isRemoteDescriptionSet = false;
@@ -381,11 +382,13 @@ public class CallActivity extends BaseActivity {
         // Only stop videoCapturer when actually finishing or call ended
         // This avoids destroying camera session during temporary pauses, incoming notifications, or lockscreen events
         if (isFinishing() || callEnded) {
-            if (videoCapturer != null) {
+            if (videoCapturer != null && isCameraCapturing) {
                 try {
                     videoCapturer.stopCapture();
                 } catch (Exception e) {
                     Log.e(TAG, "Error stopping video capturer: " + e.getMessage());
+                } finally {
+                    isCameraCapturing = false;
                 }
             }
         }
@@ -400,15 +403,16 @@ public class CallActivity extends BaseActivity {
         }
         acquireWakeLock();
         CamverzFirebaseMessagingService.isCallScreenActive = true;
-        if (videoCapturer != null && isVideoCall && !isVideoOff) {
+        if (videoCapturer != null && isVideoCall && !isVideoOff && !isCameraCapturing) {
             try {
                 videoCapturer.startCapture(VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS);
+                isCameraCapturing = true;
             } catch (Exception e) {
                 Log.e(TAG, "Error resuming video capturer: " + e.getMessage());
             }
         }
-        // Ensure WebRTC surfaces re-render smoothly if screen was unlocked
-        if (remoteView != null) {
+        // Ensure WebRTC surfaces re-render smoothly if screen was unlocked and views are initialized
+        if (remoteView != null && eglBase != null) {
             remoteView.setKeepScreenOn(true);
             remoteView.requestLayout();
             if (remoteVideoTrack != null) {
@@ -418,7 +422,7 @@ public class CallActivity extends BaseActivity {
                 } catch (Exception ignored) {}
             }
         }
-        if (localView != null) {
+        if (localView != null && eglBase != null) {
             localView.setKeepScreenOn(true);
             localView.requestLayout();
             if (localVideoTrack != null && isVideoCall && !isVideoOff) {
@@ -703,6 +707,7 @@ public class CallActivity extends BaseActivity {
 
                 videoCapturer.initialize(surfaceTextureHelper, getApplicationContext(), videoSource.getCapturerObserver());
                 videoCapturer.startCapture(VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS);
+                isCameraCapturing = true;
 
                 localVideoTrack = factory.createVideoTrack("VIDEO", videoSource);
                 localVideoTrack.addSink(localView);
@@ -1847,10 +1852,14 @@ public class CallActivity extends BaseActivity {
             }
 
             if (videoCapturer != null) {
-                try { 
-                    videoCapturer.stopCapture(); 
-                } catch (Exception e) { 
-                    Log.e(TAG, "Error stopping capturer: " + e.getMessage());
+                if (isCameraCapturing) {
+                    try { 
+                        videoCapturer.stopCapture(); 
+                    } catch (Exception e) { 
+                        Log.e(TAG, "Error stopping capturer: " + e.getMessage());
+                    } finally {
+                        isCameraCapturing = false;
+                    }
                 }
                 try {
                     videoCapturer.dispose();
@@ -1928,18 +1937,25 @@ public class CallActivity extends BaseActivity {
                     showPostCallRewardAdAndFinish();
                 } else if (!isPrivateCall) {
                     if (callConnectedTime > 0) {
-                        // Random calls: show quick, skippable interstitial ad every 2 completed calls
                         android.content.SharedPreferences statsPrefs = getSharedPreferences("camverz_call_limits", MODE_PRIVATE);
-                        int randomCallCount = statsPrefs.getInt("random_call_count", 0);
-                        randomCallCount++;
-                        Log.d(TAG, "Random call completed count: " + randomCallCount);
-                        if (randomCallCount >= 2) {
+                        if (durationSec >= 120) {
+                            // Call lasted 2 minutes or more: show ad immediately
+                            Log.d(TAG, "Random call lasted >= 2 min (" + durationSec + "s). Triggering post-call Interstitial ad directly.");
                             statsPrefs.edit().putInt("random_call_count", 0).apply();
-                            Log.d(TAG, "Random call threshold reached (every 2 calls). Triggering post-call Interstitial ad.");
                             showPostCallInterstitialAdAndFinish();
                         } else {
-                            statsPrefs.edit().putInt("random_call_count", randomCallCount).apply();
-                            finish();
+                            // Call lasted less than 2 minutes: show ad every 2 completed calls
+                            int randomCallCount = statsPrefs.getInt("random_call_count", 0);
+                            randomCallCount++;
+                            Log.d(TAG, "Short random call (< 2 min, " + durationSec + "s). Completed count: " + randomCallCount);
+                            if (randomCallCount >= 2) {
+                                statsPrefs.edit().putInt("random_call_count", 0).apply();
+                                Log.d(TAG, "Short call threshold reached (every 2 calls). Triggering post-call Interstitial ad.");
+                                showPostCallInterstitialAdAndFinish();
+                            } else {
+                                statsPrefs.edit().putInt("random_call_count", randomCallCount).apply();
+                                finish();
+                            }
                         }
                     } else {
                         finish();
@@ -2305,6 +2321,12 @@ public class CallActivity extends BaseActivity {
                 CallLimitManager.decrementFreeSeconds(CallActivity.this);
                 long secondsLeft = CallLimitManager.getFreeSecondsLeft(CallActivity.this);
                 Log.d(TAG, "⏱️ Free seconds left: " + secondsLeft);
+                if (secondsLeft <= 0) {
+                    Log.w(TAG, "⏱️ Free seconds reached 0! Disconnecting call due to limit over.");
+                    CallLimitManager.setDisconnectedDueToLimit(CallActivity.this, true);
+                    disconnect();
+                    return;
+                }
                 if (limitCountdownHandler != null) {
                     limitCountdownHandler.postDelayed(this, 1000);
                 }

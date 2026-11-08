@@ -541,4 +541,12 @@ Solo puedes publicar 1 fiesta por día. ¿Te gustaría reemplazar tu evento ante
     <string name="onboarding_error_gender">Por favor selecciona tu género</string>
     <string name="onboarding_error_city">Por favor introduce tu ciudad</string>
     <string name="onboarding_error_dob">Por favor selecciona tu fecha de nacimiento (18+)</string>
+    <!-- Call Limit Dialogs -->
+    <string name="call_limit_disconnected_title">Llamada desconectada ⏱️</string>
+    <string name="call_limit_disconnected_msg">Tu tiempo de llamada gratis ha terminado.\n\n¡Mira anuncios de video para agregar más tiempo o consigue un Pase VIP para llamadas ilimitadas!</string>
+    <string name="call_limit_over_title">Límite de llamadas alcanzado ⏱️</string>
+    <string name="call_limit_wait_msg">Has alcanzado tu límite de llamadas.\n\nTiempo de espera restante: %1$s\n\nConsigue un Pase VIP para hacer llamadas ilimitadas de inmediato.</string>
+    <string name="call_limit_watch_ads_msg">Has alcanzado tu límite de llamadas.\n\n¡Mira anuncios de video para agregar más tiempo o mejora a un Pase VIP!\n\nAnuncios vistos: %1$d/3</string>
+    <string name="upgrade_to_vip_btn">Mejorar a VIP ⚡</string>
+    <string name="watch_ads_btn">Ver anuncios</string>
 </resources>
