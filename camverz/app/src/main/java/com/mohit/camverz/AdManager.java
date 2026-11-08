@@ -430,11 +430,15 @@ public class AdManager {
             return;
         }
 
+        long now = System.currentTimeMillis();
         if (isRewardedVideoLoading) {
-            return;
+            if (now - lastRewardedRequestTime > 6000) {
+                isRewardedVideoLoading = false;
+            } else {
+                return;
+            }
         }
 
-        long now = System.currentTimeMillis();
         if (now - lastRewardedFailTime < 2000) {
             return;
         }
@@ -649,7 +653,7 @@ public class AdManager {
      * Grants the user full reward upon ad completion in either format!
      */
     public void showRewardedAd(Activity activity, String placement, RewardedAdCallback callback) {
-        showHighestBidRewardAd(activity, placement, callback);
+        showLevelPlayPureRewardedAd(activity, placement, callback);
     }
 
     /**
@@ -680,6 +684,10 @@ public class AdManager {
         Log.d(TAG, "🎁 [LEVELPLAY PURE REWARDED] Available: " + isRewardReady);
 
         if (isRewardReady) {
+            BaseActivity.isAdShowing = true;
+            WindowBackBlocker.blockBack(activity);
+            setAdWatchPending(true);
+            AdAnalyticsTracker.trackEvent(activity, "IMPRESSION", "rewarded", "ironsource", "DELIVERED", "", "", finalPlacement);
             String winnerNet = (latestRewardedAdInfo != null && latestRewardedAdInfo.getAdNetwork() != null)
                     ? latestRewardedAdInfo.getAdNetwork() : "LevelPlay Bidding Winner";
             Double rev = (latestRewardedAdInfo != null) ? latestRewardedAdInfo.getRevenue() : null;
@@ -827,6 +835,10 @@ public class AdManager {
 
     public LevelPlayAdInfo getLastRewardedAdInfo() {
         return lastRewardedAdInfo;
+    }
+
+    public boolean isRewardedVideoAvailable() {
+        return IronSource.isRewardedVideoAvailable();
     }
 
     public boolean isDualBiddingReady() {

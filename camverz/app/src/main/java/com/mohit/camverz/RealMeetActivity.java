@@ -362,6 +362,7 @@ public class RealMeetActivity extends BaseActivity {
 
         realMeetSessionStartTime = System.currentTimeMillis();
         preloadInterstitialAd();
+        loadLevelPlayRewardedAd();
 
         if (isRealMeetAdPending()) {
             Log.w(TAG, "⚠️ Ad watch was pending (app killed or ad bypassed). Showing ad immediately.");
@@ -1852,7 +1853,7 @@ public class RealMeetActivity extends BaseActivity {
         dialog.show();
     }
 
-    // ==================== DUAL-AUCTION BIDDING REWARDED ADS ====================
+    // ==================== LEVELPLAY PURE REWARDED ADS BEFORE POST ====================
     private void showRewardedAdBeforePost(String placement, Runnable onCancelOrFailure, Runnable onAdCompleted) {
         if (isFinishing() || isDestroyed()) return;
 
@@ -1862,11 +1863,11 @@ public class RealMeetActivity extends BaseActivity {
         this.pendingAdCancelAction = onCancelOrFailure;
         this.isRewardEarned = false;
 
-        if (AdManager.getInstance().isDualBiddingReady()) {
-            executeShowDualBiddingRewardAd(finalPlacement);
+        if (AdManager.getInstance().isRewardedVideoAvailable()) {
+            executeShowPureRewardedAd(finalPlacement);
         } else {
             isWaitingForAd = true;
-            AdManager.getInstance().preloadDualBiddingAds(this);
+            AdManager.getInstance().preloadRewardedVideo();
 
             if (adTimeoutRunnable != null) {
                 adHandler.removeCallbacks(adTimeoutRunnable);
@@ -1874,22 +1875,22 @@ public class RealMeetActivity extends BaseActivity {
             adTimeoutRunnable = () -> {
                 if (isWaitingForAd) {
                     isWaitingForAd = false;
-                    executeShowDualBiddingRewardAd(finalPlacement);
+                    executeShowPureRewardedAd(finalPlacement);
                 }
             };
-            adHandler.postDelayed(adTimeoutRunnable, 1500);
+            adHandler.postDelayed(adTimeoutRunnable, 2500);
 
             // Active check every 250ms: if ad loads before timeout, show immediately!
             Runnable fastCheckRunnable = new Runnable() {
                 @Override
                 public void run() {
                     if (isWaitingForAd) {
-                        if (AdManager.getInstance().isDualBiddingReady()) {
+                        if (AdManager.getInstance().isRewardedVideoAvailable()) {
                             isWaitingForAd = false;
                             if (adTimeoutRunnable != null) {
                                 adHandler.removeCallbacks(adTimeoutRunnable);
                             }
-                            executeShowDualBiddingRewardAd(finalPlacement);
+                            executeShowPureRewardedAd(finalPlacement);
                         } else {
                             adHandler.postDelayed(this, 250);
                         }
@@ -1900,12 +1901,12 @@ public class RealMeetActivity extends BaseActivity {
         }
     }
 
-    private void executeShowDualBiddingRewardAd(String placement) {
+    private void executeShowPureRewardedAd(String placement) {
         dismissAdLoadingDialog();
         isWaitingForAd = false;
         isRewardEarned = false;
 
-        AdManager.getInstance().showRewardedAd(this, placement, new AdManager.RewardedAdCallback() {
+        AdManager.getInstance().showLevelPlayPureRewardedAd(this, placement, new AdManager.RewardedAdCallback() {
             @Override
             public void onRewardEarned() {
                 isRewardEarned = true;
@@ -1930,7 +1931,7 @@ public class RealMeetActivity extends BaseActivity {
                             cancelAction.run();
                         }
                     }
-                    AdManager.getInstance().preloadDualBiddingAds(RealMeetActivity.this);
+                    AdManager.getInstance().preloadRewardedVideo();
                 });
             }
 
@@ -1938,21 +1939,21 @@ public class RealMeetActivity extends BaseActivity {
             public void onAdFailed(String reason) {
                 runOnUiThread(() -> {
                     dismissAdLoadingDialog();
-                    Log.w(TAG, "Ad display failed (" + reason + "), proceeding with post publication.");
+                    Log.w(TAG, "LevelPlay Rewarded ad failed (" + reason + "), proceeding with post publication.");
                     if (pendingAdSuccessAction != null) {
                         Runnable action = pendingAdSuccessAction;
                         pendingAdSuccessAction = null;
                         pendingAdCancelAction = null;
                         action.run();
                     }
-                    AdManager.getInstance().preloadDualBiddingAds(RealMeetActivity.this);
+                    AdManager.getInstance().preloadRewardedVideo();
                 });
             }
         });
     }
 
     private void loadLevelPlayRewardedAd() {
-        AdManager.getInstance().preloadDualBiddingAds(this);
+        AdManager.getInstance().preloadRewardedVideo();
     }
 
     private void showAdLoadingDialog() {

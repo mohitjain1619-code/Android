@@ -93,15 +93,15 @@ public class CreatePostActivity extends BaseActivity {
             }
         });
 
-        // Preload Dual Bidding (Interstitial & Rewarded) auctions immediately while user types
-        AdManager.getInstance().preloadDualBiddingAds(this);
+        // Preload Rewarded Video auction immediately while user types
+        AdManager.getInstance().preloadRewardedVideo();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Ensure auctions are actively preloading in background the instant screen is visible
-        AdManager.getInstance().preloadDualBiddingAds(this);
+        // Ensure Rewarded Video is actively preloading in background the instant screen is visible
+        AdManager.getInstance().preloadRewardedVideo();
     }
 
     private void uploadPost() {
@@ -138,7 +138,7 @@ public class CreatePostActivity extends BaseActivity {
         postButton.setText("Please wait...");
 
         // If ad is already cached (preloaded in background while user types), show immediately with ZERO delay!
-        if (AdManager.getInstance().isDualBiddingReady()) {
+        if (AdManager.getInstance().isRewardedVideoAvailable()) {
             postButton.setText("Post");
             showDualBiddingAd();
             return;
@@ -146,7 +146,7 @@ public class CreatePostActivity extends BaseActivity {
 
         // If user typed very fast and ad is still loading, wait up to 3.5s in background
         isWaitingForAd = true;
-        AdManager.getInstance().preloadDualBiddingAds(this);
+        AdManager.getInstance().preloadRewardedVideo();
 
         if (adTimeoutRunnable != null) {
             adHandler.removeCallbacks(adTimeoutRunnable);
@@ -155,13 +155,13 @@ public class CreatePostActivity extends BaseActivity {
             if (isWaitingForAd) {
                 isWaitingForAd = false;
                 postButton.setText("Post");
-                if (AdManager.getInstance().isDualBiddingReady()) {
+                if (AdManager.getInstance().isRewardedVideoAvailable()) {
                     showDualBiddingAd();
                 } else {
                     isPosting = false;
                     postButton.setEnabled(true);
                     Toast.makeText(CreatePostActivity.this, "Ad load ho raha hai, kripya 1 second baad dubara Post dabayein.", Toast.LENGTH_SHORT).show();
-                    AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
+                    AdManager.getInstance().preloadRewardedVideo();
                 }
             }
         };
@@ -172,7 +172,7 @@ public class CreatePostActivity extends BaseActivity {
             @Override
             public void run() {
                 if (isWaitingForAd) {
-                    if (AdManager.getInstance().isDualBiddingReady()) {
+                    if (AdManager.getInstance().isRewardedVideoAvailable()) {
                         isWaitingForAd = false;
                         if (adTimeoutRunnable != null) {
                             adHandler.removeCallbacks(adTimeoutRunnable);
@@ -212,7 +212,7 @@ public class CreatePostActivity extends BaseActivity {
                         postButton.setEnabled(true);
                         Toast.makeText(CreatePostActivity.this, "Post upload karne ke liye ad dekhna anivarya hai.", Toast.LENGTH_SHORT).show();
                     }
-                    AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
+                    AdManager.getInstance().preloadRewardedVideo();
                 });
             }
 
@@ -225,7 +225,7 @@ public class CreatePostActivity extends BaseActivity {
                     postButton.setText("Post");
                     Log.w(TAG, "Ad display failed (" + reason + ")");
                     Toast.makeText(CreatePostActivity.this, "Ad load ho raha hai, kripya 1 second baad dubara tap karein.", Toast.LENGTH_SHORT).show();
-                    AdManager.getInstance().preloadDualBiddingAds(CreatePostActivity.this);
+                    AdManager.getInstance().preloadRewardedVideo();
                 });
             }
         });
