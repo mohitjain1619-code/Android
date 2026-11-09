@@ -413,8 +413,6 @@ public class AdManager {
         isInterstitialLoading = true;
         lastInterstitialRequestTime = now;
         Log.d(TAG, "🚀 Dispatching LevelPlay Interstitial load request (Running Header Bidding Auction)...");
-        AdAnalyticsTracker.trackEvent(appContext, "REQUEST", "interstitial", "ironsource", "REQUESTED", "", "",
-                "app_start_preload");
         IronSource.loadInterstitial();
     }
 

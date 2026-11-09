@@ -30,6 +30,8 @@ const adsRoutes = require("./src/routes/ads");
 const realMeetRoutes = require("./src/routes/realmeet");
 const NotificationService = require("./src/services/notificationService");
 const storiesRoutes = require("./src/routes/stories");
+const telemetryRoutes = require("./src/routes/telemetry");
+const adminRoutes = require("./src/routes/admin");
 
 // Services
 const { startCleanupCron } = require("./src/services/cleanup");
@@ -117,6 +119,8 @@ app.use("/api/affiliate", affiliateRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/api/realmeet", realMeetRoutes);
 app.use("/api/stories", storiesRoutes);
+app.use("/api/telemetry", telemetryRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api", adsRoutes);
 
 // Optimized Static Media Serving (Stories, verification, profile attachments)

@@ -153,6 +153,11 @@ public class OnboardingActivity extends BaseActivity {
 
         // 2. Gender Pre-selection (Default: male, but respect passed intent or tokenManager)
         String preGender = getIntent().getStringExtra("gender");
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("preGender", preGender != null ? preGender : "");
+            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("ONBOARDING_STARTED", meta, true, null);
+        } catch (Throwable ignored) {}
         if (TextUtils.isEmpty(preGender)) {
             preGender = tokenManager.getUserGender();
         }
@@ -236,6 +241,11 @@ public class OnboardingActivity extends BaseActivity {
 
     private void selectGender(String gender) {
         selectedGender = "female".equalsIgnoreCase(gender) ? "female" : "male";
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("gender", selectedGender);
+            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("GENDER_SELECTED", meta, true, null);
+        } catch (Throwable ignored) {}
         if ("male".equalsIgnoreCase(selectedGender)) {
             cardMale.setBackgroundResource(R.drawable.bg_gender_card_selected_male);
             tvMaleText.setTextColor(0xFF00E5FF);
@@ -285,8 +295,20 @@ public class OnboardingActivity extends BaseActivity {
 
                         tvAgeBadge.setVisibility(View.VISIBLE);
                         tvAgeBadge.setText(String.format(getString(R.string.onboarding_age_years), age));
+                        try {
+                            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                            meta.put("dob", selectedDob);
+                            meta.put("age", age);
+                            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("DOB_SELECTED", meta, true, null);
+                        } catch (Throwable ignored) {}
                     } else {
                         showAgeErrorDialog();
+                        try {
+                            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+                            meta.put("attemptedDob", day + "/" + (month + 1) + "/" + year);
+                            meta.put("age", age);
+                            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("DOB_UNDERAGE_REJECTED", meta, false, "Age < 18");
+                        } catch (Throwable ignored) {}
                         // Keep previous valid DOB so user is never left in an unsubmitable state
                         if (TextUtils.isEmpty(selectedDob)) {
                             selectedDob = DEFAULT_DOB;
@@ -493,8 +515,14 @@ public class OnboardingActivity extends BaseActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                try {
+                    com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("LOCATION_PERMISSION_GRANTED", null, true, null);
+                } catch (Throwable ignored) {}
                 fetchLocation();
             } else {
+                try {
+                    com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("LOCATION_PERMISSION_DENIED", null, false, "User declined permission");
+                } catch (Throwable ignored) {}
                 // Non-blocking: user already has their country pre-filled from Locale!
                 Log.d(TAG, "Location permission declined, using pre-filled country.");
             }
@@ -621,6 +649,14 @@ public class OnboardingActivity extends BaseActivity {
 
     private void completeOnboardingAndProceed(String name, String gender) {
         tokenManager.setOnboardingComplete(true);
+        try {
+            java.util.Map<String, Object> meta = new java.util.HashMap<>();
+            meta.put("name", name);
+            meta.put("gender", gender);
+            meta.put("city", etCity != null ? etCity.getText().toString().trim() : "");
+            meta.put("dob", selectedDob);
+            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logOnboardingStep("ONBOARDING_COMPLETED", meta, true, null);
+        } catch (Throwable ignored) {}
         tokenManager.saveUser(
                 tokenManager.getUserId(),
                 name,

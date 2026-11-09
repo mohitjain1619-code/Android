@@ -51,6 +51,23 @@ public class AdAnalyticsTracker {
                     Log.e(TAG, "Error sending ad tracking event", t);
                 }
             });
+
+            // Mirror into Telemetry Event Stream for unified User Journey & Ad Flow monitoring
+            try {
+                com.mohit.camverz.telemetry.AppTelemetry.getInstance().logAdLifecycle(
+                        adType,
+                        placement,
+                        "ad_action",
+                        eventType,
+                        adNetwork,
+                        revenue,
+                        (revenue != null ? revenue * 1000.0 : 0.0),
+                        "",
+                        status,
+                        errorCode,
+                        errorMessage
+                );
+            } catch (Throwable ignored) {}
         } catch (Exception e) {
             Log.e(TAG, "Exception in trackEvent", e);
         }

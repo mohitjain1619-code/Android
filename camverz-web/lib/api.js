@@ -471,4 +471,27 @@ export async function deleteStory(storyId) {
   return data;
 }
 
+// ============================================
+// ADMIN TELEMETRY & USER MONITORING
+// ============================================
+export async function getAdminOverview() {
+  const { data } = await api.get('/admin/overview');
+  return data;
+}
+
+export async function getAdminUsers(params = {}) {
+  const { data } = await api.get('/admin/users', { params });
+  return data;
+}
+
+export async function getAdminUserJourney(identifier) {
+  const { data } = await api.get(`/admin/user-journey/${identifier}`);
+  return data;
+}
+
+export async function getAdminAdFlow(params = {}) {
+  const { data } = await api.get('/admin/ad-flow', { params });
+  return data;
+}
+
 export default api;

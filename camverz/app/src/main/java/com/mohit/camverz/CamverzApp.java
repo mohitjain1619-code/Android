@@ -32,10 +32,28 @@ public class CamverzApp extends Application {
         super.onCreate();
         instance = this;
 
+        // Initialize Enterprise Telemetry & Monitoring System
+        try {
+            com.mohit.camverz.telemetry.AppTelemetry.init(this);
+            com.mohit.camverz.telemetry.AppTelemetry.getInstance().checkAndLogInstall();
+            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logAppOpen();
+        } catch (Throwable t) {
+            Log.w(TAG, "Error initializing AppTelemetry: " + t.getMessage());
+        }
+
         // Install top-level crash logger to guarantee instant crashes never fail silently
         final Thread.UncaughtExceptionHandler defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
             Log.e("FATAL_CAMVERZ_CRASH", "💥 CRASH ON THREAD [" + thread.getName() + "]: " + throwable.getMessage(), throwable);
+            try {
+                com.mohit.camverz.telemetry.AppTelemetry.getInstance().logError(
+                    "CRASH",
+                    throwable.getClass().getSimpleName(),
+                    throwable.getMessage(),
+                    Log.getStackTraceString(throwable),
+                    null
+                );
+            } catch (Throwable ignored) {}
             try {
                 java.io.File file = new java.io.File(getFilesDir(), "last_crash.txt");
                 java.io.FileWriter writer = new java.io.FileWriter(file);
@@ -101,11 +119,17 @@ public class CamverzApp extends Application {
                     WindowBackBlocker.blockBack(activity);
                     Log.d(TAG, "🔒 Back button blocked on ad activity resumed: " + activity.getClass().getName());
                 }
+                try {
+                    com.mohit.camverz.telemetry.AppTelemetry.getInstance().onScreenEntered(activity.getClass().getSimpleName());
+                } catch (Throwable ignored) {}
             }
 
             @Override
             public void onActivityPaused(@NonNull Activity activity) {
                 // Do not clear immediately if transitioning to ad activity
+                try {
+                    com.mohit.camverz.telemetry.AppTelemetry.getInstance().onScreenExited(activity.getClass().getSimpleName());
+                } catch (Throwable ignored) {}
             }
 
             @Override

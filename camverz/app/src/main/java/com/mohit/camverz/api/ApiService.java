@@ -264,6 +264,12 @@ public interface ApiService {
     Call<JsonObject> trackAdEvent(@Body Map<String, Object> body);
 
     // ============================================
+    // TELEMETRY & USER JOURNEY MONITORING
+    // ============================================
+    @POST("telemetry/log")
+    Call<JsonObject> sendTelemetry(@Body Map<String, Object> body);
+
+    // ============================================
     // APP VERSION & UPDATE CHECK
     // ============================================
     @GET("app-version")

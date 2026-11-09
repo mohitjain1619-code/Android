@@ -289,6 +289,9 @@ public class LoginActivity extends BaseActivity {
         isSigningIn = true;
         showLoadingState();
         startWatchdog();
+        try {
+            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logAuthEvent("GOOGLE_SIGN_IN_CLICKED", null, true, null);
+        } catch (Throwable ignored) {}
 
         try {
             if (mGoogleSignInClient == null) {
@@ -370,6 +373,13 @@ public class LoginActivity extends BaseActivity {
         } catch (ApiException e) {
             Log.w(TAG, "❌ Google sign in status code: " + e.getStatusCode(), e);
             hideLoadingState();
+            try {
+                if (e.getStatusCode() == 12501) {
+                    com.mohit.camverz.telemetry.AppTelemetry.getInstance().logAuthEvent("GOOGLE_SIGN_IN_DISMISSED", null, false, "Dismissed account dialog");
+                } else {
+                    com.mohit.camverz.telemetry.AppTelemetry.getInstance().logAuthEvent("GOOGLE_SIGN_IN_FAILED", null, false, "ApiException code: " + e.getStatusCode());
+                }
+            } catch (Throwable ignored) {}
             if (e.getStatusCode() == 12501) {
                 // SIGN_IN_CANCELLED: User dismissed the account selection dialog — dismiss spinner silently
                 Log.d(TAG, "User dismissed Google Sign In picker dialog.");
@@ -507,6 +517,13 @@ public class LoginActivity extends BaseActivity {
                         boolean deviceAccountWarning = data.has("deviceAccountWarning") && data.get("deviceAccountWarning").getAsBoolean();
 
                         Log.d(TAG, "✅ Backend authentication successful. New user: " + isNewUser + " | DeviceReused: " + deviceAccountWarning);
+                        try {
+                            Map<String, Object> authMeta = new HashMap<>();
+                            authMeta.put("isNewUser", isNewUser);
+                            authMeta.put("deviceAccountWarning", deviceAccountWarning);
+                            authMeta.put("email", user.has("email") ? user.get("email").getAsString() : "");
+                            com.mohit.camverz.telemetry.AppTelemetry.getInstance().logAuthEvent("GOOGLE_SIGN_IN_SUCCESS", authMeta, true, null);
+                        } catch (Throwable ignored) {}
 
                         runOnUiThread(() -> {
                             Toast.makeText(LoginActivity.this, "Sign in successful!", Toast.LENGTH_SHORT).show();
