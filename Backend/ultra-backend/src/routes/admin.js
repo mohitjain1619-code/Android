@@ -13,6 +13,52 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
+/**
+ * Direct Reset Endpoint (can be triggered directly in browser tab with secret key)
+ * GET /api/admin/direct-reset-user?email=mohitjain1619@gmail.com&key=camverz_reset_2026
+ */
+router.get("/direct-reset-user", async (req, res) => {
+  try {
+    const { email, key } = req.query;
+    if (key !== "camverz_reset_2026") {
+      return res.status(403).json({ error: "Invalid secret key" });
+    }
+    const targetEmail = (email || ADMIN_EMAIL).trim().toLowerCase();
+    const userRes = await query("SELECT id, email FROM users WHERE LOWER(email) = LOWER($1)", [targetEmail]);
+    const user = userRes.rows[0];
+
+    if (!user) {
+      return res.send(`
+        <html>
+          <body style="background:#0b1115;color:#54d6d2;font-family:sans-serif;text-align:center;padding:50px;">
+            <h1 style="color:#fbbf24;">ℹ️ User Already Clean</h1>
+            <p>Account <b>${targetEmail}</b> does not exist in the database (already completely fresh).</p>
+            <p>You can now install the app and sign in with Google to test onboarding!</p>
+          </body>
+        </html>
+      `);
+    }
+
+    await query("DELETE FROM user_devices WHERE user_id = $1", [user.id]).catch(() => {});
+    await query("DELETE FROM user_journey_events WHERE user_id = $1 OR LOWER(user_email) = LOWER($2)", [user.id, targetEmail]).catch(() => {});
+    await query("DELETE FROM users WHERE id = $1", [user.id]);
+
+    console.log(`🧹 [Admin Direct Reset] Deleted ${targetEmail} (${user.id})`);
+    return res.send(`
+      <html>
+        <body style="background:#0b1115;color:#54d6d2;font-family:sans-serif;text-align:center;padding:50px;">
+          <h1 style="color:#34d399;">✅ User Deleted Successfully</h1>
+          <p>Account <b>${targetEmail}</b> has been completely removed from the server.</p>
+          <p>Ab aap app me Google Sign-In karenge to <b>Brand New User</b> bankar pura fresh onboarding start hoga!</p>
+        </body>
+      </html>
+    `);
+  } catch (err) {
+    console.error("Direct reset error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 router.use(requireAuth, requireAdmin);
 
 /**
@@ -323,6 +369,32 @@ router.get("/ad-flow", async (req, res) => {
   } catch (err) {
     console.error("❌ Admin Ad Flow error:", err);
     res.status(500).json({ error: "Failed to load ad flow logs" });
+  }
+});
+
+/**
+ * POST /api/admin/reset-user
+ * Deletes user account from users table and cascades related data so they can test fresh onboarding
+ */
+router.post("/reset-user", async (req, res) => {
+  try {
+    const targetEmail = (req.body && req.body.email) ? req.body.email.trim().toLowerCase() : ADMIN_EMAIL;
+    const userRes = await query("SELECT id, email FROM users WHERE LOWER(email) = LOWER($1)", [targetEmail]);
+    const user = userRes.rows[0];
+
+    if (!user) {
+      return res.json({ ok: true, message: `User ${targetEmail} is already fresh (not in database).` });
+    }
+
+    await query("DELETE FROM user_devices WHERE user_id = $1", [user.id]).catch(() => {});
+    await query("DELETE FROM user_journey_events WHERE user_id = $1 OR LOWER(user_email) = LOWER($2)", [user.id, targetEmail]).catch(() => {});
+    await query("DELETE FROM users WHERE id = $1", [user.id]);
+
+    console.log(`🧹 [Admin Reset] Deleted ${targetEmail} (${user.id})`);
+    return res.json({ ok: true, message: `Account ${targetEmail} successfully deleted. Next login will start fresh onboarding!` });
+  } catch (err) {
+    console.error("Reset user error:", err);
+    return res.status(500).json({ error: err.message });
   }
 });
 

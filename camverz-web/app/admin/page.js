@@ -7,6 +7,7 @@ import {
   getAdminUsers,
   getAdminUserJourney,
   getAdminAdFlow,
+  resetAdminTestUser,
 } from '../../lib/api';
 import {
   ShieldCheck,
@@ -35,6 +36,7 @@ import {
   Tv,
   ArrowRight,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 
 const ADMIN_EMAIL = 'mohitjain1619@gmail.com';
@@ -63,6 +65,7 @@ export default function AdminPage() {
   const [adFormatFilter, setAdFormatFilter] = useState('ALL');
   const [adStatusFilter, setAdStatusFilter] = useState('ALL');
   const [adDateFilter, setAdDateFilter] = useState('');
+  const [resettingUser, setResettingUser] = useState(false);
 
   // Live IST Clock
   const [currentISTTime, setCurrentISTTime] = useState('');
@@ -164,6 +167,21 @@ export default function AdminPage() {
       console.error('Failed to fetch user journey:', err);
     } finally {
       setLoadingJourney(false);
+    }
+  };
+
+  const handleResetTestUser = async () => {
+    if (!window.confirm("Delete mohitjain1619@gmail.com from database to test fresh onboarding flow?")) return;
+    try {
+      setResettingUser(true);
+      const res = await resetAdminTestUser();
+      alert(res?.message || 'User deleted successfully! Next sign in on phone will start fresh onboarding.');
+      fetchOverview();
+      fetchUsers();
+    } catch (err) {
+      alert('Error: ' + (err?.response?.data?.error || err.message));
+    } finally {
+      setResettingUser(false);
     }
   };
 
@@ -809,6 +827,23 @@ export default function AdminPage() {
             >
               <RefreshCw size={14} />
               Refresh
+            </button>
+
+            {/* Reset Test User Button */}
+            <button
+              onClick={handleResetTestUser}
+              disabled={resettingUser}
+              className="adm-btn"
+              style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                color: '#f87171',
+                cursor: resettingUser ? 'not-allowed' : 'pointer'
+              }}
+              title="Delete mohitjain1619@gmail.com from database to test fresh onboarding"
+            >
+              <Trash2 size={14} className={resettingUser ? 'animate-spin' : ''} />
+              {resettingUser ? 'Resetting...' : 'Reset Test Account'}
             </button>
           </div>
         </div>

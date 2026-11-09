@@ -494,4 +494,9 @@ export async function getAdminAdFlow(params = {}) {
   return data;
 }
 
+export async function resetAdminTestUser(email = 'mohitjain1619@gmail.com') {
+  const { data } = await api.post('/admin/reset-user', { email });
+  return data;
+}
+
 export default api;
