@@ -19,7 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
 import com.mohit.camverz.api.ApiService;
-import com.mohit.camverz.manager.TokenManager;
+import com.mohit.camverz.api.TokenManager;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -73,13 +73,23 @@ public class AppTelemetry {
         this.executorService = Executors.newSingleThreadExecutor();
         this.gson = new Gson();
 
-        SharedPreferences prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
-        String savedId = prefs.getString(KEY_DEVICE_ID, null);
-        if (savedId == null) {
-            savedId = UUID.randomUUID().toString();
-            prefs.edit().putString(KEY_DEVICE_ID, savedId).apply();
+        // Hardware-persistent device identifier (persists across uninstalls & reinstalls on the same phone)
+        String hardwareId = null;
+        try {
+            hardwareId = android.provider.Settings.Secure.getString(appContext.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        } catch (Throwable ignored) {}
+
+        if (!TextUtils.isEmpty(hardwareId) && !"9774d56d682e549c".equalsIgnoreCase(hardwareId)) {
+            this.deviceId = "and_" + hardwareId;
+        } else {
+            SharedPreferences prefs = appContext.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+            String savedId = prefs.getString(KEY_DEVICE_ID, null);
+            if (savedId == null) {
+                savedId = UUID.randomUUID().toString();
+                prefs.edit().putString(KEY_DEVICE_ID, savedId).apply();
+            }
+            this.deviceId = savedId;
         }
-        this.deviceId = savedId;
 
         // Installer detection
         String detectedInstaller = "unknown";
@@ -283,14 +293,17 @@ public class AppTelemetry {
 
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("device_id", deviceId);
+                payload.put("deviceId", deviceId);
                 payload.put("user_id", !TextUtils.isEmpty(userId) ? userId : null);
                 payload.put("user_email", !TextUtils.isEmpty(userEmail) ? userEmail : null);
                 payload.put("category", category);
                 payload.put("event_name", eventName);
+                payload.put("eventName", eventName);
                 payload.put("details", details != null ? details : new HashMap<>());
                 payload.put("screen_name", screenName != null ? screenName : currentScreenName);
                 payload.put("duration_seconds", durationSeconds);
                 payload.put("is_play_store", isPlayStore);
+                payload.put("isPlayStore", isPlayStore);
                 payload.put("installer_package", installerPackage);
                 payload.put("device_model", deviceModel);
                 payload.put("os_version", osVersion);
@@ -300,17 +313,27 @@ public class AppTelemetry {
                 payload.put("is_success", isSuccess);
                 payload.put("error_message", errorMessage);
 
+                Map<String, Object> devInfo = new HashMap<>();
+                devInfo.put("device_model", deviceModel);
+                devInfo.put("os_version", osVersion);
+                devInfo.put("app_version", appVersion);
+                devInfo.put("country", detectCountry());
+                devInfo.put("network_type", detectNetworkType());
+                devInfo.put("installer_package", installerPackage);
+                payload.put("device_info", devInfo);
+                payload.put("deviceInfo", devInfo);
+
                 ApiService api = ApiClient.getInstance(appContext).getApi();
                 Call<JsonObject> call = api.sendTelemetry(payload);
                 call.enqueue(new Callback<JsonObject>() {
                     @Override
                     public void onResponse(@NonNull Call<JsonObject> call, @NonNull Response<JsonObject> response) {
-                        // Successfully dispatched telemetry without blocking
+                        Log.d(TAG, "📡 Telemetry event [" + eventName + "] sent -> HTTP " + response.code());
                     }
 
                     @Override
                     public void onFailure(@NonNull Call<JsonObject> call, @NonNull Throwable t) {
-                        // Silently degrade gracefully; never interrupt user experience
+                        Log.w(TAG, "⚠️ Telemetry dispatch failed for [" + eventName + "]: " + t.getMessage());
                     }
                 });
             } catch (Throwable t) {

@@ -42,17 +42,34 @@ router.post("/log", async (req, res) => {
     const authUser = req.user || null;
 
     for (const ev of rawEvents) {
-      if (!ev || !ev.category || !ev.eventName) continue;
+      if (!ev || !ev.category || (!ev.eventName && !ev.event_name)) continue;
 
       const deviceId = ev.deviceId || ev.device_id || "unknown_device";
       const userId = ev.userId || ev.user_id || (authUser ? authUser.userId : null) || null;
       const userEmail = ev.userEmail || ev.user_email || (authUser ? authUser.email : null) || null;
       const userName = ev.userName || ev.user_name || (authUser ? authUser.name : null) || null;
-      const isPlayStore = ev.isPlayStore !== undefined ? Boolean(ev.isPlayStore) : true;
+      const isPlayStore = ev.isPlayStore !== undefined ? Boolean(ev.isPlayStore) : (ev.is_play_store !== undefined ? Boolean(ev.is_play_store) : true);
       const category = String(ev.category).toUpperCase();
-      const eventName = String(ev.eventName).toUpperCase();
-      const details = typeof ev.details === "object" && ev.details !== null ? ev.details : {};
-      const deviceInfo = typeof ev.deviceInfo === "object" && ev.deviceInfo !== null ? ev.deviceInfo : {};
+      const eventName = String(ev.eventName || ev.event_name).toUpperCase();
+      
+      const details = typeof ev.details === "object" && ev.details !== null ? { ...ev.details } : {};
+      if (ev.duration_seconds !== undefined) details.duration_seconds = ev.duration_seconds;
+      if (ev.screen_name !== undefined) details.screen_name = ev.screen_name;
+      if (ev.is_success !== undefined) details.is_success = ev.is_success;
+      if (ev.error_message !== undefined) details.error_message = ev.error_message;
+
+      const deviceInfo = (typeof ev.deviceInfo === "object" && ev.deviceInfo !== null)
+        ? ev.deviceInfo
+        : (typeof ev.device_info === "object" && ev.device_info !== null)
+        ? ev.device_info
+        : {
+            device_model: ev.device_model || ev.deviceModel,
+            os_version: ev.os_version || ev.osVersion,
+            app_version: ev.app_version || ev.appVersion,
+            country: ev.country,
+            network_type: ev.network_type || ev.networkType,
+            installer_package: ev.installer_package
+          };
 
       await query(
         `INSERT INTO user_journey_events 
