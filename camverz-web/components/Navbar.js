@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { 
   Menu, X, Video, User, FileText, Info, Mail, LogOut, Crown, 
-  MessageSquare, Bell, Zap, Sparkles, Send, Check
+  MessageSquare, Bell, Zap, Sparkles, Send, Check, ShieldCheck
 } from 'lucide-react';
 import { 
   getChats, 
@@ -255,6 +255,16 @@ export default function Navbar() {
               <span className={styles.pricingBadge}>HOT🔥</span>
             </Link>
 
+            {user?.email?.toLowerCase() === 'mohitjain1619@gmail.com' && (
+              <Link
+                href="/admin"
+                className="px-3 py-1.5 rounded-full text-xs font-bold text-cyan-300 border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 flex items-center gap-1.5 transition-all shadow-sm shadow-cyan-500/20"
+              >
+                <ShieldCheck size={14} className="text-cyan-400" />
+                <span>Admin Hub</span>
+              </Link>
+            )}
+
             {user ? (
               <Link href="/profile" className={styles.profileBtn}>
                 <img src={avatarSrc} alt="Profile" className={styles.navAvatar} />
@@ -304,6 +314,12 @@ export default function Navbar() {
           })}
           {user && (
             <>
+              {user?.email?.toLowerCase() === 'mohitjain1619@gmail.com' && (
+                <Link href="/admin" className={styles.mobileLink} onClick={() => setMenuOpen(false)} style={{ color: '#00D9FF' }}>
+                  <ShieldCheck size={20} />
+                  <span>Admin Hub (Telemetry)</span>
+                </Link>
+              )}
               <Link href="/profile" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
                 <User size={20} />
                 <span>Profile</span>
