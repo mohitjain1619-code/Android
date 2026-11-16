@@ -362,6 +362,11 @@ public class CallActivity extends BaseActivity {
         }
         isInitiator = myUid.compareTo(peerId) < 0;
 
+        CallManager.setIncomingCallPending(false);
+        CallManager.setCallActive(true);
+        CallManager.setCurrentPeerId(peerId);
+        CallManager.setCurrentRoomName(roomName);
+
         initUI();
         checkPermissions();
 
@@ -593,7 +598,10 @@ public class CallActivity extends BaseActivity {
     }
 
     private void startCall() {
+        CallManager.setIncomingCallPending(false);
         CallManager.setCallActive(true);
+        CallManager.setCurrentPeerId(peerId);
+        CallManager.setCurrentRoomName(roomName);
         NotificationHelper.cancelIncomingCallNotification(this);
         CallRingtoneManager.getInstance().stop();
         setupViews();

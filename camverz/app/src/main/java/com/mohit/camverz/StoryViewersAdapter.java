@@ -56,18 +56,47 @@ public class StoryViewersAdapter extends RecyclerView.Adapter<StoryViewersAdapte
         holder.tvViewerName.setText(name);
         AvatarHelper.loadAvatar(context, photoUrl, avatar, name, holder.ivViewerAvatar);
 
-        if (!viewedAtStr.isEmpty()) {
+        long timeMillis = 0;
+        if (item.has("viewed_at_ms") && !item.get("viewed_at_ms").isJsonNull()) {
             try {
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
-                Date date = sdf.parse(viewedAtStr);
-                if (date != null) {
-                    CharSequence ago = DateUtils.getRelativeTimeSpanString(date.getTime(), System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
-                    holder.tvViewedTime.setText("Viewed " + ago);
-                } else {
-                    holder.tvViewedTime.setText("Viewed recently");
-                }
-            } catch (Exception e) {
-                holder.tvViewedTime.setText("Viewed recently");
+                timeMillis = item.get("viewed_at_ms").getAsLong();
+            } catch (Exception ignored) {}
+        }
+
+        if (timeMillis <= 0 && !viewedAtStr.isEmpty()) {
+            try {
+                timeMillis = Long.parseLong(viewedAtStr);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (timeMillis <= 0 && !viewedAtStr.isEmpty()) {
+            String[] formats = {
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                    "yyyy-MM-dd'T'HH:mm:ss"
+            };
+            for (String fmt : formats) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat(fmt, Locale.US);
+                    sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                    Date date = sdf.parse(viewedAtStr);
+                    if (date != null) {
+                        timeMillis = date.getTime();
+                        break;
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (timeMillis > 0) {
+            long now = System.currentTimeMillis();
+            long diff = now - timeMillis;
+            if (diff < 60000 && diff >= -5000) {
+                holder.tvViewedTime.setText("Viewed just now");
+            } else {
+                CharSequence ago = DateUtils.getRelativeTimeSpanString(timeMillis, now, DateUtils.MINUTE_IN_MILLIS);
+                holder.tvViewedTime.setText("Viewed " + ago);
             }
         } else {
             holder.tvViewedTime.setText("Viewed recently");

@@ -59,7 +59,7 @@ router.get("/active", async (req, res) => {
     const currentUserId = req.user ? req.user.userId : null;
     const rows = await queryMany(
       `SELECT s.*, u.name as user_name, u.avatar as user_avatar, u.photo_url as user_photo_url, u.email as user_email,
-              (SELECT COUNT(*)::int FROM story_views v WHERE v.story_id = s.id) as views_count,
+              (SELECT COUNT(*)::int FROM story_views v WHERE v.story_id = s.id AND v.viewer_id != s.user_id) as views_count,
               EXISTS(SELECT 1 FROM story_views v WHERE v.story_id = s.id AND v.viewer_id = $1) as has_viewed
        FROM stories s
        JOIN users u ON u.id = s.user_id
@@ -115,6 +115,12 @@ router.post("/:id/view", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Missing storyId or viewerId" });
     }
 
+    // Do NOT count the story author viewing their own story
+    const story = await queryOne("SELECT user_id FROM stories WHERE id = $1", [storyId]);
+    if (!story || story.user_id === viewerId) {
+      return res.json({ ok: true, message: "Own story view ignored" });
+    }
+
     await query(
       `INSERT INTO story_views (story_id, viewer_id)
        VALUES ($1, $2)
@@ -145,12 +151,12 @@ router.get("/:id/viewers", async (req, res) => {
     }
 
     const viewers = await queryMany(
-      `SELECT v.created_at as viewed_at, u.id, u.name, u.avatar, u.photo_url
+      `SELECT v.created_at as viewed_at, (EXTRACT(EPOCH FROM v.created_at)*1000)::bigint as viewed_at_ms, u.id, u.name, u.avatar, u.photo_url
        FROM story_views v
        JOIN users u ON u.id = v.viewer_id
-       WHERE v.story_id = $1
+       WHERE v.story_id = $1 AND v.viewer_id != $2
        ORDER BY v.created_at DESC`,
-      [storyId]
+      [storyId, story.user_id]
     );
 
     res.json({ ok: true, viewCount: viewers.length, viewers });

@@ -28,6 +28,12 @@ public class CamverzApp extends Application {
     }
 
     @Override
+    protected void attachBaseContext(android.content.Context base) {
+        android.content.Context localeContext = base != null ? LocaleHelper.applyLocale(base) : null;
+        super.attachBaseContext(localeContext != null ? localeContext : base);
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
@@ -68,6 +74,13 @@ public class CamverzApp extends Application {
         } catch (Throwable ignored) {}
 
         Log.d(TAG, "🚀 CamverzApp onCreate - Registering global lifecycle back-blocker");
+
+        // Initialize and sync app-wide language locale
+        try {
+            LocaleHelper.initAppLocale(this);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error initializing app locale in CamverzApp", t);
+        }
 
         // Initialize Google Play Billing Client globally & restore purchases
         try {

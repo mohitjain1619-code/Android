@@ -8,11 +8,16 @@ import android.os.Build;
 import android.os.LocaleList;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
+
 import java.util.Locale;
 
 /**
  * Production-grade Locale Helper for dynamic runtime language switching.
  * Compatible with Android 7.0 (API 24) through Android 15/16.
+ * Seamlessly integrates AndroidX AppCompat per-app language APIs,
+ * Android 13+ LocaleManager, and configuration context resolution.
  */
 public class LocaleHelper {
     private static final String TAG = "LocaleHelper";
@@ -33,13 +38,52 @@ public class LocaleHelper {
         return prefs.getString(KEY_SELECTED_LANGUAGE, DEFAULT_LANGUAGE);
     }
 
+    /**
+     * Called in CamverzApp.onCreate() on app startup to sync the saved language
+     * with AppCompatDelegate and the global Application resources.
+     */
+    public static void initAppLocale(Context context) {
+        if (context == null) return;
+        try {
+            String languageCode = getLanguage(context);
+            if (languageCode == null || languageCode.trim().isEmpty()) {
+                languageCode = DEFAULT_LANGUAGE;
+            }
+
+            // Sync with AppCompatDelegate if empty
+            LocaleListCompat appLocales = AppCompatDelegate.getApplicationLocales();
+            if (appLocales.isEmpty()) {
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageCode));
+            }
+
+            applyLocale(context, languageCode);
+            Log.d(TAG, "🌐 App locale initialized to: " + languageCode);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error initializing app locale in initAppLocale", t);
+        }
+    }
+
+    /**
+     * Changes and persists the active language across the entire application.
+     * Updates SharedPreferences, AppCompatDelegate, and Resources configuration.
+     */
     public static Context setLocale(Context context, String languageCode) {
         if (context == null) return null;
         if (languageCode == null || languageCode.trim().isEmpty()) {
             languageCode = DEFAULT_LANGUAGE;
         }
 
+        // 1. Persist selection to SharedPreferences
         persistLanguage(context, languageCode);
+
+        // 2. Official AndroidX AppCompat dynamic locale switch (syncs LocaleManager on Android 13+)
+        try {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageCode));
+        } catch (Throwable t) {
+            Log.e(TAG, "Error calling AppCompatDelegate.setApplicationLocales", t);
+        }
+
+        // 3. Update resources & return wrapped configuration context
         return applyLocale(context, languageCode);
     }
 
@@ -86,13 +130,26 @@ public class LocaleHelper {
                 LocaleList localeList = new LocaleList(locale);
                 LocaleList.setDefault(localeList);
                 configuration.setLocales(localeList);
-                configuration.setLayoutDirection(locale);
+            } else {
+                configuration.locale = locale;
+            }
+            configuration.setLayoutDirection(locale);
+
+            // Directly update resources display metrics (vital for OEM ROMs & direct getResources() calls)
+            resources.updateConfiguration(configuration, resources.getDisplayMetrics());
+
+            // Also update ApplicationContext resources if distinct
+            if (context.getApplicationContext() != null && context.getApplicationContext() != context) {
+                Resources appResources = context.getApplicationContext().getResources();
+                if (appResources != null) {
+                    appResources.updateConfiguration(configuration, appResources.getDisplayMetrics());
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 Context configContext = context.createConfigurationContext(configuration);
                 return configContext != null ? configContext : context;
             } else {
-                configuration.locale = locale;
-                configuration.setLayoutDirection(locale);
-                resources.updateConfiguration(configuration, resources.getDisplayMetrics());
                 return context;
             }
         } catch (Throwable t) {

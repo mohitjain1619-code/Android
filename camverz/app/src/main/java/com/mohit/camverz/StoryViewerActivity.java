@@ -60,7 +60,8 @@ public class StoryViewerActivity extends BaseActivity {
 
     private int currentStoryIndex = 0;
     private int currentProgress = 0;
-    private long storyDurationMs = 5000;
+    private float currentProgressFloat = 0f;
+    private long storyDurationMs = 6000;
     private boolean isPaused = false;
     private boolean isVideoPrepared = false;
 
@@ -78,20 +79,38 @@ public class StoryViewerActivity extends BaseActivity {
                 progressHandler.postDelayed(this, PROGRESS_INTERVAL);
                 return;
             }
-            
-            // For video story, only start counting down once video is fully loaded and playing
-            if ("VIDEO".equalsIgnoreCase(storiesList.get(currentStoryIndex).getType()) && !isVideoPrepared) {
-                progressHandler.postDelayed(this, PROGRESS_INTERVAL);
-                return;
+
+            if (currentStoryIndex < 0 || currentStoryIndex >= storiesList.size()) return;
+            StoryItem story = storiesList.get(currentStoryIndex);
+
+            if ("VIDEO".equalsIgnoreCase(story.getType())) {
+                if (!isVideoPrepared || vvStoryVideo == null) {
+                    progressHandler.postDelayed(this, PROGRESS_INTERVAL);
+                    return;
+                }
+                // Accurate video progress tracking based on player position
+                int curPos = vvStoryVideo.getCurrentPosition();
+                int totalDur = vvStoryVideo.getDuration();
+                if (totalDur <= 0) totalDur = (int) storyDurationMs;
+                if (totalDur > 0) {
+                    currentProgress = (int) Math.min(100f, ((float) curPos * 100f / (float) totalDur));
+                }
+            } else {
+                // Smooth float progress for images and text
+                currentProgressFloat += (100f * PROGRESS_INTERVAL / (float) storyDurationMs);
+                currentProgress = (int) currentProgressFloat;
             }
 
-            currentProgress += (int) (100 * PROGRESS_INTERVAL / storyDurationMs);
             if (currentProgress >= 100) {
                 currentProgress = 100;
-                progressBars.get(currentStoryIndex).setProgress(100);
+                if (currentStoryIndex < progressBars.size()) {
+                    progressBars.get(currentStoryIndex).setProgress(100);
+                }
                 showNextStory();
             } else {
-                progressBars.get(currentStoryIndex).setProgress(currentProgress);
+                if (currentStoryIndex < progressBars.size()) {
+                    progressBars.get(currentStoryIndex).setProgress(currentProgress);
+                }
                 progressHandler.postDelayed(this, PROGRESS_INTERVAL);
             }
         }
@@ -156,15 +175,76 @@ public class StoryViewerActivity extends BaseActivity {
             btnDeleteStory.setOnClickListener(v -> confirmDeleteStory());
         }
 
-        // Tap navigations
-        navLeftClick.setOnClickListener(v -> showPreviousStory());
-        navRightClick.setOnClickListener(v -> showNextStory());
+        // Setup touch navigation (tap to switch, press and hold to pause)
+        setupTouchNavigation();
 
         // Setup progress bars
         setupSegmentedProgressBars();
 
         // Load the first story
         loadStory(0);
+    }
+
+    private void setupTouchNavigation() {
+        View.OnTouchListener leftTouchListener = (v, event) -> handleTouch(event, true);
+        View.OnTouchListener rightTouchListener = (v, event) -> handleTouch(event, false);
+
+        navLeftClick.setOnTouchListener(leftTouchListener);
+        navRightClick.setOnTouchListener(rightTouchListener);
+    }
+
+    private long touchDownTime = 0;
+    private float touchDownX = 0;
+    private float touchDownY = 0;
+    private static final long TAP_MAX_DURATION_MS = 250;
+    private static final float TAP_MAX_DISTANCE_PX = 30f;
+
+    private boolean handleTouch(android.view.MotionEvent event, boolean isLeft) {
+        switch (event.getAction()) {
+            case android.view.MotionEvent.ACTION_DOWN:
+                touchDownTime = System.currentTimeMillis();
+                touchDownX = event.getRawX();
+                touchDownY = event.getRawY();
+                pauseStory();
+                return true;
+
+            case android.view.MotionEvent.ACTION_UP:
+                long duration = System.currentTimeMillis() - touchDownTime;
+                float deltaX = Math.abs(event.getRawX() - touchDownX);
+                float deltaY = Math.abs(event.getRawY() - touchDownY);
+
+                if (duration <= TAP_MAX_DURATION_MS && deltaX <= TAP_MAX_DISTANCE_PX && deltaY <= TAP_MAX_DISTANCE_PX) {
+                    resumeStory();
+                    if (isLeft) {
+                        showPreviousStory();
+                    } else {
+                        showNextStory();
+                    }
+                } else {
+                    // Was held down to pause, resume now
+                    resumeStory();
+                }
+                return true;
+
+            case android.view.MotionEvent.ACTION_CANCEL:
+                resumeStory();
+                return true;
+        }
+        return false;
+    }
+
+    private void pauseStory() {
+        isPaused = true;
+        if (vvStoryVideo != null && vvStoryVideo.isPlaying()) {
+            vvStoryVideo.pause();
+        }
+    }
+
+    private void resumeStory() {
+        isPaused = false;
+        if (isVideoPrepared && vvStoryVideo != null && !vvStoryVideo.isPlaying()) {
+            vvStoryVideo.start();
+        }
     }
 
     private void setupSegmentedProgressBars() {
@@ -236,11 +316,13 @@ public class StoryViewerActivity extends BaseActivity {
             });
         }
 
-        // Record story view on backend
-        api.recordStoryView(story.getId()).enqueue(new Callback<JsonObject>() {
-            @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
-            @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
-        });
+        // Record story view on backend (only if viewer is not the author)
+        if (!isStoryOwner) {
+            api.recordStoryView(story.getId()).enqueue(new Callback<JsonObject>() {
+                @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+                @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+            });
+        }
 
         String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
         String mediaUrl = story.getMediaUrl();
@@ -260,12 +342,18 @@ public class StoryViewerActivity extends BaseActivity {
             tvStoryTextOnly.setVisibility(View.VISIBLE);
             tvStoryTextOnly.setText(story.getTextContent());
             applyTextStoryTheme(story.getBgGradient(), story.getTextColor());
-            storyDurationMs = 5000;
+            storyDurationMs = 6000;
+            currentProgressFloat = 0f;
             startProgressCountdown();
         } else if ("IMAGE".equalsIgnoreCase(story.getType())) {
             ivStoryImage.setVisibility(View.VISIBLE);
             storyViewerCanvas.setBackgroundColor(Color.BLACK);
             if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.VISIBLE);
+
+            if (story.getTextContent() != null && !story.getTextContent().isEmpty()) {
+                tvStoryOverlayText.setVisibility(View.VISIBLE);
+                tvStoryOverlayText.setText(story.getTextContent());
+            }
 
             Glide.with(this)
                     .load(fullUrl)
@@ -275,6 +363,8 @@ public class StoryViewerActivity extends BaseActivity {
                         public boolean onLoadFailed(@androidx.annotation.Nullable com.bumptech.glide.load.engine.GlideException e, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, boolean isFirstResource) {
                             runOnUiThread(() -> {
                                 if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                                Toast.makeText(StoryViewerActivity.this, "Failed to load image", Toast.LENGTH_SHORT).show();
+                                showNextStory();
                             });
                             return false;
                         }
@@ -283,19 +373,14 @@ public class StoryViewerActivity extends BaseActivity {
                         public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
                             runOnUiThread(() -> {
                                 if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                                storyDurationMs = 6000;
+                                currentProgressFloat = 0f;
+                                startProgressCountdown();
                             });
                             return false;
                         }
                     })
                     .into(ivStoryImage);
-
-            if (story.getTextContent() != null && !story.getTextContent().isEmpty()) {
-                tvStoryOverlayText.setVisibility(View.VISIBLE);
-                tvStoryOverlayText.setText(story.getTextContent());
-            }
-
-            storyDurationMs = 5000;
-            startProgressCountdown();
         } else if ("VIDEO".equalsIgnoreCase(story.getType())) {
             vvStoryVideo.setVisibility(View.VISIBLE);
             storyViewerCanvas.setBackgroundColor(Color.BLACK);
@@ -311,7 +396,8 @@ public class StoryViewerActivity extends BaseActivity {
                 runOnUiThread(() -> {
                     if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
                     isVideoPrepared = true;
-                    storyDurationMs = mp.getDuration() > 0 ? mp.getDuration() : 5000;
+                    int dur = mp.getDuration();
+                    storyDurationMs = dur > 0 ? dur : 10000;
                     int videoWidth = mp.getVideoWidth();
                     int videoHeight = mp.getVideoHeight();
                     if (videoWidth > 0 && videoHeight > 0) {
@@ -333,7 +419,18 @@ public class StoryViewerActivity extends BaseActivity {
                         }
                     }
                     vvStoryVideo.start();
+                    currentProgressFloat = 0f;
+                    startProgressCountdown();
                 });
+            });
+
+            vvStoryVideo.setOnCompletionListener(mp -> {
+                // Prevent premature completion if buffer underrun occurred
+                if (vvStoryVideo.getCurrentPosition() >= storyDurationMs - 1200 || vvStoryVideo.getCurrentPosition() >= 3000) {
+                    showNextStory();
+                } else {
+                    vvStoryVideo.start();
+                }
             });
 
             vvStoryVideo.setOnErrorListener((mp, what, extra) -> {
@@ -346,16 +443,10 @@ public class StoryViewerActivity extends BaseActivity {
                 return true;
             });
 
-            vvStoryVideo.setOnCompletionListener(mp -> {
-                showNextStory();
-            });
-
             java.util.Map<String, String> headers = new java.util.HashMap<>();
             headers.put("Bypass-Tunnel-Reminder", "true");
             headers.put("localtunnel-bypass", "true");
             vvStoryVideo.setVideoURI(Uri.parse(fullUrl), headers);
-
-            startProgressCountdown();
         }
     }
 
@@ -509,19 +600,13 @@ public class StoryViewerActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        isPaused = true;
-        if (vvStoryVideo.isPlaying()) {
-            vvStoryVideo.pause();
-        }
+        pauseStory();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        isPaused = false;
-        if (isVideoPrepared && !vvStoryVideo.isPlaying()) {
-            vvStoryVideo.start();
-        }
+        resumeStory();
     }
 
     @Override

@@ -131,9 +131,16 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
 
                 Log.d(TAG, "Incoming private call from " + callerName + " (id: " + callerId + ")");
 
-                // If already in a call, auto-reject
+                // If already in a call, check if it's the SAME active call before auto-rejecting
                 if (CallManager.isCallActive()) {
-                    Log.d(TAG, "Already in a call, auto-rejecting incoming call");
+                    String activePeer = CallManager.getCurrentPeerId();
+                    String activeRoom = CallManager.getCurrentRoomName();
+                    if ((callerId != null && callerId.equals(activePeer)) ||
+                        (roomName != null && roomName.equals(activeRoom))) {
+                        Log.d(TAG, "Duplicate incoming-private-call event for active call (caller: " + callerId + ", room: " + roomName + "), ignoring.");
+                        return;
+                    }
+                    Log.d(TAG, "Already in a call with " + activePeer + ", auto-rejecting incoming call from " + callerId);
                     try {
                         JSONObject reject = new JSONObject();
                         reject.put("callerId", callerId);
@@ -144,9 +151,14 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
                     return;
                 }
 
-                // If another incoming call is already pending, reject the new one
+                // If another incoming call is already pending, check if it's duplicate before rejecting
                 if (CallManager.isIncomingCallPending()) {
-                    Log.d(TAG, "Already have a pending incoming call, rejecting new one");
+                    if ((callerId != null && callerId.equals(pendingCallerId)) ||
+                        (roomName != null && roomName.equals(pendingRoomName))) {
+                        Log.d(TAG, "Duplicate incoming-private-call event for pending call from " + callerId + ", ignoring.");
+                        return;
+                    }
+                    Log.d(TAG, "Already have a pending incoming call from " + pendingCallerId + ", rejecting new one from " + callerId);
                     try {
                         JSONObject reject = new JSONObject();
                         reject.put("callerId", callerId);
@@ -216,7 +228,14 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
 
         // Don't show dialog if we're already on CallActivity
         if (currentActivity instanceof CallActivity) {
-            Log.d(TAG, "Already on CallActivity, auto-rejecting new call");
+            String activePeer = CallManager.getCurrentPeerId();
+            String activeRoom = CallManager.getCurrentRoomName();
+            if ((pendingCallerId != null && pendingCallerId.equals(activePeer)) ||
+                (pendingRoomName != null && pendingRoomName.equals(activeRoom))) {
+                Log.d(TAG, "Already on CallActivity for this active call, ignoring incoming call dialog");
+                return;
+            }
+            Log.d(TAG, "Already on CallActivity, auto-rejecting new call from " + pendingCallerId);
             rejectPendingCall();
             return;
         }
@@ -242,16 +261,25 @@ public class IncomingCallHandler implements Application.ActivityLifecycleCallbac
                 return;
             }
             
+            String callerToStart = pendingCallerId;
+            String callerNameToStart = pendingCallerName;
+            String callerAvatarToStart = pendingCallerAvatar;
+            boolean isVideoToStart = pendingIsVideo;
+            String roomToStart = pendingRoomName;
+
             CallManager.setIncomingCallPending(false);
+            CallManager.setCallActive(true);
+            CallManager.setCurrentPeerId(callerToStart);
+            CallManager.setCurrentRoomName(roomToStart);
             
             Intent intent = new Intent(currentActivity, CallActivity.class);
-            intent.putExtra("targetUserId", pendingCallerId);
-            intent.putExtra("targetUserName", pendingCallerName);
-            intent.putExtra("targetUserAvatar", pendingCallerAvatar);
-            intent.putExtra("isVideoCall", pendingIsVideo);
+            intent.putExtra("targetUserId", callerToStart);
+            intent.putExtra("targetUserName", callerNameToStart);
+            intent.putExtra("targetUserAvatar", callerAvatarToStart);
+            intent.putExtra("isVideoCall", isVideoToStart);
             intent.putExtra("isCaller", false);
             intent.putExtra("isPrivateCall", true);
-            intent.putExtra("roomName", pendingRoomName);
+            intent.putExtra("roomName", roomToStart);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             currentActivity.startActivity(intent);
             

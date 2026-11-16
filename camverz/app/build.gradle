@@ -21,8 +21,8 @@ android {
         applicationId = "com.mohit.camverz"
         minSdk = 24
         targetSdk = 36
-        versionCode = 25
-        versionName = "1.0.25" +
+        versionCode = 28
+        versionName = "1.0.28" +
                 ""
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -140,7 +140,7 @@ dependencies {
     // Guava for ListenableFuture
     implementation libs.guava
 
-    // For face detection - using Google Play Services ML Kit (16 KB page size compliant & unbundled)
+    // For face detections - using Google Play Services ML Kit (16 KB page size compliant & unbundled)
     implementation libs.play.services.mlkit.face.detection
 
     // Media & Browser

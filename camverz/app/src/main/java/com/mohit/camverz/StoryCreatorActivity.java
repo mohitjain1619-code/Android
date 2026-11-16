@@ -2,7 +2,11 @@ package com.mohit.camverz;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -425,6 +429,13 @@ public class StoryCreatorActivity extends BaseActivity {
                 return;
             }
 
+            if ("VIDEO".equalsIgnoreCase(currentType) && file.length() > 15 * 1024 * 1024) {
+                progressDialog.dismiss();
+                Toast.makeText(this, "Video is too large (max 15MB). Please select a shorter video.", Toast.LENGTH_LONG).show();
+                try { file.delete(); } catch(Exception ignored){}
+                return;
+            }
+
             String mimeType = getContentResolver().getType(selectedFileUri);
             if (mimeType == null) {
                 mimeType = currentType.equals("IMAGE") ? "image/jpeg" : "video/mp4";
@@ -463,7 +474,78 @@ public class StoryCreatorActivity extends BaseActivity {
         }
     }
 
+    private File compressImageFile(Uri uri) {
+        try {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            InputStream isBounds = getContentResolver().openInputStream(uri);
+            if (isBounds == null) return null;
+            BitmapFactory.decodeStream(isBounds, null, options);
+            isBounds.close();
+
+            int maxDim = 1920;
+            int scale = 1;
+            while (options.outWidth / scale > maxDim || options.outHeight / scale > maxDim) {
+                scale *= 2;
+            }
+
+            options.inJustDecodeBounds = false;
+            options.inSampleSize = scale;
+
+            InputStream isBitmap = getContentResolver().openInputStream(uri);
+            if (isBitmap == null) return null;
+            Bitmap bitmap = BitmapFactory.decodeStream(isBitmap, null, options);
+            isBitmap.close();
+
+            if (bitmap == null) return null;
+
+            // Check EXIF rotation if available
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    InputStream isExif = getContentResolver().openInputStream(uri);
+                    if (isExif != null) {
+                        ExifInterface exif = new ExifInterface(isExif);
+                        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+                        int rotation = 0;
+                        if (orientation == ExifInterface.ORIENTATION_ROTATE_90) rotation = 90;
+                        else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) rotation = 180;
+                        else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) rotation = 270;
+
+                        if (rotation != 0) {
+                            Matrix matrix = new Matrix();
+                            matrix.postRotate(rotation);
+                            Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                            if (rotated != bitmap) {
+                                bitmap.recycle();
+                                bitmap = rotated;
+                            }
+                        }
+                        isExif.close();
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            File file = new File(getCacheDir(), "upload_story_media_" + System.currentTimeMillis() + ".jpg");
+            FileOutputStream outputStream = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            bitmap.recycle();
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private File getFileFromUri(Uri uri) {
+        if ("IMAGE".equalsIgnoreCase(currentType)) {
+            File compressed = compressImageFile(uri);
+            if (compressed != null && compressed.exists() && compressed.length() > 0) {
+                return compressed;
+            }
+        }
+
         try {
             InputStream inputStream = getContentResolver().openInputStream(uri);
             if (inputStream == null) return null;
@@ -480,7 +562,7 @@ public class StoryCreatorActivity extends BaseActivity {
                 }
             }
 
-            File file = new File(getCacheDir(), "upload_story_media." + extension);
+            File file = new File(getCacheDir(), "upload_story_media_" + System.currentTimeMillis() + "." + extension);
             FileOutputStream outputStream = new FileOutputStream(file);
             byte[] buffer = new byte[8192];
             int read;
