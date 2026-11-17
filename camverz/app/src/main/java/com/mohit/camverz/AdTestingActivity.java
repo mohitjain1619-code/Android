@@ -26,8 +26,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-// Google Mobile Ads (AdMob) SDK & Mediation
-import com.google.android.gms.ads.AdError;
+// Google Mobile Ads (AdMob) SDK & Meta Mediation
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
@@ -38,18 +37,22 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.ResponseInfo;
 import com.google.android.gms.ads.initialization.AdapterStatus;
 import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.google.android.gms.ads.nativead.NativeAd;
 import com.google.android.gms.ads.nativead.NativeAdView;
-import com.google.android.gms.ads.rewarded.RewardedAd;
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
-import com.google.android.gms.ads.rewarded.RewardItem;
+import com.google.android.gms.ads.nativead.MediaView;
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAd;
 import com.google.android.gms.ads.rewardedinterstitial.RewardedInterstitialAdLoadCallback;
 
 // Meta Audience Network
+import com.facebook.ads.Ad;
+import com.facebook.ads.AdError;
+import com.facebook.ads.AdSettings;
 import com.facebook.ads.AudienceNetworkAds;
+import com.facebook.ads.InterstitialAd;
+import com.facebook.ads.InterstitialAdListener;
+import com.facebook.ads.RewardedVideoAd;
+import com.facebook.ads.RewardedVideoAdListener;
 
 // Unity LevelPlay Mediation
 import com.ironsource.mediationsdk.IronSource;
@@ -74,12 +77,8 @@ import java.util.Map;
 
 /**
  * Production Testing Dashboard for Camverz:
- * 1. Google AdMob Mediation (AdMob Main Mediator + Meta Audience Network Bidding)
- *    - Live AdMob Interstitial: ca-app-pub-6992986179206821/9362140189 (1 active mediation group)
- *    - Live AdMob Rewarded:     ca-app-pub-6992986179206821/2063439948 (1 active mediation group)
- *    - Live AdMob Native:       ca-app-pub-6992986179206821/9014655823 (1 active mediation group)
- *    - Real-time ResponseInfo inspection showing winning adapter (Meta vs AdMob) and adapter latency
- * 2. Unity LevelPlay Mediation Dual-Auction Bidding (LevelPlay Main Mediator)
+ * 1. Unity LevelPlay Mediation Dual-Auction Bidding (LevelPlay Main Mediator)
+ * 2. Standalone Meta Audience Network Testing
  * 3. Live Adapter Diagnostics & Real-Time Console
  */
 public class AdTestingActivity extends AppCompatActivity {
@@ -87,42 +86,34 @@ public class AdTestingActivity extends AppCompatActivity {
     private static final String TAG = "AdTestingActivity";
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // ADMOB MEDIATION CONFIGURATION (AdMob Main Mediator)
+    // LEVELPLAY MEDIATION CONFIGURATION
+    // ─────────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────────
+    // ADMOB MEDIATION CONFIGURATION (1 Active Group Per Unit: Meta Audience Network Bidding)
     // ─────────────────────────────────────────────────────────────────────────────
     public static final String ADMOB_APP_ID = "ca-app-pub-6992986179206821~2715651414";
     public static final String ADMOB_MEDIATION_INTERSTITIAL = "ca-app-pub-6992986179206821/9362140189";
-    public static final String ADMOB_MEDIATION_REWARDED = "ca-app-pub-6992986179206821/2063439948";
     public static final String ADMOB_MEDIATION_REWARDED_INTERSTITIAL = "ca-app-pub-6992986179206821/3305765629";
     public static final String ADMOB_MEDIATION_NATIVE = "ca-app-pub-6992986179206821/9014655823";
 
-    // AdMob Mediation Ad Instances
-    private InterstitialAd admobMediatedInterstitialAd;
-    private RewardedAd admobMediatedRewardedAd;
+    private com.google.android.gms.ads.interstitial.InterstitialAd admobMediatedInterstitialAd;
     private RewardedInterstitialAd admobMediatedRewardedInterstitialAd;
     private NativeAd admobMediatedNativeAd;
     private boolean isAdMobInterLoading = false;
-    private boolean isAdMobRewardedLoading = false;
     private boolean isAdMobRewardedInterLoading = false;
     private boolean isAdMobNativeLoading = false;
 
-    // AdMob Mediation UI Badges & Buttons
     private TextView tvAdMobSdkStatus;
     private TextView tvAdMobInterStatus;
-    private TextView tvAdMobRewardedStatus;
     private TextView tvAdMobRewardedInterStatus;
     private TextView tvAdMobNativeStatus;
     private Button btnLoadAdMobInter;
     private Button btnShowAdMobInter;
-    private Button btnLoadAdMobRewarded;
-    private Button btnShowAdMobRewarded;
     private Button btnLoadAdMobRewardedInter;
     private Button btnShowAdMobRewardedInter;
     private Button btnLoadAdMobNative;
     private FrameLayout admobNativeContainer;
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // LEVELPLAY MEDIATION CONFIGURATION
-    // ─────────────────────────────────────────────────────────────────────────────
     public static final String LEVELPLAY_APP_KEY = "28890f0b5";
     private TextView tvSdkStatus;
     private TextView tvDualAuctionWinner;
@@ -133,6 +124,16 @@ public class AdTestingActivity extends AppCompatActivity {
     private Button btnLoadNative;
     private FrameLayout nativeAdContainer;
     private LevelPlayNativeAd levelPlayNativeAd;
+
+    // Meta Audience Network Direct Placement Testing
+    private InterstitialAd metaDirectInterstitial;
+    private RewardedVideoAd metaDirectRewarded;
+    private TextView tvMetaDirectInterStatus;
+    private TextView tvMetaDirectRewardedStatus;
+    private Button btnLoadMetaDirectInter;
+    private Button btnShowMetaDirectInter;
+    private Button btnLoadMetaDirectRewarded;
+    private Button btnShowMetaDirectRewarded;
 
     // LevelPlay Interstitial Bidding UI & State
     private TextView tvLevelPlayInterStatus;
@@ -190,46 +191,47 @@ public class AdTestingActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
+    
     // =========================================================================
-    // 1. GOOGLE ADMOB MEDIATION WITH META (ADMOB MAIN MEDIATOR)
+    // GOOGLE ADMOB MEDIATION WITH META (1 ACTIVE MEDIATION GROUP PER AD FORMAT)
     // =========================================================================
 
     private void initAdMobMediationWithMeta() {
         try {
-            // Initialize Meta Audience Network first for bidding
+            // Initialize Meta Audience Network first so bidder token can be produced
             try {
+                AdSettings.addTestDevice("b94e5118-43fc-4881-b07b-0ecf44bbb6ee");
                 AudienceNetworkAds.initialize(this);
-                appendLog("✅ [META AUDIENCE NETWORK] SDK Initialized");
+                appendLog("✅ [META AUDIENCE NETWORK] Initialized (Test Device GAID: b94e5118-43fc-4881-b07b-0ecf44bbb6ee)");
             } catch (Exception e) {
                 appendLog("⚠️ [META INIT NOTICE] " + e.getMessage());
             }
 
-            // Initialize Google Mobile Ads SDK (Clean production mode - no test devices)
+            appendLog("🔄 Initializing Google Mobile Ads SDK with Meta Bidding...");
             MobileAds.initialize(this, initializationStatus -> {
-                runOnUiThread(() -> {
-                    Map<String, AdapterStatus> statusMap = initializationStatus.getAdapterStatusMap();
-                    boolean metaAdapterFound = false;
-
-                    for (Map.Entry<String, AdapterStatus> entry : statusMap.entrySet()) {
-                        String className = entry.getKey();
-                        AdapterStatus status = entry.getValue();
-                        if (className.toLowerCase().contains("facebook")) {
-                            metaAdapterFound = true;
-                            appendLog("🔌 [ADMOB ADAPTER] Meta Adapter: " + status.getInitializationState()
-                                    + " (" + status.getDescription() + ")");
-                        }
+                Map<String, AdapterStatus> statusMap = initializationStatus.getAdapterStatusMap();
+                boolean metaAdapterFound = false;
+                for (Map.Entry<String, AdapterStatus> entry : statusMap.entrySet()) {
+                    String className = entry.getKey();
+                    AdapterStatus status = entry.getValue();
+                    if (className.toLowerCase().contains("facebook") || className.toLowerCase().contains("meta")) {
+                        metaAdapterFound = true;
+                        appendLog("🔌 [ADMOB ADAPTER] Meta Adapter: " + status.getInitializationState()
+                                + " (" + status.getDescription() + ", latency=" + status.getLatency() + "ms)");
                     }
+                }
 
+                final boolean hasMetaAdapter = metaAdapterFound;
+                runOnUiThread(() -> {
                     if (tvAdMobSdkStatus != null) {
-                        tvAdMobSdkStatus.setText("ACTIVE (v23.6.0" + (metaAdapterFound ? " + Meta)" : ")"));
+                        tvAdMobSdkStatus.setText("ACTIVE (v23.6.0" + (hasMetaAdapter ? " + Meta)" : ")"));
                         tvAdMobSdkStatus.setTextColor(Color.parseColor("#34D399"));
                     }
                     appendLog("✅ [ADMOB MEDIATION READY] Main Mediator: Google Mobile Ads");
                     appendLog("   AdMob App ID: " + ADMOB_APP_ID);
-                    appendLog("   Mediation Partner: Meta Audience Network (Facebook)");
+                    appendLog("   Meta Bidding Partner: " + (hasMetaAdapter ? "CONNECTED 🔥" : "STANDALONE"));
                 });
             });
-
         } catch (Exception e) {
             Log.e(TAG, "Error initializing AdMob Mediation", e);
             if (tvAdMobSdkStatus != null) {
@@ -241,8 +243,7 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads Interstitial Ad using Google AdMob as the MAIN MEDIATOR.
-     * AdMob runs an auction across Meta Audience Network and Google.
+     * 1. Loads Interstitial Ad using Google AdMob Mediation (1 active group with Meta Bidding).
      */
     private void loadAdMobMediatedInterstitial() {
         if (isAdMobInterLoading) {
@@ -252,44 +253,38 @@ public class AdTestingActivity extends AppCompatActivity {
 
         destroyAdMobMediatedInterstitial();
         isAdMobInterLoading = true;
-        btnLoadAdMobInter.setEnabled(false);
-        btnShowAdMobInter.setEnabled(false);
-        tvAdMobInterStatus.setText("AUCTION IN-FLIGHT (AdMob vs Meta)...");
-        tvAdMobInterStatus.setTextColor(Color.parseColor("#FBBF24"));
+        if (btnLoadAdMobInter != null) btnLoadAdMobInter.setEnabled(false);
+        if (btnShowAdMobInter != null) btnShowAdMobInter.setEnabled(false);
+        if (tvAdMobInterStatus != null) {
+            tvAdMobInterStatus.setText("AUCTION IN-FLIGHT (AdMob vs Meta)...");
+            tvAdMobInterStatus.setTextColor(Color.parseColor("#FBBF24"));
+        }
 
         appendLog("════════════════════════════════════════════");
         appendLog("📡 [ADMOB MEDIATION INTERSTITIAL REQUEST]");
-        appendLog("   Ad Unit: " + ADMOB_MEDIATION_INTERSTITIAL);
-        appendLog("   Mediator: Google AdMob");
-        appendLog("   Bidding Partner: Meta Audience Network");
+        appendLog("   Ad Unit ID: " + ADMOB_MEDIATION_INTERSTITIAL);
+        appendLog("   Mediation Group: 1 Active (Meta Audience Network Bidding)");
 
         AdRequest adRequest = new AdRequest.Builder().build();
 
-        InterstitialAd.load(
+        com.google.android.gms.ads.interstitial.InterstitialAd.load(
                 this,
                 ADMOB_MEDIATION_INTERSTITIAL,
                 adRequest,
                 new InterstitialAdLoadCallback() {
                     @Override
-                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                    public void onAdLoaded(@NonNull com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd) {
                         runOnUiThread(() -> {
                             isAdMobInterLoading = false;
                             admobMediatedInterstitialAd = interstitialAd;
-                            btnLoadAdMobInter.setEnabled(true);
-                            btnShowAdMobInter.setEnabled(true);
+                            if (btnLoadAdMobInter != null) btnLoadAdMobInter.setEnabled(true);
+                            if (btnShowAdMobInter != null) btnShowAdMobInter.setEnabled(true);
 
-                            // Inspect AdMob ResponseInfo to see WHO WON THE MEDIATION AUCTION!
-                            ResponseInfo responseInfo = interstitialAd.getResponseInfo();
-                            String winningAdapter = responseInfo.getMediationAdapterClassName();
-                            String winningNetwork = mapAdapterNameToNetwork(winningAdapter);
-
-                            tvAdMobInterStatus.setText("READY: " + winningNetwork);
-                            tvAdMobInterStatus.setTextColor(Color.parseColor("#34D399"));
-
-                            appendLog("🟢 [ADMOB INTERSTITIAL LOADED SUCCESSFULLY!]");
-                            appendLog("🏆 WINNING MEDIATION PARTNER: " + winningNetwork);
-                            appendLog("   Adapter Class: " + winningAdapter);
-                            logAdMobAdapterResponses(responseInfo);
+                            inspectAdMobResponseInfo(
+                                    "AdMob Mediated Interstitial",
+                                    interstitialAd.getResponseInfo(),
+                                    tvAdMobInterStatus
+                            );
 
                             setupAdMobInterstitialCallbacks(interstitialAd);
                         });
@@ -299,209 +294,101 @@ public class AdTestingActivity extends AppCompatActivity {
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                         runOnUiThread(() -> {
                             isAdMobInterLoading = false;
-                            admobMediatedInterstitialAd = null;
-                            btnLoadAdMobInter.setEnabled(true);
-                            btnShowAdMobInter.setEnabled(false);
+                            if (btnLoadAdMobInter != null) btnLoadAdMobInter.setEnabled(true);
+                            if (btnShowAdMobInter != null) btnShowAdMobInter.setEnabled(false);
+                            if (tvAdMobInterStatus != null) {
+                                tvAdMobInterStatus.setText("LOAD FAILED: " + getAdMobErrorMessage(loadAdError.getCode()));
+                                tvAdMobInterStatus.setTextColor(Color.parseColor("#EF4444"));
+                            }
 
-                            tvAdMobInterStatus.setText("FAILED (" + loadAdError.getCode() + ")");
-                            tvAdMobInterStatus.setTextColor(Color.parseColor("#EF4444"));
-
-                            appendLog("🔴 [ADMOB INTERSTITIAL LOAD FAILED]");
-                            appendLog("   Error Code: " + loadAdError.getCode());
+                            appendLog("════════════════════════════════════════════");
+                            appendLog("❌ [ADMOB INTERSTITIAL LOAD FAILED]");
+                            appendLog("   Code: " + loadAdError.getCode() + " (" + getAdMobErrorMessage(loadAdError.getCode()) + ")");
                             appendLog("   Message: " + loadAdError.getMessage());
-                            appendLog("   Domain: " + loadAdError.getDomain());
                             if (loadAdError.getResponseInfo() != null) {
-                                logAdMobAdapterResponses(loadAdError.getResponseInfo());
+                                appendLog("   Mediation Adapter: " + loadAdError.getResponseInfo().getMediationAdapterClassName());
+                                List<AdapterResponseInfo> responses = loadAdError.getResponseInfo().getAdapterResponses();
+                                if (responses != null) {
+                                    for (AdapterResponseInfo info : responses) {
+                                        appendLog("   - Adapter: " + parseAdapterNetworkName(info.getAdapterClassName()));
+                                        appendLog("     Status: " + (info.getAdError() == null ? "OK" : "Error " + info.getAdError().getMessage()));
+                                    }
+                                }
                             }
                         });
                     }
                 }
         );
+    }
+
+    private void setupAdMobInterstitialCallbacks(com.google.android.gms.ads.interstitial.InterstitialAd interstitialAd) {
+        interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdShowedFullScreenContent() {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("📺 [ADMOB INTERSTITIAL] Ad Showed Full Screen.");
+                });
+            }
+
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("👋 [ADMOB INTERSTITIAL] Ad Dismissed by User.");
+                    destroyAdMobMediatedInterstitial();
+                    if (tvAdMobInterStatus != null) {
+                        tvAdMobInterStatus.setText("DISMISSED");
+                        tvAdMobInterStatus.setTextColor(Color.parseColor("#9CA3AF"));
+                    }
+                    if (btnShowAdMobInter != null) btnShowAdMobInter.setEnabled(false);
+                });
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("❌ [ADMOB INTERSTITIAL SHOW FAILED] " + adError.getMessage());
+                    if (tvAdMobInterStatus != null) {
+                        tvAdMobInterStatus.setText("SHOW FAILED");
+                        tvAdMobInterStatus.setTextColor(Color.parseColor("#EF4444"));
+                    }
+                    destroyAdMobMediatedInterstitial();
+                    if (btnShowAdMobInter != null) btnShowAdMobInter.setEnabled(false);
+                });
+            }
+
+            @Override
+            public void onAdClicked() {
+                runOnUiThread(() -> appendLog("🖱️ [ADMOB INTERSTITIAL] User Clicked Ad."));
+            }
+
+            @Override
+            public void onAdImpression() {
+                runOnUiThread(() -> appendLog("👁️ [ADMOB INTERSTITIAL] Impression Recorded (Revenue Logged)."));
+            }
+        });
     }
 
     private void showAdMobMediatedInterstitial() {
         if (admobMediatedInterstitialAd != null) {
-            appendLog("▶️ [SHOWING ADMOB MEDIATED INTERSTITIAL]");
+            showProgress("Presenting Mediated Interstitial...");
             admobMediatedInterstitialAd.show(this);
         } else {
-            Toast.makeText(this, "AdMob Interstitial not loaded yet. Tap Load first.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "AdMob Interstitial not loaded yet!", Toast.LENGTH_SHORT).show();
+            appendLog("⚠️ [ADMOB INTERSTITIAL] Cannot show: Ad not loaded.");
         }
     }
 
-    private void setupAdMobInterstitialCallbacks(InterstitialAd interstitialAd) {
-        interstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-            @Override
-            public void onAdShowedFullScreenContent() {
-                runOnUiThread(() -> appendLog("👁️ [ADMOB INTERSTITIAL SHOWN] Full screen content displayed."));
-            }
-
-            @Override
-            public void onAdDismissedFullScreenContent() {
-                runOnUiThread(() -> {
-                    appendLog("🚪 [ADMOB INTERSTITIAL CLOSED] User dismissed the ad.");
-                    destroyAdMobMediatedInterstitial();
-                    tvAdMobInterStatus.setText("DISMISSED (Ready to load next)");
-                    tvAdMobInterStatus.setTextColor(Color.parseColor("#94A3B8"));
-                    btnShowAdMobInter.setEnabled(false);
-                });
-            }
-
-            @Override
-            public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
-                runOnUiThread(() -> {
-                    appendLog("❌ [ADMOB INTERSTITIAL SHOW FAILED] " + adError.getMessage());
-                    destroyAdMobMediatedInterstitial();
-                    btnShowAdMobInter.setEnabled(false);
-                });
-            }
-
-            @Override
-            public void onAdClicked() {
-                runOnUiThread(() -> appendLog("🖱️ [ADMOB INTERSTITIAL CLICKED] User clicked the ad."));
-            }
-
-            @Override
-            public void onAdImpression() {
-                runOnUiThread(() -> appendLog("📊 [ADMOB INTERSTITIAL IMPRESSION] Verified impression recorded."));
-            }
-        });
+    private void destroyAdMobMediatedInterstitial() {
+        if (admobMediatedInterstitialAd != null) {
+            admobMediatedInterstitialAd = null;
+        }
     }
 
     /**
-     * Loads Rewarded Ad using Google AdMob as the MAIN MEDIATOR.
-     * AdMob runs an auction across Meta Audience Network and Google.
-     */
-    private void loadAdMobMediatedRewarded() {
-        if (isAdMobRewardedLoading) {
-            appendLog("⏳ [ADMOB REWARDED] Request already in-flight.");
-            return;
-        }
-
-        destroyAdMobMediatedRewarded();
-        isAdMobRewardedLoading = true;
-        btnLoadAdMobRewarded.setEnabled(false);
-        btnShowAdMobRewarded.setEnabled(false);
-        tvAdMobRewardedStatus.setText("AUCTION IN-FLIGHT (AdMob vs Meta)...");
-        tvAdMobRewardedStatus.setTextColor(Color.parseColor("#FBBF24"));
-
-        appendLog("════════════════════════════════════════════");
-        appendLog("📡 [ADMOB MEDIATION REWARDED REQUEST]");
-        appendLog("   Ad Unit: " + ADMOB_MEDIATION_REWARDED);
-        appendLog("   Mediator: Google AdMob");
-        appendLog("   Bidding Partner: Meta Audience Network");
-
-        AdRequest adRequest = new AdRequest.Builder().build();
-
-        RewardedAd.load(
-                this,
-                ADMOB_MEDIATION_REWARDED,
-                adRequest,
-                new RewardedAdLoadCallback() {
-                    @Override
-                    public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
-                        runOnUiThread(() -> {
-                            isAdMobRewardedLoading = false;
-                            admobMediatedRewardedAd = rewardedAd;
-                            btnLoadAdMobRewarded.setEnabled(true);
-                            btnShowAdMobRewarded.setEnabled(true);
-
-                            // Inspect AdMob ResponseInfo
-                            ResponseInfo responseInfo = rewardedAd.getResponseInfo();
-                            String winningAdapter = responseInfo.getMediationAdapterClassName();
-                            String winningNetwork = mapAdapterNameToNetwork(winningAdapter);
-
-                            tvAdMobRewardedStatus.setText("READY: " + winningNetwork);
-                            tvAdMobRewardedStatus.setTextColor(Color.parseColor("#34D399"));
-
-                            appendLog("🟢 [ADMOB REWARDED LOADED SUCCESSFULLY!]");
-                            appendLog("🏆 WINNING MEDIATION PARTNER: " + winningNetwork);
-                            appendLog("   Adapter Class: " + winningAdapter);
-                            logAdMobAdapterResponses(responseInfo);
-
-                            setupAdMobRewardedCallbacks(rewardedAd);
-                        });
-                    }
-
-                    @Override
-                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                        runOnUiThread(() -> {
-                            isAdMobRewardedLoading = false;
-                            admobMediatedRewardedAd = null;
-                            btnLoadAdMobRewarded.setEnabled(true);
-                            btnShowAdMobRewarded.setEnabled(false);
-
-                            tvAdMobRewardedStatus.setText("FAILED (" + loadAdError.getCode() + ")");
-                            tvAdMobRewardedStatus.setTextColor(Color.parseColor("#EF4444"));
-
-                            appendLog("🔴 [ADMOB REWARDED LOAD FAILED]");
-                            appendLog("   Error Code: " + loadAdError.getCode());
-                            appendLog("   Message: " + loadAdError.getMessage());
-                            if (loadAdError.getResponseInfo() != null) {
-                                logAdMobAdapterResponses(loadAdError.getResponseInfo());
-                            }
-                        });
-                    }
-                }
-        );
-    }
-
-    private void showAdMobMediatedRewarded() {
-        if (admobMediatedRewardedAd != null) {
-            appendLog("▶️ [SHOWING ADMOB MEDIATED REWARDED AD]");
-            admobMediatedRewardedAd.show(this, rewardItem -> {
-                runOnUiThread(() -> {
-                    appendLog("🎁 [REWARD EARNED VIA ADMOB MEDIATION!]");
-                    appendLog("   Amount: " + rewardItem.getAmount() + " Type: " + rewardItem.getType());
-                    Toast.makeText(AdTestingActivity.this, "Reward Earned: " + rewardItem.getAmount() + " " + rewardItem.getType(), Toast.LENGTH_LONG).show();
-                });
-            });
-        } else {
-            Toast.makeText(this, "AdMob Rewarded ad not loaded yet. Tap Load first.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void setupAdMobRewardedCallbacks(RewardedAd rewardedAd) {
-        rewardedAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-            @Override
-            public void onAdShowedFullScreenContent() {
-                runOnUiThread(() -> appendLog("👁️ [ADMOB REWARDED SHOWN] Video playback started."));
-            }
-
-            @Override
-            public void onAdDismissedFullScreenContent() {
-                runOnUiThread(() -> {
-                    appendLog("🚪 [ADMOB REWARDED CLOSED] User dismissed rewarded ad.");
-                    destroyAdMobMediatedRewarded();
-                    tvAdMobRewardedStatus.setText("DISMISSED (Ready to load next)");
-                    tvAdMobRewardedStatus.setTextColor(Color.parseColor("#94A3B8"));
-                    btnShowAdMobRewarded.setEnabled(false);
-                });
-            }
-
-            @Override
-            public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
-                runOnUiThread(() -> {
-                    appendLog("❌ [ADMOB REWARDED SHOW FAILED] " + adError.getMessage());
-                    destroyAdMobMediatedRewarded();
-                    btnShowAdMobRewarded.setEnabled(false);
-                });
-            }
-
-            @Override
-            public void onAdClicked() {
-                runOnUiThread(() -> appendLog("🖱️ [ADMOB REWARDED CLICKED] User clicked the ad."));
-            }
-
-            @Override
-            public void onAdImpression() {
-                runOnUiThread(() -> appendLog("📊 [ADMOB REWARDED IMPRESSION] Verified impression recorded."));
-            }
-        });
-    }
-
-    /**
-     * Loads Rewarded Interstitial Ad using Google AdMob as the MAIN MEDIATOR.
-     * Ad Unit: ca-app-pub-6992986179206821/3305765629
+     * 2. Loads Rewarded Interstitial using Google AdMob Mediation (1 active group with Meta Bidding).
      */
     private void loadAdMobMediatedRewardedInterstitial() {
         if (isAdMobRewardedInterLoading) {
@@ -511,16 +398,17 @@ public class AdTestingActivity extends AppCompatActivity {
 
         destroyAdMobMediatedRewardedInterstitial();
         isAdMobRewardedInterLoading = true;
-        btnLoadAdMobRewardedInter.setEnabled(false);
-        btnShowAdMobRewardedInter.setEnabled(false);
-        tvAdMobRewardedInterStatus.setText("AUCTION IN-FLIGHT (AdMob vs Meta)...");
-        tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#FBBF24"));
+        if (btnLoadAdMobRewardedInter != null) btnLoadAdMobRewardedInter.setEnabled(false);
+        if (btnShowAdMobRewardedInter != null) btnShowAdMobRewardedInter.setEnabled(false);
+        if (tvAdMobRewardedInterStatus != null) {
+            tvAdMobRewardedInterStatus.setText("AUCTION IN-FLIGHT...");
+            tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#FBBF24"));
+        }
 
         appendLog("════════════════════════════════════════════");
         appendLog("📡 [ADMOB REWARDED INTERSTITIAL REQUEST]");
-        appendLog("   Ad Unit: " + ADMOB_MEDIATION_REWARDED_INTERSTITIAL);
-        appendLog("   Format: Rewarded Interstitial");
-        appendLog("   Mediator: Google AdMob");
+        appendLog("   Ad Unit ID: " + ADMOB_MEDIATION_REWARDED_INTERSTITIAL);
+        appendLog("   Format: Rewarded Interstitial (Meta Bidding)");
 
         AdRequest adRequest = new AdRequest.Builder().build();
 
@@ -534,20 +422,14 @@ public class AdTestingActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             isAdMobRewardedInterLoading = false;
                             admobMediatedRewardedInterstitialAd = rewardedInterstitialAd;
-                            btnLoadAdMobRewardedInter.setEnabled(true);
-                            btnShowAdMobRewardedInter.setEnabled(true);
+                            if (btnLoadAdMobRewardedInter != null) btnLoadAdMobRewardedInter.setEnabled(true);
+                            if (btnShowAdMobRewardedInter != null) btnShowAdMobRewardedInter.setEnabled(true);
 
-                            ResponseInfo responseInfo = rewardedInterstitialAd.getResponseInfo();
-                            String winningAdapter = responseInfo != null ? responseInfo.getMediationAdapterClassName() : "Unknown";
-                            String winningNetwork = mapAdapterNameToNetwork(winningAdapter);
-
-                            tvAdMobRewardedInterStatus.setText("READY: " + winningNetwork);
-                            tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#34D399"));
-
-                            appendLog("🟢 [ADMOB REWARDED INTERSTITIAL LOADED!]");
-                            appendLog("🏆 WINNING MEDIATION PARTNER: " + winningNetwork);
-                            appendLog("   Adapter Class: " + winningAdapter);
-                            if (responseInfo != null) logAdMobAdapterResponses(responseInfo);
+                            inspectAdMobResponseInfo(
+                                    "AdMob Rewarded Interstitial",
+                                    rewardedInterstitialAd.getResponseInfo(),
+                                    tvAdMobRewardedInterStatus
+                            );
 
                             setupAdMobRewardedInterstitialCallbacks(rewardedInterstitialAd);
                         });
@@ -557,77 +439,70 @@ public class AdTestingActivity extends AppCompatActivity {
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                         runOnUiThread(() -> {
                             isAdMobRewardedInterLoading = false;
-                            admobMediatedRewardedInterstitialAd = null;
-                            btnLoadAdMobRewardedInter.setEnabled(true);
-                            btnShowAdMobRewardedInter.setEnabled(false);
-
-                            tvAdMobRewardedInterStatus.setText("FAILED (" + loadAdError.getCode() + ")");
-                            tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#EF4444"));
-
-                            appendLog("🔴 [ADMOB REWARDED INTERSTITIAL LOAD FAILED]");
-                            appendLog("   Error Code: " + loadAdError.getCode());
-                            appendLog("   Message: " + loadAdError.getMessage());
-                            if (loadAdError.getResponseInfo() != null) {
-                                logAdMobAdapterResponses(loadAdError.getResponseInfo());
+                            if (btnLoadAdMobRewardedInter != null) btnLoadAdMobRewardedInter.setEnabled(true);
+                            if (btnShowAdMobRewardedInter != null) btnShowAdMobRewardedInter.setEnabled(false);
+                            if (tvAdMobRewardedInterStatus != null) {
+                                tvAdMobRewardedInterStatus.setText("LOAD FAILED: " + getAdMobErrorMessage(loadAdError.getCode()));
+                                tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#EF4444"));
                             }
+
+                            appendLog("❌ [ADMOB REWARDED INTERSTITIAL FAILED] " + loadAdError.getMessage());
                         });
                     }
                 }
         );
     }
 
-    private void showAdMobMediatedRewardedInterstitial() {
-        if (admobMediatedRewardedInterstitialAd != null) {
-            appendLog("▶️ [SHOWING ADMOB REWARDED INTERSTITIAL AD]");
-            admobMediatedRewardedInterstitialAd.show(this, rewardItem -> {
-                runOnUiThread(() -> {
-                    appendLog("🎁 [REWARD EARNED VIA REWARDED INTERSTITIAL!]");
-                    appendLog("   Amount: " + rewardItem.getAmount() + " Type: " + rewardItem.getType());
-                    Toast.makeText(AdTestingActivity.this, "Reward Earned: " + rewardItem.getAmount() + " " + rewardItem.getType(), Toast.LENGTH_LONG).show();
-                });
-            });
-        } else {
-            Toast.makeText(this, "Rewarded Interstitial ad not loaded yet. Tap Load first.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void setupAdMobRewardedInterstitialCallbacks(RewardedInterstitialAd rewardedInterstitialAd) {
-        rewardedInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+    private void setupAdMobRewardedInterstitialCallbacks(RewardedInterstitialAd ad) {
+        ad.setFullScreenContentCallback(new FullScreenContentCallback() {
             @Override
             public void onAdShowedFullScreenContent() {
-                runOnUiThread(() -> appendLog("👁️ [REWARDED INTERSTITIAL SHOWN] Playback started."));
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("📺 [ADMOB REWARDED INTERSTITIAL] Ad Showed Full Screen.");
+                });
             }
 
             @Override
             public void onAdDismissedFullScreenContent() {
                 runOnUiThread(() -> {
-                    appendLog("🚪 [REWARDED INTERSTITIAL CLOSED] User dismissed ad.");
+                    dismissProgress();
+                    appendLog("👋 [ADMOB REWARDED INTERSTITIAL] Ad Dismissed.");
                     destroyAdMobMediatedRewardedInterstitial();
-                    tvAdMobRewardedInterStatus.setText("DISMISSED (Ready to load next)");
-                    tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#94A3B8"));
-                    btnShowAdMobRewardedInter.setEnabled(false);
+                    if (tvAdMobRewardedInterStatus != null) {
+                        tvAdMobRewardedInterStatus.setText("DISMISSED");
+                        tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#9CA3AF"));
+                    }
+                    if (btnShowAdMobRewardedInter != null) btnShowAdMobRewardedInter.setEnabled(false);
                 });
             }
 
             @Override
-            public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
                 runOnUiThread(() -> {
-                    appendLog("❌ [REWARDED INTERSTITIAL SHOW FAILED] " + adError.getMessage());
+                    dismissProgress();
+                    appendLog("❌ [ADMOB REWARDED INTERSTITIAL SHOW FAILED] " + adError.getMessage());
+                    if (tvAdMobRewardedInterStatus != null) {
+                        tvAdMobRewardedInterStatus.setText("SHOW FAILED");
+                        tvAdMobRewardedInterStatus.setTextColor(Color.parseColor("#EF4444"));
+                    }
                     destroyAdMobMediatedRewardedInterstitial();
-                    btnShowAdMobRewardedInter.setEnabled(false);
+                    if (btnShowAdMobRewardedInter != null) btnShowAdMobRewardedInter.setEnabled(false);
                 });
-            }
-
-            @Override
-            public void onAdClicked() {
-                runOnUiThread(() -> appendLog("🖱️ [REWARDED INTERSTITIAL CLICKED] User clicked the ad."));
-            }
-
-            @Override
-            public void onAdImpression() {
-                runOnUiThread(() -> appendLog("📊 [REWARDED INTERSTITIAL IMPRESSION] Verified impression recorded."));
             }
         });
+    }
+
+    private void showAdMobMediatedRewardedInterstitial() {
+        if (admobMediatedRewardedInterstitialAd != null) {
+            showProgress("Presenting Mediated Rewarded Interstitial...");
+            admobMediatedRewardedInterstitialAd.show(this, rewardItem -> runOnUiThread(() -> {
+                appendLog("🎁 [ADMOB REWARDED INTERSTITIAL GRANTED] +" + rewardItem.getAmount() + " " + rewardItem.getType());
+                Toast.makeText(this, "🎉 Reward Granted: +" + rewardItem.getAmount() + " Coins!", Toast.LENGTH_LONG).show();
+            }));
+        } else {
+            Toast.makeText(this, "Rewarded Interstitial not loaded yet!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void destroyAdMobMediatedRewardedInterstitial() {
@@ -637,51 +512,59 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads Native Ad using Google AdMob as the MAIN MEDIATOR.
+     * 3. Loads Native Advanced Ad using Google AdMob Mediation (1 active group with Meta Bidding).
      */
     private void loadAdMobMediatedNative() {
-        if (isAdMobNativeLoading) return;
+        if (isAdMobNativeLoading) {
+            appendLog("⏳ [ADMOB NATIVE] Request already in-flight.");
+            return;
+        }
 
         destroyAdMobMediatedNative();
         isAdMobNativeLoading = true;
-        btnLoadAdMobNative.setEnabled(false);
-        tvAdMobNativeStatus.setText("AUCTION IN-FLIGHT...");
-        tvAdMobNativeStatus.setTextColor(Color.parseColor("#FBBF24"));
+        if (btnLoadAdMobNative != null) btnLoadAdMobNative.setEnabled(false);
+        if (tvAdMobNativeStatus != null) {
+            tvAdMobNativeStatus.setText("AUCTION IN-FLIGHT (AdMob vs Meta Native)...");
+            tvAdMobNativeStatus.setTextColor(Color.parseColor("#FBBF24"));
+        }
 
         appendLog("════════════════════════════════════════════");
-        appendLog("📡 [ADMOB MEDIATION NATIVE REQUEST]");
-        appendLog("   Ad Unit: " + ADMOB_MEDIATION_NATIVE);
+        appendLog("📡 [ADMOB MEDIATION NATIVE AD REQUEST]");
+        appendLog("   Ad Unit ID: " + ADMOB_MEDIATION_NATIVE);
+        appendLog("   Format: Native Advanced (Meta Bidding)");
 
         AdLoader adLoader = new AdLoader.Builder(this, ADMOB_MEDIATION_NATIVE)
-                .forNativeAd(nativeAd -> {
-                    runOnUiThread(() -> {
-                        isAdMobNativeLoading = false;
-                        admobMediatedNativeAd = nativeAd;
-                        btnLoadAdMobNative.setEnabled(true);
+                .forNativeAd(nativeAd -> runOnUiThread(() -> {
+                    isAdMobNativeLoading = false;
+                    if (btnLoadAdMobNative != null) btnLoadAdMobNative.setEnabled(true);
+                    admobMediatedNativeAd = nativeAd;
 
-                        ResponseInfo responseInfo = nativeAd.getResponseInfo();
-                        String winningAdapter = responseInfo != null ? responseInfo.getMediationAdapterClassName() : "Unknown";
-                        String winningNetwork = mapAdapterNameToNetwork(winningAdapter);
+                    inspectAdMobResponseInfo("AdMob Mediated Native", nativeAd.getResponseInfo(), tvAdMobNativeStatus);
 
-                        tvAdMobNativeStatus.setText("READY: " + winningNetwork);
-                        tvAdMobNativeStatus.setTextColor(Color.parseColor("#34D399"));
-
-                        appendLog("🟢 [ADMOB NATIVE LOADED] Winner: " + winningNetwork);
-                        if (responseInfo != null) logAdMobAdapterResponses(responseInfo);
-
-                        renderAdMobNativeView(nativeAd);
-                    });
-                })
+                    renderAdMobNativeView(nativeAd);
+                }))
                 .withAdListener(new AdListener() {
                     @Override
                     public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                         runOnUiThread(() -> {
                             isAdMobNativeLoading = false;
-                            btnLoadAdMobNative.setEnabled(true);
-                            tvAdMobNativeStatus.setText("FAILED (" + loadAdError.getCode() + ")");
-                            tvAdMobNativeStatus.setTextColor(Color.parseColor("#EF4444"));
-                            appendLog("🔴 [ADMOB NATIVE LOAD FAILED] " + loadAdError.getMessage());
+                            if (btnLoadAdMobNative != null) btnLoadAdMobNative.setEnabled(true);
+                            if (tvAdMobNativeStatus != null) {
+                                tvAdMobNativeStatus.setText("FAILED: " + getAdMobErrorMessage(loadAdError.getCode()));
+                                tvAdMobNativeStatus.setTextColor(Color.parseColor("#EF4444"));
+                            }
+                            appendLog("❌ [ADMOB NATIVE LOAD FAILED] " + loadAdError.getMessage());
                         });
+                    }
+
+                    @Override
+                    public void onAdClicked() {
+                        runOnUiThread(() -> appendLog("🖱️ [ADMOB NATIVE] User Clicked Native Ad."));
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        runOnUiThread(() -> appendLog("👁️ [ADMOB NATIVE] Native Impression Recorded."));
                     }
                 })
                 .build();
@@ -690,83 +573,89 @@ public class AdTestingActivity extends AppCompatActivity {
     }
 
     private void renderAdMobNativeView(NativeAd nativeAd) {
-        if (nativeAd == null || admobNativeContainer == null) return;
-        try {
-            admobNativeContainer.removeAllViews();
-            NativeAdView adView = (NativeAdView) LayoutInflater.from(this)
-                    .inflate(R.layout.layout_admob_native_ad, admobNativeContainer, false);
+        if (admobNativeContainer == null) return;
+        admobNativeContainer.removeAllViews();
 
-            adView.setHeadlineView(adView.findViewById(R.id.ad_headline));
-            adView.setBodyView(adView.findViewById(R.id.ad_body));
-            adView.setCallToActionView(adView.findViewById(R.id.ad_call_to_action));
-            adView.setIconView(adView.findViewById(R.id.ad_app_icon));
-            adView.setAdvertiserView(adView.findViewById(R.id.ad_advertiser));
-            adView.setMediaView(adView.findViewById(R.id.ad_media));
+        NativeAdView nativeAdView = new NativeAdView(this);
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.VERTICAL);
+        inner.setPadding(dp(14), dp(14), dp(14), dp(14));
 
-            if (adView.getHeadlineView() != null && nativeAd.getHeadline() != null) {
-                ((TextView) adView.getHeadlineView()).setText(nativeAd.getHeadline());
-            }
-            if (adView.getBodyView() != null && nativeAd.getBody() != null) {
-                ((TextView) adView.getBodyView()).setText(nativeAd.getBody());
-            }
-            if (adView.getCallToActionView() != null && nativeAd.getCallToAction() != null) {
-                ((Button) adView.getCallToActionView()).setText(nativeAd.getCallToAction());
-            }
-            if (adView.getAdvertiserView() != null && nativeAd.getAdvertiser() != null) {
-                ((TextView) adView.getAdvertiserView()).setText(nativeAd.getAdvertiser());
-            }
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.parseColor("#1F2937"));
+        bg.setCornerRadius(dp(12));
+        bg.setStroke(dp(1), Color.parseColor("#374151"));
+        inner.setBackground(bg);
 
-            adView.setNativeAd(nativeAd);
-            admobNativeContainer.addView(adView);
-            admobNativeContainer.setVisibility(View.VISIBLE);
-            appendLog("🖼️ [ADMOB NATIVE VIEW] Registered & Rendered on screen.");
-        } catch (Exception e) {
-            appendLog("❌ [ADMOB NATIVE RENDER ERROR] " + e.getMessage());
+        // Header: Icon + Headline + Advertiser
+        LinearLayout topRow = new LinearLayout(this);
+        topRow.setOrientation(LinearLayout.HORIZONTAL);
+        topRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        ImageView iconView = new ImageView(this);
+        iconView.setLayoutParams(new LinearLayout.LayoutParams(dp(44), dp(44)));
+        nativeAdView.setIconView(iconView);
+        if (nativeAd.getIcon() != null && nativeAd.getIcon().getDrawable() != null) {
+            iconView.setImageDrawable(nativeAd.getIcon().getDrawable());
+            topRow.addView(iconView);
         }
-    }
 
-    private void logAdMobAdapterResponses(ResponseInfo responseInfo) {
-        if (responseInfo == null) return;
-        List<AdapterResponseInfo> adapterList = responseInfo.getAdapterResponses();
-        if (adapterList != null && !adapterList.isEmpty()) {
-            appendLog("📋 [AUCTION ADAPTER RESPONSES (" + adapterList.size() + " bidders)]:");
-            for (AdapterResponseInfo adapterInfo : adapterList) {
-                String adapterClass = adapterInfo.getAdapterClassName();
-                String netName = mapAdapterNameToNetwork(adapterClass);
-                long latency = adapterInfo.getLatencyMillis();
-                AdError adError = adapterInfo.getAdError();
+        LinearLayout titleCol = new LinearLayout(this);
+        titleCol.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+        titleLp.setMarginStart(dp(10));
+        titleCol.setLayoutParams(titleLp);
 
-                if (adError == null) {
-                    appendLog("   ✓ " + netName + " -> WON / FILLED (" + latency + "ms)");
-                } else {
-                    appendLog("   ✗ " + netName + " -> NO FILL (" + adError.getCode() + ": " + adError.getMessage() + ")");
-                }
-            }
+        TextView tvHeadline = new TextView(this);
+        tvHeadline.setText(nativeAd.getHeadline());
+        tvHeadline.setTextColor(Color.WHITE);
+        tvHeadline.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        tvHeadline.setTypeface(null, Typeface.BOLD);
+        nativeAdView.setHeadlineView(tvHeadline);
+        titleCol.addView(tvHeadline);
+
+        if (nativeAd.getAdvertiser() != null) {
+            TextView tvAdv = new TextView(this);
+            tvAdv.setText("Promoted by " + nativeAd.getAdvertiser());
+            tvAdv.setTextColor(Color.parseColor("#9CA3AF"));
+            tvAdv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+            nativeAdView.setAdvertiserView(tvAdv);
+            titleCol.addView(tvAdv);
         }
-    }
+        topRow.addView(titleCol);
+        inner.addView(topRow);
 
-    private String mapAdapterNameToNetwork(String adapterClassName) {
-        if (adapterClassName == null) return "Unknown Mediator";
-        if (adapterClassName.toLowerCase().contains("facebook")) {
-            return "Meta Audience Network (Bidding Winner 🔥)";
-        } else if (adapterClassName.toLowerCase().contains("google") || adapterClassName.contains("MobileAds")) {
-            return "Google AdMob Direct";
-        } else if (adapterClassName.toLowerCase().contains("unity")) {
-            return "Unity Ads";
+        // Body Text
+        if (nativeAd.getBody() != null) {
+            TextView tvBody = new TextView(this);
+            tvBody.setText(nativeAd.getBody());
+            tvBody.setTextColor(Color.parseColor("#D1D5DB"));
+            tvBody.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+            tvBody.setPadding(0, dp(8), 0, dp(8));
+            nativeAdView.setBodyView(tvBody);
+            inner.addView(tvBody);
         }
-        return adapterClassName;
-    }
 
-    private void destroyAdMobMediatedInterstitial() {
-        if (admobMediatedInterstitialAd != null) {
-            admobMediatedInterstitialAd = null;
-        }
-    }
+        // Media Content
+        MediaView mediaView = new MediaView(this);
+        mediaView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(180)));
+        nativeAdView.setMediaView(mediaView);
+        inner.addView(mediaView);
 
-    private void destroyAdMobMediatedRewarded() {
-        if (admobMediatedRewardedAd != null) {
-            admobMediatedRewardedAd = null;
+        // CTA Button
+        if (nativeAd.getCallToAction() != null) {
+            Button btnCta = createButton(nativeAd.getCallToAction().toUpperCase(), "#10B981");
+            nativeAdView.setCallToActionView(btnCta);
+            inner.addView(btnCta);
         }
+
+        nativeAdView.setNativeAd(nativeAd);
+        nativeAdView.addView(inner);
+
+        admobNativeContainer.addView(nativeAdView);
+        admobNativeContainer.setVisibility(View.VISIBLE);
+
+        appendLog("🖼️ [ADMOB NATIVE] Rendered successfully onto dashboard screen!");
     }
 
     private void destroyAdMobMediatedNative() {
@@ -780,9 +669,85 @@ public class AdTestingActivity extends AppCompatActivity {
         }
     }
 
+    private void inspectAdMobResponseInfo(String adType, ResponseInfo responseInfo, TextView statusBadge) {
+        if (responseInfo == null) return;
+
+        String winningAdapter = responseInfo.getMediationAdapterClassName();
+        String winningNetworkName = parseAdapterNetworkName(winningAdapter);
+
+        appendLog("════════════════════════════════════════════");
+        appendLog("🏆 [ADMOB MEDIATION AUCTION RESULT]");
+        appendLog("   Ad Format: " + adType);
+        appendLog("   Response ID: " + responseInfo.getResponseId());
+        appendLog("   WINNING MEDIATION ADAPTER: " + winningAdapter);
+        appendLog("   WINNING NETWORK: " + winningNetworkName.toUpperCase() + " 🔥");
+
+        AdapterResponseInfo loadedAdapter = responseInfo.getLoadedAdapterResponseInfo();
+        if (loadedAdapter != null) {
+            appendLog("   Loaded Ad Source: " + loadedAdapter.getAdSourceName());
+            appendLog("   Latency: " + loadedAdapter.getLatencyMillis() + "ms");
+        }
+
+        if (statusBadge != null) {
+            statusBadge.setText("LOADED (" + winningNetworkName + ")");
+            statusBadge.setTextColor(Color.parseColor("#34D399"));
+        }
+
+        List<AdapterResponseInfo> adapterList = responseInfo.getAdapterResponses();
+        if (adapterList != null && !adapterList.isEmpty()) {
+            appendLog("📊 [AUCTION PARTICIPANTS & BIDS]:");
+            for (AdapterResponseInfo adapterInfo : adapterList) {
+                String network = parseAdapterNetworkName(adapterInfo.getAdapterClassName());
+                long latency = adapterInfo.getLatencyMillis();
+                boolean won = adapterInfo.getAdapterClassName().equals(winningAdapter);
+                appendLog(String.format(
+                        Locale.getDefault(),
+                        "   • %s %s (Latency: %dms, Status: %s)",
+                        (won ? "👑 [WINNER]" : "   [BIDDER]"),
+                        network,
+                        latency,
+                        (adapterInfo.getAdError() == null ? "OK" : "Rejected: " + adapterInfo.getAdError().getMessage())
+                ));
+            }
+        }
+        appendLog("════════════════════════════════════════════");
+    }
+
+    private String parseAdapterNetworkName(String adapterClassName) {
+        if (adapterClassName == null) return "Unknown";
+        String lower = adapterClassName.toLowerCase();
+        if (lower.contains("facebook") || lower.contains("meta")) {
+            return "Meta Audience Network (Bidding)";
+        } else if (lower.contains("admob") || lower.contains("google")) {
+            return "Google AdMob";
+        } else if (lower.contains("unity")) {
+            return "Unity Ads";
+        } else if (lower.contains("applovin")) {
+            return "AppLovin";
+        } else if (lower.contains("ironsource") || lower.contains("levelplay")) {
+            return "ironSource / LevelPlay";
+        }
+        return adapterClassName;
+    }
+
+    private String getAdMobErrorMessage(int errorCode) {
+        switch (errorCode) {
+            case AdRequest.ERROR_CODE_INTERNAL_ERROR:
+                return "INTERNAL_ERROR (0)";
+            case AdRequest.ERROR_CODE_INVALID_REQUEST:
+                return "INVALID_REQUEST (1)";
+            case AdRequest.ERROR_CODE_NETWORK_ERROR:
+                return "NETWORK_ERROR (2)";
+            case AdRequest.ERROR_CODE_NO_FILL:
+                return "NO_FILL (3 - Auction ran, no ad returned from Meta/Google)";
+            default:
+                return "CODE_" + errorCode;
+        }
+    }
+
     private void validateAdMobMetaMediationAdapters() {
         appendLog("════════════════════════════════════════════");
-        appendLog("🩺 [VALIDATING ADMOB + META MEDIATION PIPELINE]");
+        appendLog("🩺 [VALIDATING ADMOB-META MEDIATION INTEGRATION]");
 
         boolean admobSdk = checkClassExists("com.google.android.gms.ads.MobileAds");
         boolean metaSdk = checkClassExists("com.facebook.ads.AudienceNetworkAds");
@@ -1465,15 +1430,224 @@ public class AdTestingActivity extends AppCompatActivity {
         dismissProgress();
         AdManager.getInstance().setDebugAdListener(null);
         AdManager.getInstance().rebindLevelPlayListeners();
-        destroyAdMobMediatedInterstitial();
-        destroyAdMobMediatedRewarded();
-        destroyAdMobMediatedRewardedInterstitial();
-        destroyAdMobMediatedNative();
         if (levelPlayNativeAd != null) {
             levelPlayNativeAd.destroyAd();
             levelPlayNativeAd = null;
         }
+        destroyAdMobMediatedInterstitial();
+        destroyAdMobMediatedRewardedInterstitial();
+        destroyAdMobMediatedNative();
+        destroyDirectMetaInterstitial();
+        destroyDirectMetaRewarded();
     }
+    // =========================================================================
+    // STANDALONE META AUDIENCE NETWORK DIRECT PLACEMENT TESTING
+    // =========================================================================
+
+    private void loadDirectMetaInterstitial() {
+        destroyDirectMetaInterstitial();
+        appendLog("════════════════════════════════════════════");
+        appendLog("📡 [META DIRECT INTERSTITIAL] Requesting placement: " + AdManager.META_INTERSTITIAL_PLACEMENT);
+        if (tvMetaDirectInterStatus != null) {
+            tvMetaDirectInterStatus.setText("LOADING...");
+            tvMetaDirectInterStatus.setTextColor(Color.parseColor("#FBBF24"));
+        }
+        if (btnLoadMetaDirectInter != null) btnLoadMetaDirectInter.setEnabled(false);
+        if (btnShowMetaDirectInter != null) btnShowMetaDirectInter.setEnabled(false);
+
+        metaDirectInterstitial = new InterstitialAd(this, AdManager.META_INTERSTITIAL_PLACEMENT);
+        InterstitialAdListener listener = new InterstitialAdListener() {
+            @Override
+            public void onInterstitialDisplayed(Ad ad) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("📺 [META DIRECT INTERSTITIAL] Displayed on screen.");
+                });
+            }
+
+            @Override
+            public void onInterstitialDismissed(Ad ad) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("👋 [META DIRECT INTERSTITIAL] Dismissed by user.");
+                    if (tvMetaDirectInterStatus != null) {
+                        tvMetaDirectInterStatus.setText("DISMISSED");
+                        tvMetaDirectInterStatus.setTextColor(Color.parseColor("#9CA3AF"));
+                    }
+                    if (btnShowMetaDirectInter != null) btnShowMetaDirectInter.setEnabled(false);
+                    destroyDirectMetaInterstitial();
+                });
+            }
+
+            @Override
+            public void onError(Ad ad, AdError adError) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    if (btnLoadMetaDirectInter != null) btnLoadMetaDirectInter.setEnabled(true);
+                    if (btnShowMetaDirectInter != null) btnShowMetaDirectInter.setEnabled(false);
+                    String msg = adError != null ? adError.getErrorMessage() : "Unknown";
+                    int code = adError != null ? adError.getErrorCode() : -1;
+                    if (tvMetaDirectInterStatus != null) {
+                        tvMetaDirectInterStatus.setText("FAILED (" + code + ")");
+                        tvMetaDirectInterStatus.setTextColor(Color.parseColor("#EF4444"));
+                    }
+                    appendLog("❌ [META DIRECT INTERSTITIAL FAILED] Code " + code + ": " + msg);
+                    Toast.makeText(AdTestingActivity.this, "Meta Error " + code + ": " + msg, Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onAdLoaded(Ad ad) {
+                runOnUiThread(() -> {
+                    if (btnLoadMetaDirectInter != null) btnLoadMetaDirectInter.setEnabled(true);
+                    if (btnShowMetaDirectInter != null) btnShowMetaDirectInter.setEnabled(true);
+                    if (tvMetaDirectInterStatus != null) {
+                        tvMetaDirectInterStatus.setText("READY (Direct Meta Fill 🔥)");
+                        tvMetaDirectInterStatus.setTextColor(Color.parseColor("#34D399"));
+                    }
+                    appendLog("🟢 [META DIRECT INTERSTITIAL READY] Ad loaded directly from Meta servers!");
+                    Toast.makeText(AdTestingActivity.this, "Meta Interstitial Ready!", Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onAdClicked(Ad ad) {
+                runOnUiThread(() -> appendLog("🖱️ [META DIRECT INTERSTITIAL] Clicked by user."));
+            }
+
+            @Override
+            public void onLoggingImpression(Ad ad) {
+                runOnUiThread(() -> appendLog("👁️ [META DIRECT INTERSTITIAL] Impression recorded on Meta server!"));
+            }
+        };
+
+        try {
+            metaDirectInterstitial.loadAd(metaDirectInterstitial.buildLoadAdConfig().withAdListener(listener).build());
+        } catch (Exception e) {
+            appendLog("❌ [META DIRECT LOAD EXCEPTION] " + e.getMessage());
+            if (btnLoadMetaDirectInter != null) btnLoadMetaDirectInter.setEnabled(true);
+        }
+    }
+
+    private void showDirectMetaInterstitial() {
+        if (metaDirectInterstitial != null && metaDirectInterstitial.isAdLoaded() && !metaDirectInterstitial.isAdInvalidated()) {
+            showProgress("Displaying Direct Meta Interstitial...");
+            metaDirectInterstitial.show();
+        } else {
+            Toast.makeText(this, "Meta Interstitial not loaded yet!", Toast.LENGTH_SHORT).show();
+            appendLog("⚠️ [META DIRECT INTERSTITIAL] Cannot show: Ad not ready.");
+        }
+    }
+
+    private void destroyDirectMetaInterstitial() {
+        if (metaDirectInterstitial != null) {
+            try { metaDirectInterstitial.destroy(); } catch (Exception ignored) {}
+            metaDirectInterstitial = null;
+        }
+    }
+
+    private void loadDirectMetaRewarded() {
+        destroyDirectMetaRewarded();
+        appendLog("════════════════════════════════════════════");
+        appendLog("📡 [META DIRECT REWARDED] Requesting placement: " + AdManager.META_REWARDED_PLACEMENT);
+        if (tvMetaDirectRewardedStatus != null) {
+            tvMetaDirectRewardedStatus.setText("LOADING...");
+            tvMetaDirectRewardedStatus.setTextColor(Color.parseColor("#FBBF24"));
+        }
+        if (btnLoadMetaDirectRewarded != null) btnLoadMetaDirectRewarded.setEnabled(false);
+        if (btnShowMetaDirectRewarded != null) btnShowMetaDirectRewarded.setEnabled(false);
+
+        metaDirectRewarded = new RewardedVideoAd(this, AdManager.META_REWARDED_PLACEMENT);
+        RewardedVideoAdListener listener = new RewardedVideoAdListener() {
+            @Override
+            public void onRewardedVideoCompleted() {
+                runOnUiThread(() -> {
+                    appendLog("🎁 [META DIRECT REWARD EARNED] Video completed! Reward unlocked.");
+                    Toast.makeText(AdTestingActivity.this, "🎉 Meta Reward Granted!", Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onLoggingImpression(Ad ad) {
+                runOnUiThread(() -> appendLog("👁️ [META DIRECT REWARDED] Impression logged to Meta server."));
+            }
+
+            @Override
+            public void onRewardedVideoClosed() {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    appendLog("👋 [META DIRECT REWARDED] Video closed.");
+                    if (tvMetaDirectRewardedStatus != null) {
+                        tvMetaDirectRewardedStatus.setText("CLOSED");
+                        tvMetaDirectRewardedStatus.setTextColor(Color.parseColor("#9CA3AF"));
+                    }
+                    if (btnShowMetaDirectRewarded != null) btnShowMetaDirectRewarded.setEnabled(false);
+                    destroyDirectMetaRewarded();
+                });
+            }
+
+            @Override
+            public void onError(Ad ad, AdError adError) {
+                runOnUiThread(() -> {
+                    dismissProgress();
+                    if (btnLoadMetaDirectRewarded != null) btnLoadMetaDirectRewarded.setEnabled(true);
+                    if (btnShowMetaDirectRewarded != null) btnShowMetaDirectRewarded.setEnabled(false);
+                    String msg = adError != null ? adError.getErrorMessage() : "Unknown";
+                    int code = adError != null ? adError.getErrorCode() : -1;
+                    if (tvMetaDirectRewardedStatus != null) {
+                        tvMetaDirectRewardedStatus.setText("FAILED (" + code + ")");
+                        tvMetaDirectRewardedStatus.setTextColor(Color.parseColor("#EF4444"));
+                    }
+                    appendLog("❌ [META DIRECT REWARDED FAILED] Code " + code + ": " + msg);
+                    Toast.makeText(AdTestingActivity.this, "Meta Rewarded Error " + code + ": " + msg, Toast.LENGTH_LONG).show();
+                });
+            }
+
+            @Override
+            public void onAdLoaded(Ad ad) {
+                runOnUiThread(() -> {
+                    if (btnLoadMetaDirectRewarded != null) btnLoadMetaDirectRewarded.setEnabled(true);
+                    if (btnShowMetaDirectRewarded != null) btnShowMetaDirectRewarded.setEnabled(true);
+                    if (tvMetaDirectRewardedStatus != null) {
+                        tvMetaDirectRewardedStatus.setText("READY (Direct Meta Fill 🔥)");
+                        tvMetaDirectRewardedStatus.setTextColor(Color.parseColor("#34D399"));
+                    }
+                    appendLog("🟢 [META DIRECT REWARDED READY] Video loaded directly from Meta!");
+                    Toast.makeText(AdTestingActivity.this, "Meta Rewarded Video Ready!", Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onAdClicked(Ad ad) {
+                runOnUiThread(() -> appendLog("🖱️ [META DIRECT REWARDED] User clicked ad."));
+            }
+        };
+
+        try {
+            metaDirectRewarded.loadAd(metaDirectRewarded.buildLoadAdConfig().withAdListener(listener).build());
+        } catch (Exception e) {
+            appendLog("❌ [META DIRECT LOAD EXCEPTION] " + e.getMessage());
+            if (btnLoadMetaDirectRewarded != null) btnLoadMetaDirectRewarded.setEnabled(true);
+        }
+    }
+
+    private void showDirectMetaRewarded() {
+        if (metaDirectRewarded != null && metaDirectRewarded.isAdLoaded() && !metaDirectRewarded.isAdInvalidated()) {
+            showProgress("Displaying Direct Meta Rewarded Video...");
+            metaDirectRewarded.show();
+        } else {
+            Toast.makeText(this, "Meta Rewarded Video not loaded yet!", Toast.LENGTH_SHORT).show();
+            appendLog("⚠️ [META DIRECT REWARDED] Cannot show: Ad not ready.");
+        }
+    }
+
+    private void destroyDirectMetaRewarded() {
+        if (metaDirectRewarded != null) {
+            try { metaDirectRewarded.destroy(); } catch (Exception ignored) {}
+            metaDirectRewarded = null;
+        }
+    }
+
 
     // =========================================================================
     // UI BUILDER (Modern Dark Dashboard with AdMob Mediation & LevelPlay)
@@ -1519,14 +1693,13 @@ public class AdTestingActivity extends AppCompatActivity {
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(16), dp(16), dp(16), dp(32));
 
-        String activeEmail = TokenManager.getInstance(this).getUserEmail();
-        boolean isTester = activeEmail != null && "jainmohit8120@gmail.com".equalsIgnoreCase(activeEmail.trim());
 
-        // ─────────────────────────────────────────────────────────────────────
-        // CARD 1: GOOGLE ADMOB MEDIATION (ADMOB MAIN MEDIATOR + META BIDDING)
+
+                // ─────────────────────────────────────────────────────────────────────
+        // CARD 1: GOOGLE ADMOB MEDIATION (WITH META AUDIENCE NETWORK BIDDING)
         // ─────────────────────────────────────────────────────────────────────
         LinearLayout cardAdMobMediation = createCard();
-        cardAdMobMediation.addView(createSectionHeader("🔥 Google AdMob Mediation (AdMob Main Mediator)"));
+        cardAdMobMediation.addView(createSectionHeader("🔥 Google AdMob Mediation (Meta Bidding 1-Active)"));
 
         LinearLayout rowAdMobSdk = new LinearLayout(this);
         rowAdMobSdk.setOrientation(LinearLayout.HORIZONTAL);
@@ -1543,11 +1716,11 @@ public class AdTestingActivity extends AppCompatActivity {
         rowAdMobSdk.addView(tvAdMobSdkStatus);
         cardAdMobMediation.addView(rowAdMobSdk);
 
-        Button btnValidateAdMob = createButton("🩺 Verify AdMob-Meta Mediation Adapters", "#3B82F6");
+        Button btnValidateAdMob = createButton("🩺 Verify AdMob-Meta Mediation Pipeline", "#3B82F6");
         btnValidateAdMob.setOnClickListener(v -> validateAdMobMetaMediationAdapters());
         cardAdMobMediation.addView(btnValidateAdMob);
 
-        Button btnOpenInspector = createButton("🔍 Open AdMob Ad Inspector (Mediation Diagnostics)", "#4F46E5");
+        Button btnOpenInspector = createButton("🔍 Open AdMob Ad Inspector (Live Diagnostics)", "#4F46E5");
         btnOpenInspector.setOnClickListener(v -> openAdMobInspector());
         cardAdMobMediation.addView(btnOpenInspector);
 
@@ -1577,33 +1750,7 @@ public class AdTestingActivity extends AppCompatActivity {
         rowInterBtns.addView(btnShowAdMobInter);
         cardAdMobMediation.addView(rowInterBtns);
 
-        // 1.B AdMob Mediated Rewarded
-        cardAdMobMediation.addView(createSubHeader("🎁 AdMob Rewarded (" + ADMOB_MEDIATION_REWARDED.substring(ADMOB_MEDIATION_REWARDED.length() - 10) + ")"));
-        tvAdMobRewardedStatus = createStatusBadge("NOT LOADED");
-        cardAdMobMediation.addView(tvAdMobRewardedStatus);
-
-        LinearLayout rowRewBtns = new LinearLayout(this);
-        rowRewBtns.setOrientation(LinearLayout.HORIZONTAL);
-        rowRewBtns.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        btnLoadAdMobRewarded = createButton("1. Load Rewarded", "#8B5CF6");
-        LinearLayout.LayoutParams pLoadRew = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
-        pLoadRew.setMarginEnd(dp(6));
-        btnLoadAdMobRewarded.setLayoutParams(pLoadRew);
-        btnLoadAdMobRewarded.setOnClickListener(v -> loadAdMobMediatedRewarded());
-
-        btnShowAdMobRewarded = createButton("2. Show Rewarded", "#10B981");
-        LinearLayout.LayoutParams pShowRew = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
-        pShowRew.setMarginStart(dp(6));
-        btnShowAdMobRewarded.setLayoutParams(pShowRew);
-        btnShowAdMobRewarded.setEnabled(false);
-        btnShowAdMobRewarded.setOnClickListener(v -> showAdMobMediatedRewarded());
-
-        rowRewBtns.addView(btnLoadAdMobRewarded);
-        rowRewBtns.addView(btnShowAdMobRewarded);
-        cardAdMobMediation.addView(rowRewBtns);
-
-        // 1.C AdMob Mediated Rewarded Interstitial
+        // 1.B AdMob Mediated Rewarded Interstitial
         cardAdMobMediation.addView(createSubHeader("💎 AdMob Rewarded Interstitial (" + ADMOB_MEDIATION_REWARDED_INTERSTITIAL.substring(ADMOB_MEDIATION_REWARDED_INTERSTITIAL.length() - 10) + ")"));
         tvAdMobRewardedInterStatus = createStatusBadge("NOT LOADED");
         cardAdMobMediation.addView(tvAdMobRewardedInterStatus);
@@ -1629,12 +1776,12 @@ public class AdTestingActivity extends AppCompatActivity {
         rowRewInterBtns.addView(btnShowAdMobRewardedInter);
         cardAdMobMediation.addView(rowRewInterBtns);
 
-        // 1.D AdMob Mediated Native
-        cardAdMobMediation.addView(createSubHeader("🖼️ AdMob Native (" + ADMOB_MEDIATION_NATIVE.substring(ADMOB_MEDIATION_NATIVE.length() - 10) + ")"));
+        // 1.C AdMob Mediated Native Advanced
+        cardAdMobMediation.addView(createSubHeader("🖼️ AdMob Native Advanced (" + ADMOB_MEDIATION_NATIVE.substring(ADMOB_MEDIATION_NATIVE.length() - 10) + ")"));
         tvAdMobNativeStatus = createStatusBadge("NOT LOADED");
         cardAdMobMediation.addView(tvAdMobNativeStatus);
 
-        btnLoadAdMobNative = createButton("Load & Render AdMob Native", "#EC4899");
+        btnLoadAdMobNative = createButton("Load & Render AdMob Native (Meta Bidding)", "#EC4899");
         btnLoadAdMobNative.setOnClickListener(v -> loadAdMobMediatedNative());
         cardAdMobMediation.addView(btnLoadAdMobNative);
 
@@ -1671,11 +1818,9 @@ public class AdTestingActivity extends AppCompatActivity {
         btnValidate.setOnClickListener(v -> runIntegrationValidator());
         cardLevelPlay.addView(btnValidate);
 
-        if (isTester) {
-            Button btnTestSuite = createButton("🚀 Launch LevelPlay Test Suite", "#6366F1");
-            btnTestSuite.setOnClickListener(v -> AdManager.getInstance().launchTestSuite(this));
-            cardLevelPlay.addView(btnTestSuite);
-        }
+        Button btnTestSuite = createButton("🚀 Launch LevelPlay Test Suite", "#6366F1");
+        btnTestSuite.setOnClickListener(v -> AdManager.getInstance().launchTestSuite(this));
+        cardLevelPlay.addView(btnTestSuite);
 
         tvDualAuctionWinner = createStatusBadge("🏆 HIGHEST BIDDER: Checking auctions...");
         tvDualAuctionWinner.setTextColor(Color.parseColor("#38BDF8"));
@@ -1728,7 +1873,90 @@ public class AdTestingActivity extends AppCompatActivity {
         content.addView(cardLevelPlay);
 
         // ─────────────────────────────────────────────────────────────────────
-        // CARD 3: REAL-TIME CONSOLE
+        // CARD 2: LEVELPLAY NATIVE AD (RANDOM VIDEO CALL SEARCH)
+        // ─────────────────────────────────────────────────────────────────────
+        LinearLayout cardNative = createCard();
+        cardNative.addView(createSectionHeader("🖼️ LevelPlay Native Ad (Random Call Search)"));
+        cardNative.addView(createSubText("Placement ID: " + AdManager.LEVELPLAY_NATIVE_ID + " (Preloaded in ConnectingActivity)"));
+
+        tvNativeStatus = createStatusBadge("NOT LOADED");
+        cardNative.addView(tvNativeStatus);
+
+        btnLoadNative = createButton("Load & Render LevelPlay Native Ad", "#EC4899");
+        btnLoadNative.setOnClickListener(v -> loadNativeAd());
+        cardNative.addView(btnLoadNative);
+
+        nativeAdContainer = new FrameLayout(this);
+        nativeAdContainer.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        nativeAdContainer.setVisibility(View.GONE);
+        nativeAdContainer.setPadding(0, dp(10), 0, 0);
+        cardNative.addView(nativeAdContainer);
+
+        content.addView(cardNative);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // CARD 3: STANDALONE META AUDIENCE NETWORK DIRECT TESTING
+        // ─────────────────────────────────────────────────────────────────────
+        LinearLayout cardMetaDirect = createCard();
+        cardMetaDirect.addView(createSectionHeader("🌐 Meta Audience Network (Direct Placements)"));
+        cardMetaDirect.addView(createSubText("Bypasses mediation to verify Meta server delivery directly"));
+
+        // Direct Interstitial
+        cardMetaDirect.addView(createSubHeader("🎬 Meta Direct Interstitial (1063416116506979)"));
+        tvMetaDirectInterStatus = createStatusBadge("NOT LOADED");
+        cardMetaDirect.addView(tvMetaDirectInterStatus);
+
+        LinearLayout rowMetaInterBtns = new LinearLayout(this);
+        rowMetaInterBtns.setOrientation(LinearLayout.HORIZONTAL);
+        rowMetaInterBtns.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        btnLoadMetaDirectInter = createButton("1. Load Meta Interstitial", "#0284C7");
+        LinearLayout.LayoutParams pLoadMetaInter = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
+        pLoadMetaInter.setMarginEnd(dp(6));
+        btnLoadMetaDirectInter.setLayoutParams(pLoadMetaInter);
+        btnLoadMetaDirectInter.setOnClickListener(v -> loadDirectMetaInterstitial());
+
+        btnShowMetaDirectInter = createButton("2. Show Meta Interstitial", "#10B981");
+        LinearLayout.LayoutParams pShowMetaInter = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
+        pShowMetaInter.setMarginStart(dp(6));
+        btnShowMetaDirectInter.setLayoutParams(pShowMetaInter);
+        btnShowMetaDirectInter.setEnabled(false);
+        btnShowMetaDirectInter.setOnClickListener(v -> showDirectMetaInterstitial());
+
+        rowMetaInterBtns.addView(btnLoadMetaDirectInter);
+        rowMetaInterBtns.addView(btnShowMetaDirectInter);
+        cardMetaDirect.addView(rowMetaInterBtns);
+
+        // Direct Rewarded
+        cardMetaDirect.addView(createSubHeader("🎁 Meta Direct Rewarded (1063416119840312)"));
+        tvMetaDirectRewardedStatus = createStatusBadge("NOT LOADED");
+        cardMetaDirect.addView(tvMetaDirectRewardedStatus);
+
+        LinearLayout rowMetaRewBtns = new LinearLayout(this);
+        rowMetaRewBtns.setOrientation(LinearLayout.HORIZONTAL);
+        rowMetaRewBtns.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        btnLoadMetaDirectRewarded = createButton("1. Load Meta Rewarded", "#8B5CF6");
+        LinearLayout.LayoutParams pLoadMetaRew = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
+        pLoadMetaRew.setMarginEnd(dp(6));
+        btnLoadMetaDirectRewarded.setLayoutParams(pLoadMetaRew);
+        btnLoadMetaDirectRewarded.setOnClickListener(v -> loadDirectMetaRewarded());
+
+        btnShowMetaDirectRewarded = createButton("2. Show Meta Rewarded", "#10B981");
+        LinearLayout.LayoutParams pShowMetaRew = new LinearLayout.LayoutParams(0, dp(44), 1.0f);
+        pShowMetaRew.setMarginStart(dp(6));
+        btnShowMetaDirectRewarded.setLayoutParams(pShowMetaRew);
+        btnShowMetaDirectRewarded.setEnabled(false);
+        btnShowMetaDirectRewarded.setOnClickListener(v -> showDirectMetaRewarded());
+
+        rowMetaRewBtns.addView(btnLoadMetaDirectRewarded);
+        rowMetaRewBtns.addView(btnShowMetaDirectRewarded);
+        cardMetaDirect.addView(rowMetaRewBtns);
+
+        content.addView(cardMetaDirect);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // CARD 4: REAL-TIME CONSOLE
         // ─────────────────────────────────────────────────────────────────────
         LinearLayout cardLogs = createCard();
         LinearLayout rowLogHeader = new LinearLayout(this);

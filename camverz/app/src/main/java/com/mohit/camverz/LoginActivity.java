@@ -298,12 +298,24 @@ public class LoginActivity extends BaseActivity {
                         .build();
                 mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
             }
-            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-            if (googleSignInLauncher != null) {
-                googleSignInLauncher.launch(signInIntent);
-            } else {
-                startActivityForResult(signInIntent, RC_SIGN_IN);
-            }
+            // Always sign out prior cached session so the Google Account Picker dialog
+            // ALWAYS appears, allowing the user to select their desired account every time
+            mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
+                try {
+                    Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+                    if (googleSignInLauncher != null) {
+                        googleSignInLauncher.launch(signInIntent);
+                    } else {
+                        startActivityForResult(signInIntent, RC_SIGN_IN);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error launching Google Sign-In intent", e);
+                    cancelWatchdog();
+                    isSigningIn = false;
+                    hideLoadingState();
+                    Toast.makeText(LoginActivity.this, "Sign-in error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error starting Google Sign-In intent", e);
             cancelWatchdog();
@@ -370,6 +382,9 @@ public class LoginActivity extends BaseActivity {
         } catch (ApiException e) {
             Log.w(TAG, "❌ Google sign in status code: " + e.getStatusCode(), e);
             hideLoadingState();
+            if (mGoogleSignInClient != null) {
+                try { mGoogleSignInClient.signOut(); } catch (Exception ignored) {}
+            }
             if (e.getStatusCode() == 12501) {
                 // SIGN_IN_CANCELLED: User dismissed the account selection dialog — dismiss spinner silently
                 Log.d(TAG, "User dismissed Google Sign In picker dialog.");
@@ -533,6 +548,9 @@ public class LoginActivity extends BaseActivity {
                     } else {
                         Log.w(TAG, "❌ Backend auth response not ok");
                         hideLoadingState();
+                        if (mGoogleSignInClient != null) {
+                            try { mGoogleSignInClient.signOut(); } catch (Exception ignored) {}
+                        }
                         runOnUiThread(() ->
                                 Toast.makeText(LoginActivity.this, "Authentication failed", Toast.LENGTH_SHORT).show()
                         );
@@ -540,6 +558,9 @@ public class LoginActivity extends BaseActivity {
                 } else {
                     Log.w(TAG, "❌ Backend auth failed: " + response.code());
                     hideLoadingState();
+                    if (mGoogleSignInClient != null) {
+                        try { mGoogleSignInClient.signOut(); } catch (Exception ignored) {}
+                    }
                     String errorMsg = "Authentication failed";
                     if (response.code() == 403) {
                         try {
@@ -557,7 +578,10 @@ public class LoginActivity extends BaseActivity {
                         new androidx.appcompat.app.AlertDialog.Builder(LoginActivity.this)
                                 .setTitle("Access Denied")
                                 .setMessage(finalMsg)
-                                .setPositiveButton("OK", null)
+                                .setPositiveButton("Choose Another Account", (dialog, which) -> {
+                                    signInWithGoogle();
+                                })
+                                .setNegativeButton("Cancel", null)
                                 .show();
                     });
                 }

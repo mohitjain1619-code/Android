@@ -393,10 +393,8 @@ public class MainScreenActivity extends BaseActivity {
         PopupMenu popup = new PopupMenu(wrapper, view);
         popup.getMenuInflater().inflate(R.menu.top_menu, popup.getMenu());
 
-        if (tokenManager != null && "jainmohit8120@gmail.com".equalsIgnoreCase(tokenManager.getUserEmail())) {
-            popup.getMenu().add(0, 9998, 0, "📊 Ad Testing Dashboard");
-            popup.getMenu().add(0, 9999, 0, "🛠️ LevelPlay Test Suite (Meta)");
-        }
+        // Ad Testing Dashboard enabled globally for device testing from Play Store
+        popup.getMenu().add(0, 9998, 0, "📊 Ad Testing Dashboard");
 
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();

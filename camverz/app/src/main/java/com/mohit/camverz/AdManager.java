@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import android.widget.Toast;
 import com.facebook.ads.Ad;
 import com.facebook.ads.AdError;
+import com.facebook.ads.AdSettings;
 import com.facebook.ads.AudienceNetworkAds;
 import com.facebook.ads.InterstitialAd;
 import com.facebook.ads.InterstitialAdListener;
@@ -184,8 +185,9 @@ public class AdManager {
 
         // 2. Initialize Meta Audience Network SDK for bidding & direct fallback
         try {
+            AdSettings.addTestDevice("b94e5118-43fc-4881-b07b-0ecf44bbb6ee");
             AudienceNetworkAds.initialize(appContext);
-            Log.d(TAG, "✅ Meta Audience Network SDK Initialized");
+            Log.d(TAG, "✅ Meta Audience Network SDK Initialized (Test Device GAID: b94e5118-43fc-4881-b07b-0ecf44bbb6ee)");
         } catch (Exception e) {
             Log.e(TAG, "Error initializing Meta Audience Network", e);
         }
@@ -266,7 +268,9 @@ public class AdManager {
      * Applies Meta test device hash for registered Realme & test devices.
      */
     public static void applyMetaTestDeviceHash(Context context) {
-        // Clean production mode - no hardcoded test devices
+        try {
+            AdSettings.addTestDevice("b94e5118-43fc-4881-b07b-0ecf44bbb6ee");
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -278,18 +282,12 @@ public class AdManager {
 
     /**
      * Launches the official Unity LevelPlay Integration Test Suite.
-     * Strictly restricted to jainmohit8120@gmail.com.
+     * Accessible globally for device testing.
      */
     public void launchTestSuite(Activity activity) {
         if (activity == null) return;
         try {
-            String email = TokenManager.getInstance(activity).getUserEmail();
-            if (email == null || !"jainmohit8120@gmail.com".equalsIgnoreCase(email.trim())) {
-                Toast.makeText(activity, "⚠️ LevelPlay Test Suite is only allowed for jainmohit8120@gmail.com", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            Log.d(TAG, "🚀 Launching LevelPlay Integration Test Suite for " + email);
+            Log.d(TAG, "🚀 Launching LevelPlay Integration Test Suite");
             IronSource.launchTestSuite(activity);
         } catch (Exception e) {
             Log.e(TAG, "Error launching LevelPlay Test Suite", e);
