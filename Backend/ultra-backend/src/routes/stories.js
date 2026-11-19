@@ -69,7 +69,21 @@ router.get("/active", async (req, res) => {
     );
 
     const grouped = {};
-    rows.forEach(r => {
+    for (const r of rows) {
+      // Validate local media existence if type is IMAGE or VIDEO
+      if ((r.type === "IMAGE" || r.type === "VIDEO") && r.media_url) {
+        let cleanMedia = r.media_url.replace(/^\/+/, "");
+        if (cleanMedia.startsWith("uploads/")) {
+          const diskPath = path.join(__dirname, "../../", cleanMedia);
+          if (!fs.existsSync(diskPath)) {
+            // File does not exist on disk (e.g. wiped after host restart)
+            // Prune orphaned row from DB asynchronously so it never causes 404 again
+            query("DELETE FROM stories WHERE id = $1", [r.id]).catch(() => {});
+            continue;
+          }
+        }
+      }
+
       const uId = r.user_id;
       if (!grouped[uId]) {
         grouped[uId] = {
@@ -94,7 +108,7 @@ router.get("/active", async (req, res) => {
         createdAt: new Date(r.created_at).getTime(),
         expiresAt: new Date(r.expires_at).getTime()
       });
-    });
+    }
 
     res.json({ ok: true, usersWithStories: Object.values(grouped) });
   } catch (err) {

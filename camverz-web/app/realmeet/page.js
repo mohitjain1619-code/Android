@@ -75,9 +75,16 @@ function RealMeetContent() {
   const { user, userData, loading: authLoading, setShowLogin, setShowAppRedirect } = useAuth();
   const searchParams = useSearchParams();
   const action = searchParams.get('action');
+  const urlTab = searchParams.get('tab');
   
   // Selected Tab: 'meet' | 'party' | 'fantasy'
-  const [activeTab, setActiveTab] = useState('meet');
+  const [activeTab, setActiveTab] = useState(urlTab && ['meet', 'party', 'fantasy'].includes(urlTab) ? urlTab : 'meet');
+
+  useEffect(() => {
+    if (urlTab && ['meet', 'party', 'fantasy'].includes(urlTab)) {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
   const [loading, setLoading] = useState(true);
   const [stories, setStories] = useState([]);
   const [showUploadStory, setShowUploadStory] = useState(false);

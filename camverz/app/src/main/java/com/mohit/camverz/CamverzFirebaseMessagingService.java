@@ -123,6 +123,10 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
                 channelId = NotificationHelper.CHANNEL_MARKETING;
                 priority = NotificationCompat.PRIORITY_DEFAULT;
                 category = NotificationCompat.CATEGORY_PROMO;
+            } else if ("realmeet_request".equalsIgnoreCase(type) || "realmeet_accepted".equalsIgnoreCase(type)) {
+                channelId = NotificationHelper.CHANNEL_SOCIAL;
+                priority = NotificationCompat.PRIORITY_HIGH;
+                category = NotificationCompat.CATEGORY_SOCIAL;
             } else {
                 channelId = NotificationHelper.CHANNEL_SOCIAL;
                 priority = NotificationCompat.PRIORITY_DEFAULT;
@@ -245,7 +249,7 @@ public class CamverzFirebaseMessagingService extends FirebaseMessagingService {
             intent.putExtra("isPrivateCall", true);
             intent.putExtra("roomName", room);
         } else if ("realmeet_request".equalsIgnoreCase(type) || "realmeet_accepted".equalsIgnoreCase(type)) {
-            intent = new Intent(this, RealMeetActivity.class);
+            intent = new Intent(this, CommunityNotificationActivity.class);
         } else if ("friend_request".equalsIgnoreCase(type)) {
             intent = new Intent(this, ProfileActivity.class);
             String fromUserId = data.get("fromUserId");

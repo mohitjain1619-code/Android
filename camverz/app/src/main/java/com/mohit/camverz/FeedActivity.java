@@ -6,6 +6,9 @@ import android.view.View;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+import com.mohit.camverz.OnboardingTourManager;
+import com.mohit.camverz.SpotlightOverlayView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,7 +36,6 @@ public class FeedActivity extends BaseActivity {
 
     private static final String TAG = "FeedActivity";
     private RecyclerView postsRecyclerView;
-    private FloatingActionButton fabCreatePost;
     private TextView filterAll, filterMale, filterFemale;
     private SwipeRefreshLayout swipeRefreshLayout;
 
@@ -62,7 +64,38 @@ public class FeedActivity extends BaseActivity {
         tokenManager = TokenManager.getInstance(this);
 
         // Back button
-        findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
+        findViewById(R.id.back_button_container).setOnClickListener(v -> {
+            int stage = OnboardingTourManager.getInstance(this).getTourStage(this);
+            if (stage == OnboardingTourManager.STAGE_FEED_POST) {
+                Toast.makeText(this, "Please create your first post to continue 👉", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (stage == OnboardingTourManager.STAGE_RETURN_HOME) {
+                OnboardingTourManager.getInstance(this).setTourStage(this, OnboardingTourManager.STAGE_RANDOM_CALL);
+                SpotlightOverlayView.detach(this);
+                finish();
+                return;
+            }
+            finish();
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                int stage = OnboardingTourManager.getInstance(FeedActivity.this).getTourStage(FeedActivity.this);
+                if (stage == OnboardingTourManager.STAGE_FEED_POST) {
+                    Toast.makeText(FeedActivity.this, "Please create your first post to continue 👉", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (stage == OnboardingTourManager.STAGE_RETURN_HOME) {
+                    OnboardingTourManager.getInstance(FeedActivity.this).setTourStage(FeedActivity.this, OnboardingTourManager.STAGE_RANDOM_CALL);
+                    SpotlightOverlayView.detach(FeedActivity.this);
+                    finish();
+                    return;
+                }
+                finish();
+            }
+        });
 
         // Create Post Button
         findViewById(R.id.fab_create_post).setOnClickListener(v -> {
@@ -158,6 +191,42 @@ public class FeedActivity extends BaseActivity {
         super.onResume();
         AdManager.getInstance().preloadDualBiddingAds(this);
         fetchPosts();
+        checkAndShowTourSpotlight();
+    }
+
+    private void checkAndShowTourSpotlight() {
+        int stage = OnboardingTourManager.getInstance(this).getTourStage(this);
+        if (stage == OnboardingTourManager.STAGE_FEED_POST) {
+            View fabCreate = findViewById(R.id.fab_create_post);
+            if (fabCreate != null) {
+                fabCreate.post(() -> {
+                    SpotlightOverlayView.attach(this, fabCreate,
+                            "Tap to create a post",
+                            true, android.graphics.Color.parseColor("#00FFFF"), () -> {
+                                SpotlightOverlayView.detach(this);
+                                Intent createIntent = new Intent(this, CreatePostActivity.class);
+                                createIntent.putExtra("is_onboarding_post", true);
+                                startActivity(createIntent);
+                                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                            });
+                });
+            }
+        } else if (stage == OnboardingTourManager.STAGE_RETURN_HOME) {
+            View backBtn = findViewById(R.id.back_button_container);
+            if (backBtn != null) {
+                backBtn.post(() -> {
+                    SpotlightOverlayView.attach(this, backBtn,
+                            "Tap to return to Home",
+                            true, android.graphics.Color.parseColor("#10B981"), () -> {
+                                OnboardingTourManager.getInstance(this).setTourStage(this, OnboardingTourManager.STAGE_RANDOM_CALL);
+                                SpotlightOverlayView.detach(this);
+                                finish();
+                            });
+                });
+            }
+        } else {
+            SpotlightOverlayView.detach(this);
+        }
     }
 
     private void setCategory(String category) {

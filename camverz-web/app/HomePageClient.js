@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useRef, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { Video, Shield, Users, Globe, Heart, Zap, ArrowRight, Star, Lock, Sparkles, MessageSquare, UserCheck, Smartphone, QrCode, AlertCircle, Download } from 'lucide-react';
+import { Video, Shield, Users, Globe, Heart, Zap, ArrowRight, Star, Lock, Sparkles, MessageSquare, UserCheck, Smartphone, QrCode, AlertCircle, Download, MapPin, Flame } from 'lucide-react';
 import styles from './page.module.css';
 
 function HomeContent() {
@@ -108,12 +109,12 @@ function HomeContent() {
   };
 
   const features = [
-    { icon: Sparkles, title: 'Real Meet & Party Host', desc: 'Host or discover real-world meetups, house parties, coffee hangouts, and events with real-time join requests & party approvals.' },
-    { icon: Video, title: 'Instant 1-on-1 Video Match', desc: 'Get matched instantly in live face-to-face video calls with Straight, Gay, or Lesbian orientation filtering.' },
-    { icon: Users, title: 'Stories & Community Feed', desc: 'Post daily stories, share social updates, like & comment on community posts, and engage with verified creators.' },
-    { icon: UserCheck, title: 'Verified Profiles & Anti-Catfish', desc: 'Gender-verified members and AI profile checks ensure 100% authentic real-people connections with no fake bots.' },
-    { icon: MessageSquare, title: 'Private Direct Messaging', desc: 'Send direct messages, coordinate party invites, and keep in touch with your matches through real-time chat.' },
-    { icon: Lock, title: 'Strict Zero-Nudity & P2P Privacy', desc: '24/7 AI moderation, screenshot blocking, and encrypted peer-to-peer WebRTC calls with zero server recordings.' },
+    { icon: Sparkles, title: 'RealMeet & Party Host', desc: 'Host or join real-world dates, nightlife events, private house parties, and club hangouts with instant join requests.' },
+    { icon: Video, title: 'Instant Random Video Match', desc: 'Tap once to connect live 1-on-1 with strangers. Filter by Straight (opposite gender), Gay, or Lesbian matching.' },
+    { icon: Heart, title: 'Fantasy & Open Dating', desc: 'Explore bold desires, secret fantasies, and connect discreetly with open-minded adults in your city.' },
+    { icon: UserCheck, title: 'Verified Profiles & Anti-Catfish', desc: 'Face gesture verification ensures 100% genuine girls and boys on camera. Zero bots, zero fake profiles.' },
+    { icon: Users, title: 'Stories & Community Feed', desc: 'Post daily stories, share photos, like and comment on community posts, and chat directly with verified members.' },
+    { icon: Lock, title: '18+ Private & Anti-Screenshot', desc: 'Hardware-level screenshot and screen recording blocking with peer-to-peer WebRTC encryption for complete privacy.' },
   ];
 
   return (
@@ -123,20 +124,25 @@ function HomeContent() {
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
             <Zap size={14} />
-            <span>Social Media & Live Connection Network</span>
+            <span>🔥 18+ Live Random Video Chat & Real Meet Dating</span>
           </div>
           <h1 className={styles.heroTitle}>
-            Connect & Socialize<br />
-            Through <span className="neon-text">Live Video Chat</span>
+            Live Random Video Chat<br />
+            & <span className="neon-text">RealMeet Party Dating</span>
           </h1>
           <p className={styles.heroDesc}>
-            Discover new friends, join inclusive LGBTQ+ social circles, share stories, and build real-time connections worldwide through instant 1-on-1 video chat.
+            Instant 1-on-1 video calls with verified girls & boys worldwide. Plan real-world dates, attend wild house parties, and explore open fantasies — 100% anti-screenshot safe.
           </p>
           <div className={styles.heroBtns}>
             <button className="btn-neon" onClick={() => handleStartCall('straight')}>
-              <Video size={18} /> Start Calling <ArrowRight size={16} />
+              <Video size={18} /> Random Video Match <ArrowRight size={16} />
             </button>
-            <a href="#features" className="btn-glass">Learn More</a>
+            <Link href="/realmeet?tab=party" className="btn-glass" style={{ borderColor: 'rgba(255, 0, 110, 0.4)', color: '#FF006E' }}>
+              <Flame size={18} /> Real House Parties
+            </Link>
+            <Link href="/realmeet?tab=meet" className="btn-glass" style={{ borderColor: 'rgba(0, 229, 255, 0.4)', color: '#00E5FF' }}>
+              <MapPin size={18} /> Real Meet Dating
+            </Link>
           </div>
         </div>
         <div className={styles.heroVisual}>
@@ -155,13 +161,13 @@ function HomeContent() {
         <div className="section">
           <div className="section-title">
             <h2>Choose Your Preference</h2>
-            <p>Select a category to get matched with the right people</p>
+            <p>Instant 1-on-1 live video match with real people</p>
           </div>
           <div className={styles.prefGrid}>
             {[
-              { key: 'straight', emoji: '💑', label: 'Straight', desc: 'Male & Female matching', color: '#FF006E' },
-              { key: 'gay', emoji: '👨‍❤️‍👨', label: 'Gay', desc: 'Male only matching', color: '#2979FF' },
-              { key: 'lesbian', emoji: '👩‍❤️‍👩', label: 'Lesbian', desc: 'Female only matching', color: '#BD00FF' },
+              { key: 'straight', emoji: '💑', label: 'Straight', desc: 'Girls & Boys 1-on-1 Video Match', color: '#FF006E' },
+              { key: 'gay', emoji: '👨‍❤️‍👨', label: 'Gay', desc: 'Male 1-on-1 Video Chat & Dating', color: '#2979FF' },
+              { key: 'lesbian', emoji: '👩‍❤️‍👩', label: 'Lesbian', desc: 'Female 1-on-1 Video Chat & Dating', color: '#BD00FF' },
             ].map(cat => (
               <button
                 key={cat.key}
@@ -179,6 +185,94 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* Real House Party & Real Meet Showcase */}
+      <section className={styles.showcaseSection} id="realmeet-modes">
+        <div className="section">
+          <div className="section-title">
+            <span className={styles.showcaseBadge}>🔥 OFFLINE &amp; REAL WORLD</span>
+            <h2>Real House Parties &amp; Real Meet Dating</h2>
+            <p>Don&apos;t just talk on camera — take your connection to the real world</p>
+          </div>
+
+          <div className={styles.showcaseGrid}>
+            {/* Mode 1: Real House Party */}
+            <div className={`${styles.showcaseCard} ${styles.cardParty}`}>
+              <div className={styles.showcaseCardGlow} />
+              <div className={styles.showcaseHeader}>
+                <div className={styles.showcaseIconWrap} style={{ background: 'rgba(255, 0, 110, 0.15)', color: '#FF006E' }}>
+                  <Flame size={28} />
+                </div>
+                <span className={styles.showcasePill} style={{ background: 'rgba(255, 0, 110, 0.2)', color: '#FF006E' }}>
+                  🎉 PARTY HOST
+                </span>
+              </div>
+              <h3>Real House Parties &amp; Nightlife</h3>
+              <p>
+                Host private house parties, villa pool bashes, rooftop mixers, or nightlife clubbing in your city. Review guest join requests, approve who enters, and coordinate BYOB and vibes.
+              </p>
+              <ul className={styles.perkList}>
+                <li><span>👑</span> Host Approvals &amp; Verified Guest List</li>
+                <li><span>📍</span> Secret Venue Address Revealed on Approval</li>
+                <li><span>🍾</span> BYOB, Music, Pool Parties &amp; Club Passes</li>
+              </ul>
+              <Link href="/realmeet?tab=party" className={`${styles.showcaseBtn} ${styles.btnParty}`}>
+                Explore Real House Parties <ArrowRight size={16} />
+              </Link>
+            </div>
+
+            {/* Mode 2: Real Meet */}
+            <div className={`${styles.showcaseCard} ${styles.cardMeet}`}>
+              <div className={styles.showcaseCardGlow} />
+              <div className={styles.showcaseHeader}>
+                <div className={styles.showcaseIconWrap} style={{ background: 'rgba(0, 229, 255, 0.15)', color: '#00E5FF' }}>
+                  <MapPin size={28} />
+                </div>
+                <span className={styles.showcasePill} style={{ background: 'rgba(0, 229, 255, 0.2)', color: '#00E5FF' }}>
+                  ☕ 1-ON-1 CITY DATING
+                </span>
+              </div>
+              <h3>Real Meet 1-on-1 Hangouts</h3>
+              <p>
+                Take connection from screen to real life. Post or discover 1-on-1 city hangouts: coffee dates, drinks, dinner, late-night drives, or casual weekend exploration with face-verified singles.
+              </p>
+              <ul className={styles.perkList}>
+                <li><span>💑</span> 1-on-1 Offline Dating with Verified Profiles</li>
+                <li><span>🚫</span> Anti-Catfish: Face-Verified Members Only</li>
+                <li><span>💬</span> Direct Private Requests &amp; Real-Time Chats</li>
+              </ul>
+              <Link href="/realmeet?tab=meet" className={`${styles.showcaseBtn} ${styles.btnMeet}`}>
+                Find Real Meet Dates <ArrowRight size={16} />
+              </Link>
+            </div>
+
+            {/* Mode 3: Fantasy Meetups */}
+            <div className={`${styles.showcaseCard} ${styles.cardFantasy}`}>
+              <div className={styles.showcaseCardGlow} />
+              <div className={styles.showcaseHeader}>
+                <div className={styles.showcaseIconWrap} style={{ background: 'rgba(189, 0, 255, 0.15)', color: '#BD00FF' }}>
+                  <Sparkles size={28} />
+                </div>
+                <span className={styles.showcasePill} style={{ background: 'rgba(189, 0, 255, 0.2)', color: '#BD00FF' }}>
+                  🔮 SECRET FANTASY
+                </span>
+              </div>
+              <h3>Fantasy &amp; Secret Desires</h3>
+              <p>
+                Connect discreetly with open-minded adults who share your exact desires. No judgment, no superficial fluff — express your wild fantasies and connect with like-minded people safely.
+              </p>
+              <ul className={styles.perkList}>
+                <li><span>🔒</span> 100% Private, Safe &amp; Discreet Matchmaking</li>
+                <li><span>⚡</span> Open-Minded Adults &amp; Bold Desires</li>
+                <li><span>🛡️</span> Hardware-Level Anti-Screenshot Security</li>
+              </ul>
+              <Link href="/realmeet?tab=fantasy" className={`${styles.showcaseBtn} ${styles.btnFantasy}`}>
+                Explore Fantasy Meetups <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Mobile App Download Section */}
       <section className={styles.appDownloadSection} id="mobile-app">
         <div className="section">
@@ -192,25 +286,25 @@ function HomeContent() {
               </div>
 
               <h2 className={styles.appTitle}>
-                Find People <span className="neon-text">Faster & Better</span> On Mobile App
+                Match & Video Call <span className="neon-text">Faster On Mobile</span>
               </h2>
 
               <p className={styles.appSubtitle}>
-                In our Mobile App, you find people much faster! Get instant push alerts, zero-lag video calls, real-world party check-ins, and camera optimizations designed for real-time socializing on the go.
+                Download the Camverz Android App for instant push alerts, zero-lag HD video calls, nearby RealMeet dating, house party invites, and camera optimizations on the go.
               </p>
 
               <div className={styles.appFeaturesList}>
                 <div className={styles.appFeatureItem}>
                   <Zap size={16} className={styles.appIconCyan} />
-                  <span><strong>Instant Match Alerts:</strong> Never miss a video call or RealMeet party request</span>
+                  <span><strong>Instant Match Alerts:</strong> Never miss a live video call or RealMeet party request</span>
                 </div>
                 <div className={styles.appFeatureItem}>
                   <Sparkles size={16} className={styles.appIconMagenta} />
-                  <span><strong>Smooth HD Video Calls:</strong> Optimized mobile WebRTC engine for low latency</span>
+                  <span><strong>Smooth HD Video Calls:</strong> Low-latency 1-on-1 random video matching</span>
                 </div>
                 <div className={styles.appFeatureItem}>
                   <Smartphone size={16} className={styles.appIconGreen} />
-                  <span><strong>RealMeet Party Host:</strong> Discover nearby events or host house parties on the go</span>
+                  <span><strong>RealMeet & Party Host:</strong> Discover nearby dates, club parties, or host your own</span>
                 </div>
               </div>
 
@@ -265,8 +359,8 @@ function HomeContent() {
       <section className={styles.features} id="features" ref={featuresRef}>
         <div className="section">
           <div className="section-title">
-            <h2>Why Choose Camverz?</h2>
-            <p>Built for real connections, not superficial swipes</p>
+            <h2>Why Camverz?</h2>
+            <p>Real face-to-face random video calls, real-world dates, and wild parties</p>
           </div>
           <div className={styles.featureGrid}>
             {features.map((f, i) => (
@@ -283,10 +377,10 @@ function HomeContent() {
       {/* CTA */}
       <section className={styles.cta}>
         <div className="section" style={{ textAlign: 'center' }}>
-          <h2>Ready to Connect Worldwide?</h2>
-          <p>Join thousands of people meeting authentically every single day.</p>
+          <h2>Ready to Meet Someone Hot?</h2>
+          <p>Join thousands of real adults video calling, dating, and partying every single day.</p>
           <button className="btn-neon" onClick={() => handleStartCall('straight')}>
-            <Video size={18} /> Get Started Now <ArrowRight size={16} />
+            <Video size={18} /> Start Video Match <ArrowRight size={16} />
           </button>
         </div>
       </section>

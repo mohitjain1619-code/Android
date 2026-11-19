@@ -30,11 +30,11 @@ export default function AboutPage() {
         <section className={styles.hero}>
           <div className={styles.badge}>
             <Sparkles size={14} />
-            <span>Connecting the World</span>
+            <span>🔥 18+ Live Random Video Chat & RealMeet Dating</span>
           </div>
           <h1 className="neon-text">About Camverz</h1>
           <p className={styles.subtitle}>
-            We are redefining how people meet in the digital age by bringing back spontaneous, face-to-face conversations.
+            Bringing back spontaneous, exciting 1-on-1 random video calls, in-person dating, and wild party hosting.
           </p>
         </section>
 
@@ -42,10 +42,10 @@ export default function AboutPage() {
         <section className={styles.storyCard}>
           <h2>Our Story</h2>
           <p>
-            Camverz was created to empower individuals, creators, and diverse social communities—including LGBTQ+ networks—to connect authentically through live video chat, story sharing, and real-time social communication.
+            Camverz was built for adults who want real, unfiltered human connection. Tired of endless superficial swiping, fake profiles, and catfishing, we created a platform where you can jump into instant 1-on-1 live video chats with hot girls & boys worldwide.
           </p>
           <p>
-            Whether you want to discover new friends, join inclusive social circles, practice languages, or share everyday moments on our social feed, Camverz provides a safe, seamless, and high-performance social networking platform.
+            With RealMeet and Party Host, we take connection beyond the screen into real life: discover local 1-on-1 dates, coffee meetups, private house parties, and nightlife events in your city, plus explore your secret fantasies with open-minded adults discreetly and safely.
           </p>
         </section>
 

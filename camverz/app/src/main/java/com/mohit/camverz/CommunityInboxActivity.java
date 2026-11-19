@@ -82,17 +82,22 @@ public class CommunityInboxActivity extends BaseActivity {
 
         inboxRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new CommunityInboxAdapter(currentUserId, activeConnections, request -> {
-            Intent intent = new Intent(CommunityInboxActivity.this, ChatActivity.class);
+            Intent intent = new Intent(CommunityInboxActivity.this, CommunityChatActivity.class);
             boolean isPoster = currentUserId != null && currentUserId.equalsIgnoreCase(request.getPosterUserId());
             String partnerId = isPoster ? request.getApplicantUserId() : request.getPosterUserId();
             String partnerName = isPoster ? request.getApplicantName() : (request.getPosterName() != null && !request.getPosterName().isEmpty() ? request.getPosterName() : getString(R.string.community_host));
             String partnerAvatar = isPoster ? request.getApplicantAvatar() : request.getPosterAvatar();
             String partnerPhotoUrl = isPoster ? request.getApplicantPhotoUrl() : request.getPosterPhotoUrl();
 
+            intent.putExtra("targetUserId", partnerId);
             intent.putExtra("userId", partnerId);
+            intent.putExtra("targetUserName", partnerName);
             intent.putExtra("userName", partnerName);
+            intent.putExtra("targetUserAvatar", partnerAvatar);
             intent.putExtra("userAvatar", partnerAvatar);
             intent.putExtra("userPhotoUrl", partnerPhotoUrl);
+            intent.putExtra("contactPreference", request.getContactPreference());
+            intent.putExtra("postTitle", request.getPostTitle());
             startActivity(intent);
         });
         inboxRecyclerView.setAdapter(adapter);
@@ -183,9 +188,12 @@ public class CommunityInboxActivity extends BaseActivity {
                                 AvatarHelper.loadAvatar(CommunityInboxActivity.this, friendPhotoUrl, friendAvatar, friendName, avatarView);
 
                                 itemView.setOnClickListener(v -> {
-                                    Intent intent = new Intent(CommunityInboxActivity.this, ChatActivity.class);
+                                    Intent intent = new Intent(CommunityInboxActivity.this, CommunityChatActivity.class);
+                                    intent.putExtra("targetUserId", friendId);
                                     intent.putExtra("userId", friendId);
+                                    intent.putExtra("targetUserName", friendName);
                                     intent.putExtra("userName", friendName);
+                                    intent.putExtra("targetUserAvatar", friendAvatar);
                                     intent.putExtra("userAvatar", friendAvatar);
                                     startActivity(intent);
                                 });

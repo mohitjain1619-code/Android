@@ -5,10 +5,10 @@ import ClientLayoutWrapper from '../components/ClientLayoutWrapper';
 export const metadata = {
   metadataBase: new URL('https://camverz.com'),
   title: {
-    default: 'Camverz — Social Media, Connection & Inclusive LGBTQ+ Live Video Network',
+    default: 'Camverz — 18+ Random Video Chat, Dating, RealMeet & Party Host',
     template: '%s | Camverz',
   },
-  description: 'Join Camverz for instant 1-on-1 video connections, social media post sharing, Real Meet local city hangouts (meet local lesbians, gay men, transgender members, girls & boys), and Party Host real-world house parties with guest list approvals. Safe, 100% verified, anti-screenshot protected.',
+  description: 'Join Camverz for instant 1-on-1 live random video chat, RealMeet in-person dating, wild house party hosting, and fantasy meetups. 100% verified & anti-screenshot protected.',
   keywords: [
     'social media',
     'live video call',
@@ -79,8 +79,8 @@ export const metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Camverz — Social Media, Connection & Inclusive LGBTQ+ Live Video Network',
-    description: 'Connect with new friends and inclusive LGBTQ+ communities worldwide through live video chat, story sharing, real-life meetups, and instant social media connection.',
+    title: 'Camverz — 18+ Random Video Chat, Dating, RealMeet & Party Host',
+    description: 'Connect with verified girls & boys worldwide through live random video calls, in-person RealMeet dates, and wild house party hosting.',
     url: 'https://camverz.com',
     siteName: 'Camverz',
     locale: 'en_US',
@@ -88,8 +88,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Camverz — Social Media & Live Video Network',
-    description: 'Connect with verified members worldwide through live video chat, real-world meetups, and inclusive LGBTQ+ social networks.',
+    title: 'Camverz — 18+ Random Video Chat & RealMeet Party Host',
+    description: 'Connect worldwide through live random video chat, real-life dating meetups, and wild party hosting.',
     creator: '@camverz',
   },
   robots: {

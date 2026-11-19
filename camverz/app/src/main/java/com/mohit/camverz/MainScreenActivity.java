@@ -29,6 +29,8 @@ import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
 import com.mohit.camverz.api.ApiService;
 import com.mohit.camverz.api.TokenManager;
+import com.mohit.camverz.OnboardingTourManager;
+import com.mohit.camverz.SpotlightOverlayView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -98,6 +100,21 @@ public class MainScreenActivity extends BaseActivity {
 
         appUpdateHelper = new AppUpdateHelper(this);
         appUpdateHelper.checkForUpdates();
+
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (isAdShowing || AdManager.getInstance().isAdWatchPending(MainScreenActivity.this)) {
+                    Log.d(TAG, "🚫 Back press blocked because an ad is currently playing.");
+                    return;
+                }
+                if (OnboardingTourManager.getInstance(MainScreenActivity.this).isTourPending(MainScreenActivity.this)) {
+                    Toast.makeText(MainScreenActivity.this, "Please follow the tour to get started 👉", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                finish();
+            }
+        });
 
         api = ApiClient.getInstance(this).getApi();
         socket = SocketManager.getInstance();
@@ -393,12 +410,35 @@ public class MainScreenActivity extends BaseActivity {
         PopupMenu popup = new PopupMenu(wrapper, view);
         popup.getMenuInflater().inflate(R.menu.top_menu, popup.getMenu());
 
-        // Ad Testing Dashboard enabled globally for device testing from Play Store
-        popup.getMenu().add(0, 9998, 0, "📊 Ad Testing Dashboard");
+        String userEmail = tokenManager != null ? tokenManager.getUserEmail() : null;
+        boolean isDevOrTester = OnboardingTourManager.getInstance(this).isMohitTester(this);
+        if (isDevOrTester) {
+            boolean alwaysOn = OnboardingTourManager.getInstance(this).isTestModeAlwaysOn(this);
+            popup.getMenu().add(0, 9996, 0, alwaysOn ? "🔁 Demo Test Mode: [ON]" : "🔁 Demo Test Mode: [OFF]");
+            popup.getMenu().add(0, 9997, 0, "🎯 Restart Onboarding Tour");
+            popup.getMenu().add(0, 9998, 0, "📊 Ad Testing Dashboard");
+            popup.getMenu().add(0, 9999, 0, "🛠️ LevelPlay Test Suite (Meta)");
+        }
 
         popup.setOnMenuItemClickListener(item -> {
             int itemId = item.getItemId();
-            if (itemId == 9998) {
+            if (itemId == 9996) {
+                boolean newState = !OnboardingTourManager.getInstance(this).isTestModeAlwaysOn(this);
+                OnboardingTourManager.getInstance(this).setTestModeAlwaysOn(this, newState);
+                if (newState) {
+                    OnboardingTourManager.getInstance(this).resetTour(this);
+                    checkAndShowOnboardingTour();
+                    Toast.makeText(this, "🔁 Demo Test Mode ON! Tour will run every time.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Demo Test Mode OFF.", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            } else if (itemId == 9997) {
+                OnboardingTourManager.getInstance(this).resetTour(this);
+                checkAndShowOnboardingTour();
+                Toast.makeText(this, "🎯 Demo Tour Started! Tap highlighted steps.", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (itemId == 9998) {
                 startActivity(new Intent(this, AdTestingActivity.class));
                 return true;
             } else if (itemId == 9999) {
@@ -427,10 +467,15 @@ public class MainScreenActivity extends BaseActivity {
     private void openPlayStoreForRating() {
         try {
             Intent playStoreIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=" + getPackageName()));
+            playStoreIntent.setPackage("com.android.vending");
             playStoreIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
             startActivity(playStoreIntent);
-        } catch (android.content.ActivityNotFoundException e) {
-            startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+        } catch (Exception e) {
+            try {
+                Intent webIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName()));
+                webIntent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_ACTIVITY_NEW_DOCUMENT | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                startActivity(webIntent);
+            } catch (Exception ignored) {}
         }
         Toast.makeText(this, "Thank you for rating Camverz 5 Stars! ⭐", Toast.LENGTH_LONG).show();
     }
@@ -520,11 +565,14 @@ public class MainScreenActivity extends BaseActivity {
             CallLimitManager.setDisconnectedDueToLimit(this, false);
             showCallLimitDisconnectedDialog();
         }
+
+        checkAndShowOnboardingTour();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        SpotlightOverlayView.detach(this);
     }
 
     private void fetchUnreadNotificationsCount() {
@@ -957,6 +1005,7 @@ public class MainScreenActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SpotlightOverlayView.detach(this);
         if (profileUpdateListener != null) {
             ProfileUpdateManager.getInstance(this).unregisterListener(profileUpdateListener);
         }
@@ -968,6 +1017,124 @@ public class MainScreenActivity extends BaseActivity {
             // incoming-private-call is managed by IncomingCallHandler (global, not removed here)
             if (newMessageListener != null) socket.off("new_message", newMessageListener);
         }
+    }
+
+    private void checkAndShowOnboardingTour() {
+        OnboardingTourManager tourManager = OnboardingTourManager.getInstance(this);
+        if (!tourManager.isTourPending(this)) {
+            SpotlightOverlayView.detach(this);
+            return;
+        }
+
+        int stage = tourManager.getTourStage(this);
+
+        if (stage == OnboardingTourManager.STAGE_FEED_POST) {
+            // Stage 1: Highlight Feed navigation icon (imageNav) with animated tapping finger
+            if (imageNav != null) {
+                imageNav.post(() -> {
+                    SpotlightOverlayView.attach(this, imageNav,
+                            "Tap to open Feed",
+                            true, Color.parseColor("#00FFFF"), () -> {
+                                SpotlightOverlayView.detach(this);
+                                Intent feedIntent = new Intent(MainScreenActivity.this, FeedActivity.class);
+                                feedIntent.putExtra("is_onboarding_tour", true);
+                                startActivity(feedIntent);
+                                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                            });
+                });
+            }
+        } else if (stage == OnboardingTourManager.STAGE_RETURN_HOME || stage == OnboardingTourManager.STAGE_RANDOM_CALL) {
+            // Stage 2/3: If returning home, ensure stage is set to RANDOM_CALL
+            if (stage == OnboardingTourManager.STAGE_RETURN_HOME) {
+                tourManager.setTourStage(this, OnboardingTourManager.STAGE_RANDOM_CALL);
+            }
+
+            // Highlight valid preferences based on user gender
+            String userGender = tokenManager.getUserGender();
+            boolean isMale = "male".equalsIgnoreCase(userGender);
+            boolean isFemale = "female".equalsIgnoreCase(userGender);
+
+            // Smooth scroll down so preference cards are 100% visible
+            android.widget.ScrollView scrollView = findViewById(R.id.main_scroll_view);
+            if (scrollView != null && cardStraight != null) {
+                scrollView.post(() -> {
+                    int scrollY = Math.max(0, cardStraight.getTop() - 30);
+                    scrollView.smoothScrollTo(0, scrollY);
+
+                    // Allow smooth scroll to settle before measuring & attaching spotlight
+                    scrollView.postDelayed(() -> {
+                        if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) return;
+
+                        List<SpotlightOverlayView.TargetItem> targets = new java.util.ArrayList<>();
+                        if (cardStraight != null) {
+                            targets.add(new SpotlightOverlayView.TargetItem(cardStraight, false, Color.parseColor("#FF9F43"), () -> handleTourCallClick("straight")));
+                        }
+                        if (cardGay != null && (isMale || (!isMale && !isFemale))) {
+                            targets.add(new SpotlightOverlayView.TargetItem(cardGay, false, Color.parseColor("#FF6B6B"), () -> handleTourCallClick("gay")));
+                        }
+                        if (cardLesbian != null && (isFemale || (!isMale && !isFemale))) {
+                            targets.add(new SpotlightOverlayView.TargetItem(cardLesbian, false, Color.parseColor("#9B51E0"), () -> handleTourCallClick("lesbian")));
+                        }
+
+                        if (!targets.isEmpty()) {
+                            SpotlightOverlayView.attachMulti(this, targets, "Choose your preference to start video call");
+                        }
+                    }, 350);
+                });
+            } else {
+                List<SpotlightOverlayView.TargetItem> targets = new java.util.ArrayList<>();
+                if (cardStraight != null) {
+                    targets.add(new SpotlightOverlayView.TargetItem(cardStraight, false, Color.parseColor("#FF9F43"), () -> handleTourCallClick("straight")));
+                }
+                if (cardGay != null && (isMale || (!isMale && !isFemale))) {
+                    targets.add(new SpotlightOverlayView.TargetItem(cardGay, false, Color.parseColor("#FF6B6B"), () -> handleTourCallClick("gay")));
+                }
+                if (cardLesbian != null && (isFemale || (!isMale && !isFemale))) {
+                    targets.add(new SpotlightOverlayView.TargetItem(cardLesbian, false, Color.parseColor("#9B51E0"), () -> handleTourCallClick("lesbian")));
+                }
+
+                if (!targets.isEmpty() && cardStraight != null) {
+                    cardStraight.post(() -> {
+                        SpotlightOverlayView.attachMulti(this, targets, "Choose your preference to start video call");
+                    });
+                }
+            }
+        }
+    }
+
+    private void handleTourCallClick(String category) {
+        String gender = tokenManager.getUserGender();
+        if ("gay".equalsIgnoreCase(category) && !"male".equalsIgnoreCase(gender)) {
+            Toast.makeText(this, R.string.toast_only_males_gay, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if ("lesbian".equalsIgnoreCase(category) && !"female".equalsIgnoreCase(gender)) {
+            Toast.makeText(this, R.string.toast_only_females_lesbian, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Female verification check
+        if ("female".equalsIgnoreCase(gender) && !tokenManager.isVerified()) {
+            showFemaleVerificationTourDialog();
+            return;
+        }
+
+        // Male or already verified:
+        OnboardingTourManager.getInstance(this).markTourCompleted(this);
+        SpotlightOverlayView.detach(this);
+        goToConnecting(category);
+    }
+
+    private void showFemaleVerificationTourDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Quick Verification Required")
+                .setMessage("To keep our community safe and real, female users must complete a quick face verification before video calling.")
+                .setCancelable(false)
+                .setPositiveButton("Verify Now", (dialog, which) -> {
+                    Intent intent = new Intent(MainScreenActivity.this, VerificationInfoActivity.class);
+                    startActivity(intent);
+                })
+                .show();
     }
 
     private void checkPreferenceSelection() {

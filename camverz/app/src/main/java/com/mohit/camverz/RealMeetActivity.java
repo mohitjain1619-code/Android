@@ -1107,9 +1107,21 @@ public class RealMeetActivity extends BaseActivity {
             }
         }
 
+        boolean isPartyPost = (currentTab == Tab.PARTY);
+        if (!isPartyPost && postId != null) {
+            for (PartyPost p : store.getPartyPosts()) {
+                if (postId.equalsIgnoreCase(p.getId())) {
+                    isPartyPost = true;
+                    break;
+                }
+            }
+        }
+        final boolean finalIsPartyPost = isPartyPost;
+        String boardBtnText = isPartyPost ? "📢 Party Board" : "📢 Board";
+
         boolean hasRequested = store.hasUserRequestedPost(currentUserId, postId);
         if (isHost) {
-            btnFullDialogAction.setText("📢 Party Board");
+            btnFullDialogAction.setText(boardBtnText);
             btnFullDialogAction.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             btnFullDialogAction.setTextColor(Color.WHITE);
             btnFullDialogAction.setEnabled(true);
@@ -1119,10 +1131,11 @@ public class RealMeetActivity extends BaseActivity {
                 intent.putExtra("postId", postId);
                 intent.putExtra("isHost", true);
                 intent.putExtra("title", title);
+                intent.putExtra("isParty", finalIsPartyPost);
                 startActivity(intent);
             });
         } else if (isAcceptedMember) {
-            btnFullDialogAction.setText("📢 Party Board");
+            btnFullDialogAction.setText(boardBtnText);
             btnFullDialogAction.setBackgroundResource(R.drawable.bg_btn_primary_gradient);
             btnFullDialogAction.setTextColor(Color.WHITE);
             btnFullDialogAction.setEnabled(true);
@@ -1132,6 +1145,7 @@ public class RealMeetActivity extends BaseActivity {
                 intent.putExtra("postId", postId);
                 intent.putExtra("isHost", false);
                 intent.putExtra("title", title);
+                intent.putExtra("isParty", finalIsPartyPost);
                 startActivity(intent);
             });
         } else if (hasRequested) {

@@ -181,7 +181,7 @@ class NotificationService {
             sound: sound,
             defaultSound: sound === "default",
             defaultVibrateTimings: true,
-            icon: "ic_notification",
+            icon: "ic_notification_bell",
             color: "#6366F1",
             clickAction: "OPEN_CAMVERZ_NOTIFICATION",
           },

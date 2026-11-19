@@ -80,8 +80,16 @@ public class PartyBoardActivity extends BaseActivity {
         etAnnouncement = findViewById(R.id.etAnnouncement);
         btnPost = findViewById(R.id.btnPost);
 
-        if (partyTitle != null) {
+        boolean isParty = getIntent().getBooleanExtra("isParty", true);
+        if (partyTitle != null && !partyTitle.trim().isEmpty()) {
             tvPartyTitle.setText(partyTitle);
+        } else {
+            tvPartyTitle.setText(isParty ? "VIP Party Board" : "Board");
+        }
+
+        TextView tvBoardSubtitle = findViewById(R.id.tvBoardSubtitle);
+        if (tvBoardSubtitle != null) {
+            tvBoardSubtitle.setText(isParty ? getString(R.string.announcements_and_members) : "Announcements & Updates");
         }
 
         btnBack.setOnClickListener(v -> finish());

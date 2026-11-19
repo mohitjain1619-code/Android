@@ -282,12 +282,18 @@ public class AdManager {
 
     /**
      * Launches the official Unity LevelPlay Integration Test Suite.
-     * Accessible globally for device testing.
+     * Strictly restricted to tester accounts (mohitj8120@gmail.com / jainmohit8120@gmail.com).
      */
     public void launchTestSuite(Activity activity) {
         if (activity == null) return;
         try {
-            Log.d(TAG, "🚀 Launching LevelPlay Integration Test Suite");
+            String email = TokenManager.getInstance(activity).getUserEmail();
+            if (email == null || (!"mohitj8120@gmail.com".equalsIgnoreCase(email.trim()) && !"jainmohit8120@gmail.com".equalsIgnoreCase(email.trim()))) {
+                Toast.makeText(activity, "⚠️ LevelPlay Test Suite is only allowed for tester account", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Log.d(TAG, "🚀 Launching LevelPlay Integration Test Suite for " + email);
             IronSource.launchTestSuite(activity);
         } catch (Exception e) {
             Log.e(TAG, "Error launching LevelPlay Test Suite", e);

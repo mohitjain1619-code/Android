@@ -156,6 +156,13 @@ public class AdTestingActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        String userEmail = TokenManager.getInstance(this).getUserEmail();
+        if (userEmail == null || (!"mohitj8120@gmail.com".equalsIgnoreCase(userEmail.trim()) && !"jainmohit8120@gmail.com".equalsIgnoreCase(userEmail.trim()))) {
+            Toast.makeText(this, "Unauthorized access", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         // Build Clean, Modern UI
         View rootView = buildDashboardUi();
         setContentView(rootView);

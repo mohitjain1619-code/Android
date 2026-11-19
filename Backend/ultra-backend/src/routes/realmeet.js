@@ -576,6 +576,57 @@ router.post("/request", async (req, res) => {
         [posterUserId, req.user.userId, postId]
       );
 
+      // Auto-deliver applicant's request description/message to the host as a direct chat message
+      if (message && message.trim()) {
+        try {
+          const [u1, u2] = [req.user.userId, posterUserId].sort();
+          let chat = await queryOne(
+            "SELECT * FROM chats WHERE user1_id = $1 AND user2_id = $2",
+            [u1, u2]
+          );
+          if (!chat) {
+            chat = await queryOne(
+              "INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *",
+              [u1, u2]
+            );
+          }
+          if (chat) {
+            const chatMsg = await queryOne(
+              "INSERT INTO messages (chat_id, sender_id, text) VALUES ($1, $2, $3) RETURNING *",
+              [chat.id, req.user.userId, message.trim()]
+            );
+            await query(
+              "UPDATE chats SET last_message_at = NOW(), user1_deleted = false, user2_deleted = false WHERE id = $1",
+              [chat.id]
+            );
+
+            // Realtime socket emit
+            const io = req.app.get("io");
+            const redisModule = req.app.get("redisModule");
+            if (io && redisModule) {
+              const msgPayload = {
+                senderId: req.user.userId,
+                chatId: chat.id,
+                text: message.trim(),
+                messageId: chatMsg ? chatMsg.id : null,
+                createdAt: chatMsg ? chatMsg.created_at : new Date(),
+              };
+              const targetSocket = await redisModule.getUserSocket(posterUserId);
+              if (targetSocket) {
+                io.to(targetSocket).emit("new_message", msgPayload);
+                io.to(targetSocket).emit("chat-message-received", {
+                  senderId: req.user.userId,
+                  message: message.trim(),
+                  timestamp: Date.now()
+                });
+              }
+            }
+          }
+        } catch (msgErr) {
+          console.error("Auto message creation error on request:", msgErr.message);
+        }
+      }
+
       // Trigger Push Notification to host
       (async () => {
         try {
@@ -585,6 +636,7 @@ router.post("/request", async (req, res) => {
             body: `${applicant ? applicant.name : "Someone"} sent a request to join your RealMeet`,
             type: "realmeet_request",
             channelId: "camverz_social",
+            highPriority: true,
             data: {
               communityPostId: postId,
               requestId: reqId,
@@ -659,6 +711,7 @@ router.put("/request/status", async (req, res) => {
             body: `${host ? host.name : "Host"} accepted your RealMeet request!`,
             type: "realmeet_accepted",
             channelId: "camverz_social",
+            highPriority: true,
             data: {
               communityPostId: request.post_id,
               requestId: requestId,
@@ -694,8 +747,8 @@ router.get("/notifications", async (req, res) => {
               u.name as triggering_user_name,
               u.avatar as triggering_user_avatar,
               u.photo_url as triggering_user_photo_url,
-              cp.type as post_type,
-              cp.purpose as post_title
+              COALESCE(cp.type, 'REAL_MEET') as post_type,
+              COALESCE(cp.purpose, cp.description, 'RealMeet') as post_title
        FROM notifications n
        LEFT JOIN users u ON u.id = n.triggering_user_id
        LEFT JOIN community_posts cp ON cp.id = n.community_post_id
@@ -721,21 +774,21 @@ router.get("/notifications", async (req, res) => {
       }
 
       notifications.push({
-        id: r.id,
+        id: String(r.id),
         type: r.type,
-        read: r.read,
+        read: Boolean(r.read),
         triggeringUser: r.triggering_user_id ? {
-          id: r.triggering_user_id,
-          name: r.triggering_user_name,
-          avatar: r.triggering_user_avatar,
-          photoUrl: r.triggering_user_photo_url
+          id: String(r.triggering_user_id),
+          name: r.triggering_user_name || "Someone",
+          avatar: r.triggering_user_avatar || "",
+          photoUrl: r.triggering_user_photo_url || ""
         } : null,
-        postId: r.community_post_id,
-        postTitle: r.post_title,
-        postType: r.post_type,
-        friendRequestId,
-        friendshipStatus,
-        createdAt: new Date(r.created_at).getTime()
+        postId: r.community_post_id ? String(r.community_post_id) : null,
+        postTitle: r.post_title || "RealMeet",
+        postType: r.post_type || (r.type === "party_announcement" ? "PARTY" : "REAL_MEET"),
+        friendRequestId: friendRequestId ? String(friendRequestId) : null,
+        friendshipStatus: friendshipStatus || (r.type === "realmeet_accepted" ? "ACCEPTED" : "PENDING"),
+        createdAt: r.created_at ? new Date(r.created_at).getTime() : Date.now()
       });
     }
 

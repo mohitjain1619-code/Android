@@ -12,7 +12,7 @@ export default function Footer() {
               <span>⚡</span>
               <span className={styles.logoText}>Camverz</span>
             </div>
-            <p className={styles.tagline}>Next-generation social media & live video connection network. Connect with verified members & inclusive communities worldwide.</p>
+            <p className={styles.tagline}>18+ live random video chat, dating & RealMeet party network. Match 1-on-1 with real people, discover house parties, and meet verified singles worldwide.</p>
           </div>
 
           <div className={styles.linkGroup}>

@@ -64,6 +64,10 @@ public class StoryViewerActivity extends BaseActivity {
     private long storyDurationMs = 6000;
     private boolean isPaused = false;
     private boolean isVideoPrepared = false;
+    private int videoCurrentLoop = 0;
+    private int videoTargetLoops = 1;
+    private int videoSingleLoopDuration = 0;
+    private boolean isNavigatingStory = false;
 
     private final Handler progressHandler = new Handler();
     private static final int PROGRESS_INTERVAL = 50;
@@ -88,12 +92,14 @@ public class StoryViewerActivity extends BaseActivity {
                     progressHandler.postDelayed(this, PROGRESS_INTERVAL);
                     return;
                 }
-                // Accurate video progress tracking based on player position
+                // Accurate video progress tracking based on player position and loop count
                 int curPos = vvStoryVideo.getCurrentPosition();
-                int totalDur = vvStoryVideo.getDuration();
-                if (totalDur <= 0) totalDur = (int) storyDurationMs;
-                if (totalDur > 0) {
-                    currentProgress = (int) Math.min(100f, ((float) curPos * 100f / (float) totalDur));
+                if (videoSingleLoopDuration > 0) {
+                    if (curPos > videoSingleLoopDuration) curPos = videoSingleLoopDuration;
+                    long totalPlayed = ((long) videoCurrentLoop * videoSingleLoopDuration) + curPos;
+                    if (storyDurationMs > 0) {
+                        currentProgress = (int) Math.min(100f, ((float) totalPlayed * 100f / (float) storyDurationMs));
+                    }
                 }
             } else {
                 // Smooth float progress for images and text
@@ -235,16 +241,20 @@ public class StoryViewerActivity extends BaseActivity {
 
     private void pauseStory() {
         isPaused = true;
-        if (vvStoryVideo != null && vvStoryVideo.isPlaying()) {
-            vvStoryVideo.pause();
-        }
+        try {
+            if (vvStoryVideo != null && vvStoryVideo.isPlaying()) {
+                vvStoryVideo.pause();
+            }
+        } catch (Exception ignored) {}
     }
 
     private void resumeStory() {
         isPaused = false;
-        if (isVideoPrepared && vvStoryVideo != null && !vvStoryVideo.isPlaying()) {
-            vvStoryVideo.start();
-        }
+        try {
+            if (isVideoPrepared && vvStoryVideo != null && !vvStoryVideo.isPlaying()) {
+                vvStoryVideo.start();
+            }
+        } catch (Exception ignored) {}
     }
 
     private void setupSegmentedProgressBars() {
@@ -272,9 +282,20 @@ public class StoryViewerActivity extends BaseActivity {
         if (index < 0 || index >= storiesList.size()) return;
 
         // Reset state
+        isNavigatingStory = false;
         progressHandler.removeCallbacks(progressRunnable);
+        try {
+            if (vvStoryVideo != null) {
+                vvStoryVideo.stopPlayback();
+            }
+        } catch (Exception ignored) {}
+
         currentStoryIndex = index;
         currentProgress = 0;
+        currentProgressFloat = 0f;
+        videoCurrentLoop = 0;
+        videoTargetLoops = 1;
+        videoSingleLoopDuration = 0;
         isVideoPrepared = false;
         isPaused = false;
 
@@ -391,13 +412,32 @@ public class StoryViewerActivity extends BaseActivity {
                 tvStoryOverlayText.setText(story.getTextContent());
             }
 
+            if (fullUrl == null || fullUrl.trim().isEmpty()) {
+                if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
+                Toast.makeText(this, "Story media not found", Toast.LENGTH_SHORT).show();
+                showNextStory();
+                return;
+            }
+
             // CRITICAL: Set listeners BEFORE setVideoURI to catch all player lifecycle events
             vvStoryVideo.setOnPreparedListener(mp -> {
                 runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
                     if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
                     isVideoPrepared = true;
                     int dur = mp.getDuration();
-                    storyDurationMs = dur > 0 ? dur : 10000;
+                    videoSingleLoopDuration = dur > 0 ? dur : 5000;
+                    videoCurrentLoop = 0;
+
+                    // If video is short (under ~6.5 seconds), loop 3 times before advancing like Instagram
+                    if (videoSingleLoopDuration <= 6500) {
+                        videoTargetLoops = 3;
+                        storyDurationMs = (long) videoSingleLoopDuration * videoTargetLoops;
+                    } else {
+                        videoTargetLoops = 1;
+                        storyDurationMs = videoSingleLoopDuration;
+                    }
+
                     int videoWidth = mp.getVideoWidth();
                     int videoHeight = mp.getVideoHeight();
                     if (videoWidth > 0 && videoHeight > 0) {
@@ -418,26 +458,41 @@ public class StoryViewerActivity extends BaseActivity {
                             vvStoryVideo.setLayoutParams(lp);
                         }
                     }
-                    vvStoryVideo.start();
+                    try {
+                        vvStoryVideo.start();
+                    } catch (Exception e) {
+                        android.util.Log.e("StoryViewerActivity", "Error starting video: " + e.getMessage());
+                    }
                     currentProgressFloat = 0f;
                     startProgressCountdown();
                 });
             });
 
             vvStoryVideo.setOnCompletionListener(mp -> {
-                // Prevent premature completion if buffer underrun occurred
-                if (vvStoryVideo.getCurrentPosition() >= storyDurationMs - 1200 || vvStoryVideo.getCurrentPosition() >= 3000) {
-                    showNextStory();
+                videoCurrentLoop++;
+                if (videoCurrentLoop < videoTargetLoops) {
+                    try {
+                        vvStoryVideo.seekTo(0);
+                        vvStoryVideo.start();
+                    } catch (Exception e) {
+                        android.util.Log.e("StoryViewerActivity", "Error re-looping video: " + e.getMessage());
+                        showNextStory();
+                    }
                 } else {
-                    vvStoryVideo.start();
+                    showNextStory();
                 }
             });
 
             vvStoryVideo.setOnErrorListener((mp, what, extra) -> {
                 runOnUiThread(() -> {
+                    try {
+                        if (vvStoryVideo != null) {
+                            vvStoryVideo.stopPlayback();
+                        }
+                    } catch (Exception ignored) {}
                     if (pbStoryLoading != null) pbStoryLoading.setVisibility(View.GONE);
                     android.util.Log.e("StoryViewerActivity", "Video load error: what=" + what + ", extra=" + extra + " url=" + fullUrl);
-                    Toast.makeText(this, "Failed to load video", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Story video unavailable", Toast.LENGTH_SHORT).show();
                     showNextStory();
                 });
                 return true;
@@ -535,6 +590,13 @@ public class StoryViewerActivity extends BaseActivity {
     }
 
     private void showNextStory() {
+        if (isNavigatingStory || isFinishing() || isDestroyed()) return;
+        isNavigatingStory = true;
+        try {
+            if (vvStoryVideo != null) {
+                vvStoryVideo.stopPlayback();
+            }
+        } catch (Exception ignored) {}
         if (currentStoryIndex + 1 < storiesList.size()) {
             loadStory(currentStoryIndex + 1);
         } else {
@@ -544,6 +606,13 @@ public class StoryViewerActivity extends BaseActivity {
     }
 
     private void showPreviousStory() {
+        if (isNavigatingStory || isFinishing() || isDestroyed()) return;
+        isNavigatingStory = true;
+        try {
+            if (vvStoryVideo != null) {
+                vvStoryVideo.stopPlayback();
+            }
+        } catch (Exception ignored) {}
         if (currentStoryIndex - 1 >= 0) {
             loadStory(currentStoryIndex - 1);
         } else {
@@ -612,6 +681,11 @@ public class StoryViewerActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         progressHandler.removeCallbacks(progressRunnable);
+        try {
+            if (vvStoryVideo != null) {
+                vvStoryVideo.stopPlayback();
+            }
+        } catch (Exception ignored) {}
         super.onDestroy();
     }
 }

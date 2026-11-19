@@ -77,11 +77,14 @@ public class NotificationHelper {
             NotificationChannel socialChannel = new NotificationChannel(
                     CHANNEL_SOCIAL,
                     "Social & Community Alerts",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    NotificationManager.IMPORTANCE_HIGH
             );
             socialChannel.setDescription("Notifications for likes, comments, RealMeet requests, and friends");
             socialChannel.enableLights(true);
+            socialChannel.setLightColor(0xFF6366F1);
             socialChannel.enableVibration(true);
+            socialChannel.setVibrationPattern(new long[]{0, 250, 150, 250});
+            socialChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             manager.createNotificationChannel(socialChannel);
 
             // 4. MARKETING & ANNOUNCEMENTS CHANNEL (Broadcast Campaigns, Offers)

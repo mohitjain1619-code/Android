@@ -1,10 +1,12 @@
 package com.mohit.camverz;
 
 import android.app.ProgressDialog;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -18,6 +20,8 @@ import com.google.gson.JsonObject;
 import com.mohit.camverz.api.ApiClient;
 import com.mohit.camverz.api.ApiService;
 import com.mohit.camverz.api.TokenManager;
+import com.mohit.camverz.OnboardingTourManager;
+import com.mohit.camverz.SpotlightOverlayView;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,6 +55,8 @@ public class CreatePostActivity extends BaseActivity {
     private ProgressDialog adProgressDialog;
     private final Handler adHandler = new Handler(Looper.getMainLooper());
     private Runnable adTimeoutRunnable;
+
+    private boolean isGuidedToPostButton = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,8 +99,95 @@ public class CreatePostActivity extends BaseActivity {
             }
         });
 
-        // Preload Rewarded Video auction immediately while user types
-        AdManager.getInstance().preloadRewardedVideo();
+        // If onboarding post, let user write freely and attach progressive spotlight
+        if (OnboardingTourManager.getInstance(this).shouldBypassAdsForPost(this)
+                || getIntent().getBooleanExtra("is_onboarding_post", false)) {
+            setupOnboardingPostFlow();
+        } else {
+            // Preload Rewarded Video auction immediately while user types
+            AdManager.getInstance().preloadRewardedVideo();
+        }
+    }
+
+    private void setupOnboardingPostFlow() {
+        if (postText != null) {
+            postText.setText("");
+            postText.setHint("Write a post, share your feelings...");
+        }
+        if (categoryGroup != null && categoryGroup.getCheckedRadioButtonId() == -1) {
+            categoryGroup.check(R.id.category_all);
+        }
+
+        // Step 1: Highlight text box & auto open soft keyboard with clickable "Okay, Typed ✓" button
+        postText.post(() -> {
+            SpotlightOverlayView.attachWithAction(this, postText,
+                    "Type your message or feelings",
+                    "Okay, Typed ✓",
+                    false, android.graphics.Color.parseColor("#00FFFF"),
+                    () -> {
+                        String text = postText != null ? postText.getText().toString().trim() : "";
+                        if (text.isEmpty()) {
+                            Toast.makeText(this, "Please write your feelings first 👉", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Hide keyboard
+                        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                        if (imm != null && getCurrentFocus() != null) {
+                            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                        }
+
+                        isGuidedToPostButton = true;
+                        highlightPostButton();
+                    },
+                    () -> {
+                        postText.requestFocus();
+                        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                        if (imm != null) {
+                            imm.showSoftInput(postText, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                        }
+                    });
+
+            postText.requestFocus();
+            postText.postDelayed(() -> {
+                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(postText, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                }
+            }, 300);
+        });
+
+        // Step 2: Listen for keyboard dismissal after user finishes typing
+        View rootView = findViewById(android.R.id.content);
+        if (rootView != null) {
+            rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+                if (isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed())) return;
+                android.graphics.Rect r = new android.graphics.Rect();
+                rootView.getWindowVisibleDisplayFrame(r);
+                int screenHeight = rootView.getRootView().getHeight();
+                int keypadHeight = screenHeight - r.bottom;
+
+                boolean isKeyboardOpen = keypadHeight > screenHeight * 0.15;
+                if (!isKeyboardOpen && postText != null) {
+                    String text = postText.getText().toString().trim();
+                    if (!text.isEmpty() && !isGuidedToPostButton) {
+                        isGuidedToPostButton = true;
+                        highlightPostButton();
+                    }
+                }
+            });
+        }
+    }
+
+    private void highlightPostButton() {
+        postButton.post(() -> {
+            SpotlightOverlayView.attach(this, postButton,
+                    "Tap Post to share",
+                    false, android.graphics.Color.parseColor("#10B981"), () -> {
+                        SpotlightOverlayView.detach(this);
+                        uploadPost();
+                    });
+        });
     }
 
     @Override
@@ -128,6 +221,13 @@ public class CreatePostActivity extends BaseActivity {
 
         pendingPostText = text;
         pendingCategory = category;
+
+        if (OnboardingTourManager.getInstance(this).shouldBypassAdsForPost(this)
+                || getIntent().getBooleanExtra("is_onboarding_post", false)) {
+            // New user onboarding tour: ZERO ADS!
+            executePostUpload(text, category);
+            return;
+        }
 
         proceedWithRewardedAd();
     }
@@ -278,6 +378,13 @@ public class CreatePostActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean()) {
                         Toast.makeText(CreatePostActivity.this, "Post uploaded successfully", Toast.LENGTH_SHORT).show();
+
+                        if (OnboardingTourManager.getInstance(CreatePostActivity.this).isTourPending(CreatePostActivity.this)) {
+                            OnboardingTourManager.getInstance(CreatePostActivity.this).setTourStage(CreatePostActivity.this, OnboardingTourManager.STAGE_RETURN_HOME);
+                            finish();
+                            return;
+                        }
+
                         finish();
                         return;
                     }

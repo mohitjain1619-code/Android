@@ -1,15 +1,15 @@
 import HomePageClient from './HomePageClient';
 
 export const metadata = {
-  title: 'Camverz — Social Media, Real-Time Connection & Inclusive LGBTQ+ Live Video Network',
-  description: 'Join Camverz for instant 1-on-1 video connections, social media post sharing, real-time messaging, and inclusive LGBTQ+ social networking. Safe, 100% verified, and anti-screenshot protected.',
-  keywords: 'social media, live video chat, LGBTQ social network, video connection, real-time social discovery, meet new friends, gay chat, lesbian chat, straight chat, social networking app, real meet, party host',
+  title: 'Camverz — 18+ Random Video Chat, Dating, RealMeet & Party Host',
+  description: 'Join Camverz for instant 1-on-1 live random video chat, in-person RealMeet dating, wild house party hosting, and open-minded fantasy meetups. 100% verified & anti-screenshot protected.',
+  keywords: 'random video call, live video chat, adult dating app, real meet, party host, fantasy dating, stranger video call, omegle alternative, ometv alternative, video call with girls, meet singles online, house party app',
   alternates: {
     canonical: 'https://camverz.com',
   },
   openGraph: {
-    title: 'Camverz — Social Media, Real-Time Connection & Inclusive LGBTQ+ Live Video Network',
-    description: 'Connect with new friends and inclusive LGBTQ+ communities worldwide through live video chat, story sharing, real-life meetups, and instant social media connection.',
+    title: 'Camverz — 18+ Random Video Chat, Dating, RealMeet & Party Host',
+    description: 'Connect with verified girls & boys worldwide through live 1-on-1 random video calls, real-world dating meetups, and wild house parties.',
     url: 'https://camverz.com',
     siteName: 'Camverz',
     locale: 'en_US',
@@ -17,8 +17,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Camverz — Social Media & Live Video Network',
-    description: 'Connect worldwide through live video chat, real-life meetups, and inclusive LGBTQ+ social networking.',
+    title: 'Camverz — 18+ Random Video Chat & RealMeet Party Host',
+    description: 'Connect worldwide through live random video chat, real-life dating meetups, and wild party hosting.',
   },
 };
 
@@ -31,7 +31,7 @@ const homeFaqSchema = {
       name: 'What is Camverz?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Camverz is a real-time social connection and live video chat platform where users can connect 1-on-1, share social media posts, join inclusive LGBTQ+ communities, organize real-life offline meetups (Real Meet), and host real-world house parties (Party Host).',
+        text: 'Camverz is an 18+ live random video chat and real-world dating platform where users connect 1-on-1 via live video, organize real-life offline meetups (RealMeet), host private house parties (Party Host), and explore open fantasies.',
       },
     },
     {
@@ -47,7 +47,7 @@ const homeFaqSchema = {
       name: 'Is Camverz inclusive of LGBTQ+ communities?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Absolutely. Camverz provides dedicated Gay, Lesbian, Bisexual, Transgender, Queer, Non-Binary, and Straight tags, orientation match filters, and zero-tolerance anti-discrimination moderation.',
+        text: 'Yes. Camverz provides dedicated Gay, Lesbian, Bisexual, and Straight matching filters with 100% verified authentic profiles.',
       },
     },
     {
@@ -55,7 +55,7 @@ const homeFaqSchema = {
       name: 'How do Real Meet and Party Host work?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Real Meet allows you to post and find real-world 1-on-1 offline hangouts in your city. Party Host lets hosts publish real-life offline house parties and venue events with guest lists and announcements.',
+        text: 'Real Meet allows you to discover and post 1-on-1 real-world dates and hangouts in your city. Party Host lets hosts publish real-life offline house parties and nightlife events with guest list approvals. Fantasy lets members connect discreetly for open desires.',
       },
     },
   ],
