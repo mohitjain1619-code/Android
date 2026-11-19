@@ -2,6 +2,7 @@ const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
 const NotificationService = require("../services/notificationService");
+const botEngagementService = require("../services/botEngagementService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -141,6 +142,16 @@ router.post("/", async (req, res) => {
       gender: "",
       sex_preference: "Straight"
     };
+
+    // Trigger Pro-level Automated Bot Engagement in background (Zero-Cost Contextual Engine)
+    botEngagementService.schedulePostEngagement(
+      post.id,
+      req.user.userId,
+      text.trim(),
+      normalizedCategory,
+      user.gender,
+      user.sex_preference
+    );
 
     return res.json({
       ok: true,
@@ -383,6 +394,9 @@ router.post("/:id/comments", async (req, res) => {
           }
         })();
       }
+
+      // Check if user replied to a bot comment to trigger 2-way bot conversation
+      botEngagementService.handleUserReplyToBot(req.params.id, validParentId, req.user.userId, text.trim());
     }
 
     const user = await queryOne("SELECT name, avatar, photo_url FROM users WHERE id = $1", [req.user.userId]);

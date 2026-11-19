@@ -374,7 +374,22 @@ async function runMigrations() {
         PRIMARY KEY (comment_id, user_id)
       );
       CREATE INDEX IF NOT EXISTS idx_comment_likes_comment ON comment_likes(comment_id);
+
+      -- Bot Engine columns
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_bot BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS bot_personality TEXT DEFAULT 'friendly';
+      CREATE INDEX IF NOT EXISTS idx_users_is_bot ON users(is_bot);
     `);
+
+    // Ensure bot profiles are seeded
+    try {
+      const botService = require("../services/botEngagementService");
+      if (botService && botService.ensureBotsSeeded) {
+        await botService.ensureBotsSeeded();
+      }
+    } catch (e) {
+      console.warn("Bot seeding deferred:", e.message);
+    }
 
     console.log("✅ Database migrations, FCM columns, message deleted_for, reply-to support, and speed indexing applied successfully!");
   } catch (err) {
