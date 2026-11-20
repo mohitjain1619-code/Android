@@ -103,6 +103,10 @@ public class CallActivity extends BaseActivity {
     private boolean isCaller = false;
     private boolean isPrivateCall = false;
     private boolean isVideoCall = true;
+    private boolean isBotCall = false;
+    private String botVideoUrl = null;
+    private String botAssetPath = null;
+    private android.widget.VideoView botVideoView;
     private boolean connectionAnimationActive = true;
     private boolean isCallAccepted = false;
     private boolean isCameraCapturing = false;
@@ -346,6 +350,9 @@ public class CallActivity extends BaseActivity {
         isCaller = getIntent().getBooleanExtra("isCaller", false);
         isPrivateCall = getIntent().getBooleanExtra("isPrivateCall", false);
         isVideoCall = getIntent().getBooleanExtra("isVideoCall", true);
+        isBotCall = getIntent().getBooleanExtra("isBotCall", false);
+        botVideoUrl = getIntent().getStringExtra("botVideoUrl");
+        botAssetPath = getIntent().getStringExtra("botAssetPath");
         isCallAccepted = !isCaller;
 
         myUid = tokenManager.getUserId();
@@ -442,6 +449,7 @@ public class CallActivity extends BaseActivity {
     private void initUI() {
         localView = findViewById(R.id.localView);
         remoteView = findViewById(R.id.remoteView);
+        botVideoView = findViewById(R.id.botVideoView);
         btnMute = findViewById(R.id.btnMute);
         btnSwitchCamera = findViewById(R.id.btnSwitchCamera);
         btnEnd = findViewById(R.id.btnEnd);
@@ -598,6 +606,10 @@ public class CallActivity extends BaseActivity {
     }
 
     private void startCall() {
+        if (isBotCall) {
+            startBotCall();
+            return;
+        }
         CallManager.setIncomingCallPending(false);
         CallManager.setCallActive(true);
         CallManager.setCurrentPeerId(peerId);
@@ -666,6 +678,116 @@ public class CallActivity extends BaseActivity {
                 connectionStatus.setText("Connecting...");
             }
             timeoutHandler.postDelayed(timeoutRunnable, 15000); // 15s connection timeout for callee
+        }
+    }
+
+    private void startBotCall() {
+        Log.d(TAG, "🤖 [Level 3] Starting Bot Call with peer: " + peerId);
+        CallManager.setIncomingCallPending(false);
+        CallManager.setCallActive(true);
+        CallManager.setCurrentPeerId(peerId);
+        CallManager.setCurrentRoomName(roomName);
+        NotificationHelper.cancelIncomingCallNotification(this);
+        CallRingtoneManager.getInstance().stop();
+
+        setupViews();
+        initWebRTC(); // Starts local camera capturer and attaches localView
+
+        if (remoteView != null) {
+            remoteView.setVisibility(View.GONE);
+        }
+
+        if (botVideoView != null) {
+            botVideoView.setVisibility(View.VISIBLE);
+            playBotVideo();
+        }
+
+        markConnected();
+        if (callConnectedTime == 0) {
+            callConnectedTime = System.currentTimeMillis();
+            startLimitCountdown();
+        }
+
+        // Setup Audio routing
+        try {
+            audioManager = (android.media.AudioManager) getSystemService(android.content.Context.AUDIO_SERVICE);
+            if (audioManager != null) {
+                audioManager.setMode(android.media.AudioManager.MODE_IN_COMMUNICATION);
+                requestAudioFocus();
+                updateAudioRouting();
+            }
+        } catch (Exception ignored) {}
+
+        // In-call realistic bot banter after 3.5 seconds
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (!isFinishing() && !isDestroyed() && !callEnded) {
+                String botNameStr = (peerNameValue != null && !peerNameValue.isEmpty()) ? peerNameValue : "Matched User";
+                Toast.makeText(CallActivity.this, "💬 " + botNameStr + ": Hey! Can you hear me? Mic thoda glitch kar raha hai haha 🙈", Toast.LENGTH_LONG).show();
+            }
+        }, 3500);
+    }
+
+    private void playBotVideo() {
+        if (botVideoView == null) return;
+        try {
+            String assetPathToUse = (botAssetPath != null && !botAssetPath.isEmpty()) 
+                ? botAssetPath 
+                : "bot_videos/gay_straightgirls/video_1.mp4";
+
+            java.io.File cachedVideo = getOrExtractAssetVideo(assetPathToUse);
+            if (cachedVideo != null && cachedVideo.exists() && cachedVideo.length() > 0) {
+                Log.d(TAG, "🤖 Playing bot video from local cached asset: " + cachedVideo.getAbsolutePath());
+                botVideoView.setVideoPath(cachedVideo.getAbsolutePath());
+            } else if (botVideoUrl != null && !botVideoUrl.isEmpty()) {
+                String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
+                String fullUrl = botVideoUrl.startsWith("http") ? botVideoUrl : baseUrl + botVideoUrl;
+                Log.d(TAG, "🤖 Streaming bot video from server URL: " + fullUrl);
+                botVideoView.setVideoURI(android.net.Uri.parse(fullUrl));
+            } else {
+                Log.w(TAG, "⚠️ No valid bot video source found.");
+                return;
+            }
+
+            botVideoView.setOnPreparedListener(mp -> {
+                mp.setLooping(true);
+                botVideoView.start();
+                Log.d(TAG, "▶️ Bot video started playing and looping!");
+            });
+
+            botVideoView.setOnCompletionListener(mp -> {
+                botVideoView.seekTo(0);
+                botVideoView.start();
+            });
+
+            botVideoView.setOnErrorListener((mp, what, extra) -> {
+                Log.e(TAG, "❌ Bot VideoView error: what=" + what + ", extra=" + extra);
+                return true;
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error playing bot video", e);
+        }
+    }
+
+    private java.io.File getOrExtractAssetVideo(String assetPath) {
+        try {
+            java.io.File cacheFile = new java.io.File(getCacheDir(), "bot_vid_" + Math.abs(assetPath.hashCode()) + ".mp4");
+            if (cacheFile.exists() && cacheFile.length() > 0) {
+                return cacheFile;
+            }
+            try (java.io.InputStream is = getAssets().open(assetPath);
+                 java.io.OutputStream os = new java.io.FileOutputStream(cacheFile)) {
+                byte[] buffer = new byte[16384];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    os.write(buffer, 0, read);
+                }
+                os.flush();
+                return cacheFile;
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Could not extract asset: " + assetPath + " (" + e.getMessage() + ")");
+            return null;
         }
     }
 
@@ -1782,6 +1904,12 @@ public class CallActivity extends BaseActivity {
     private void disconnect() {
         if (callEnded) return;
         callEnded = true;
+
+        if (botVideoView != null) {
+            try {
+                botVideoView.stopPlayback();
+            } catch (Exception ignored) {}
+        }
 
         releaseWakeLock();
         try {

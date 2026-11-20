@@ -251,7 +251,10 @@ public class ConnectingActivity extends BaseActivity {
                 String peerId = data.getString("peerId");
                 String peerName = data.has("peerName") ? data.getString("peerName") : "";
                 String peerAvatar = data.has("peerAvatar") ? data.getString("peerAvatar") : "";
-                Log.d(TAG, "📥 match-found details -> peerId: " + peerId + ", myUid: " + myUid);
+                boolean isBotCall = data.has("isBotCall") && data.optBoolean("isBotCall");
+                String botVideoUrl = data.has("botVideoUrl") ? data.optString("botVideoUrl") : "";
+                String botAssetPath = data.has("botAssetPath") ? data.optString("botAssetPath") : "";
+                Log.d(TAG, "📥 match-found details -> peerId: " + peerId + ", isBotCall: " + isBotCall + ", myUid: " + myUid);
 
                 if (peerId.equals(myUid)) return;
 
@@ -259,7 +262,7 @@ public class ConnectingActivity extends BaseActivity {
                     isWaiting = false;
                     stopQueueHeartbeat();
                     matchedPeerId = peerId;
-                    startMatchTransitionCountdown(peerId, peerName, peerAvatar);
+                    startMatchTransitionCountdown(peerId, peerName, peerAvatar, isBotCall, botVideoUrl, botAssetPath);
                 });
 
             } catch (Exception e) {
@@ -269,7 +272,7 @@ public class ConnectingActivity extends BaseActivity {
         socket.on("match-found", matchFoundListener);
     }
 
-    private void startMatchTransitionCountdown(String peerId, String peerName, String peerAvatar) {
+    private void startMatchTransitionCountdown(String peerId, String peerName, String peerAvatar, boolean isBotCall, String botVideoUrl, String botAssetPath) {
         cancelCountdown();
         if (waitingText != null) {
             waitingText.setText("Matched! Connecting...");
@@ -277,15 +280,15 @@ public class ConnectingActivity extends BaseActivity {
         countdownHandler = new Handler(Looper.getMainLooper());
         countdownRunnable = () -> {
             if (isFinishing() || isDestroyed()) return;
-            transitionToCall(peerId, peerName, peerAvatar);
+            transitionToCall(peerId, peerName, peerAvatar, isBotCall, botVideoUrl, botAssetPath);
         };
         // 1.5s delay gives enough time for match state feedback and for native ad impression to register
         countdownHandler.postDelayed(countdownRunnable, 1500);
     }
 
-    private void transitionToCall(String peerId, String peerName, String peerAvatar) {
+    private void transitionToCall(String peerId, String peerName, String peerAvatar, boolean isBotCall, String botVideoUrl, String botAssetPath) {
         destroyNativeAd();
-        Log.d(TAG, "🚀 transitionToCall starting CallActivity with peerId: " + peerId);
+        Log.d(TAG, "🚀 transitionToCall starting CallActivity with peerId: " + peerId + ", isBotCall: " + isBotCall);
         matchAccepted = true;
         Intent i = new Intent(ConnectingActivity.this, CallActivity.class);
         i.putExtra("peer", peerId);
@@ -294,6 +297,9 @@ public class ConnectingActivity extends BaseActivity {
         i.putExtra("category", category);
         String deterministicRoom = myUid.compareTo(peerId) < 0 ? myUid + "_" + peerId : peerId + "_" + myUid;
         i.putExtra("roomName", deterministicRoom);
+        i.putExtra("isBotCall", isBotCall);
+        i.putExtra("botVideoUrl", botVideoUrl);
+        i.putExtra("botAssetPath", botAssetPath);
         startActivity(i);
         finish();
     }

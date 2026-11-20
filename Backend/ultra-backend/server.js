@@ -30,6 +30,7 @@ const adsRoutes = require("./src/routes/ads");
 const realMeetRoutes = require("./src/routes/realmeet");
 const NotificationService = require("./src/services/notificationService");
 const storiesRoutes = require("./src/routes/stories");
+const botEngagementService = require("./src/services/botEngagementService");
 
 // Services
 const { startCleanupCron } = require("./src/services/cleanup");
@@ -366,6 +367,16 @@ io.on("connection", (socket) => {
       const s1 = socket.id;
       const s2 = await redisModule.getUserSocket(peerId);
       const peerSocket = io.sockets.sockets.get(s2);
+
+      // Cancel any pending bot fallback timer for both users
+      if (socket.botFallbackTimer) {
+        clearTimeout(socket.botFallbackTimer);
+        socket.botFallbackTimer = null;
+      }
+      if (peerSocket && peerSocket.botFallbackTimer) {
+        clearTimeout(peerSocket.botFallbackTimer);
+        peerSocket.botFallbackTimer = null;
+      }
       
       // Establish deterministic room name
       const room = uid.localeCompare(peerId) < 0 ? `${uid}_${peerId}` : `${peerId}_${uid}`;
@@ -381,18 +392,101 @@ io.on("connection", (socket) => {
         peerSocket.currentRoom = room;
       }
       
-      console.log("💚 MATCH FOUND:", uid, "<>", peerId);
+      console.log("💚 MATCH FOUND (Real Users):", uid, "<>", peerId);
       if (s1) io.to(s1).emit("match-found", { peerId });
       if (s2) io.to(s2).emit("match-found", { peerId: uid });
     } else {
       // No match found, enqueue self
       await redisModule.addToQueue(uid, gender, category);
+
+      // LEVEL 3: Bot Fallback Timer (PRIORITY ALWAYS TO REAL USERS: search for 8.5 seconds first)
+      if (socket.botFallbackTimer) {
+        clearTimeout(socket.botFallbackTimer);
+        socket.botFallbackTimer = null;
+      }
+
+      socket.botFallbackTimer = setTimeout(async () => {
+        try {
+          if (!socket.isSearching || socket.peerUid) return;
+
+          // Priority Check: Did a real user join the queue while we waited?
+          const latePeerId = await redisModule.popFromQueue(targetQueueKey);
+          if (latePeerId && latePeerId !== uid) {
+            const latePeerSocketId = await redisModule.getUserSocket(latePeerId);
+            const latePeerSocket = latePeerSocketId ? io.sockets.sockets.get(latePeerSocketId) : null;
+            if (latePeerSocket && latePeerSocket.isSearching) {
+              // Real match found! Real users always prioritized!
+              if (latePeerSocket.botFallbackTimer) {
+                clearTimeout(latePeerSocket.botFallbackTimer);
+                latePeerSocket.botFallbackTimer = null;
+              }
+              await redisModule.removeFromQueue(latePeerId);
+              await redisModule.removeFromQueue(uid);
+              const room = uid.localeCompare(latePeerId) < 0 ? `${uid}_${latePeerId}` : `${latePeerId}_${uid}`;
+              socket.isSearching = false;
+              socket.peerUid = latePeerId;
+              socket.currentRoom = room;
+              latePeerSocket.isSearching = false;
+              latePeerSocket.peerUid = uid;
+              latePeerSocket.currentRoom = room;
+
+              console.log("💚 REAL MATCH FOUND (late queue pop):", uid, "<>", latePeerId);
+              socket.emit("match-found", { peerId: latePeerId });
+              latePeerSocket.emit("match-found", { peerId: uid });
+              return;
+            }
+          }
+
+          // No real user available after 8.5s -> Trigger Level 3 Bot Fallback (Zero Search Drop-off)
+          const userRec = await queryOne("SELECT gender, sex_preference FROM users WHERE id = $1", [uid]);
+          const userGen = (userRec?.gender || gender || "male").toLowerCase();
+          const userPref = (userRec?.sex_preference || "straight").toLowerCase();
+
+          const bots = await botEngagementService.getMatchingBots(userGen, userPref, 1);
+          if (!bots || bots.length === 0) return;
+          const bot = bots[0];
+
+          await redisModule.removeFromQueue(uid);
+          socket.isSearching = false;
+          socket.peerUid = bot.id;
+          const botRoom = `bot_call_${uid}_${bot.id}`;
+          socket.currentRoom = botRoom;
+
+          // Orientation-aware video selection:
+          // Gay Male or Straight Female -> Male Bot video clip (Video_1.mp4 in gay_straightgirls)
+          const isGayOrStraightFemale = userPref.includes("gay") || (userGen === "female" && !userPref.includes("lesbian"));
+          const botAssetPath = isGayOrStraightFemale 
+            ? "bot_videos/gay_straightgirls/video_1.mp4" 
+            : "bot_videos/gay_straightgirls/video_1.mp4"; // fallback for now until female video provided
+          const botVideoUrl = isGayOrStraightFemale 
+            ? "/uploads/bot_videos/gay_straightgirls/video_1.mp4" 
+            : "/uploads/bot_videos/gay_straightgirls/video_1.mp4";
+
+          console.log(`🤖 [Level 3 Bot Call] Zero-dropoff fallback for user ${uid} (${userGen}, ${userPref}) matched with Bot ${bot.name} (${bot.gender}) after 8.5s!`);
+
+          socket.emit("match-found", {
+            peerId: bot.id,
+            peerName: bot.name,
+            peerAvatar: bot.avatar,
+            isBotCall: true,
+            botVideoUrl: botVideoUrl,
+            botAssetPath: botAssetPath,
+            room: botRoom,
+          });
+        } catch (botErr) {
+          console.error("Level 3 Bot fallback error:", botErr);
+        }
+      }, 8500);
     }
   });
 
   // CANCEL MATCH (If user cancels during the 5-second countdown in ConnectingActivity)
   socket.on("cancel-match", async ({ uid, peerId }) => {
     console.log("🚫 Match cancelled by", uid, "for peer", peerId);
+    if (socket.botFallbackTimer) {
+      clearTimeout(socket.botFallbackTimer);
+      socket.botFallbackTimer = null;
+    }
     socket.isSearching = false;
     socket.peerUid = null;
     socket.currentRoom = null;
@@ -403,6 +497,10 @@ io.on("connection", (socket) => {
       if (peerSocketId) {
         const peerSocket = io.sockets.sockets.get(peerSocketId);
         if (peerSocket) {
+          if (peerSocket.botFallbackTimer) {
+            clearTimeout(peerSocket.botFallbackTimer);
+            peerSocket.botFallbackTimer = null;
+          }
           peerSocket.peerUid = null;
           peerSocket.currentRoom = null;
           peerSocket.isSearching = false;
@@ -415,6 +513,10 @@ io.on("connection", (socket) => {
 
   // LEAVE QUEUE
   socket.on("leave-queue", async ({ uid }) => {
+    if (socket.botFallbackTimer) {
+      clearTimeout(socket.botFallbackTimer);
+      socket.botFallbackTimer = null;
+    }
     const peerUid = socket.peerUid;
     socket.isSearching = false;
     socket.peerUid = null;
@@ -428,6 +530,10 @@ io.on("connection", (socket) => {
         io.to(peerSocketId).emit("match-cancelled");
         const peerSocket = io.sockets.sockets.get(peerSocketId);
         if (peerSocket) {
+          if (peerSocket.botFallbackTimer) {
+            clearTimeout(peerSocket.botFallbackTimer);
+            peerSocket.botFallbackTimer = null;
+          }
           peerSocket.peerUid = null;
           peerSocket.currentRoom = null;
           peerSocket.isSearching = false;
@@ -699,6 +805,10 @@ io.on("connection", (socket) => {
   // DISCONNECT CLEANUP
   // ============================================
   socket.on("disconnect", async () => {
+    if (socket.botFallbackTimer) {
+      clearTimeout(socket.botFallbackTimer);
+      socket.botFallbackTimer = null;
+    }
     let disconnectedUid = socket.uid;
 
     if (!disconnectedUid) {
