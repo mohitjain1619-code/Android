@@ -1189,7 +1189,18 @@ public class ProfileActivity extends BaseActivity {
         RecyclerView recyclerView = view.findViewById(R.id.avatar_recycler_view);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
 
-        AvatarSelectionAdapter adapter = new AvatarSelectionAdapter(this, avatars, avatarName -> {
+        // Filter avatars strictly by user gender
+        String userGender = visitedUser != null && visitedUser.getGender() != null ? visitedUser.getGender() : tokenManager.getUserGender();
+        String[] displayAvatars;
+        if ("female".equalsIgnoreCase(userGender)) {
+            displayAvatars = new String[]{"av3", "av4", "av5", "av10", "av11", "av12", "av13"};
+        } else if ("male".equalsIgnoreCase(userGender)) {
+            displayAvatars = new String[]{"av2", "av6", "av7", "av9", "av14", "av15"};
+        } else {
+            displayAvatars = avatars;
+        }
+
+        AvatarSelectionAdapter adapter = new AvatarSelectionAdapter(this, displayAvatars, avatarName -> {
             updateProfile("avatar", avatarName);
             dialog.dismiss();
         });

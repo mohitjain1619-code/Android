@@ -1113,6 +1113,19 @@ public class MainScreenActivity extends BaseActivity {
             return;
         }
 
+        // Immediately save preference to TokenManager and backend
+        String prefFormatted = "Straight";
+        if ("gay".equalsIgnoreCase(category)) prefFormatted = "Gay";
+        else if ("lesbian".equalsIgnoreCase(category)) prefFormatted = "Lesbian";
+
+        tokenManager.setSexPreference(prefFormatted);
+        java.util.Map<String, Object> updates = new java.util.HashMap<>();
+        updates.put("sex_preference", prefFormatted);
+        api.updateMe(updates).enqueue(new Callback<JsonObject>() {
+            @Override public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {}
+            @Override public void onFailure(Call<JsonObject> call, Throwable t) {}
+        });
+
         // Female verification check
         if ("female".equalsIgnoreCase(gender) && !tokenManager.isVerified()) {
             showFemaleVerificationTourDialog();

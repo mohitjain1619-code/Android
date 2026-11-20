@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const botEngagementService = require("../services/botEngagementService");
 
 const router = express.Router();
 
@@ -208,6 +209,9 @@ router.post("/upload", upload.single("media"), async (req, res) => {
        RETURNING *`,
       [req.user.userId, type, mediaUrl, textContent || "", textColor || "#FFFFFF", bgGradient || ""]
     );
+
+    // Trigger automated bot story views matching author's preferences
+    botEngagementService.scheduleStoryViews(inserted.id, req.user.userId);
 
     const io = req.app.get("io");
     if (io) {

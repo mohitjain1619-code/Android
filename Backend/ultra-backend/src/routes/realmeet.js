@@ -74,7 +74,7 @@ async function cleanupExpiredPosts() {
     const now = Date.now();
     const rows = await queryMany("SELECT id, meeting_time FROM community_posts WHERE meeting_time IS NOT NULL AND meeting_time != ''");
     if (!rows || rows.length === 0) return;
-    
+
     const expiredIds = [];
     for (const r of rows) {
       if (r.meeting_time && typeof r.meeting_time === 'string' && r.meeting_time.includes('T')) {
@@ -84,12 +84,12 @@ async function cleanupExpiredPosts() {
         }
       }
     }
-    
+
     if (expiredIds.length > 0) {
       for (const id of expiredIds) {
-        await query("DELETE FROM saved_parties WHERE post_id = $1", [id]).catch(() => {});
-        await query("DELETE FROM community_requests WHERE post_id = $1", [id]).catch(() => {});
-        await query("DELETE FROM community_posts WHERE id = $1", [id]).catch(() => {});
+        await query("DELETE FROM saved_parties WHERE post_id = $1", [id]).catch(() => { });
+        await query("DELETE FROM community_requests WHERE post_id = $1", [id]).catch(() => { });
+        await query("DELETE FROM community_posts WHERE id = $1", [id]).catch(() => { });
       }
       console.log(`[RealMeet Auto-Cleanup] Purged ${expiredIds.length} expired posts.`);
     }
@@ -134,7 +134,7 @@ router.get("/feed", async (req, res) => {
             const m = today.getMonth() - birthDate.getMonth();
             if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       return formatPost({ ...r, age });
     });
@@ -290,7 +290,7 @@ router.get("/saved-parties", async (req, res) => {
             const m = today.getMonth() - birthDate.getMonth();
             if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       return formatPost({ ...r, age });
     });
@@ -333,7 +333,7 @@ router.get("/requests", async (req, res) => {
             const m = today.getMonth() - birthDate.getMonth();
             if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) applicantAge--;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       let posterAge = 22;
@@ -347,7 +347,7 @@ router.get("/requests", async (req, res) => {
             const m = today.getMonth() - birthDate.getMonth();
             if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) posterAge--;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       return formatRequest({ ...r, applicant_age: applicantAge, poster_age: posterAge });
@@ -659,7 +659,7 @@ router.post("/request", async (req, res) => {
         const birthDate = new Date(parts[2], parts[1] - 1, parts[0]);
         const today = new Date();
         age = today.getFullYear() - birthDate.getFullYear();
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const formatted = formatRequest({ ...inserted, ...u, applicant_age: age, post_title: postTitle });
