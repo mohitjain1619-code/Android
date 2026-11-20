@@ -2,6 +2,7 @@ const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
 const NotificationService = require("../services/notificationService");
+const botEngagementService = require("../services/botEngagementService");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -230,6 +231,28 @@ router.post("/:targetUserId/messages", async (req, res) => {
         });
       } catch (fcmErr) {
         console.error("Error triggering chat push notification:", fcmErr.message);
+      }
+    })();
+
+    // Level 2: If the recipient is an AI bot, trigger intelligent natural DM reply
+    (async () => {
+      try {
+        const targetBot = await queryOne(
+          "SELECT id, name, gender, avatar, photo_url, is_bot, bot_personality, city FROM users WHERE id = $1",
+          [targetId]
+        );
+        if (targetBot && targetBot.is_bot) {
+          botEngagementService.handleIncomingDMToBot({
+            chatId: chat.id,
+            botUser: targetBot,
+            realUserId: req.user.userId,
+            incomingText: text.trim(),
+            io: req.app.get("io"),
+            redisModule: req.app.get("redisModule"),
+          });
+        }
+      } catch (botChatErr) {
+        console.error("Error triggering bot chat response:", botChatErr.message);
       }
     })();
 

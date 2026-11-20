@@ -1,6 +1,7 @@
 const express = require("express");
 const { queryOne, queryMany, query } = require("../config/database");
 const { requireAuth } = require("../middleware/auth");
+const botEngagementService = require("../services/botEngagementService");
 
 const router = express.Router();
 
@@ -30,6 +31,9 @@ router.get("/me", async (req, res) => {
 
     const followers = await queryOne("SELECT COUNT(*) as count FROM follows WHERE following_id = $1", [user.id]);
     const following = await queryOne("SELECT COUNT(*) as count FROM follows WHERE follower_id = $1", [user.id]);
+
+    // Level 2 Retention Booster: Trigger welcome DM check when user visits feed/profile
+    botEngagementService.scheduleWelcomeDM(user.id, req.app.get("io"), req.app.get("redisModule"));
 
     return res.json({
       ok: true,

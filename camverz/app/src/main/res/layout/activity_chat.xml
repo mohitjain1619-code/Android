@@ -44,17 +44,33 @@
                 app:civ_border_color="@color/accent_primary"
                 app:civ_border_width="1.5dp" />
 
-            <TextView
-                android:id="@+id/toolbar_username"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="14dp"
                 android:layout_toEndOf="@id/toolbar_avatar"
-                android:textColor="@color/text_primary"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                tools:text="Username" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/toolbar_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    tools:text="Username" />
+
+                <TextView
+                    android:id="@+id/toolbar_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent_primary"
+                    android:textSize="11sp"
+                    android:textStyle="italic"
+                    android:visibility="gone"
+                    tools:text="typing..." />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"

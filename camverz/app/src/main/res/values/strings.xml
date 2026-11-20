@@ -10,6 +10,7 @@
     <string name="change_language">Change Language</string>
 
     <!-- Call Activity -->
+    <string name="typing_status">typing…</string>
     <string name="mute_audio">Mute audio</string>
     <string name="switch_camera">Switch camera</string>
     <string name="end_call">End call</string>

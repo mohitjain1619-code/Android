@@ -52,6 +52,7 @@ public class ChatActivity extends BaseActivity {
     private View replyPreviewLayout;
     private TextView tvReplyName;
     private TextView tvReplyText;
+    private TextView toolbarStatus;
     private ImageView btnCancelReply;
     private Message replyingToMessage = null;
     private String chatId;
@@ -112,6 +113,7 @@ public class ChatActivity extends BaseActivity {
 
         CircleImageView toolbarAvatar = findViewById(R.id.toolbar_avatar);
         TextView toolbarUsername = findViewById(R.id.toolbar_username);
+        toolbarStatus = findViewById(R.id.toolbar_status);
         
         ImageView videoCallBtn = findViewById(R.id.video_call_button);
         ImageView voiceCallBtn = findViewById(R.id.voice_call_button);
@@ -259,6 +261,9 @@ public class ChatActivity extends BaseActivity {
                         chatId = msgChatId;
                     }
                     runOnUiThread(() -> {
+                        if (toolbarStatus != null) {
+                            toolbarStatus.setVisibility(View.GONE);
+                        }
                         loadMessages(); // reload messages to get the latest
                         markAsRead();
                     });
@@ -279,6 +284,28 @@ public class ChatActivity extends BaseActivity {
                 runOnUiThread(() -> removeMessageById(deletedMsgId));
             } catch (JSONException e) {
                 Log.e(TAG, "Error handling message_deleted socket event", e);
+            }
+        });
+
+        socket.on("user_typing", args -> {
+            try {
+                JSONObject data = (JSONObject) args[0];
+                String senderId = data.getString("senderId");
+                boolean isTyping = data.optBoolean("isTyping", false);
+                if (senderId.equals(receiverId)) {
+                    runOnUiThread(() -> {
+                        if (toolbarStatus != null) {
+                            if (isTyping) {
+                                toolbarStatus.setText(R.string.typing_status);
+                                toolbarStatus.setVisibility(View.VISIBLE);
+                            } else {
+                                toolbarStatus.setVisibility(View.GONE);
+                            }
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error handling user_typing socket event", e);
             }
         });
     }
@@ -628,6 +655,7 @@ public class ChatActivity extends BaseActivity {
         }
         socket.off("new_message");
         socket.off("message_deleted");
+        socket.off("user_typing");
     }
 
 }

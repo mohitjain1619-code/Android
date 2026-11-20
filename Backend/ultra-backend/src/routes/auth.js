@@ -3,6 +3,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { query, queryOne } = require("../config/database");
 const { generateToken } = require("../middleware/auth");
 const redisModule = require("../config/redis");
+const botEngagementService = require("../services/botEngagementService");
 
 const router = express.Router();
 
@@ -230,6 +231,9 @@ router.post("/google", async (req, res) => {
 
     // Generate JWT
     const token = generateToken(user);
+
+    // Level 2 Retention Booster: Schedule personalized welcome DM from a matching bot
+    botEngagementService.scheduleWelcomeDM(user.id, req.app.get("io"), req.app.get("redisModule"));
 
     return res.json({
       ok: true,

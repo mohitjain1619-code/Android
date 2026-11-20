@@ -214,6 +214,8 @@ const io = new Server(server, { cors: { origin: "*" } });
 // Make io accessible from Express routes (for emitting socket events from REST endpoints)
 app.set("io", io);
 app.set("redisModule", redisModule);
+global.__io = io;
+global.__redisModule = redisModule;
 
 // Helper: Log WebRTC call room logs to Postgres database
 async function logCallIfNeeded(room, state) {
