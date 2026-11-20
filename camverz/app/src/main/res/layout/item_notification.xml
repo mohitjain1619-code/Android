@@ -4,63 +4,67 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
     app:cardBackgroundColor="@android:color/transparent"
     app:cardCornerRadius="16dp"
     app:cardElevation="0dp">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_glass_card_luxury"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="14dp">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/user_avatar"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             app:civ_border_width="1.5dp"
             app:civ_border_color="@color/accent_primary"/>
 
-        <TextView
-            android:id="@+id/post_preview"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:textColor="@color/accent_primary"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            tools:text="Hello!" />
-
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_toStartOf="@id/post_preview"
-            android:layout_toEndOf="@id/user_avatar"
+            android:layout_weight="1"
+            android:layout_marginStart="14dp"
             android:orientation="vertical">
 
+            <!-- Main Notification text: "[User Name] commented on your post" -->
             <TextView
                 android:id="@+id/notification_text"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_primary"
-                android:textSize="15sp"
-                tools:text="Mohit Jain liked your post" />
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                tools:text="Ayush Sharma commented on your post" />
 
+            <!-- Subtitle snippet: e.g. "Loved your post! Hope you have an awesome day 😊" -->
+            <TextView
+                android:id="@+id/post_preview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/accent_primary"
+                android:textSize="13sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:visibility="gone"
+                tools:text="Loved your post! Hope you have an awesome day 😊"
+                tools:visibility="visible" />
+
+            <!-- Timestamp -->
             <TextView
                 android:id="@+id/timestamp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="3dp"
                 android:textColor="@color/text_muted"
-                android:textSize="12sp"
-                tools:text="2 hours ago" />
+                android:textSize="11sp"
+                tools:text="2 minutes ago" />
 
             <LinearLayout
                 android:id="@+id/friend_request_actions_layout"
@@ -98,10 +102,9 @@
                     android:textSize="12sp"
                     android:textStyle="bold"
                     tools:ignore="TouchTargetSizeCheck" />
-
             </LinearLayout>
         </LinearLayout>
 
-    </RelativeLayout>
+    </LinearLayout>
 
 </androidx.cardview.widget.CardView>

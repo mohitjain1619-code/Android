@@ -67,9 +67,14 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             context.startActivity(intent);
         });
 
-        if (notification.getPostText() != null && !notification.getPostText().isEmpty()) {
+        if (notification.getPostText() != null && !notification.getPostText().trim().isEmpty()) {
             holder.postPreview.setVisibility(View.VISIBLE);
-            holder.postPreview.setText(notification.getPostText());
+            String snippet = notification.getPostText().trim();
+            if ("comment".equals(notification.getType()) || "reply".equals(notification.getType())) {
+                holder.postPreview.setText("\"" + snippet + "\"");
+            } else {
+                holder.postPreview.setText(snippet);
+            }
         } else {
             holder.postPreview.setVisibility(View.GONE);
         }

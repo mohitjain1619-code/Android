@@ -1128,14 +1128,25 @@ async function generateWithAI(systemPrompt, userPrompt, messagesHistory = []) {
  * and maintains context even if cloud AI keys are temporarily unconfigured.
  * =========================================================================
  */
-function generateSmartContextualChatReply(bot, userMessage, userPreference, userGender, messageCount = 1, botPreviouslyInvitedCall = false) {
+function generateSmartContextualChatReply(bot, userMessage, userPreference, userGender, messageCount = 1, botPreviouslyInvitedCall = false, alreadyAskedCall = false, lastBotText = "") {
   const text = (userMessage || "").trim().toLowerCase();
   const city = bot.city || (bot.gender === "female" ? "Delhi" : "Pune");
   const isGay = String(userPreference || "").toLowerCase().includes("gay");
   const isMaleBot = bot.gender === "male";
   const bro = (isGay || isMaleBot) ? "bro" : "yaar";
 
-  // 1. Check if user is answering a video call invitation
+  // 1. Check if user is saying NO / declining video call or request
+  const isNegative = /(^|\b)(no|nah|nahi|na|nope|not now|never|baad me|later|don't|dont|nhi|mat karo|call nahi|call nhi)(\b|$)/i.test(text);
+  if (isNegative) {
+    const declineReplies = [
+      `Haha koi baat nahi! Yahan chat par hi baat karte hain 😊 Aur batao aaj ka din kaisa raha?`,
+      `Arey chill ${bro}, no problem at all! Aur batao kya chal raha hai aaj kal? ✨`,
+      `Haha okay sure, no pressure! Yahan text par hi connect karte hain 😊 Aur batao?`,
+    ];
+    return pickRandom(declineReplies);
+  }
+
+  // 2. Check if user agreed to a video call that was PREVIOUSLY invited
   if (botPreviouslyInvitedCall) {
     const isAffirmative = /^(haan|ha|yes|sure|chalo|karo|call|ok|okay|aao|dial|bilkul)\b/i.test(text);
     if (isAffirmative && !/[?]|kahan|kha|kya|who|where/i.test(text)) {
@@ -1146,7 +1157,7 @@ function generateSmartContextualChatReply(bot, userMessage, userPreference, user
     }
   }
 
-  // 2. Direct Location Questions: "india and you?", "tum kha se ho?", "where from", "kahan rehte ho"
+  // 3. Direct Location Questions: "india and you?", "tum kha se ho?", "where from", "kahan rehte ho"
   if (/(kahan se|kha se|kaha se|where are you|where from|and you|aur aap|aur tum|location)/i.test(text)) {
     const cityReplies = [
       `Main ${city} se hoon ${bro}! Aur batao, Camverz par naye ho kya? 😊`,
@@ -1156,7 +1167,7 @@ function generateSmartContextualChatReply(bot, userMessage, userPreference, user
     return pickRandom(cityReplies);
   }
 
-  // 3. Direct Profession/Study/Bio Questions: "kya karti ho?", "kya karte ho?", "what do you do?"
+  // 4. Direct Profession/Study/Bio Questions: "kya karti ho?", "kya karte ho?", "what do you do?"
   if (/(kya kar|karti ho|karte ho|profession|study|work|job|padhai|kya karte)/i.test(text)) {
     if (bot.bio && bot.bio.length > 5) {
       return `Main ${bot.bio.replace(/[✨❤️🍕☕]/g, "").trim()}! Aur aap kya karte ho waise? 😊`;
@@ -1164,7 +1175,7 @@ function generateSmartContextualChatReply(bot, userMessage, userPreference, user
     return `Main college student hoon aur thoda freelance karta hoon ${bro}! Aap batao? 😊`;
   }
 
-  // 4. Gym / Workout Questions: "aaj gym chale?", "workout"
+  // 5. Gym / Workout Questions: "aaj gym chale?", "workout"
   if (/(gym|workout|fitness|biceps|exercise)/i.test(text)) {
     const gymReplies = [
       `Haan ${bro} bilkul! Aaj to heavy workout ka plan hai, kab chal rahe ho? 💪`,
@@ -1174,7 +1185,7 @@ function generateSmartContextualChatReply(bot, userMessage, userPreference, user
     return pickRandom(gymReplies);
   }
 
-  // 5. How are you / Kaise ho?
+  // 6. How are you / Kaise ho?
   if (/(kaise ho|kaisa hai|how are you|sab theek|kya haal|wassup|sup)/i.test(text)) {
     return pickRandom([
       "Main ekdum badhiya! Aap batao, aaj ka din kaisa chal raha hai? 😊",
@@ -1182,14 +1193,14 @@ function generateSmartContextualChatReply(bot, userMessage, userPreference, user
     ]);
   }
 
-  // 6. Relationship / Flirt: "single ho?", "crush", "girlfriend", "boyfriend"
+  // 7. Relationship / Flirt: "single ho?", "crush", "girlfriend", "boyfriend"
   if (/(single|dating|girlfriend|boyfriend|gf|bf|pyaar)/i.test(text)) {
     return isMaleBot
       ? `Haha filhal toh single hoon bro! Why, koi setting karwa rahe ho kya? 😉`
       : `Haha filhal toh single hoon! Why, koi accha prospect hai kya? 😉`;
   }
 
-  // 7. Free ho / Online ho?
+  // 8. Free ho / Online ho?
   if (/(free ho|online ho|busy|available)/i.test(text)) {
     return pickRandom([
       `Haan abhi free hoon ${bro}, batao kya chal raha hai? 😊`,
@@ -1197,21 +1208,23 @@ function generateSmartContextualChatReply(bot, userMessage, userPreference, user
     ]);
   }
 
-  // 8. Video Call invitation (ONLY after 4+ messages of healthy conversation)
-  if (messageCount >= 4 && !/[?]|kya|kaun|kaise/i.test(text)) {
+  // 9. Video Call invitation (STRICTLY ONCE per conversation, only after 5+ messages, NEVER if already asked or declined)
+  if (messageCount >= 5 && !alreadyAskedCall && !isNegative && !/[?]|kya|kaun|kaise/i.test(text)) {
     return pickRandom([
-      `Typing me bohot time lagta hai haha, RealMeet par live video call karein kya? 😉✨`,
-      `Aapse baat karke maza aa raha hai! Kabhi RealMeet par live video call karein, what say? 😊`,
+      `Aapse baat karke maza aa raha hai! Kabhi RealMeet par live video call karein, what say? 😊✨`,
+      `Typing me thoda time lagta hai haha, RealMeet par live video call karein kya thodi der me? 😉✨`,
     ]);
   }
 
-  // 9. Natural Friendly Banter
+  // 10. Natural Friendly Banter (Pick one that doesn't match last bot message)
   const banter = [
     `Haha sahi me ${bro}! Aur batao, aaj weekend ke kya plans hain? 😊`,
     `Arey waah, that sounds really cool! Aur batao apne baare me? ✨`,
     `Totally agree with you! Camverz par genuinely achhe logon se milke maza aata hai 🌸`,
+    `Sahi baat hai! Aur batao, Camverz par friends bane abhi tak ya explore hi kar rahe ho? 😊`,
   ];
-  return pickRandom(banter);
+  const filtered = banter.filter((b) => b.trim().toLowerCase() !== lastBotText.trim().toLowerCase());
+  return pickRandom(filtered.length > 0 ? filtered : banter);
 }
 
 /**
@@ -1732,10 +1745,12 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
       // Find the last message sent by the bot
       const previousBotMessages = historyChronological.filter((m) => m.sender_id === botUser.id);
       const lastBotMessage = previousBotMessages.length > 0 ? previousBotMessages[previousBotMessages.length - 1].text : "";
-      const botPreviouslyAskedForCall = /(video call|videocall|call karein|call karte hain|realmeet par call)/i.test(lastBotMessage);
+      const botPreviouslyAskedForCall = /(video call|videocall|call karein|call karte hain|realmeet)/i.test(lastBotMessage);
+      const alreadyAskedCall = historyChronological.some((m) => /(video call|videocall|call karein|call karte hain|realmeet)/i.test(m.text));
 
-      // Check if user is asking a question
+      // Check if user is asking a question or declining
       const userAskedAQuestion = /[?]|kahan|kha se|kaha se|kya|who|where|how|kaise|kaun|and you/i.test(cleanIncoming);
+      const isNegative = /(^|\b)(no|nah|nahi|na|nope|not now|never|baad me|later|don't|dont|nhi|mat karo|call nahi|call nhi)(\b|$)/i.test(cleanIncoming);
 
       // Format messages history for LLM
       const messagesHistory = [];
@@ -1759,12 +1774,14 @@ BIO/INTERESTS: ${personaBio}.
 You are in a direct 1-on-1 private chat on the Camverz social app.
 STRICT INSTRUCTIONS:
 1. DIRECTLY ANSWER QUESTIONS: If the user asks where you are from, ALWAYS state that you are from ${personaCity}! If they ask what you do, answer based on your bio. Never ignore questions!
-2. Language: Casual, modern, natural Hinglish (mix of Hindi & English in English script, e.g. "Main ${personaCity} se hoon yaar!", "Haan bilkul!", "Aap batao?").
-3. Tone: Genuine, human, warm, conversational.
-4. Length: Exactly 1 to 2 short sentences (maximum 15-20 words). Never write long paragraphs.
-5. VIDEO CALL RULE: Only invite them to a video call if you have already exchanged at least 4 friendly messages AND they did not ask you a specific question.
-6. NEVER say you are an AI, bot, assistant, or virtual persona. You are a real person on Camverz.
-7. Output ONLY the response text. No quotes, no prefixes.`;
+2. REJECTION HANDLING: If the user says "no", "nahi", "nah", or declines, NEVER push for a call! Accept casually with "Haha koi baat nahi! Yahan chat par hi baat karte hain 😊 Aur batao?".
+3. VIDEO CALL RULE: NEVER mention video call if you already invited them before or if the user declined! Only invite once after 5+ friendly turns.
+4. Language: Casual, modern, natural Hinglish (mix of Hindi & English in English script, e.g. "Main ${personaCity} se hoon yaar!", "Haan bilkul!", "Aap batao?").
+5. Tone: Genuine, human, warm, conversational.
+6. Length: Exactly 1 to 2 short sentences (maximum 15-20 words). Never write long paragraphs.
+7. NEVER repeat the exact same sentence you sent previously.
+8. NEVER say you are an AI, bot, assistant, or virtual persona. You are a real person on Camverz.
+9. Output ONLY the response text. No quotes, no prefixes.`;
 
       // 4. Generate response with Multi-Provider AI (Gemini -> Groq -> OpenAI -> Ollama)
       let botReply = await generateWithAI(systemPrompt, "", messagesHistory);
@@ -1777,8 +1794,16 @@ STRICT INSTRUCTIONS:
           user.sex_preference,
           user.gender,
           totalMessageCount,
-          botPreviouslyAskedForCall && !userAskedAQuestion
+          botPreviouslyAskedForCall && !userAskedAQuestion && !isNegative,
+          alreadyAskedCall,
+          lastBotMessage
         );
+      }
+
+      // 5b. Anti-loop de-duplication: NEVER repeat the exact sentence sent last turn!
+      if (lastBotMessage && botReply.trim().toLowerCase() === lastBotMessage.trim().toLowerCase()) {
+        const bro = (isGayUser || isMaleBot) ? "bro" : "yaar";
+        botReply = `Haha aur batao ${bro}, aaj ka din kaisa raha? Aur kya chal raha hai? 😊`;
       }
 
       // 6. Deliver after realistic typing delay
