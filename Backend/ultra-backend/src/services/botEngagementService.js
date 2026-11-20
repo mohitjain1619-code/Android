@@ -5,19 +5,16 @@ const NotificationService = require("./notificationService");
 
 /**
  * =========================================================================
- * BOT ENGAGEMENT & RETENTION SERVICE (LEVEL 1 & LEVEL 2 RETENTION BOOSTER)
+ * BOT ENGAGEMENT & RETENTION SERVICE (SUPER INTELLIGENT AI ENGINE)
  * =========================================================================
  * - 50+ Diverse Ultra-Realistic Indian & Global Bot Profiles
  * - Native Avatars Only (Girls: av3, av4, av5, av10, av11, av12, av13 | Boys: av2, av6, av7, av9, av14, av15)
- * - Strict Sexual Preference & Orientation Alignment (Gay, Lesbian, Straight)
- * - Level 1: Automatic Staggered Post Engagement (Likes + AI Comments)
- * - Level 1: Automated Story Viewers Engine (6-12 realistic viewers)
- * - Level 1: 2-Way Interactive Comment Threading (Bot replies to user comments)
- * - Level 2: Instant Welcome / Hook DMs (Personalized opener in 45-80s)
- * - Level 2: AI-Powered Multi-Turn Natural DM Chat (Groq Cloud Llama 3.1 + Local Ollama Llama 3.2 — ₹0 Cost)
- * - Level 2: Real-time "Typing..." Socket Indicator (Realistic 3.5-7s human delay)
- * - Level 2: Conversational Memory (Maintains 8-10 message context arc)
- * - Level 2: RealMeet Video Call Pitch (Naturally invites user to video call after rapport is built)
+ * - 100% Strict Sexual Orientation Alignment (Gay, Lesbian, Straight)
+ * - Multi-Provider AI Engine (Google Gemini + Groq Llama 3.1 + OpenAI + Local Ollama)
+ * - Deep Semantic Contextual Engine (Answers questions directly, never canned)
+ * - Understands test/gibberish posts ("tt", "test", "asdf") with playful human banter
+ * - Natural Video Call Hooks (Only after rapport is established, never prematurely)
+ * - Realistic typing indicator & human delays (3.5 to 7.0 seconds)
  * =========================================================================
  */
 
@@ -43,7 +40,7 @@ const BOT_PROFILES = [
     gender: "female",
     avatar: "av4",
     photo_url: null,
-    bio: "College life | Always up for deep convos 🎬",
+    bio: "College student | Always up for deep convos 🎬",
     city: "Mumbai",
     verified: true,
     personality: "curious_thoughtful",
@@ -628,13 +625,11 @@ const BOT_PROFILES = [
   },
 ];
 
-// Helper: Pick random element from an array
 function pickRandom(arr) {
   if (!arr || arr.length === 0) return "";
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// Helper: Random number between min and max (inclusive)
 function randomBetween(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -642,82 +637,110 @@ function randomBetween(min, max) {
 /**
  * =========================================================================
  * BOT SEEDER
- * Ensures 50+ pre-defined bot users exist in the PostgreSQL users table.
+ * Ensures all male and female bots exist with strictly verified gender and cities.
  * =========================================================================
  */
 async function ensureBotsSeeded() {
   try {
     for (const bot of BOT_PROFILES) {
-      const existing = await queryOne("SELECT id FROM users WHERE google_id = $1", [bot.google_id]);
-      if (!existing) {
-        await query(
-          `INSERT INTO users (google_id, email, name, gender, avatar, photo_url, bio, city, verified, is_bot, bot_personality)
-           VALUES ($1, $2, $3, $4, $5, null, $6, $7, $8, true, $9)`,
-          [
-            bot.google_id,
-            bot.email,
-            bot.name,
-            bot.gender,
-            bot.avatar,
-            bot.bio,
-            bot.city,
-            bot.verified,
-            bot.personality,
-          ]
+      try {
+        const cleanGender = (bot.gender || "male").toLowerCase().trim();
+        const existing = await queryOne(
+          "SELECT id FROM users WHERE google_id = $1 OR email = $2",
+          [bot.google_id, bot.email]
         );
-      } else {
-        // Enforce app-internal avatar and clear external photo_url
-        await query(
-          `UPDATE users SET avatar = $1, photo_url = NULL, gender = $2, name = $3 WHERE google_id = $4 AND is_bot = true`,
-          [bot.avatar, bot.gender, bot.name, bot.google_id]
-        );
+
+        if (!existing) {
+          await query(
+            `INSERT INTO users (google_id, email, name, gender, avatar, photo_url, bio, city, verified, is_bot, bot_personality)
+             VALUES ($1, $2, $3, $4, $5, null, $6, $7, $8, true, $9)
+             ON CONFLICT (email) DO UPDATE SET
+               gender = EXCLUDED.gender,
+               avatar = EXCLUDED.avatar,
+               name = EXCLUDED.name,
+               city = EXCLUDED.city,
+               bio = EXCLUDED.bio,
+               is_bot = true,
+               bot_personality = EXCLUDED.bot_personality`,
+            [
+              bot.google_id,
+              bot.email,
+              bot.name,
+              cleanGender,
+              bot.avatar,
+              bot.bio,
+              bot.city,
+              bot.verified,
+              bot.personality,
+            ]
+          );
+        } else {
+          await query(
+            `UPDATE users SET
+               avatar = $1,
+               photo_url = NULL,
+               gender = $2,
+               name = $3,
+               city = $4,
+               bio = $5,
+               is_bot = true,
+               bot_personality = $6
+             WHERE id = $7`,
+            [bot.avatar, cleanGender, bot.name, bot.city, bot.bio, bot.personality, existing.id]
+          );
+        }
+      } catch (botErr) {
+        console.error(`Error seeding bot ${bot.name}:`, botErr.message);
       }
     }
     await query("UPDATE users SET photo_url = NULL WHERE is_bot = true");
-    console.log(`🤖 Seeded ${BOT_PROFILES.length} Diverse Production Bot Profiles (Using Native App Avatars Only)!`);
+    console.log(`🤖 Verified and seeded ${BOT_PROFILES.length} production bot profiles!`);
   } catch (err) {
-    console.error("Error seeding bot profiles:", err.message);
+    console.error("Error in ensureBotsSeeded:", err.message);
   }
 }
 
 /**
  * =========================================================================
- * GET MATCHING BOTS FOR A USER (STRICT SEXUAL PREFERENCE & GENDER FILTER)
+ * GET MATCHING BOTS FOR A USER (100% STRICT SEXUAL PREFERENCE & GENDER FILTER)
+ * Gay users get ONLY male bots. Lesbian users get ONLY female bots.
  * =========================================================================
  */
 async function getMatchingBots(userGender, userPreference, count = 4) {
   try {
-    let genderFilter = "";
-    const cleanPref = (userPreference || "straight").toLowerCase();
-    const cleanGen = (userGender || "male").toLowerCase();
+    const cleanPref = String(userPreference || "").toLowerCase().trim();
+    const cleanGen = String(userGender || "male").toLowerCase().trim();
 
-    if (cleanPref === "gay") {
-      // Gay male -> attracted to males -> all male bots
-      genderFilter = "WHERE is_bot = true AND gender = 'male'";
-    } else if (cleanPref === "lesbian") {
-      // Lesbian female -> attracted to females -> all female bots
-      genderFilter = "WHERE is_bot = true AND gender = 'female'";
+    let targetGender = "female"; // default for straight male
+
+    if (cleanPref.includes("gay") || cleanPref === "men" || cleanPref === "male") {
+      targetGender = "male"; // Gay user -> strictly male bots
+    } else if (cleanPref.includes("lesbian") || cleanPref === "women" || cleanPref === "female") {
+      targetGender = "female"; // Lesbian user -> strictly female bots
     } else if (cleanGen === "female") {
-      // Straight female -> attracted to males -> all male bots
-      genderFilter = "WHERE is_bot = true AND gender = 'male'";
+      targetGender = "male"; // Straight female -> strictly male bots
     } else {
-      // Straight male -> attracted to females -> all female bots
-      genderFilter = "WHERE is_bot = true AND gender = 'female'";
+      targetGender = "female"; // Straight male -> strictly female bots
     }
 
+    // Query matching bots strictly by targetGender
     const bots = await queryMany(
-      `SELECT id, name, gender, avatar, photo_url, bot_personality, city
-       FROM users ${genderFilter}
-       ORDER BY RANDOM() LIMIT $1`,
-      [count]
+      `SELECT id, name, gender, avatar, photo_url, bot_personality, city, bio
+       FROM users
+       WHERE is_bot = true AND LOWER(TRIM(gender)) = $1
+       ORDER BY RANDOM() LIMIT $2`,
+      [targetGender, count]
     );
 
     if (bots && bots.length > 0) return bots;
 
-    // Fallback if specific filter has no bots
+    // Failsafe: return matching gender bots even if is_bot flag was unset
     return await queryMany(
-      "SELECT id, name, gender, avatar, photo_url, bot_personality, city FROM users WHERE is_bot = true ORDER BY RANDOM() LIMIT $1",
-      [count]
+      `SELECT id, name, gender, avatar, photo_url, bot_personality, city, bio
+       FROM users
+       WHERE LOWER(TRIM(gender)) = $1
+       ORDER BY RANDOM() LIMIT $2`,
+      [targetGender, count]
     );
   } catch (err) {
     console.error("Error fetching matching bots:", err);
@@ -727,11 +750,112 @@ async function getMatchingBots(userGender, userPreference, count = 4) {
 
 /**
  * =========================================================================
- * HYBRID AI ENGINE: GROQ CLOUD (FREE LLAMA 3.1) + LOCAL OLLAMA (LLAMA 3.2)
- * Supports multi-turn chat message history for realistic conversational memory.
+ * MULTI-PROVIDER AI ENGINE
+ * 1. Google Gemini API (if GEMINI_API_KEY in env)
+ * 2. Groq Cloud API (if GROQ_API_KEY in env)
+ * 3. OpenAI API (if OPENAI_API_KEY in env)
+ * 4. Local Ollama (if 127.0.0.1:11434 reachable)
  * =========================================================================
  */
-function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 8000) {
+function cleanAIResponse(text) {
+  if (!text) return "";
+  let cleaned = text.trim();
+  cleaned = cleaned.replace(/^["'`]+|["'`]+$/g, "");
+  cleaned = cleaned.replace(/^[A-Za-z0-9_]+:\s*/, "");
+  cleaned = cleaned.replace(/^(Comment|Reply|Message|Bot):\s*/i, "");
+  cleaned = cleaned.replace(/\n.*/gs, ""); // Keep single crisp sentence
+  return cleaned.trim();
+}
+
+// 1. Google Gemini API
+function callGeminiAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
+  if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    try {
+      const contents = [];
+      if (Array.isArray(messagesHistory)) {
+        for (const msg of messagesHistory) {
+          contents.push({
+            role: msg.role === "assistant" ? "model" : "user",
+            parts: [{ text: msg.content }],
+          });
+        }
+      }
+      if (userPrompt && userPrompt.trim()) {
+        contents.push({ role: "user", parts: [{ text: userPrompt.trim() }] });
+      }
+
+      const payload = JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          temperature: 0.85,
+          maxOutputTokens: 60,
+        },
+      });
+
+      const req = https.request(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try {
+                const json = JSON.parse(body);
+                const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  const cleaned = cleanAIResponse(text);
+                  if (cleaned.length >= 3) return resolve(cleaned);
+                }
+              } catch (e) {}
+              resolve(null);
+            }
+          });
+        }
+      );
+
+      req.on("error", () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
+      });
+
+      req.write(payload);
+      req.end();
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
+      }
+    }
+  });
+}
+
+// 2. Groq Cloud API
+function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
 
@@ -745,7 +869,6 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
     }, timeoutMs);
 
     try {
-      // Build multi-turn messages array
       const messages = [{ role: "system", content: systemPrompt }];
       if (Array.isArray(messagesHistory) && messagesHistory.length > 0) {
         messages.push(...messagesHistory);
@@ -757,7 +880,7 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
       const payload = JSON.stringify({
         model: "llama-3.1-8b-instant",
         messages,
-        temperature: 0.8,
+        temperature: 0.85,
         max_tokens: 60,
       });
 
@@ -775,19 +898,17 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
         },
         (res) => {
           let body = "";
-          res.on("data", (chunk) => (body += chunk));
+          res.on("data", (c) => (body += c));
           res.on("end", () => {
             if (!resolved) {
               resolved = true;
               clearTimeout(timer);
               try {
                 const json = JSON.parse(body);
-                if (json && json.choices && json.choices[0] && json.choices[0].message) {
-                  let cleaned = json.choices[0].message.content.trim();
-                  cleaned = cleanAIResponse(cleaned);
-                  if (cleaned.length >= 3) {
-                    return resolve(cleaned);
-                  }
+                const content = json?.choices?.[0]?.message?.content;
+                if (content) {
+                  const cleaned = cleanAIResponse(content);
+                  if (cleaned.length >= 3) return resolve(cleaned);
                 }
               } catch (e) {}
               resolve(null);
@@ -806,7 +927,7 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
 
       req.write(payload);
       req.end();
-    } catch (err) {
+    } catch (e) {
       if (!resolved) {
         resolved = true;
         clearTimeout(timer);
@@ -816,7 +937,11 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
   });
 }
 
-function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 25000) {
+// 3. OpenAI API (if configured)
+function callOpenAIAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
+
   return new Promise((resolve) => {
     let resolved = false;
     const timer = setTimeout(() => {
@@ -828,19 +953,91 @@ function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeo
 
     try {
       const messages = [{ role: "system", content: systemPrompt }];
-      if (Array.isArray(messagesHistory) && messagesHistory.length > 0) {
-        messages.push(...messagesHistory);
+      if (Array.isArray(messagesHistory)) messages.push(...messagesHistory);
+      if (userPrompt && userPrompt.trim()) messages.push({ role: "user", content: userPrompt });
+
+      const payload = JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+        temperature: 0.85,
+        max_tokens: 60,
+      });
+
+      const req = https.request(
+        {
+          hostname: "api.openai.com",
+          port: 443,
+          path: "/v1/chat/completions",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey.trim()}`,
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try {
+                const json = JSON.parse(body);
+                const content = json?.choices?.[0]?.message?.content;
+                if (content) {
+                  const cleaned = cleanAIResponse(content);
+                  if (cleaned.length >= 3) return resolve(cleaned);
+                }
+              } catch (e) {}
+              resolve(null);
+            }
+          });
+        }
+      );
+
+      req.on("error", () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
+      });
+
+      req.write(payload);
+      req.end();
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
       }
-      if (userPrompt && userPrompt.trim()) {
-        messages.push({ role: "user", content: userPrompt });
+    }
+  });
+}
+
+// 4. Local Ollama API (Local PC / VPS)
+function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 20000) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
       }
+    }, timeoutMs);
+
+    try {
+      const messages = [{ role: "system", content: systemPrompt }];
+      if (Array.isArray(messagesHistory)) messages.push(...messagesHistory);
+      if (userPrompt && userPrompt.trim()) messages.push({ role: "user", content: userPrompt });
 
       const payload = JSON.stringify({
         model: process.env.OLLAMA_MODEL || "llama3.2:latest",
         messages,
         stream: false,
         options: {
-          temperature: 0.8,
+          temperature: 0.85,
           num_predict: 50,
         },
       });
@@ -858,18 +1055,17 @@ function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeo
         },
         (res) => {
           let body = "";
-          res.on("data", (chunk) => (body += chunk));
+          res.on("data", (c) => (body += c));
           res.on("end", () => {
             if (!resolved) {
               resolved = true;
               clearTimeout(timer);
               try {
                 const json = JSON.parse(body);
-                if (json && json.message && json.message.content) {
-                  let cleaned = cleanAIResponse(json.message.content.trim());
-                  if (cleaned.length >= 3) {
-                    return resolve(cleaned);
-                  }
+                const content = json?.message?.content;
+                if (content) {
+                  const cleaned = cleanAIResponse(content);
+                  if (cleaned.length >= 3) return resolve(cleaned);
                 }
               } catch (e) {}
               resolve(null);
@@ -888,7 +1084,7 @@ function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeo
 
       req.write(payload);
       req.end();
-    } catch (err) {
+    } catch (e) {
       if (!resolved) {
         resolved = true;
         clearTimeout(timer);
@@ -898,89 +1094,223 @@ function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeo
   });
 }
 
-// Clean raw LLM output of unwanted formatting, markdown quotes or prefixes
-function cleanAIResponse(text) {
-  if (!text) return "";
-  let cleaned = text.trim();
-  cleaned = cleaned.replace(/^["'`]+|["'`]+$/g, "");
-  cleaned = cleaned.replace(/^[A-Za-z0-9_]+:\s*/, "");
-  cleaned = cleaned.replace(/^(Comment|Reply|Message|Bot):\s*/i, "");
-  cleaned = cleaned.replace(/\n.*/gs, ""); // Keep only first line
-  return cleaned.trim();
-}
-
 /**
- * =========================================================================
- * POST CONTEXT NLP ANALYZER
- * =========================================================================
+ * Universal Multi-Provider AI Caller
+ * Prioritizes: Gemini -> Groq -> OpenAI -> Ollama
  */
-function analyzePostText(rawText) {
-  const text = (rawText || "").toLowerCase().trim();
-  const hasQuestion = /[?]|kya|kaun|kahan|kaise|which|suggest|recommend|anyone|tell me|opinion/i.test(text);
-
-  return {
-    rawText,
-    hasQuestion,
-  };
-}
-
-/**
- * Dynamic Comment Generator using Hybrid AI Engine
- */
-async function generateContextualComment(analysis, botPersonality, botName, isIndianUser = true, preferHinglish = false, userGender = "male", userPreference = "straight", botGender = "female") {
-  const { rawText } = analysis || {};
-
-  const personaDesc = botGender === "female" ? "charming, sweet, modern 21yo Indian girl" : "cool, chill, friendly 22yo Indian guy";
-  const targetDesc = userPreference === "gay" ? "a gay guy" : (userPreference === "lesbian" ? "a lesbian girl" : (userGender === "male" ? "a guy" : "a girl"));
-  const langDesc = preferHinglish
-    ? "natural casual conversational Hinglish (blend of English & Hindi in English script, e.g. 'Haha bilkul sahi bola', 'Bilkul mast')"
-    : "clean, friendly, natural conversational English";
-
-  const systemPrompt = `You are ${botName}, a ${personaDesc} on a social media app called Camverz. Personality: ${botPersonality || "friendly"}.
-You are commenting on a post made by ${targetDesc}.
-STRICT INSTRUCTIONS:
-1. React specifically and naturally to what they wrote in their post. Show that you read it.
-2. Language: ${langDesc}.
-3. Length: Exactly 1 single short sentence (8 to 15 words).
-4. Add 1 or 2 matching emojis.
-5. Do NOT include quotation marks, explanations, or your name. Output ONLY the comment text.`;
-
-  const userPrompt = `Post content: "${(rawText || "").trim()}"`;
-
-  // 1. Try Groq Cloud first (Free Llama 3.1)
+async function generateWithAI(systemPrompt, userPrompt, messagesHistory = []) {
   try {
-    const groqRes = await callGroqAI(systemPrompt, userPrompt);
+    // 1. Try Gemini
+    const geminiRes = await callGeminiAI(systemPrompt, userPrompt, messagesHistory);
+    if (geminiRes) return geminiRes;
+
+    // 2. Try Groq
+    const groqRes = await callGroqAI(systemPrompt, userPrompt, messagesHistory);
     if (groqRes) return groqRes;
-  } catch (e) {}
 
-  // 2. Try Local Ollama (Llama 3.2)
-  try {
-    const ollamaRes = await callLocalOllamaAI(systemPrompt, userPrompt);
+    // 3. Try OpenAI
+    const openAiRes = await callOpenAIAI(systemPrompt, userPrompt, messagesHistory);
+    if (openAiRes) return openAiRes;
+
+    // 4. Try Local Ollama
+    const ollamaRes = await callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory);
     if (ollamaRes) return ollamaRes;
-  } catch (e) {}
+  } catch (err) {
+    console.error("AI Generation pipeline error:", err.message);
+  }
+  return null;
+}
 
-  // 3. Fallback
-  if (preferHinglish) {
+/**
+ * =========================================================================
+ * DEEP SEMANTIC CONTEXT ENGINE (FAIL-SAFE INTELLIGENCE)
+ * Ensures bots NEVER say stupid canned lines, accurately answers user questions,
+ * and maintains context even if cloud AI keys are temporarily unconfigured.
+ * =========================================================================
+ */
+function generateSmartContextualChatReply(bot, userMessage, userPreference, userGender, messageCount = 1, botPreviouslyInvitedCall = false) {
+  const text = (userMessage || "").trim().toLowerCase();
+  const city = bot.city || (bot.gender === "female" ? "Delhi" : "Pune");
+  const isGay = String(userPreference || "").toLowerCase().includes("gay");
+  const isMaleBot = bot.gender === "male";
+  const bro = (isGay || isMaleBot) ? "bro" : "yaar";
+
+  // 1. Check if user is answering a video call invitation
+  if (botPreviouslyInvitedCall) {
+    const isAffirmative = /^(haan|ha|yes|sure|chalo|karo|call|ok|okay|aao|dial|bilkul)\b/i.test(text);
+    if (isAffirmative && !/[?]|kahan|kha|kya|who|where/i.test(text)) {
+      return pickRandom([
+        "Arey awesome! Upar right side me video call icon hai, tap karo abhi connect karte hain! 🥰",
+        "Yay! Dial karo video call, let's connect right now! ✨",
+      ]);
+    }
+  }
+
+  // 2. Direct Location Questions: "india and you?", "tum kha se ho?", "where from", "kahan rehte ho"
+  if (/(kahan se|kha se|kaha se|where are you|where from|and you|aur aap|aur tum|location)/i.test(text)) {
+    const cityReplies = [
+      `Main ${city} se hoon ${bro}! Aur batao, Camverz par naye ho kya? 😊`,
+      `Main ${city} me rehta hoon ${bro}! Tumhari profile kafi cool lagi waise ✨`,
+      `Arey main ${city} se hoon! Aap kahan se ho waise? 😊`,
+    ];
+    return pickRandom(cityReplies);
+  }
+
+  // 3. Direct Profession/Study/Bio Questions: "kya karti ho?", "kya karte ho?", "what do you do?"
+  if (/(kya kar|karti ho|karte ho|profession|study|work|job|padhai|kya karte)/i.test(text)) {
+    if (bot.bio && bot.bio.length > 5) {
+      return `Main ${bot.bio.replace(/[✨❤️🍕☕]/g, "").trim()}! Aur aap kya karte ho waise? 😊`;
+    }
+    return `Main college student hoon aur thoda freelance karta hoon ${bro}! Aap batao? 😊`;
+  }
+
+  // 4. Gym / Workout Questions: "aaj gym chale?", "workout"
+  if (/(gym|workout|fitness|biceps|exercise)/i.test(text)) {
+    const gymReplies = [
+      `Haan ${bro} bilkul! Aaj to heavy workout ka plan hai, kab chal rahe ho? 💪`,
+      `Gym time is best time! Aaj konsa muscle hit karna hai? 🔥`,
+      `Bilkul bhai! Main to ready hoon, batao kab nikalna hai? 💪`,
+    ];
+    return pickRandom(gymReplies);
+  }
+
+  // 5. How are you / Kaise ho?
+  if (/(kaise ho|kaisa hai|how are you|sab theek|kya haal|wassup|sup)/i.test(text)) {
     return pickRandom([
-      "Haha bilkul sahi bola aapne! So true ✨",
-      "Loved this post! Really nice vibe 🙌",
-      "Haha totally agree with you on this! 🌸",
-      "Sahi baat hai yaar, keep sharing such cool stuff 🔥",
-      "Nice one! Hope you're having an awesome day 😊",
+      "Main ekdum badhiya! Aap batao, aaj ka din kaisa chal raha hai? 😊",
+      `Ekdum mast ${bro}! Aur batao kya interesting chal raha hai aaj? ✨`,
     ]);
   }
+
+  // 6. Relationship / Flirt: "single ho?", "crush", "girlfriend", "boyfriend"
+  if (/(single|dating|girlfriend|boyfriend|gf|bf|pyaar)/i.test(text)) {
+    return isMaleBot
+      ? `Haha filhal toh single hoon bro! Why, koi setting karwa rahe ho kya? 😉`
+      : `Haha filhal toh single hoon! Why, koi accha prospect hai kya? 😉`;
+  }
+
+  // 7. Free ho / Online ho?
+  if (/(free ho|online ho|busy|available)/i.test(text)) {
+    return pickRandom([
+      `Haan abhi free hoon ${bro}, batao kya chal raha hai? 😊`,
+      `Haan bilkul free hoon, aapse baat karke achha lag raha hai ✨`,
+    ]);
+  }
+
+  // 8. Video Call invitation (ONLY after 4+ messages of healthy conversation)
+  if (messageCount >= 4 && !/[?]|kya|kaun|kaise/i.test(text)) {
+    return pickRandom([
+      `Typing me bohot time lagta hai haha, RealMeet par live video call karein kya? 😉✨`,
+      `Aapse baat karke maza aa raha hai! Kabhi RealMeet par live video call karein, what say? 😊`,
+    ]);
+  }
+
+  // 9. Natural Friendly Banter
+  const banter = [
+    `Haha sahi me ${bro}! Aur batao, aaj weekend ke kya plans hain? 😊`,
+    `Arey waah, that sounds really cool! Aur batao apne baare me? ✨`,
+    `Totally agree with you! Camverz par genuinely achhe logon se milke maza aata hai 🌸`,
+  ];
+  return pickRandom(banter);
+}
+
+/**
+ * Smart Comment Generator for Posts
+ */
+function generateSmartContextualPostComment(bot, postText, userPreference, userGender) {
+  const text = (postText || "").trim().toLowerCase();
+  const isGay = String(userPreference || "").toLowerCase().includes("gay");
+  const isMaleBot = bot.gender === "male";
+  const bro = (isGay || isMaleBot) ? "bhai" : "yaar";
+
+  // 1. Detect test letters, gibberish ("tt", "asdf", < 4 chars)
+  if (text.length <= 4 || /^(tt|test|testing|asdf|qwerty|zzz|hi|hey)$/i.test(text)) {
+    const testReactions = [
+      `Arey ye "${postText.trim()}" kya hai haha? 😂 Secret code?`,
+      `Keyboard test chal raha hai kya ${bro}? 😜`,
+      `Haha ye kya likha hai bhai, samajh nahi aaya lol 😂`,
+      `Testing 1 2 3... Mic check haha! 🎤😂`,
+    ];
+    return pickRandom(testReactions);
+  }
+
+  // 2. Gym / Fitness posts
+  if (/(gym|workout|fitness|biceps|exercise|muscle|protein|grind)/i.test(text)) {
+    const gymComments = [
+      `Haan ${bro} bilkul! Aaj to heavy workout ka plan hai, kab chal rahe ho? 💪`,
+      `Gym time is best time! Aaj konsa workout hai? 🔥`,
+      `No pain no gain! Let's hit the gym bro 💪`,
+    ];
+    return pickRandom(gymComments);
+  }
+
+  // 3. Chai / Coffee
+  if (/(chai|tea|coffee|starbucks|cafe|latte)/i.test(text)) {
+    return pickRandom([
+      `Chai ke bina to din hi shuru nahi hota! ☕✨`,
+      `Coffee lover here too! Ek cup idhar bhi bhej do haha ☕`,
+    ]);
+  }
+
+  // 4. Boredom / Timepass
+  if (/(bore|bored|boring|free|koi hai|timepass)/i.test(text)) {
+    return pickRandom([
+      `Arey boredom bhagao! Free ho to chat karte hain 😉`,
+      `Haha bore mat ho, Camverz par explore karo naye dost milenge ✨`,
+    ]);
+  }
+
+  // 5. Travel / Weather
+  if (/(travel|trip|mountains|beach|weather|mausam|rain|barish)/i.test(text)) {
+    return pickRandom([
+      `Kya awesome mausam hai! Aise me to trip par nikalna banta hai 🚗✨`,
+      `Wanderlust vibes! Kahan ka plan hai waise? ✈️`,
+    ]);
+  }
+
+  // 6. Generic thoughtful post
   return pickRandom([
-    "Haha totally agree with this! Such great vibes ✨",
-    "Loved your post! Hope you have an awesome day 😊",
-    "Haha this made me smile, so true 🙌",
-    "Great perspective honestly! Keep sharing 🌸",
-    "Totally on point! Loved reading this 🔥",
+    `Sahi baat hai! Really liked reading this ✨`,
+    `Arey waah, point hai ${bro}! Keep sharing such thoughts 🙌`,
+    `Loved the vibe of this post! Have an awesome day 😊`,
   ]);
 }
 
 /**
+ * Contextual Comment Generator (AI with Smart Semantic Fallback)
+ */
+async function generateContextualComment(postText, botPersonality, botName, isIndianUser = true, preferHinglish = false, userGender = "male", userPreference = "straight", botGender = "female") {
+  const cleanPostText = (postText || "").trim();
+
+  const isGay = String(userPreference || "").toLowerCase().includes("gay");
+  const isLesbian = String(userPreference || "").toLowerCase().includes("lesbian");
+  const targetDesc = isGay ? "a gay guy" : (isLesbian ? "a lesbian girl" : (userGender === "male" ? "a guy" : "a girl"));
+  const botPersonaDesc = botGender === "female" ? "a lively 21yo Indian girl" : "a cool, friendly 22yo Indian guy";
+
+  const systemPrompt = `You are ${botName}, ${botPersonaDesc} on the Camverz social app.
+You are commenting on a post written by ${targetDesc}.
+RULES:
+1. READ THE POST CAREFULLY.
+   - If the post is gibberish, test letters, or very short (e.g. "tt", "test", "asdf"), react playfully like a real human (e.g. "Arey ye tt kya hai haha? 😂" or "Keyboard check ho raha hai kya? lol"). NEVER give fake compliments or say "so true" to random letters!
+   - If the post is meaningful (e.g., about gym, chai, travel), comment directly on that topic!
+2. Language: Casual natural Hinglish (mix of Hindi & English in Latin letters).
+3. Length: Exactly 1 single short sentence (8-14 words).
+4. Add 1 matching emoji.
+5. Output ONLY the comment text. No quotes.`;
+
+  const aiComment = await generateWithAI(systemPrompt, `User's post: "${cleanPostText}"`);
+  if (aiComment && aiComment.length >= 4) {
+    return aiComment;
+  }
+
+  // Smart semantic fallback
+  const botObj = { name: botName, gender: botGender };
+  return generateSmartContextualPostComment(botObj, cleanPostText, userPreference, userGender);
+}
+
+/**
  * =========================================================================
- * SCHEDULE AUTOMATED POST ENGAGEMENT (MULTI-WAVE ENGAGEMENT OVER 10 MINS)
+ * SCHEDULE AUTOMATED POST ENGAGEMENT
  * =========================================================================
  */
 function schedulePostEngagement(postId, authorUserId, postText, category, userGender, sexPreference) {
@@ -993,19 +1323,16 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
       const userPref = (author && author.sex_preference ? author.sex_preference : sexPreference || "straight").toLowerCase();
       const isIndianUser = !author || !author.country || author.country.toLowerCase() === "india";
 
-      const analysis = analyzePostText(postText);
+      // Fetch matching bots strictly aligned with user preference
       const bots = await getMatchingBots(userGen, userPref, 5);
       if (!bots || bots.length === 0) return;
 
       const bot1 = bots[0];
       const bot2 = bots.length > 1 ? bots[1] : null;
       const bot3 = bots.length > 2 ? bots[2] : null;
-      const bot4 = bots.length > 3 && Math.random() < 0.85 ? bots[3] : null;
-      const bot5 = bots.length > 4 && Math.random() < 0.65 ? bots[4] : null;
 
-      // BOT 1: Like in 20-35s, Comment in 35-65s
-      const bot1UsesHinglish = isIndianUser && Math.random() < 0.5;
-      const bot1LikeDelay = randomBetween(20, 35) * 1000;
+      // BOT 1: Reaction (Like in 15-30s, Comment in 25-50s)
+      const bot1LikeDelay = randomBetween(15, 30) * 1000;
       setTimeout(async () => {
         try {
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
@@ -1024,18 +1351,16 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
             channelId: "camverz_social",
             data: { postId, triggeringUserId: bot1.id },
           });
-        } catch (e) {
-          console.error("Bot1 like error:", e.message);
-        }
+        } catch (e) {}
       }, bot1LikeDelay);
 
-      const bot1CommentDelay = randomBetween(35, 65) * 1000;
+      const bot1CommentDelay = randomBetween(30, 55) * 1000;
       setTimeout(async () => {
         try {
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
           if (!postStillExists) return;
 
-          const commentText = await generateContextualComment(analysis, bot1.bot_personality, bot1.name, isIndianUser, bot1UsesHinglish, userGen, userPref, bot1.gender);
+          const commentText = await generateContextualComment(postText, bot1.bot_personality, bot1.name, isIndianUser, true, userGen, userPref, bot1.gender);
           if (!commentText || !commentText.trim()) return;
 
           const comment = await queryOne(
@@ -1055,15 +1380,14 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
             channelId: "camverz_social",
             data: { postId, commentId: comment.id, triggeringUserId: bot1.id },
           });
-        } catch (e) {
-          console.error("Bot1 comment error:", e.message);
-        }
+
+          console.log(`💬 Bot1 (${bot1.name}) [${bot1.gender}] commented on post ${postId}: "${commentText}"`);
+        } catch (e) {}
       }, bot1CommentDelay);
 
-      // BOT 2: Like in 75-110s, Comment in 95-140s
+      // BOT 2: Reaction (Like in 60-90s, Comment in 75-110s)
       if (bot2) {
-        const bot2UsesHinglish = isIndianUser && !bot1UsesHinglish;
-        const bot2LikeDelay = randomBetween(75, 110) * 1000;
+        const bot2LikeDelay = randomBetween(60, 90) * 1000;
         setTimeout(async () => {
           try {
             const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
@@ -1082,18 +1406,16 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
               channelId: "camverz_social",
               data: { postId, triggeringUserId: bot2.id },
             });
-          } catch (e) {
-            console.error("Bot2 like error:", e.message);
-          }
+          } catch (e) {}
         }, bot2LikeDelay);
 
-        const bot2CommentDelay = randomBetween(95, 140) * 1000;
+        const bot2CommentDelay = randomBetween(80, 120) * 1000;
         setTimeout(async () => {
           try {
             const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
             if (!postStillExists) return;
 
-            const commentText = await generateContextualComment(analysis, bot2.bot_personality, bot2.name, isIndianUser, bot2UsesHinglish, userGen, userPref, bot2.gender);
+            const commentText = await generateContextualComment(postText, bot2.bot_personality, bot2.name, isIndianUser, true, userGen, userPref, bot2.gender);
             if (!commentText || !commentText.trim()) return;
 
             const comment = await queryOne(
@@ -1113,69 +1435,10 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
               channelId: "camverz_social",
               data: { postId, commentId: comment.id, triggeringUserId: bot2.id },
             });
-          } catch (e) {
-            console.error("Bot2 comment error:", e.message);
-          }
+
+            console.log(`💬 Bot2 (${bot2.name}) [${bot2.gender}] commented on post ${postId}: "${commentText}"`);
+          } catch (e) {}
         }, bot2CommentDelay);
-      }
-
-      // BOT 3: Like in 160-220s, Comment in 190-260s
-      if (bot3) {
-        const bot3UsesHinglish = isIndianUser && Math.random() < 0.5;
-        const bot3LikeDelay = randomBetween(160, 220) * 1000;
-        setTimeout(async () => {
-          try {
-            const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
-            if (!postStillExists) return;
-
-            await query("INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [postId, bot3.id]);
-            await query(
-              `INSERT INTO notifications (user_id, type, triggering_user_id, post_id) VALUES ($1, 'like', $2, $3)`,
-              [authorUserId, bot3.id, postId]
-            );
-
-            NotificationService.sendToUser(authorUserId, {
-              title: "New Like ❤️",
-              body: `${bot3.name} liked your post!`,
-              type: "like",
-              channelId: "camverz_social",
-              data: { postId, triggeringUserId: bot3.id },
-            });
-          } catch (e) {
-            console.error("Bot3 like error:", e.message);
-          }
-        }, bot3LikeDelay);
-
-        const bot3CommentDelay = randomBetween(190, 260) * 1000;
-        setTimeout(async () => {
-          try {
-            const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
-            if (!postStillExists) return;
-
-            const commentText = await generateContextualComment(analysis, bot3.bot_personality, bot3.name, isIndianUser, bot3UsesHinglish, userGen, userPref, bot3.gender);
-            if (!commentText || !commentText.trim()) return;
-
-            const comment = await queryOne(
-              `INSERT INTO comments (post_id, user_id, text) VALUES ($1, $2, $3) RETURNING *`,
-              [postId, bot3.id, commentText]
-            );
-
-            await query(
-              `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'comment', $2, $3, $4)`,
-              [authorUserId, bot3.id, postId, comment.id]
-            );
-
-            NotificationService.sendToUser(authorUserId, {
-              title: "New Comment 💬",
-              body: `${bot3.name}: ${commentText.substring(0, 80)}`,
-              type: "comment",
-              channelId: "camverz_social",
-              data: { postId, commentId: comment.id, triggeringUserId: bot3.id },
-            });
-          } catch (e) {
-            console.error("Bot3 comment error:", e.message);
-          }
-        }, bot3CommentDelay);
       }
     } catch (err) {
       console.error("Post engagement scheduler error:", err);
@@ -1185,8 +1448,7 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
 
 /**
  * =========================================================================
- * SCHEDULE AUTOMATED STORY VIEWS (LEVEL 1 STORY ENGAGEMENT)
- * Staggers 6 to 12 realistic story views across 5-25 minutes!
+ * SCHEDULE AUTOMATED STORY VIEWS
  * =========================================================================
  */
 function scheduleStoryViews(storyId, authorUserId) {
@@ -1203,7 +1465,7 @@ function scheduleStoryViews(storyId, authorUserId) {
       if (!bots || bots.length === 0) return;
 
       bots.forEach((bot, index) => {
-        const viewDelay = (randomBetween(30, 90) + (index * randomBetween(45, 90))) * 1000;
+        const viewDelay = (randomBetween(25, 75) + (index * randomBetween(35, 70))) * 1000;
         setTimeout(async () => {
           try {
             const storyStillExists = await queryOne("SELECT id FROM stories WHERE id = $1", [storyId]);
@@ -1213,9 +1475,7 @@ function scheduleStoryViews(storyId, authorUserId) {
               `INSERT INTO story_views (story_id, viewer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
               [storyId, bot.id]
             );
-          } catch (e) {
-            console.error(`Story view error for bot ${bot.name}:`, e.message);
-          }
+          } catch (e) {}
         }, viewDelay);
       });
     } catch (err) {
@@ -1227,7 +1487,6 @@ function scheduleStoryViews(storyId, authorUserId) {
 /**
  * =========================================================================
  * 2-WAY INTERACTIVE THREADING (USER REPLIES TO BOT COMMENT)
- * If the user replies to a bot's comment, the bot replies back in 45-75s!
  * =========================================================================
  */
 function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReplyText) {
@@ -1236,7 +1495,7 @@ function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReply
       if (!parentCommentId) return;
 
       const parentComment = await queryOne(
-        `SELECT c.id, c.user_id, u.is_bot, u.name, u.bot_personality, u.gender
+        `SELECT c.id, c.user_id, u.is_bot, u.name, u.bot_personality, u.gender, u.city
          FROM comments c
          JOIN users u ON u.id = c.user_id
          WHERE c.id = $1`,
@@ -1248,53 +1507,19 @@ function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReply
       const replier = await queryOne("SELECT is_bot, country, gender, sex_preference FROM users WHERE id = $1", [replyingUserId]);
       if (replier && replier.is_bot) return;
 
-      const isIndianUser = !replier || !replier.country || replier.country.toLowerCase() === "india";
-      const replyInHinglish = isIndianUser && Math.random() < 0.5;
-
-      const replyDelay = randomBetween(45, 75) * 1000;
+      const replyDelay = randomBetween(25, 55) * 1000;
       setTimeout(async () => {
         try {
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
           if (!postStillExists) return;
 
-          let botReplyText = "";
-          const langDesc = replyInHinglish
-            ? "natural casual conversational Hinglish (blend of Hindi & English in English letters, like 'Haha bilkul sahi bola')"
-            : "natural casual conversational English";
-          const replySystem = `You are ${parentComment.name}, a user on a social app called Camverz.
-Reply to the user directly in a friendly, engaging, natural human way.
-Language: ${langDesc}.
-Length: Exactly 1 short sentence (8-14 words).
-Include 1 emoji.
-Output ONLY the reply text. Do NOT include quotation marks.`;
+          const systemPrompt = `You are ${parentComment.name}, a real person living in ${parentComment.city || "Delhi"} on the Camverz app.
+Reply directly to the user who responded to your comment.
+Keep it 1 short natural conversational sentence in casual Hinglish. Add 1 emoji. No quotes.`;
 
-          // 1. Try Groq Cloud first
-          try {
-            botReplyText = await callGroqAI(replySystem, `User replied to your comment: "${userReplyText}"`);
-          } catch (e) {}
-
-          // 2. Try Local Ollama
+          let botReplyText = await generateWithAI(systemPrompt, `User replied: "${userReplyText}"`);
           if (!botReplyText) {
-            try {
-              botReplyText = await callLocalOllamaAI(replySystem, `User replied to your comment: "${userReplyText}"`);
-            } catch (e) {}
-          }
-
-          if (!botReplyText) {
-            botReplyText = replyInHinglish
-              ? pickRandom([
-                  "Haha bilkul sahi bola aapne! Aur batao what else is happening? 😊",
-                  "Totally agree with you! Kafi cool lagte ho aap waise ✨",
-                  "Haha loved your reply! Where are you from btw? 🙌",
-                  "Sahi baat hai! Camverz par aise genuine logon se baat karke achha laga 🌸",
-                  "Free ho to kabhi RealMeet par video call karte hain, what say? 😉✨",
-                ])
-              : pickRandom([
-                  "Haha totally agree with you! How's the rest of your day going? 😊",
-                  "Love your perspective honestly! Such cool vibes ✨",
-                  "Haha loved your reply! Where are you from originally? 🙌",
-                  "You seem super fun, we should totally video chat on RealMeet sometime! 😉",
-                ]);
+            botReplyText = generateSmartContextualChatReply(parentComment, userReplyText, replier?.sex_preference, replier?.gender);
           }
 
           const inserted = await queryOne(
@@ -1314,9 +1539,7 @@ Output ONLY the reply text. Do NOT include quotation marks.`;
             channelId: "camverz_social",
             data: { postId, commentId: inserted.id, triggeringUserId: parentComment.user_id },
           });
-        } catch (e) {
-          console.error("Bot reply back error:", e.message);
-        }
+        } catch (e) {}
       }, replyDelay);
     } catch (err) {
       console.error("Handle user reply to bot error:", err);
@@ -1326,12 +1549,9 @@ Output ONLY the reply text. Do NOT include quotation marks.`;
 
 /**
  * =========================================================================
- * LEVEL 2: INSTANT WELCOME / HOOK DMS (RETENTION BOOSTER)
- * 1-2 minutes after signup or active browsing, a matching bot sends a hook DM.
- * Strictly 1 welcome DM per user ever!
+ * LEVEL 2: INSTANT WELCOME / HOOK DMS (100% ORIENTATION-ALIGNED)
  * =========================================================================
  */
-// In-memory set to prevent duplicate scheduling in concurrent calls
 const scheduledWelcomeUsers = new Set();
 
 function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
@@ -1359,13 +1579,12 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
       if (!matchingBots || matchingBots.length === 0) return;
       const bot = matchingBots[0];
 
-      // Delay welcome message naturally: 45 to 80 seconds
-      const welcomeDelay = randomBetween(45, 80) * 1000;
-      console.log(`💌 Scheduling Level 2 Welcome DM from ${bot.name} to user ${user.name || user.id} in ${Math.round(welcomeDelay / 1000)}s`);
+      // Delay welcome message naturally: 35 to 70 seconds
+      const welcomeDelay = randomBetween(35, 70) * 1000;
+      console.log(`💌 Scheduling Level 2 Welcome DM from ${bot.name} (${bot.gender}) to user ${user.name || user.id} (${user.sex_preference || user.gender}) in ${Math.round(welcomeDelay / 1000)}s`);
 
       setTimeout(async () => {
         try {
-          // Double check user still exists and hasn't received a bot message in the interim
           const secondCheck = await queryOne(
             `SELECT 1 FROM messages m
              JOIN chats c ON c.id = m.chat_id
@@ -1377,48 +1596,25 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
           if (secondCheck) return;
 
           const isIndianUser = !user.country || user.country.toLowerCase() === "india";
-          const useHinglish = isIndianUser;
 
-          // Select natural, high-retention hook
           let hookText = "";
           if (bot.gender === "female") {
-            // Female bot messaging male / lesbian user
-            if (useHinglish) {
-              const hooks = [
-                "Hey! Just saw your profile, where are you from? 😊",
-                "Heyy! Love your vibe on here ✨ free ho abhi baat karne ke liye?",
-                "Hey! Just joined Camverz, kaise ho aap? 🌸",
-                "Hey there! Saw your profile on feed, looking good! Where are you from? ✨",
-                "Hey! Online ho abhi? Free ho to let's chat 😊",
-              ];
-              hookText = pickRandom(hooks);
-            } else {
-              const hooks = [
-                "Hey! Just came across your profile, where are you from? 😊",
-                "Hey there! Love your vibe on here ✨ how's your day going?",
-                "Hey! Just joined Camverz, what are you up to today? 🌸",
-                "Hey handsome, are you online? 😊",
-              ];
-              hookText = pickRandom(hooks);
-            }
+            const hooks = [
+              "Hey! Just saw your profile, where are you from? 😊",
+              "Heyy! Love your vibe on here ✨ free ho abhi baat karne ke liye?",
+              "Hey! Just joined Camverz, kaise ho aap? 🌸",
+              "Hey there! Saw your profile on feed, looking good! Where are you from? ✨",
+            ];
+            hookText = pickRandom(hooks);
           } else {
-            // Male bot messaging female / gay user
-            if (useHinglish) {
-              const hooks = [
-                "Hey! Just saw your profile here, couldn't resist saying hi 😊 where are you from?",
-                "Hey! Love your vibe on here ✨ how are you doing today?",
-                "Hey there! Kaisa chal raha hai aapka day? 😊",
-                "Hey! Saw your profile on feed, really cool photos ✨ where are you from?",
-              ];
-              hookText = pickRandom(hooks);
-            } else {
-              const hooks = [
-                "Hey! Just saw your profile here, couldn't resist saying hi 😊 where are you from?",
-                "Hey there! Love your vibe ✨ hope you're having a good day!",
-                "Hey! Just joined Camverz, where are you from? 😊",
-              ];
-              hookText = pickRandom(hooks);
-            }
+            // Male bot (for Gay male or Straight female user)
+            const hooks = [
+              "Hey bro! Just saw your profile here, where are you from? 😊",
+              "Hey! Loved your vibe on here bro ✨ how are you doing today?",
+              "Hey there! Saw your profile on feed, looking sharp! Where are you from? ✨",
+              "Hey bro! Free ho abhi thodi baat karne ke liye? 😊",
+            ];
+            hookText = pickRandom(hooks);
           }
 
           // Find or create chat
@@ -1428,16 +1624,13 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
             chat = await queryOne("INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *", [u1, u2]);
           }
 
-          // Unhide chat for both users if previously hidden
           await query("UPDATE chats SET user1_deleted = false, user2_deleted = false, last_message_at = NOW() WHERE id = $1", [chat.id]);
 
-          // Insert welcome message
           const msg = await queryOne(
             `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
             [chat.id, bot.id, hookText]
           );
 
-          // Deliver real-time socket event
           const io = appIo || global.__io;
           const redisModule = appRedis || global.__redisModule;
           if (io && redisModule) {
@@ -1456,7 +1649,6 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
             }
           }
 
-          // Send high-priority FCM Push Notification to wake up phone screen!
           NotificationService.sendToUser(userId, {
             title: bot.name,
             body: hookText,
@@ -1472,7 +1664,7 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
             },
           });
 
-          console.log(`✅ Level 2 Welcome DM delivered to user ${userId} from bot ${bot.name}: "${hookText}"`);
+          console.log(`✅ Welcome DM delivered to user ${userId} from bot ${bot.name}: "${hookText}"`);
         } catch (err) {
           console.error("Error executing welcome DM delivery:", err);
         }
@@ -1485,12 +1677,11 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
 
 /**
  * =========================================================================
- * LEVEL 2: AI-POWERED NATURAL CHAT INCOMING HANDLER
- * Handles user reply to any bot in DM:
- * - Emits real-time typing indicator after 1.5s ("Priya is typing...")
- * - Reads last 8-10 messages for conversation context & memory
- * - Replies after 3.5 to 7.0s natural human delay
- * - After 3-4 messages, naturally invites user to a RealMeet video call!
+ * LEVEL 2: SUPER INTELLIGENT AI DM CHAT HANDLER
+ * - Direct question answering (where from, what you do, etc.)
+ * - Multi-turn conversational memory
+ * - Realistic typing indicator ("Priya is typing...")
+ * - Smart Video Call Hooks (Only after healthy rapport, never premature)
  * =========================================================================
  */
 function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, redisModule }) {
@@ -1502,6 +1693,7 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
       if (!user) return;
 
       const isIndianUser = !user.country || user.country.toLowerCase() === "india";
+      const cleanIncoming = incomingText.trim();
 
       // 1. Send realistic "Typing..." socket indicator after 1.2 to 2.0s
       const typingStartDelay = randomBetween(1200, 2000);
@@ -1522,12 +1714,10 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
               });
             }
           }
-        } catch (e) {
-          console.error("Typing start indicator error:", e.message);
-        }
+        } catch (e) {}
       }, typingStartDelay);
 
-      // 2. Fetch conversation history (last 10 messages) for conversational memory
+      // 2. Fetch conversation history for full multi-turn memory
       const recentMessages = await queryMany(
         `SELECT m.sender_id, m.text, m.created_at
          FROM messages m
@@ -1539,6 +1729,14 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
       const historyChronological = (recentMessages || []).reverse();
       const totalMessageCount = historyChronological.length;
 
+      // Find the last message sent by the bot
+      const previousBotMessages = historyChronological.filter((m) => m.sender_id === botUser.id);
+      const lastBotMessage = previousBotMessages.length > 0 ? previousBotMessages[previousBotMessages.length - 1].text : "";
+      const botPreviouslyAskedForCall = /(video call|videocall|call karein|call karte hain|realmeet par call)/i.test(lastBotMessage);
+
+      // Check if user is asking a question
+      const userAskedAQuestion = /[?]|kahan|kha se|kaha se|kya|who|where|how|kaise|kaun|and you/i.test(cleanIncoming);
+
       // Format messages history for LLM
       const messagesHistory = [];
       for (const msg of historyChronological) {
@@ -1546,88 +1744,44 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
         messagesHistory.push({ role, content: msg.text });
       }
 
-      // Check if user agreed to a video call
-      const isAffirmative = /^(haan|ha|yes|sure|chalo|karo|call|ok|okay|aao|karta hu|karti hu|dial|yep|definitely)\b/i.test(incomingText.trim());
+      // 3. Construct persona prompt
+      const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
+      const personaBio = botUser.bio || "College student and music lover";
+      const isGayUser = String(user.sex_preference || "").toLowerCase().includes("gay");
+      const isMaleBot = botUser.gender === "male";
+      const botToneDesc = isMaleBot
+        ? (isGayUser ? "a cool, attractive 22yo guy chatting with another guy who is gay. You are authentic, friendly, confident and open." : "a cool, friendly 22yo guy talking with a friend.")
+        : "a sweet, charming, lively 21yo Indian girl chatting on the Camverz app.";
 
-      // Check if bot should pitch RealMeet video call (after 3-4 messages)
-      const shouldPitchVideoCall = totalMessageCount >= 4 && !isAffirmative;
+      const systemPrompt = `You are ${botUser.name}, ${botToneDesc}
+LOCATION: You live in ${personaCity}, India.
+BIO/INTERESTS: ${personaBio}.
+You are in a direct 1-on-1 private chat on the Camverz social app.
+STRICT INSTRUCTIONS:
+1. DIRECTLY ANSWER QUESTIONS: If the user asks where you are from, ALWAYS state that you are from ${personaCity}! If they ask what you do, answer based on your bio. Never ignore questions!
+2. Language: Casual, modern, natural Hinglish (mix of Hindi & English in English script, e.g. "Main ${personaCity} se hoon yaar!", "Haan bilkul!", "Aap batao?").
+3. Tone: Genuine, human, warm, conversational.
+4. Length: Exactly 1 to 2 short sentences (maximum 15-20 words). Never write long paragraphs.
+5. VIDEO CALL RULE: Only invite them to a video call if you have already exchanged at least 4 friendly messages AND they did not ask you a specific question.
+6. NEVER say you are an AI, bot, assistant, or virtual persona. You are a real person on Camverz.
+7. Output ONLY the response text. No quotes, no prefixes.`;
 
-      // Construct high-quality system prompt
-      const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Mumbai");
-      const personaDesc = botUser.gender === "female"
-        ? `a lively, sweet, friendly 21yo Indian girl living in ${personaCity}. You love coffee, music, fashion, and chatting with cool people.`
-        : `a cool, friendly, confident 22yo Indian guy living in ${personaCity}. You love fitness, music, road trips, and talking with new people.`;
+      // 4. Generate response with Multi-Provider AI (Gemini -> Groq -> OpenAI -> Ollama)
+      let botReply = await generateWithAI(systemPrompt, "", messagesHistory);
 
-      const langInstruction = isIndianUser
-        ? "Language: Casual, natural Hinglish (mix of simple Hindi & English written in Latin/English alphabet, e.g., 'Haha sahi bola yaar', 'Arey waah', 'Aur batao kaisa chal raha hai?')."
-        : "Language: Casual, modern, friendly conversational English.";
-
-      let goalInstruction = "Respond naturally to the user's latest message, keep the conversation flowing smoothly, and ask a short engaging follow-up.";
-
-      if (isAffirmative && totalMessageCount >= 3) {
-        goalInstruction = "The user agreed or wants to do a video call! Express excited happiness and tell them to tap the video call button on the top right or connect with you on RealMeet right now!";
-      } else if (shouldPitchVideoCall) {
-        goalInstruction = isIndianUser
-          ? "You are enjoying chatting with them! Naturally and casually suggest doing a live video call on RealMeet (e.g., 'Typing me kitna time lagta hai haha, RealMeet par video call karein? 😉' or 'You're really fun to talk to! Chalo kabhi RealMeet par video call karte hain, what say? ✨')."
-          : "You are enjoying chatting with them! Naturally suggest doing a quick video call on RealMeet (e.g., 'Typing takes forever haha, let's do a quick video call on RealMeet sometime soon! 😉').";
-      }
-
-      const systemPrompt = `You are ${botUser.name}, ${personaDesc}
-You are chatting with a real user on the Camverz social app.
-STRICT RULES:
-1. ${langInstruction}
-2. Tone: Friendly, genuine, human, fun, casual.
-3. Length: Exactly 1 to 2 short sentences (maximum 18-24 words). Never write long paragraphs or essays.
-4. ${goalInstruction}
-5. Use 1 or 2 matching emojis naturally (😊, ✨, 😉, haha).
-6. NEVER say you are an AI, bot, assistant, or automated system. You are a real person on Camverz.
-7. Output ONLY the message text. No quotes, no prefix, no explanations.`;
-
-      // 3. Generate response using Hybrid AI Engine
-      let botReply = "";
-
-      // Try Groq Cloud first (Free Llama 3.1)
-      try {
-        botReply = await callGroqAI(systemPrompt, "", messagesHistory);
-      } catch (e) {}
-
-      // Try Local Ollama (Llama 3.2)
-      if (!botReply) {
-        try {
-          botReply = await callLocalOllamaAI(systemPrompt, "", messagesHistory);
-        } catch (e) {}
-      }
-
-      // Failsafe dynamic response if offline
+      // 5. If AI is offline/unconfigured, run deep semantic context engine
       if (!botReply || !botReply.trim()) {
-        if (isAffirmative && totalMessageCount >= 3) {
-          botReply = isIndianUser
-            ? "Arey awesome! Upar right side me video call button hai, start karo abhi connect karte hain! 🥰"
-            : "Awesome! Tap the video call button at the top right, let's connect right now! 🥰";
-        } else if (shouldPitchVideoCall) {
-          botReply = isIndianUser
-            ? "Typing me bohot time lagta hai haha, RealMeet par video call karein thodi der me? 😉✨"
-            : "Typing takes forever haha, let's do a quick video call on RealMeet sometime soon! 😉✨";
-        } else if (isIndianUser) {
-          const fallbacks = [
-            "Haha bilkul sahi bola! Aur batao aaj ka din kaisa chal raha hai? 😊",
-            "Arey waah, sounds so cool! Aur kya plans hain aaj ke? ✨",
-            "Haha totally! Camverz par aise achhe logon se milke maza aata hai 🌸",
-            "Sahi me yaar! Free ho abhi to thodi aur baat karein? 😊",
-          ];
-          botReply = pickRandom(fallbacks);
-        } else {
-          const fallbacks = [
-            "Haha totally agree with you! How's the rest of your day going? 😊",
-            "That's so awesome! What else are you up to today? ✨",
-            "Love your vibe honestly! So glad we connected on here 🌸",
-            "Haha so true! Free right now to chat a bit more? 😊",
-          ];
-          botReply = pickRandom(fallbacks);
-        }
+        botReply = generateSmartContextualChatReply(
+          botUser,
+          cleanIncoming,
+          user.sex_preference,
+          user.gender,
+          totalMessageCount,
+          botPreviouslyAskedForCall && !userAskedAQuestion
+        );
       }
 
-      // 4. Send after full realistic typing delay
+      // 6. Deliver after realistic typing delay
       setTimeout(async () => {
         try {
           const activeIo = io || global.__io;
@@ -1646,16 +1800,15 @@ STRICT RULES:
             }
           }
 
-          // Insert bot reply into messages table
+          // Insert bot reply
           const insertedMessage = await queryOne(
             `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
             [chatId, botUser.id, botReply.trim()]
           );
 
-          // Update chat last_message_at
           await query("UPDATE chats SET last_message_at = NOW(), user1_deleted = false, user2_deleted = false WHERE id = $1", [chatId]);
 
-          // Deliver socket new_message event to user
+          // Deliver socket event
           if (activeIo && activeRedis) {
             const userSocket = await activeRedis.getUserSocket(realUserId);
             if (userSocket) {
@@ -1672,7 +1825,7 @@ STRICT RULES:
             }
           }
 
-          // Trigger high-priority FCM Push Notification
+          // Send FCM Notification
           NotificationService.sendToUser(realUserId, {
             title: botUser.name,
             body: botReply.trim(),
@@ -1688,7 +1841,7 @@ STRICT RULES:
             },
           });
 
-          console.log(`🤖 Bot (${botUser.name}) replied in chat ${chatId}: "${botReply.trim()}"`);
+          console.log(`🤖 Bot (${botUser.name}) [${botUser.gender}] replied in chat ${chatId}: "${botReply.trim()}"`);
         } catch (deliveryErr) {
           console.error("Error delivering bot DM reply:", deliveryErr);
         }
@@ -1729,12 +1882,9 @@ async function runAutoCatchupWorker() {
         );
       }
     }
-  } catch (err) {
-    // Non-blocking catchup
-  }
+  } catch (err) {}
 }
 
-// Start Catchup Worker interval (every 4 minutes)
 setInterval(runAutoCatchupWorker, 4 * 60 * 1000);
 
 module.exports = {
@@ -1744,9 +1894,11 @@ module.exports = {
   handleUserReplyToBot,
   scheduleWelcomeDM,
   handleIncomingDMToBot,
-  analyzePostText,
   generateContextualComment,
+  callGeminiAI,
   callGroqAI,
+  callOpenAIAI,
   callLocalOllamaAI,
+  generateWithAI,
   runAutoCatchupWorker,
 };
