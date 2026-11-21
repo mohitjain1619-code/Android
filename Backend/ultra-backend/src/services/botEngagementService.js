@@ -1324,11 +1324,14 @@ async function generateContextualComment(postText, botPersonality, botName, isIn
   const cleanPostText = (postText || "").trim();
   if (!cleanPostText) return null;
 
-  const systemPrompt = `You are ${botName}, a real person on the Camverz social app.
-Leave a quick comment on this post like a real friend scrolling Instagram:
-- Very short: 3 to 10 words max.
-- Normal and casual Hinglish/English. No fake praise, no assistant tone.
-- Output only the comment without quotes.`;
+  const systemPrompt = `You are ${botName}, an adult user on the Camverz social app.
+You are seeing someone's post on your feed.
+Read their post and understand the context, emotions, and vibe completely:
+- Zero bot behavior, zero fake cliches (no "Nice post", no "Great perspective", no assistant tone).
+- If the post is adult, bold, naughty, or about sex/dating/attraction, react freely with a short, open adult comment matching their vibe.
+- If it's normal, react naturally like a real friend commenting on Instagram.
+- Keep it short: 3 to 12 words max in casual Hinglish/English.
+- Output ONLY the comment text without quotes.`;
 
   const aiComment = await generateWithAI(systemPrompt, `User's post: "${cleanPostText}"`);
   return aiComment && aiComment.length >= 2 ? aiComment : null;
@@ -1521,7 +1524,7 @@ function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReply
       if (!parentCommentId) return;
 
       const parentComment = await queryOne(
-        `SELECT c.id, c.user_id, u.is_bot, u.name, u.bot_personality, u.gender, u.city
+        `SELECT c.id, c.user_id, c.text, u.is_bot, u.name, u.bot_personality, u.gender, u.city
          FROM comments c
          JOIN users u ON u.id = c.user_id
          WHERE c.id = $1`,
@@ -1539,13 +1542,23 @@ function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReply
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
           if (!postStillExists) return;
 
-          const systemPrompt = `You are ${parentComment.name}, living in ${parentComment.city || "Delhi"}.
-Someone replied to your comment. Reply back like a normal friend texting:
-- Very short: 4 to 12 words max.
-- Natural casual Hinglish/English. Zero bot vibe.
-- Output only the reply without quotes.`;
+          const systemPrompt = `You are ${parentComment.name}, an adult user on the Camverz social app.
+Someone replied to your comment on a post.
+Read what they said and understand their vibe, emotions, and intent completely:
+- Zero bot behavior, no robotic lines or assistant tone.
+- If their reply is adult, bold, flirty, or dirty, reply freely as a consenting adult matching their vibe without hesitation or moralizing.
+- If it's normal, reply casually like a real person texting on Instagram.
+- Keep it short: 3 to 12 words max in casual Hinglish/English.
+- Output ONLY the reply without quotes.`;
 
-          let botReplyText = await generateWithAI(systemPrompt, `User replied: "${userReplyText}"`);
+          const history = parentComment.text
+            ? [
+                { role: "assistant", content: parentComment.text },
+                { role: "user", content: userReplyText },
+              ]
+            : [{ role: "user", content: userReplyText }];
+
+          let botReplyText = await generateWithAI(systemPrompt, userReplyText, history);
           if (!botReplyText || !botReplyText.trim()) return;
 
           const inserted = await queryOne(
