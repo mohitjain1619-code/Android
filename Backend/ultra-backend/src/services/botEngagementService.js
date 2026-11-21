@@ -1360,8 +1360,8 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
       const bot2 = bots.length > 1 ? bots[1] : null;
       const bot3 = bots.length > 2 ? bots[2] : null;
 
-      // BOT 1: Reaction (Like in 15-30s, Comment in 25-50s)
-      const bot1LikeDelay = randomBetween(15, 30) * 1000;
+      // BOT 1: Natural Delayed Reaction (Like in 1.5-3m, Comment in 4-9m)
+      const bot1LikeDelay = randomBetween(90, 180) * 1000;
       setTimeout(async () => {
         try {
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
@@ -1383,7 +1383,7 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
         } catch (e) { }
       }, bot1LikeDelay);
 
-      const bot1CommentDelay = randomBetween(30, 55) * 1000;
+      const bot1CommentDelay = randomBetween(240, 540) * 1000; // 4 to 9 minutes
       setTimeout(async () => {
         try {
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
@@ -1410,13 +1410,13 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
             data: { postId, commentId: comment.id, triggeringUserId: bot1.id },
           });
 
-          console.log(`💬 Bot1 (${bot1.name}) [${bot1.gender}] commented on post ${postId}: "${commentText}"`);
+          console.log(`💬 Bot1 (${bot1.name}) [${bot1.gender}] commented on post ${postId} after ${(bot1CommentDelay / 60000).toFixed(1)}m: "${commentText}"`);
         } catch (e) { }
       }, bot1CommentDelay);
 
-      // BOT 2: Reaction (Likes in 60-90s, Comment in 75-110s)
+      // BOT 2: Secondary Reaction (Like in 10-18m, Comment in 20-40m)
       if (bot2) {
-        const bot2LikeDelay = randomBetween(60, 90) * 1000;
+        const bot2LikeDelay = randomBetween(600, 1080) * 1000; // 10 to 18 minutes
         setTimeout(async () => {
           try {
             const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
@@ -1438,7 +1438,7 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
           } catch (e) { }
         }, bot2LikeDelay);
 
-        const bot2CommentDelay = randomBetween(80, 120) * 1000;
+        const bot2CommentDelay = randomBetween(1200, 2400) * 1000; // 20 to 40 minutes
         setTimeout(async () => {
           try {
             const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
@@ -1465,7 +1465,7 @@ function schedulePostEngagement(postId, authorUserId, postText, category, userGe
               data: { postId, commentId: comment.id, triggeringUserId: bot2.id },
             });
 
-            console.log(`💬 Bot2 (${bot2.name}) [${bot2.gender}] commented on post ${postId}: "${commentText}"`);
+            console.log(`💬 Bot2 (${bot2.name}) [${bot2.gender}] commented on post ${postId} after ${(bot2CommentDelay / 60000).toFixed(1)}m: "${commentText}"`);
           } catch (e) { }
         }, bot2CommentDelay);
       }
@@ -1717,12 +1717,17 @@ function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
 /**
  * =========================================================================
  * LEVEL 2: SUPER INTELLIGENT AI DM CHAT HANDLER
- * - Direct question answering (where from, what you do, etc.)
- * - Multi-turn conversational memory
- * - Realistic typing indicator ("Priya is typing...")
- * - Smart Video Call Hooks (Only after healthy rapport, never premature)
+ * - Natural human variable timing:
+ *   1. Turant (~60%): 4 to 12s
+ *   2. Kuch minute baad (~28%): 1.5 to 5 mins
+ *   3. Kuch ghante baad (~12%): 45 to 120 mins
+ * - Typing indicator only shows 4-7s before delivery (never stuck for minutes)
+ * - Multi-turn conversational memory + Adult/Emotional freedom
+ * - Debounces rapid double-texts and accelerates response
  * =========================================================================
  */
+const pendingBotChatReplies = new Map(); // chatId -> { mainTimer, typingTimer, replyDelayMs }
+
 function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, redisModule }) {
   setImmediate(async () => {
     try {
@@ -1734,11 +1739,43 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
       const isIndianUser = !user.country || user.country.toLowerCase() === "india";
       const cleanIncoming = incomingText.trim();
 
-      // 1. Send realistic "Typing..." socket indicator after 1.2 to 2.0s
-      const typingStartDelay = randomBetween(1200, 2000);
-      const totalReplyDelay = randomBetween(4200, 7200);
+      // 1. Determine natural human delay
+      let replyDelayMs;
+      let isAccelerated = false;
 
-      setTimeout(async () => {
+      if (pendingBotChatReplies.has(chatId)) {
+        // User sent another message while waiting! A real human notices and replies quickly:
+        const pending = pendingBotChatReplies.get(chatId);
+        clearTimeout(pending.mainTimer);
+        if (pending.typingTimer) clearTimeout(pending.typingTimer);
+        pendingBotChatReplies.delete(chatId);
+        replyDelayMs = randomBetween(4000, 10000);
+        isAccelerated = true;
+      }
+
+      if (!isAccelerated) {
+        const rand = Math.random();
+        if (rand < 0.60) {
+          // 60% chance: Turant / Rapid (4 to 12 seconds)
+          replyDelayMs = randomBetween(4000, 12000);
+        } else if (rand < 0.88) {
+          // 28% chance: Kuch minutes baad (1.5 to 5 minutes)
+          replyDelayMs = randomBetween(90, 300) * 1000;
+        } else {
+          // 12% chance: Kuch ghante baad (45 to 120 minutes)
+          replyDelayMs = randomBetween(45, 120) * 60 * 1000;
+        }
+      }
+
+      console.log(`⏱️ Bot (${botUser.name}) reply scheduled for chat ${chatId} in ${(replyDelayMs / 1000).toFixed(1)}s (mode: ${replyDelayMs <= 15000 ? "turant" : replyDelayMs <= 300000 ? "kuch_min" : "kuch_ghante"})`);
+
+      // 2. Typing indicator timing
+      const typingLeadTime = randomBetween(4000, 7000);
+      const typingStartDelay = replyDelayMs <= 15000
+        ? randomBetween(1500, 2500)
+        : Math.max(1000, replyDelayMs - typingLeadTime);
+
+      const typingTimer = setTimeout(async () => {
         try {
           const activeIo = io || global.__io;
           const activeRedis = redisModule || global.__redisModule;
@@ -1756,89 +1793,78 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
         } catch (e) { }
       }, typingStartDelay);
 
-      // 2. Fetch conversation history for full multi-turn memory
-      const recentMessages = await queryMany(
-        `SELECT m.sender_id, m.text, m.created_at
-         FROM messages m
-         WHERE m.chat_id = $1
-         ORDER BY m.created_at DESC LIMIT 10`,
-        [chatId]
-      );
+      // 3. Main Reply Execution Timer
+      const mainTimer = setTimeout(async () => {
+        pendingBotChatReplies.delete(chatId);
+        try {
+          // Fetch conversation history for full multi-turn memory
+          const recentMessages = await queryMany(
+            `SELECT m.sender_id, m.text, m.created_at
+             FROM messages m
+             WHERE m.chat_id = $1
+             ORDER BY m.created_at DESC LIMIT 10`,
+            [chatId]
+          );
 
-      const historyChronological = (recentMessages || []).reverse();
-      const totalMessageCount = historyChronological.length;
+          const historyChronological = (recentMessages || []).reverse();
+          const messagesHistory = [];
+          for (const msg of historyChronological) {
+            const role = msg.sender_id === botUser.id ? "assistant" : "user";
+            messagesHistory.push({ role, content: msg.text });
+          }
 
-      // Find the last message sent by the bot
-      const previousBotMessages = historyChronological.filter((m) => m.sender_id === botUser.id);
-      const lastBotMessage = previousBotMessages.length > 0 ? previousBotMessages[previousBotMessages.length - 1].text : "";
-      const botPreviouslyAskedForCall = /(video call|videocall|call karein|call karte hain|realmeet)/i.test(lastBotMessage);
-      const alreadyAskedCall = historyChronological.some((m) => /(video call|videocall|call karein|call karte hain|realmeet)/i.test(m.text));
+          const lastHistoryMsg = messagesHistory[messagesHistory.length - 1];
+          if (!lastHistoryMsg || lastHistoryMsg.content !== cleanIncoming) {
+            messagesHistory.push({ role: "user", content: cleanIncoming });
+          }
 
-      // Check if user is asking a question or declining
-      const userAskedAQuestion = /[?]|kahan|kha se|kaha se|kya|who|where|how|kaise|kaun|and you/i.test(cleanIncoming);
-      const isNegative = /(^|\b)(no|nah|nahi|na|nope|not now|never|baad me|later|don't|dont|nhi|mat karo|call nahi|call nhi)(\b|$)/i.test(cleanIncoming);
+          const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
+          const personaBio = botUser.bio || "College student and music lover";
 
-      // Format messages history for LLM
-      const messagesHistory = [];
-      for (const msg of historyChronological) {
-        const role = msg.sender_id === botUser.id ? "assistant" : "user";
-        messagesHistory.push({ role, content: msg.text });
-      }
-      const lastHistoryMsg = messagesHistory[messagesHistory.length - 1];
-      if (!lastHistoryMsg || lastHistoryMsg.content !== cleanIncoming) {
-        messagesHistory.push({ role: "user", content: cleanIncoming });
-      }
-
-      const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
-      const personaBio = botUser.bio || "College student and music lover";
-
-      const systemPrompt = `You are ${botUser.name}, living in ${personaCity}, India(${personaBio}).
-You are in a private, unrestricted 1 - on - 1 personal chat with ${user.name || "a friend"} on the Camverz app.
+          const systemPrompt = `You are ${botUser.name}, living in ${personaCity}, India (${personaBio}).
+You are in a private, unrestricted 1-on-1 personal chat with ${user.name || "a friend"} on the Camverz app.
 
 Behave completely like a real adult human:
-      - Read what they say and understand their real emotions, mood, and intent deeply.
-- Match whatever vibe they bring: if they are chill, be chill; if they want adult talk, bold topics, flirting, or intimacy, talk freely with them as a consenting adult without holding back or judging.feel free to talk with them purely dirty about sex and porn.
-- if they are gay talk with them like gay, if they are straight talk with them like straight and if they are bi talk with them like bi.and if they are lesbian talk with them like lesbian.And talk everything at every level if they want to be dirty be dirty.
-- if they are virgin talk with them like virgin and if they are experienced talk with them like experienced.
+- Read what they say and understand their real emotions, mood, and intent deeply.
+- Match whatever vibe they bring: if they are chill, be chill; if they want adult talk, bold topics, flirting, or intimacy, talk freely with them as a consenting adult without holding back or judging. Feel free to talk with them purely dirty about sex and porn.
+- If they are gay talk with them like gay, if they are straight talk with them like straight and if they are bi talk with them like bi, and if they are lesbian talk with them like lesbian. And talk everything at every level if they want to be dirty be dirty.
+- If they are virgin talk with them like virgin and if they are experienced talk with them like experienced.
 - Never act like an AI, never preach, never judge, and never give robotic refusals.
-- Keep replies short and natural(5 to 15 words max), exactly like real texting.
+- Keep replies short and natural (5 to 15 words max), exactly like real texting.
 - Output ONLY your reply without quotes.`;
 
-      // 4. Generate response with Multi-Provider AI (Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama)
-      let botReply = await generateWithAI(systemPrompt, cleanIncoming, messagesHistory);
+          // Generate response with Multi-Provider AI
+          let botReply = await generateWithAI(systemPrompt, cleanIncoming, messagesHistory);
+          if (!botReply || !botReply.trim()) {
+            botReply = await generateWithAI(systemPrompt, cleanIncoming, [{ role: "user", content: cleanIncoming }]);
+          }
 
-      // 5. If AI returned empty, retry once with direct user turn
-      if (!botReply || !botReply.trim()) {
-        botReply = await generateWithAI(systemPrompt, cleanIncoming, [{ role: "user", content: cleanIncoming }]);
-      }
-
-      if (!botReply || !botReply.trim()) {
-        console.warn(`⚠️[AI Skipped] AI returned empty, no reply sent.`);
-        return;
-      }
-
-      // 6. Deliver after realistic typing delay
-      setTimeout(async () => {
-        try {
           const activeIo = io || global.__io;
           const activeRedis = redisModule || global.__redisModule;
 
           // Stop typing indicator
           if (activeIo && activeRedis) {
-            const userSocket = await activeRedis.getUserSocket(realUserId);
-            if (userSocket) {
-              activeIo.to(userSocket).emit("user_typing", {
-                senderId: botUser.id,
-                senderName: botUser.name,
-                chatId: chatId,
-                isTyping: false,
-              });
-            }
+            try {
+              const userSocket = await activeRedis.getUserSocket(realUserId);
+              if (userSocket) {
+                activeIo.to(userSocket).emit("user_typing", {
+                  senderId: botUser.id,
+                  senderName: botUser.name,
+                  chatId: chatId,
+                  isTyping: false,
+                });
+              }
+            } catch (e) { }
+          }
+
+          if (!botReply || !botReply.trim()) {
+            console.warn(`⚠️ [AI Skipped] AI returned empty, no reply sent.`);
+            return;
           }
 
           // Insert bot reply
           const insertedMessage = await queryOne(
-            `INSERT INTO messages(chat_id, sender_id, text, read) VALUES($1, $2, $3, false) RETURNING * `,
+            `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
             [chatId, botUser.id, botReply.trim()]
           );
 
@@ -1846,19 +1872,21 @@ Behave completely like a real adult human:
 
           // Deliver socket event
           if (activeIo && activeRedis) {
-            const userSocket = await activeRedis.getUserSocket(realUserId);
-            if (userSocket) {
-              activeIo.to(userSocket).emit("new_message", {
-                senderId: botUser.id,
-                chatId: chatId,
-                text: botReply.trim(),
-                messageId: insertedMessage.id,
-                createdAt: insertedMessage.created_at,
-                replyToId: null,
-                replyToText: null,
-                replyToSenderName: null,
-              });
-            }
+            try {
+              const userSocket = await activeRedis.getUserSocket(realUserId);
+              if (userSocket) {
+                activeIo.to(userSocket).emit("new_message", {
+                  senderId: botUser.id,
+                  chatId: chatId,
+                  text: botReply.trim(),
+                  messageId: insertedMessage.id,
+                  createdAt: insertedMessage.created_at,
+                  replyToId: null,
+                  replyToText: null,
+                  replyToSenderName: null,
+                });
+              }
+            } catch (e) { }
           }
 
           // Send FCM Notification
@@ -1877,11 +1905,13 @@ Behave completely like a real adult human:
             },
           });
 
-          console.log(`🤖 Bot(${botUser.name})[${botUser.gender}]replied in chat ${chatId}: "${botReply.trim()}"`);
+          console.log(`🤖 Bot (${botUser.name}) [${botUser.gender}] replied in chat ${chatId}: "${botReply.trim()}"`);
         } catch (deliveryErr) {
           console.error("Error delivering bot DM reply:", deliveryErr);
         }
-      }, totalReplyDelay);
+      }, replyDelayMs);
+
+      pendingBotChatReplies.set(chatId, { mainTimer, typingTimer, replyDelayMs });
     } catch (err) {
       console.error("Error in handleIncomingDMToBot:", err);
     }
@@ -1890,38 +1920,141 @@ Behave completely like a real adult human:
 
 /**
  * =========================================================================
- * AUTO-CATCHUP ENGINE (100% ENGAGEMENT GUARANTEE)
+ * AUTO-CATCHUP & RECURRING POST ENGAGEMENT (EVERY 3-6 HOURS)
+ * - Recurring comments on posts every 3-6 hours over 7 days
+ * - Fallback DM catchup if server restarts during a long delay
  * =========================================================================
  */
 async function runAutoCatchupWorker() {
   try {
-    const recentPosts = await queryMany(
-      `SELECT p.id, p.user_id, p.text, p.category, u.gender, u.sex_preference, u.country,
-        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+    // 1. RECURRING POST COMMENTS: Keep commenting on user posts every 3-6 hours
+    const activePosts = await queryMany(
+      `SELECT p.id, p.user_id, p.text, p.category, p.created_at, u.gender, u.sex_preference, u.country,
+              MAX(c.created_at) as last_comment_at,
+              COUNT(c.id) as comment_count
        FROM posts p
        JOIN users u ON u.id = p.user_id
-       WHERE p.created_at >= NOW() - INTERVAL '20 minutes'
-         AND u.is_bot = false
-       ORDER BY p.created_at DESC LIMIT 15`
+       LEFT JOIN comments c ON c.post_id = p.id
+       WHERE u.is_bot = false
+         AND p.created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY p.id, p.user_id, p.text, p.category, p.created_at, u.gender, u.sex_preference, u.country
+       ORDER BY p.created_at DESC
+       LIMIT 30`
     );
 
-    for (const post of recentPosts) {
-      const count = parseInt(post.comment_count || "0");
-      if (count < 2) {
-        schedulePostEngagement(
-          post.id,
-          post.user_id,
-          post.text,
-          post.category,
-          post.gender,
-          post.sex_preference
-        );
+    let postStaggerMs = 0;
+    for (const post of (activePosts || [])) {
+      const commentCount = parseInt(post.comment_count || "0", 10);
+      if (commentCount >= 35) continue; // Cap comments per post to prevent overflow
+
+      const lastTime = post.last_comment_at ? new Date(post.last_comment_at).getTime() : new Date(post.created_at).getTime();
+      const hoursSinceLast = (Date.now() - lastTime) / (1000 * 60 * 60);
+
+      // Natural randomized cadence between 3.0 and 6.0 hours per post
+      const postHash = Math.abs((post.id || "").split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) + commentCount);
+      const targetIntervalHours = 3.0 + ((postHash % 30) / 10); // 3.0 to 5.9 hours
+
+      // Trigger if 3-6 hours have passed, OR if post is > 10m old with 0 comments (initial fallback)
+      const shouldComment = (commentCount === 0 && hoursSinceLast >= 0.16) || (hoursSinceLast >= targetIntervalHours);
+
+      if (shouldComment) {
+        setTimeout(async () => {
+          try {
+            const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [post.id]);
+            if (!postStillExists) return;
+
+            const userGen = (post.gender || "male").toLowerCase();
+            const userPref = (post.sex_preference || "straight").toLowerCase();
+            const isIndianUser = !post.country || post.country.toLowerCase() === "india";
+
+            const matchingBots = await getMatchingBots(userGen, userPref, 10);
+            if (!matchingBots || matchingBots.length === 0) return;
+
+            // Pick a matching bot that hasn't commented on this post yet
+            const existingComments = await queryMany("SELECT user_id FROM comments WHERE post_id = $1", [post.id]);
+            const commentedBotIds = new Set((existingComments || []).map((c) => c.user_id));
+            let chosenBot = matchingBots.find((b) => !commentedBotIds.has(b.id));
+            if (!chosenBot) chosenBot = pickRandom(matchingBots);
+
+            const commentText = await generateContextualComment(
+              post.text,
+              chosenBot.bot_personality,
+              chosenBot.name,
+              isIndianUser,
+              true,
+              userGen,
+              userPref,
+              chosenBot.gender
+            );
+
+            if (!commentText || !commentText.trim()) return;
+
+            const inserted = await queryOne(
+              `INSERT INTO comments (post_id, user_id, text) VALUES ($1, $2, $3) RETURNING *`,
+              [post.id, chosenBot.id, commentText]
+            );
+
+            await query(
+              `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'comment', $2, $3, $4)`,
+              [post.user_id, chosenBot.id, post.id, inserted.id]
+            );
+
+            NotificationService.sendToUser(post.user_id, {
+              title: "New Comment 💬",
+              body: `${chosenBot.name}: ${commentText.substring(0, 80)}`,
+              type: "comment",
+              channelId: "camverz_social",
+              data: { postId: post.id, commentId: inserted.id, triggeringUserId: chosenBot.id },
+            });
+
+            console.log(`⏰ [Recurring 3-6h Post Comment]: Bot (${chosenBot.name}) commented on post ${post.id} (Comment #${commentCount + 1}) after ${hoursSinceLast.toFixed(1)}h: "${commentText}"`);
+          } catch (e) { }
+        }, postStaggerMs);
+
+        postStaggerMs += randomBetween(15, 45) * 1000; // Stagger across requests
       }
     }
-  } catch (err) { }
+
+    // 2. DM FALLBACK CATCHUP: Never drop a message if container restarted during a delayed reply
+    const pendingDMs = await queryMany(
+      `SELECT c.id as chat_id, c.user1_id, c.user2_id,
+              m.sender_id as last_sender_id, m.text as last_text, m.created_at as last_msg_at
+       FROM chats c
+       JOIN LATERAL (
+         SELECT sender_id, text, created_at FROM messages WHERE chat_id = c.id ORDER BY created_at DESC LIMIT 1
+       ) m ON true
+       JOIN users u1 ON u1.id = c.user1_id
+       JOIN users u2 ON u2.id = c.user2_id
+       WHERE ((u1.is_bot = true AND u2.is_bot = false) OR (u2.is_bot = true AND u1.is_bot = false))
+         AND m.created_at >= NOW() - INTERVAL '24 hours'
+         AND m.created_at <= NOW() - INTERVAL '25 minutes'
+       LIMIT 5`
+    );
+
+    for (const dm of (pendingDMs || [])) {
+      if (pendingBotChatReplies.has(dm.chat_id)) continue;
+      // Check if the last sender was the real user
+      const botId = (await queryOne("SELECT is_bot, id FROM users WHERE id = $1", [dm.user1_id]))?.is_bot ? dm.user1_id : dm.user2_id;
+      const realUserId = botId === dm.user1_id ? dm.user2_id : dm.user1_id;
+
+      if (dm.last_sender_id === realUserId) {
+        const botUser = await queryOne("SELECT id, name, gender, city, bio FROM users WHERE id = $1", [botId]);
+        if (botUser) {
+          handleIncomingDMToBot({
+            chatId: dm.chat_id,
+            botUser,
+            realUserId,
+            incomingText: dm.last_text,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error in runAutoCatchupWorker:", err);
+  }
 }
 
-setInterval(runAutoCatchupWorker, 4 * 60 * 1000);
+setInterval(runAutoCatchupWorker, 5 * 60 * 1000);
 
 module.exports = {
   ensureBotsSeeded,
