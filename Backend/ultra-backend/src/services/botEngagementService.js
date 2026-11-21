@@ -856,16 +856,12 @@ function callGeminiAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs 
 }
 
 // 2. Groq Cloud API
-function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
-  const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_KEY || process.env.GROQCLOUD_API_KEY;
-  if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
-
+function callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHistory, timeoutMs) {
   return new Promise((resolve) => {
     let resolved = false;
     const timer = setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        console.warn("⚠️ [Groq Timeout] Request timed out after " + timeoutMs + "ms");
         resolve(null);
       }
     }, timeoutMs);
@@ -898,7 +894,7 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
       }
 
       const payload = JSON.stringify({
-        model: "llama-3.1-8b-instant",
+        model,
         messages,
         temperature: 0.85,
         max_tokens: 120,
@@ -929,17 +925,15 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
                 if (content) {
                   const cleaned = cleanAIResponse(content);
                   if (cleaned && cleaned.length >= 2) {
-                    console.log(`🤖 [Groq Success]: "${cleaned}"`);
+                    console.log(`🤖 [Groq Success (${model})]: "${cleaned}"`);
                     return resolve(cleaned);
                   }
                 }
                 if (json?.error) {
-                  console.error("❌ [Groq API Error]:", res.statusCode, JSON.stringify(json.error));
-                } else {
-                  console.warn("⚠️ [Groq Warning]:", res.statusCode, body.slice(0, 150));
+                  console.warn(`⚠️ [Groq API Error on ${model}]:`, res.statusCode, JSON.stringify(json.error));
                 }
               } catch (e) {
-                console.error("❌ [Groq Parse Error]:", e.message, "Body:", body.slice(0, 150));
+                console.error(`❌ [Groq Parse Error on ${model}]:`, e.message);
               }
               resolve(null);
             }
@@ -951,7 +945,7 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
         if (!resolved) {
           resolved = true;
           clearTimeout(timer);
-          console.error("❌ [Groq Network Error]:", err.message);
+          console.error(`❌ [Groq Network Error on ${model}]:`, err.message);
           resolve(null);
         }
       });
@@ -962,11 +956,27 @@ function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 
       if (!resolved) {
         resolved = true;
         clearTimeout(timer);
-        console.error("❌ [Groq Catch Error]:", e.message);
         resolve(null);
       }
     }
   });
+}
+
+async function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
+  const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_KEY || process.env.GROQCLOUD_API_KEY;
+  if (!apiKey || !apiKey.trim()) return null;
+
+  const candidateModels = [
+    "openai/gpt-oss-20b",
+    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
+  ];
+
+  for (const model of candidateModels) {
+    const res = await callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHistory, timeoutMs);
+    if (res) return res;
+  }
+  return null;
 }
 
 // 3. OpenAI API (if configured)
