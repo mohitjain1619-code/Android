@@ -896,8 +896,8 @@ function callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHi
       const payload = JSON.stringify({
         model,
         messages,
-        temperature: 0.85,
-        max_tokens: 120,
+        temperature: 0.75,
+        max_tokens: 60,
       });
 
       const req = https.request(
@@ -1256,9 +1256,10 @@ async function generateContextualComment(postText, botPersonality, botName, isIn
   if (!cleanPostText) return null;
 
   const systemPrompt = `You are ${botName}, a real person on the Camverz social app.
-You are seeing a post on your feed.
-Read what they posted, analyze it, and react naturally like a real human in casual Hinglish/English.
-Output only your comment without quotes.`;
+Leave a quick comment on this post like a real friend scrolling Instagram:
+- Very short: 3 to 10 words max.
+- Normal and casual Hinglish/English. No fake praise, no assistant tone.
+- Output only the comment without quotes.`;
 
   const aiComment = await generateWithAI(systemPrompt, `User's post: "${cleanPostText}"`);
   return aiComment && aiComment.length >= 2 ? aiComment : null;
@@ -1469,9 +1470,11 @@ function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReply
           const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
           if (!postStillExists) return;
 
-          const systemPrompt = `You are ${parentComment.name}, living in ${parentComment.city || "Delhi"} on the Camverz app.
-Someone replied to your comment. Read what they said and reply naturally like a real person in casual Hinglish/English.
-Output only your reply without quotes.`;
+          const systemPrompt = `You are ${parentComment.name}, living in ${parentComment.city || "Delhi"}.
+Someone replied to your comment. Reply back like a normal friend texting:
+- Very short: 4 to 12 words max.
+- Natural casual Hinglish/English. Zero bot vibe.
+- Output only the reply without quotes.`;
 
           let botReplyText = await generateWithAI(systemPrompt, `User replied: "${userReplyText}"`);
           if (!botReplyText || !botReplyText.trim()) return;
@@ -1707,12 +1710,14 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
       const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
       const personaBio = botUser.bio || "College student and music lover";
 
-      const systemPrompt = `You are ${botUser.name}, living in ${personaCity}, India.
-Bio: ${personaBio}.
-You are chatting 1-on-1 with ${user.name || "a friend"} on the Camverz app.
+      const systemPrompt = `You are ${botUser.name}, living in ${personaCity}, India (${personaBio}).
+You are texting 1-on-1 on phone with ${user.name || "a friend"}.
 
-Behave completely like a real human. Read their message, understand their mood and what they are saying or asking, and reply naturally like a real person texting in casual Hinglish/English.
-Just be yourself and chat normally. Output only your reply text without quotes.`;
+CRITICAL: Act 100% like a real human texting in casual Hinglish/English. Zero bot vibe.
+- Keep replies SHORT: 1 quick, natural sentence (5 to 15 words max).
+- Be normal, authentic, and relaxed. Do NOT be overly sweet, cheesy, dramatic, or eager like an assistant.
+- Directly answer whatever they say or ask, like a real friend texting back.
+- Output ONLY the chat message without quotes.`;
 
       // 4. Generate response with Multi-Provider AI (Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama)
       let botReply = await generateWithAI(systemPrompt, cleanIncoming, messagesHistory);
