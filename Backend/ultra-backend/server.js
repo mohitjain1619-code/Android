@@ -140,7 +140,7 @@ app.use("/uploads/stories", (req, res, next) => {
         } else if (buffer[0] === 0x89 && buffer[1] === 0x50) {
           res.setHeader("Content-Type", "image/png");
         }
-      } catch (err) {}
+      } catch (err) { }
     }
   }
   next();
@@ -224,7 +224,7 @@ async function logCallIfNeeded(room, state) {
     if (state && state.start_time && state.participants && state.participants.length >= 2) {
       const durationSeconds = Math.round((Date.now() - state.start_time) / 1000);
       const [callerId, receiverId] = state.participants;
-      
+
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (uuidRegex.test(callerId) && uuidRegex.test(receiverId) && durationSeconds > 0) {
         await query(
@@ -326,25 +326,25 @@ io.on("connection", (socket) => {
 
     await redisModule.setUserOnline(uid, socket.id);
     await redisModule.removeFromQueue(uid);
-    
+
     console.log("➕ Queue request from user:", uid, "category:", category, "gender:", gender);
-    
+
     const { myQueueKey, targetQueueKey } = redisModule.getQueueKeys(gender, category);
     let matchFound = false;
     let peerId = null;
-    
+
     // Try to pop a candidate from target queue atomically
     while (true) {
       peerId = await redisModule.popFromQueue(targetQueueKey);
       if (!peerId) {
         break; // Target queue is empty
       }
-      
+
       // Ignore self-popping in identical queues (e.g. gay/lesbian)
       if (peerId === uid) {
         continue;
       }
-      
+
       // Verify candidate is still online & actively searching
       const peerSocketId = await redisModule.getUserSocket(peerId);
       if (peerSocketId) {
@@ -354,16 +354,16 @@ io.on("connection", (socket) => {
           break; // Found a valid matched user!
         }
       }
-      
+
       // Discard invalid/stale/offline user and clean up their queue registry
       await redisModule.removeFromQueue(peerId);
     }
-    
+
     if (matchFound && peerId) {
       // Clean up queue lists for both users
       await redisModule.removeFromQueue(peerId);
       await redisModule.removeFromQueue(uid);
-      
+
       const s1 = socket.id;
       const s2 = await redisModule.getUserSocket(peerId);
       const peerSocket = io.sockets.sockets.get(s2);
@@ -377,21 +377,21 @@ io.on("connection", (socket) => {
         clearTimeout(peerSocket.botFallbackTimer);
         peerSocket.botFallbackTimer = null;
       }
-      
+
       // Establish deterministic room name
       const room = uid.localeCompare(peerId) < 0 ? `${uid}_${peerId}` : `${peerId}_${uid}`;
-      
+
       // Bind states to socket objects immediately to prevent race conditions during transitions
       socket.isSearching = false;
       socket.peerUid = peerId;
       socket.currentRoom = room;
-      
+
       if (peerSocket) {
         peerSocket.isSearching = false;
         peerSocket.peerUid = uid;
         peerSocket.currentRoom = room;
       }
-      
+
       console.log("💚 MATCH FOUND (Real Users):", uid, "<>", peerId);
       if (s1) io.to(s1).emit("match-found", { peerId });
       if (s2) io.to(s2).emit("match-found", { peerId: uid });
@@ -455,11 +455,11 @@ io.on("connection", (socket) => {
           // Orientation-aware video selection:
           // Gay Male or Straight Female -> Male Bot video clip (Video_1.mp4 in gay_straightgirls)
           const isGayOrStraightFemale = userPref.includes("gay") || (userGen === "female" && !userPref.includes("lesbian"));
-          const botAssetPath = isGayOrStraightFemale 
-            ? "bot_videos/gay_straightgirls/video_1.mp4" 
+          const botAssetPath = isGayOrStraightFemale
+            ? "bot_videos/gay_straightgirls/video_1.mp4"
             : "bot_videos/gay_straightgirls/video_1.mp4"; // fallback for now until female video provided
-          const botVideoUrl = isGayOrStraightFemale 
-            ? "/uploads/bot_videos/gay_straightgirls/video_1.mp4" 
+          const botVideoUrl = isGayOrStraightFemale
+            ? "/uploads/bot_videos/gay_straightgirls/video_1.mp4"
             : "/uploads/bot_videos/gay_straightgirls/video_1.mp4";
 
           console.log(`🤖 [Level 3 Bot Call] Zero-dropoff fallback for user ${uid} (${userGen}, ${userPref}) matched with Bot ${bot.name} (${bot.gender}) after 8.5s!`);
@@ -586,7 +586,7 @@ io.on("connection", (socket) => {
     socket.currentRoom = null; // Clear room tracking
     socket.peerUid = null;
     socket.leave(room);
-    
+
     // Notify peer that this user disconnected
     io.to(room).emit("peer-disconnected", { uid });
 
@@ -757,7 +757,7 @@ io.on("connection", (socket) => {
         highPriority: true,
         data: { type: "call_cancelled" },
       });
-    } catch (e) {}
+    } catch (e) { }
   });
 
   socket.on("end-private-call", async ({ targetId }) => {
@@ -783,7 +783,7 @@ io.on("connection", (socket) => {
         highPriority: true,
         data: { type: "call_ended" },
       });
-    } catch (e) {}
+    } catch (e) { }
   });
 
   socket.on("send-private-offer", async ({ targetId, offer, room }) => {
