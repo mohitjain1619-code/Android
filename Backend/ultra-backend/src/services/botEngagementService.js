@@ -1219,17 +1219,17 @@ function callFreeCloudAI(systemPrompt, userPrompt, messagesHistory = [], timeout
 
 /**
  * Universal Multi-Provider AI Caller
- * Prioritizes: Gemini -> Groq -> OpenAI -> FreeCloudAI -> Ollama
+ * Prioritizes: Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama
  */
 async function generateWithAI(systemPrompt, userPrompt, messagesHistory = []) {
   try {
-    // 1. Try Gemini
-    const geminiRes = await callGeminiAI(systemPrompt, userPrompt, messagesHistory);
-    if (geminiRes) return geminiRes;
-
-    // 2. Try Groq
+    // 1. Try Groq (Primary high-speed LLM)
     const groqRes = await callGroqAI(systemPrompt, userPrompt, messagesHistory);
     if (groqRes) return groqRes;
+
+    // 2. Try Gemini
+    const geminiRes = await callGeminiAI(systemPrompt, userPrompt, messagesHistory);
+    if (geminiRes) return geminiRes;
 
     // 3. Try OpenAI
     const openAiRes = await callOpenAIAI(systemPrompt, userPrompt, messagesHistory);
@@ -1249,317 +1249,19 @@ async function generateWithAI(systemPrompt, userPrompt, messagesHistory = []) {
 }
 
 /**
- * =========================================================================
- * DEEP SEMANTIC CONTEXT ENGINE (FAIL-SAFE INTELLIGENCE)
- * Ensures bots behave 100% like real human friends, directly answer questions,
- * understand nuances (city, work, food, sleep, gym, mood, tests),
- * and NEVER say robotic canned lines or make unsolicited video call spam.
- * =========================================================================
- */
-function generateSmartContextualChatReply(bot, userMessage, userPreference, userGender, messageCount = 1, botPreviouslyInvitedCall = false, alreadyAskedCall = false, lastBotText = "") {
-  const text = (userMessage || "").trim().toLowerCase();
-  const city = bot.city || (bot.gender === "female" ? "Delhi" : "Pune");
-  const isGay = String(userPreference || "").toLowerCase().includes("gay");
-  const isMaleBot = bot.gender === "male";
-  const bro = (isGay || isMaleBot) ? "bro" : "yaar";
-
-  // 1. Check if user explicitly asked for a video or audio call
-  if (/(video call|videocall|call karu|call karein|call pe aao|live call|call me|dial karu|vc karein|call kar sakta)/i.test(text)) {
-    return pickRandom([
-      "Arey bilkul! Upar right side me video call button hai, connect karo abhi baat karte hain! 🥰",
-      "Yay, sure! Upar call button par tap karke dial karo, let's talk! ✨",
-    ]);
-  }
-
-  // 2. Check if user is saying NO / declining
-  const isNegative = /(^|\b)(no|nah|nahi|na|nope|not now|never|baad me|later|don't|dont|nhi|mat karo|call nahi|call nhi)(\b|$)/i.test(text);
-  if (isNegative) {
-    const declineReplies = [
-      `Haha koi baat nahi! Yahan chat par hi baat karte hain 😊 Aur batao aaj ka din kaisa raha?`,
-      `Arey chill ${bro}, no problem at all! Aur batao kya chal raha hai aaj kal? ✨`,
-      `Haha okay sure, no pressure! Yahan text par hi connect karte hain 😊 Aur batao?`,
-    ];
-    return pickRandom(declineReplies);
-  }
-
-  // 3. Direct Location Questions: "india and you?", "tum kha se ho?", "where from", "kahan rehte ho"
-  if (/(kahan se|kha se|kaha se|where are you|where from|and you|aur aap|aur tum|kahan rehte|kha rehte|city|location|living in|staying in)/i.test(text)) {
-    const cityReplies = isMaleBot
-      ? [
-        `Main ${city} se hoon ${bro}! Aur aap India me kahan se belong karte ho waise? 😊`,
-        `Main ${city} me rehta hoon ${bro}! Tumhari profile kafi cool lagi waise ✨`,
-        `Arey main ${city} se hoon! Aap kahan se ho waise? 😊`,
-      ]
-      : [
-        `Main ${city} se hoon! Aur aap India me kahan se belong karte ho waise? 😊`,
-        `Main ${city} me rehti hoon! Tumhari profile kafi cool lagi waise ✨`,
-        `Arey main ${city} se hoon! Aap kahan se ho waise? 😊`,
-      ];
-    return pickRandom(cityReplies);
-  }
-
-  // 3b. Questions about visiting places: "gwalior dekha h?", "goa gaya hai?", "delhi visit kiya?"
-  if (/(dekha h|dekha hai|gaya h|gaye ho|gayi ho|suna h|suna hai|visit kiya|jaante ho|kaisa hai)/i.test(text)) {
-    const placeReplies = [
-      `Nahi yaar abhi tak to nahi dekha! Kaisa place hai waise ghumne ke liye? 😊`,
-      `Suna to hai bohot, par kabhi jaane ka mauka nahi mila! Aap wahan gaye ho kya? ✨`,
-      `Nahi dekha yaar, but bucket list me hai haha! Aap wahan rehte ho kya? 😊`,
-    ];
-    return pickRandom(placeReplies);
-  }
-
-  // 3c. User asking "and you?", "or tera?", "apna batao", "tum batao" (e.g. "bhadiya or tera")
-  if (/(or tera|aur tera|or aap|aur aap|aur tum|or tum|apna batao|tum batao|tera batao|tu bata)/i.test(text)) {
-    const selfReplies = [
-      `Main bhi ekdum badhiya hoon ${bro}! Bas free baitha tha room pe 😊 Aap batao kya chal raha hai?`,
-      `Main bhi mast hoon ekdum! Aaj thoda chill day tha mera ✨ Aur batao kuch naya?`,
-      `Main bhi badhiya ${bro}! Bas thoda phone chala raha tha haha. Aap batao? 😊`,
-    ];
-    return pickRandom(selfReplies);
-  }
-
-  // 3d. User asking "kya h?", "ky h", "what"
-  if (/^(ky h|kya h|kya|ky|what|kya hua|kya matlab|kyu)[?]?$/i.test(text)) {
-
-    const clarifyReplies = [
-      `Kuch nahi yaar, aise hi pooch raha tha haha! Aur batao kya chal raha hai? 😄`,
-      `Arey kuch nahi bas baat karne ka mann kiya to message bhej diya 😊 Free ho abhi?`,
-      `Haha bas bore ho raha tha to message kar diya! Kya plans hain aaj ke? ✨`,
-    ];
-    return pickRandom(clarifyReplies);
-  }
-
-  // 4. Direct Profession/Study/Bio Questions: "kya karti ho?", "kya karte ho?", "what do you do?"
-  if (/(kya karte ho|kya karti ho|profession|study|work|job|padhai|college|office|what do you do)/i.test(text)) {
-    const bioText = bot.bio ? bot.bio.replace(/[✨❤️🍕☕|]/g, "").trim() : "college student";
-    return isMaleBot
-      ? `Main ${bioText} hoon ${bro}! Aap kya karte ho waise? 😊`
-      : `Main ${bioText} hoon! Aap kya karte ho waise? 😊`;
-  }
-
-  // 5. Questions about Doing What right now: "kya kar rahe ho?", "kya chal raha hai?"
-  if (/(kya kar rahe|kya kar rahi|doing what|kya chal raha|what's up|wassup|aur batao|kya ho raha)/i.test(text)) {
-    const activityReplies = isMaleBot
-      ? [
-        `Kuch nahi yaar, bas room pe gaane sun raha tha chill karke 🎧 Aap batao, aaj ka din kaisa raha?`,
-        `Bas free baitha tha phone scroll karte hue haha! Aur batao kya chal raha hai aaj? ✨`,
-        `Kuch khas nahi ${bro}, abhi just thoda free hua tha. Aap batao apne baare me? 😊`,
-      ]
-      : [
-        `Kuch nahi yaar, bas room me gaane sun rahi thi chill karke 🎧 Aap batao, aaj ka din kaisa raha?`,
-        `Bas free baithi thi phone scroll karte hue haha! Aur batao kya chal raha hai aaj? ✨`,
-        `Kuch khas nahi, abhi just thoda free hui thi. Aap batao apne baare me? 😊`,
-      ];
-    return pickRandom(activityReplies);
-  }
-
-  // 6. Food / Eating: "khana khaya?", "lunch kiya?", "dinner"
-  if (/(khana khaya|lunch kiya|dinner kiya|breakfast kiya|kya khaya|food|dinner|lunch)/i.test(text)) {
-    return pickRandom([
-      `Haan abhi thodi der pehle hi khaya, mast pet bhar ke 😋 Aapne khana khaya kya?`,
-      `Haanji bilkul! Aap batao, aapne khana khaya ki nahi abhi tak? 😊`,
-    ]);
-  }
-
-  // 7. Sleep / Night: "so ja", "so jao", "good night", "gn"
-  if (/(so ja|so jao|sleep|good night|gn|so rahe ho|soye nahi|neend)/i.test(text)) {
-    return pickRandom([
-      `Haha neend nahi aa rahi yaar, night owl vibe hai lol 😅 Aap kyu jaag rahe ho itni raat ko?`,
-      `Bas thodi der me so jaunga! Aap bhi rest karo, good night ✨`,
-    ]);
-  }
-
-  // 8. Gym / Fitness Questions: "aaj gym chale?", "workout"
-  if (/(gym|workout|fitness|biceps|exercise|muscle|deadlift)/i.test(text)) {
-    const gymReplies = [
-      `Haan ${bro} bilkul! Aaj to heavy workout ka plan hai, kab chal rahe ho? 💪`,
-      `Gym time is best time! Aaj konsa workout hai? Chest ya legs? 🔥`,
-      `Bilkul bhai! Main to ready hoon, batao kab nikalna hai? 💪`,
-    ];
-    return pickRandom(gymReplies);
-  }
-
-  // 9. Relationship / Flirt: "single ho?", "crush", "girlfriend", "boyfriend"
-  if (/(single|dating|girlfriend|boyfriend|gf|bf|pyaar|crush|shaadi)/i.test(text)) {
-    return isMaleBot
-      ? `Haha filhal toh pure single hoon bro! Why, koi setting karwa rahe ho kya? 😉`
-      : `Haha filhal toh single hoon! Why, koi accha proposal hai kya? 😉`;
-  }
-
-  // 10. Age questions: "age kya hai", "how old"
-  if (/(age|kitne saal|how old|umar)/i.test(text)) {
-    return `Main 21 ka/ki hoon ${bro}! Aapki kitni age hai waise? 😊`;
-  }
-
-  // 11. Name questions: "naam kya hai", "who are you"
-  if (/(naam kya|who are you|tumhara naam|aapka naam|what's your name)/i.test(text)) {
-    return `Main ${bot.name} hoon! Aur aapka naam kya hai waise? 😊`;
-  }
-
-  // 12. Photo requests: "photo bhejo", "pic bhejo"
-  if (/(photo|pic|picture|face|dekhna)/i.test(text)) {
-    return `Profile par hi meri photos lagi hain haha! Check out kar lo 😉`;
-  }
-
-  // 13. How are you / Kaise ho?
-  if (/(kaise ho|kaisa hai|how are you|sab theek|kya haal|wassup|sup)/i.test(text)) {
-    return pickRandom([
-      "Main ekdum badhiya! Aap batao, aaj ka din kaisa chal raha hai? 😊",
-      `Ekdum mast ${bro}! Aur batao kya interesting chal raha hai aaj? ✨`,
-    ]);
-  }
-
-  // 14. Free ho / Online ho?
-  if (/(free ho|online ho|busy|available)/i.test(text)) {
-    return pickRandom([
-      `Haan abhi free hoon ${bro}, batao kya chal raha hai? 😊`,
-      `Haan bilkul free hoon, aapse baat karke achha lag raha hai ✨`,
-    ]);
-  }
-
-  // 15. Chai / Coffee
-  if (/(chai|tea|coffee|cafe)/i.test(text)) {
-    return pickRandom([
-      `Chai ke bina to din hi nahi banta! Ek cup idhar bhi bhej do haha ☕`,
-      `Coffee lover here! Kabhi coffee pe milte hain ✨`,
-    ]);
-  }
-
-  // 16. Boredom / Mood
-  if (/(bore|bored|boring|mood|kuch bolo)/i.test(text)) {
-    return pickRandom([
-      `Haha bore mat ho yaar! Chalo koi mast topic batao baat karne ke liye 😄`,
-      `Arey boredom bhagao! Aaj pura din kya kiya waise? ✨`,
-    ]);
-  }
-
-  // 17. Short acknowledgment / Fillers: "hmm", "haan", "acha", "ok"
-  if (/^(hmm|hm|haan|ha|acha|accha|ok|okay|sahi hai|theek hai|thik hai|cool|mast|nice|yep|yes)$/i.test(text)) {
-    const fillerReplies = [
-      `Haha aur batao ${bro}, aaj ke kya plans hain? Kuch interesting kiya aaj? 😊`,
-      `Arey waah! Waise aap Camverz regular use karte ho ya naye ho yahan? ✨`,
-      `Sahi hai! Aur batao apne baare me kuch, kahan se ho waise? 😊`,
-    ];
-    return pickRandom(fillerReplies);
-  }
-
-  // 18. Gibberish / Test text in chat: "tt", "test", "asdf"
-  if (/^(tt|test|asdf|qwerty|zzz|[a-z]{1,3})$/i.test(text)) {
-    return `Arey ye kya likha hai haha 😂 Samjha nahi lol! Secret code? 😜`;
-  }
-
-  // 19. Natural Friendly Banter (No unsolicited video calls, de-duplicated against lastBotText)
-  const banter = [
-    `Haha aur batao ${bro}, aaj ka din kaisa raha? Kuch interesting hua? 😊`,
-    `Acha waise aap Camverz par naye ho ya pehle se use kar rahe ho? ✨`,
-    `Haha sahi hai! Waise weekend ke kya plans chal rahe hain aaj kal? 😄`,
-    `Aur batao apne baare me, free time me kya karna pasand hai aapko? 😊`,
-    `Acha waise movies ya series dekhne ka shauk hai? Last kya dekha tha? 🎬`,
-    `Badiya! Aaj ka din kaisa tha waise? Thaka dene wala ya chill? ☕`,
-    `Haha sahi baat hai. Waise music kaisa sunte ho aap? Any fav artist? 🎧`,
-    `Aur sunao kya chal raha hai aaj kal life me? College ya job? ✨`,
-    `Acha waise foodie ho ya fitness freak? Haha dono bhi chalega 🍕💪`,
-    `Main to bas free baitha tha phone scroll karte huye 😄 Aap batao kya kar rahe the?`,
-    `Acha waise late night jagte ho ya early bird ho? 🌙`,
-    `Nice! Waise coffee pasand hai ya chai lover ho? ☕✨`,
-    `Haha mast! Camverz par achha laga connect karke waise 😊`,
-    `Acha ghumne-phirne ka shauk hai? Mountains pasand hain ya beach side? ⛰️🌊`,
-    `Sahi hai yaar! Aur batao, dinner ya lunch ho gaya aapka? 😋`,
-    `Acha waise Instagram par reels scroll karte ho ya normal chat type person ho? 😂`,
-    `Haha true! Aur sunao, kuch exciting chal raha hai life me ya sab routine? ✨`,
-  ];
-  const filtered = banter.filter((b) => b.trim().toLowerCase() !== lastBotText.trim().toLowerCase());
-  return pickRandom(filtered.length > 0 ? filtered : banter);
-}
-
-/**
- * Smart Comment Generator for Posts (Zero robotic lines, 100% human context)
- */
-function generateSmartContextualPostComment(bot, postText, userPreference, userGender) {
-  const text = (postText || "").trim().toLowerCase();
-  const isGay = String(userPreference || "").toLowerCase().includes("gay");
-  const isMaleBot = bot.gender === "male";
-  const bro = (isGay || isMaleBot) ? "bhai" : "yaar";
-
-  // 1. Detect test letters, gibberish ("tt", "asdf", < 4 chars)
-  if (text.length <= 4 || /^(tt|test|testing|asdf|qwerty|zzz|hi|hey)$/i.test(text)) {
-    const testReactions = [
-      `Arey ye "${postText.trim()}" kya hai haha? 😂 Secret code lag raha hai!`,
-      `Keyboard test chal raha hai kya ${bro}? 😜`,
-      `Haha ye kya likha hai bhai, samajh nahi aaya lol 😂`,
-      `Testing 1 2 3... Mic check haha! 🎤😂`,
-    ];
-    return pickRandom(testReactions);
-  }
-
-  // 2. Gym / Fitness posts
-  if (/(gym|workout|fitness|biceps|exercise|muscle|protein|grind|deadlift)/i.test(text)) {
-    const gymComments = [
-      `Haan ${bro} bilkul! Aaj to heavy workout ka plan hai, kab chal rahe ho? 💪`,
-      `Gym time is best time! Aaj konsa workout hai? Chest ya legs? 🔥`,
-      `No pain no gain! Aaj heavy deadlifts marenge bro 💪`,
-    ];
-    return pickRandom(gymComments);
-  }
-
-  // 3. Chai / Coffee
-  if (/(chai|tea|coffee|starbucks|cafe|latte)/i.test(text)) {
-    return pickRandom([
-      `Chai ke bina to din hi shuru nahi hota! ☕✨`,
-      `Coffee lover here too! Ek cup idhar bhi bhej do haha ☕`,
-    ]);
-  }
-
-  // 4. Boredom / Timepass
-  if (/(bore|bored|boring|free|koi hai|timepass)/i.test(text)) {
-    return pickRandom([
-      `Arey boredom bhagao! Free ho to chat karte hain 😉`,
-      `Haha bore mat ho, Camverz par explore karo naye dost milenge ✨`,
-    ]);
-  }
-
-  // 5. Travel / Weather
-  if (/(travel|trip|mountains|beach|weather|mausam|rain|barish)/i.test(text)) {
-    return pickRandom([
-      `Kya awesome mausam hai! Aise me to trip par nikalna banta hai 🚗✨`,
-      `Wanderlust vibes! Kahan ka plan hai waise? ✈️`,
-    ]);
-  }
-
-  // 6. Generic thoughtful post (REAL human comments, ZERO robotic praise)
-  const realComments = [
-    `Sahi baat hai yaar! Vibe achhi hai ✨`,
-    `Haha relatable! Aur kya chal raha hai aaj? 😊`,
-    `Arey waah, sahi lag raha hai ${bro}! 🙌`,
-    `Nice post ${bro}! Have an awesome day ✨`,
-  ];
-  return pickRandom(realComments);
-}
-
-/**
- * Contextual Comment Generator (AI with Smart Semantic Fallback)
+ * Contextual Comment Generator (100% Pure AI Intelligence - Zero Canned Predefined Lines)
  */
 async function generateContextualComment(postText, botPersonality, botName, isIndianUser = true, preferHinglish = false, userGender = "male", userPreference = "straight", botGender = "female") {
   const cleanPostText = (postText || "").trim();
-
-  const isGay = String(userPreference || "").toLowerCase().includes("gay");
-  const isLesbian = String(userPreference || "").toLowerCase().includes("lesbian");
-  const targetDesc = isGay ? "a gay guy" : (isLesbian ? "a lesbian girl" : (userGender === "male" ? "a guy" : "a girl"));
-  const botPersonaDesc = botGender === "female" ? "a lively 21yo Indian girl" : "a cool, friendly 22yo Indian guy";
+  if (!cleanPostText) return null;
 
   const systemPrompt = `You are ${botName}, a real person on the Camverz social app.
 You are seeing a post on your feed.
-Read what they posted and react naturally like a real human in casual Hinglish/English.
+Read what they posted, analyze it, and react naturally like a real human in casual Hinglish/English.
 Output only your comment without quotes.`;
 
   const aiComment = await generateWithAI(systemPrompt, `User's post: "${cleanPostText}"`);
-  if (aiComment && aiComment.length >= 4) {
-    return aiComment;
-  }
-
-  // Smart semantic fallback
-  const botObj = { name: botName, gender: botGender };
-  return generateSmartContextualPostComment(botObj, cleanPostText, userPreference, userGender);
+  return aiComment && aiComment.length >= 2 ? aiComment : null;
 }
 
 /**
@@ -1772,9 +1474,7 @@ Someone replied to your comment. Read what they said and reply naturally like a 
 Output only your reply without quotes.`;
 
           let botReplyText = await generateWithAI(systemPrompt, `User replied: "${userReplyText}"`);
-          if (!botReplyText) {
-            botReplyText = generateSmartContextualChatReply(parentComment, userReplyText, replier?.sex_preference, replier?.gender);
-          }
+          if (!botReplyText || !botReplyText.trim()) return;
 
           const inserted = await queryOne(
             `INSERT INTO comments (post_id, user_id, text, parent_id) VALUES ($1, $2, $3, $4) RETURNING *`,
@@ -2014,27 +1714,17 @@ You are chatting 1-on-1 with ${user.name || "a friend"} on the Camverz app.
 Behave completely like a real human. Read their message, understand their mood and what they are saying or asking, and reply naturally like a real person texting in casual Hinglish/English.
 Just be yourself and chat normally. Output only your reply text without quotes.`;
 
-      // 4. Generate response with Multi-Provider AI (Gemini -> Groq -> OpenAI -> FreeCloudAI -> Ollama)
+      // 4. Generate response with Multi-Provider AI (Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama)
       let botReply = await generateWithAI(systemPrompt, cleanIncoming, messagesHistory);
 
-      // 5. If AI is offline/unconfigured, run deep semantic context engine
+      // 5. If AI returned empty, retry once with direct user turn
       if (!botReply || !botReply.trim()) {
-        botReply = generateSmartContextualChatReply(
-          botUser,
-          cleanIncoming,
-          user.sex_preference,
-          user.gender,
-          totalMessageCount,
-          botPreviouslyAskedForCall && !userAskedAQuestion && !isNegative,
-          alreadyAskedCall,
-          lastBotMessage
-        );
+        botReply = await generateWithAI(systemPrompt, cleanIncoming, [{ role: "user", content: cleanIncoming }]);
       }
 
-      // 5b. Anti-loop de-duplication: NEVER repeat the exact sentence sent last turn!
-      if (lastBotMessage && botReply.trim().toLowerCase() === lastBotMessage.trim().toLowerCase()) {
-        const bro = (isGayUser || isMaleBot) ? "bro" : "yaar";
-        botReply = `Haha aur batao ${bro}, aaj ka din kaisa raha? Aur kya chal raha hai? 😊`;
+      if (!botReply || !botReply.trim()) {
+        console.warn(`⚠️ [AI Skipped] AI returned empty, no reply sent.`);
+        return;
       }
 
       // 6. Deliver after realistic typing delay
@@ -2152,8 +1842,6 @@ module.exports = {
   scheduleWelcomeDM,
   handleIncomingDMToBot,
   generateContextualComment,
-  generateSmartContextualChatReply,
-  generateSmartContextualPostComment,
   callGeminiAI,
   callGroqAI,
   callOpenAIAI,
