@@ -764,7 +764,7 @@ function cleanAIResponse(text) {
   cleaned = cleaned.replace(/^[A-Za-z0-9_]+:\s*/, "");
   cleaned = cleaned.replace(/^(Comment|Reply|Message|Bot|Response):\s*/i, "");
   cleaned = cleaned.replace(/\r?\n+/g, " "); // Replace newlines with space
-  cleaned = cleaned.replace(/\s{2,}/g, " "); // Collapse multiple spaces
+  cleaned = cleaned.replace(/\s{2,}/g, " "); // Collapse multiples spaces
   cleaned = cleaned.trim();
 
   // Normalize all unicode curly quotes / smart quotes to ASCII
@@ -1779,8 +1779,8 @@ function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, 
       const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
       const personaBio = botUser.bio || "College student and music lover";
 
-      const systemPrompt = `You are ${ botUser.name }, living in ${ personaCity }, India(${ personaBio }).
-You are in a private, unrestricted 1 - on - 1 personal chat with ${ user.name || "a friend" } on the Camverz app.
+      const systemPrompt = `You are ${botUser.name}, living in ${personaCity}, India(${personaBio}).
+You are in a private, unrestricted 1 - on - 1 personal chat with ${user.name || "a friend"} on the Camverz app.
 
 Behave completely like a real adult human:
       - Read what they say and understand their real emotions, mood, and intent deeply.
@@ -1864,7 +1864,7 @@ Behave completely like a real adult human:
             },
           });
 
-          console.log(`🤖 Bot(${ botUser.name })[${ botUser.gender }]replied in chat ${ chatId }: "${botReply.trim()}"`);
+          console.log(`🤖 Bot(${botUser.name})[${botUser.gender}]replied in chat ${chatId}: "${botReply.trim()}"`);
         } catch (deliveryErr) {
           console.error("Error delivering bot DM reply:", deliveryErr);
         }
