@@ -1722,80 +1722,80 @@ Just be yourself and chat normally. Output only your reply text without quotes.`
         botReply = await generateWithAI(systemPrompt, cleanIncoming, [{ role: "user", content: cleanIncoming }]);
       }
 
-      if (!botReply || !botReply.trim()) {
-        console.warn(`⚠️ [AI Skipped] AI returned empty, no reply sent.`);
-        return;
-      }
-
-      // 6. Deliver after realistic typing delay
-      setTimeout(async () => {
-        try {
-          const activeIo = io || global.__io;
-          const activeRedis = redisModule || global.__redisModule;
-
-          // Stop typing indicator
-          if (activeIo && activeRedis) {
-            const userSocket = await activeRedis.getUserSocket(realUserId);
-            if (userSocket) {
-              activeIo.to(userSocket).emit("user_typing", {
-                senderId: botUser.id,
-                senderName: botUser.name,
-                chatId: chatId,
-                isTyping: false,
-              });
-            }
-          }
-
-          // Insert bot reply
-          const insertedMessage = await queryOne(
-            `INSERT INTO messages(chat_id, sender_id, text, read) VALUES($1, $2, $3, false) RETURNING * `,
-            [chatId, botUser.id, botReply.trim()]
-          );
-
-          await query("UPDATE chats SET last_message_at = NOW(), user1_deleted = false, user2_deleted = false WHERE id = $1", [chatId]);
-
-          // Deliver socket event
-          if (activeIo && activeRedis) {
-            const userSocket = await activeRedis.getUserSocket(realUserId);
-            if (userSocket) {
-              activeIo.to(userSocket).emit("new_message", {
-                senderId: botUser.id,
-                chatId: chatId,
-                text: botReply.trim(),
-                messageId: insertedMessage.id,
-                createdAt: insertedMessage.created_at,
-                replyToId: null,
-                replyToText: null,
-                replyToSenderName: null,
-              });
-            }
-          }
-
-          // Send FCM Notification
-          NotificationService.sendToUser(realUserId, {
-            title: botUser.name,
-            body: botReply.trim(),
-            type: "chat",
-            channelId: "camverz_chats",
-            highPriority: true,
-            data: {
-              targetUserId: botUser.id,
-              targetUserName: botUser.name,
-              targetUserAvatar: botUser.avatar || "",
-              chatId: chatId,
-              messageId: insertedMessage.id,
-            },
-          });
-
-          console.log(`🤖 Bot(${botUser.name})[${botUser.gender}]replied in chat ${chatId}: "${botReply.trim()}"`);
-        } catch (deliveryErr) {
-          console.error("Error delivering bot DM reply:", deliveryErr);
+        if (!botReply || !botReply.trim()) {
+          console.warn(`⚠️ [AI Skipped] AI returned empty, no reply sent.`);
+          return;
         }
-      }, totalReplyDelay);
-    } catch (err) {
-      console.error("Error in handleIncomingDMToBot:", err);
-    }
-  });
+
+        // 6. Deliver after realistic typing delay
+        setTimeout(async () => {
+          try {
+            const activeIo = io || global.__io;
+            const activeRedis = redisModule || global.__redisModule;
+
+            // Stop typing indicator
+            if (activeIo && activeRedis) {
+              const userSocket = await activeRedis.getUserSocket(realUserId);
+              if (userSocket) {
+                activeIo.to(userSocket).emit("user_typing", {
+                  senderId: botUser.id,
+                  senderName: botUser.name,
+                  chatId: chatId,
+                  isTyping: false,
+                });
+              }
+            }
+
+            // Insert bot reply
+            const insertedMessage = await queryOne(
+              `INSERT INTO messages(chat_id, sender_id, text, read) VALUES($1, $2, $3, false) RETURNING * `,
+              [chatId, botUser.id, botReply.trim()]
+            );
+
+            await query("UPDATE chats SET last_message_at = NOW(), user1_deleted = false, user2_deleted = false WHERE id = $1", [chatId]);
+
+            // Deliver socket event
+            if (activeIo && activeRedis) {
+              const userSocket = await activeRedis.getUserSocket(realUserId);
+              if (userSocket) {
+                activeIo.to(userSocket).emit("new_message", {
+                  senderId: botUser.id,
+                  chatId: chatId,
+                  text: botReply.trim(),
+                  messageId: insertedMessage.id,
+                  createdAt: insertedMessage.created_at,
+                  replyToId: null,
+                  replyToText: null,
+                  replyToSenderName: null,
+                });
+              }
+            }
+
+            // Send FCM Notification
+            NotificationService.sendToUser(realUserId, {
+              title: botUser.name,
+              body: botReply.trim(),
+              type: "chat",
+              channelId: "camverz_chats",
+              highPriority: true,
+              data: {
+                targetUserId: botUser.id,
+                targetUserName: botUser.name,
+                targetUserAvatar: botUser.avatar || "",
+                chatId: chatId,
+                messageId: insertedMessage.id,
+              },
+            });
+
+            console.log(`🤖 Bot(${botUser.name})[${botUser.gender}]replied in chat ${chatId}: "${botReply.trim()}"`);
+          } catch (deliveryErr) {
+            console.error("Error delivering bot DM reply:", deliveryErr);
+          }
+        }, totalReplyDelay);
+      } catch (err) {
+        console.error("Error in handleIncomingDMToBot:", err);
+      }
+    });
 }
 
 /**
