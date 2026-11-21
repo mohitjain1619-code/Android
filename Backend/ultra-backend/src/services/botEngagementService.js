@@ -767,1028 +767,1028 @@ function cleanAIResponse(text) {
   cleaned = cleaned.replace(/\s{2,}/g, " "); // Collapse multiple spaces
   cleaned = cleaned.trim();
 
-    // Normalize all unicode curly quotes / smart quotes to ASCII
-    const normalized = cleaned.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
+  // Normalize all unicode curly quotes / smart quotes to ASCII
+  const normalized = cleaned.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");
 
-    // Intercept any robotic corporate AI refusals
-    if (
-      /help with that/i.test(normalized) ||
-      /i'?m sorry/i.test(normalized) ||
-      /cannot assist/i.test(normalized) ||
-      /can'?t help/i.test(normalized) ||
-      /cannot fulfill/i.test(normalized) ||
-      /as an ai/i.test(normalized) ||
-      /language model/i.test(normalized) ||
-      /safety guidelines/i.test(normalized) ||
-      /policy prevents/i.test(normalized) ||
-      /inappropriate request/i.test(normalized)
-    ) {
-      return null;
-    }
-
-    return cleaned;
+  // Intercept any robotic corporate AI refusals
+  if (
+    /help with that/i.test(normalized) ||
+    /i'?m sorry/i.test(normalized) ||
+    /cannot assist/i.test(normalized) ||
+    /can'?t help/i.test(normalized) ||
+    /cannot fulfill/i.test(normalized) ||
+    /as an ai/i.test(normalized) ||
+    /language model/i.test(normalized) ||
+    /safety guidelines/i.test(normalized) ||
+    /policy prevents/i.test(normalized) ||
+    /inappropriate request/i.test(normalized)
+  ) {
+    return null;
   }
 
-  // 1. Google Gemini API
-  function callGeminiAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
-    if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
+  return cleaned;
+}
 
-    return new Promise((resolve) => {
-      let resolved = false;
-      const timer = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(null);
-        }
-      }, timeoutMs);
+// 1. Google Gemini API
+function callGeminiAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_KEY;
+  if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
 
-      try {
-        const contents = [];
-        if (Array.isArray(messagesHistory)) {
-          for (const msg of messagesHistory) {
-            contents.push({
-              role: msg.role === "assistant" ? "model" : "user",
-              parts: [{ text: msg.content }],
-            });
-          }
-        }
-        if (userPrompt && userPrompt.trim()) {
-          contents.push({ role: "user", parts: [{ text: userPrompt.trim() }] });
-        }
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
 
-        const payload = JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents,
-          generationConfig: {
-            temperature: 0.85,
-            maxOutputTokens: 60,
-          },
-        });
-
-        const req = https.request(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Content-Length": Buffer.byteLength(payload),
-            },
-          },
-          (res) => {
-            let body = "";
-            res.on("data", (c) => (body += c));
-            res.on("end", () => {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timer);
-                try {
-                  const json = JSON.parse(body);
-                  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-                  if (text) {
-                    const cleaned = cleanAIResponse(text);
-                    if (cleaned.length >= 3) return resolve(cleaned);
-                  }
-                } catch (e) { }
-                resolve(null);
-              }
-            });
-          }
-        );
-
-        req.on("error", () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timer);
-            resolve(null);
-          }
-        });
-
-        req.write(payload);
-        req.end();
-      } catch (e) {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timer);
-          resolve(null);
+    try {
+      const contents = [];
+      if (Array.isArray(messagesHistory)) {
+        for (const msg of messagesHistory) {
+          contents.push({
+            role: msg.role === "assistant" ? "model" : "user",
+            parts: [{ text: msg.content }],
+          });
         }
       }
-    });
-  }
-
-  // 2. Groq Cloud API
-  function callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHistory, timeoutMs) {
-    return new Promise((resolve) => {
-      let resolved = false;
-      const timer = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(null);
-        }
-      }, timeoutMs);
-
-      try {
-        const messages = [{ role: "system", content: systemPrompt }];
-        if (Array.isArray(messagesHistory) && messagesHistory.length > 0) {
-          for (const m of messagesHistory) {
-            if (m && m.content && String(m.content).trim()) {
-              messages.push({
-                role: m.role === "assistant" ? "assistant" : "user",
-                content: String(m.content).trim(),
-              });
-            }
-          }
-        }
-
-        // Ensure userPrompt is properly included as the final user message
-        if (userPrompt && userPrompt.trim()) {
-          const last = messages[messages.length - 1];
-          if (!last || last.content !== userPrompt.trim() || last.role !== "user") {
-            messages.push({ role: "user", content: userPrompt.trim() });
-          }
-        }
-
-        // Groq requires at least one user message
-        const hasUserMsg = messages.some((m) => m.role === "user");
-        if (!hasUserMsg && userPrompt && userPrompt.trim()) {
-          messages.push({ role: "user", content: userPrompt.trim() });
-        }
-
-        const payload = JSON.stringify({
-          model,
-          messages,
-          temperature: 0.75,
-          max_tokens: 60,
-        });
-
-        const req = https.request(
-          {
-            hostname: "api.groq.com",
-            port: 443,
-            path: "/openai/v1/chat/completions",
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey.trim()}`,
-              "Content-Length": Buffer.byteLength(payload),
-            },
-          },
-          (res) => {
-            let body = "";
-            res.on("data", (c) => (body += c));
-            res.on("end", () => {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timer);
-                try {
-                  const json = JSON.parse(body);
-                  const content = json?.choices?.[0]?.message?.content;
-                  if (content) {
-                    const cleaned = cleanAIResponse(content);
-                    if (cleaned && cleaned.length >= 2) {
-                      console.log(`🤖 [Groq Success (${model})]: "${cleaned}"`);
-                      return resolve(cleaned);
-                    }
-                  }
-                  if (json?.error) {
-                    console.warn(`⚠️ [Groq API Error on ${model}]:`, res.statusCode, JSON.stringify(json.error));
-                  }
-                } catch (e) {
-                  console.error(`❌ [Groq Parse Error on ${model}]:`, e.message);
-                }
-                resolve(null);
-              }
-            });
-          }
-        );
-
-        req.on("error", (err) => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timer);
-            console.error(`❌ [Groq Network Error on ${model}]:`, err.message);
-            resolve(null);
-          }
-        });
-
-        req.write(payload);
-        req.end();
-      } catch (e) {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timer);
-          resolve(null);
-        }
+      if (userPrompt && userPrompt.trim()) {
+        contents.push({ role: "user", parts: [{ text: userPrompt.trim() }] });
       }
-    });
-  }
 
-  let cachedGroqModels = null;
-  function getAvailableGroqModels(apiKey) {
-    if (cachedGroqModels && cachedGroqModels.length > 0) return Promise.resolve(cachedGroqModels);
-    return new Promise((resolve) => {
+      const payload = JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          temperature: 0.85,
+          maxOutputTokens: 60,
+        },
+      });
+
       const req = https.request(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
         {
-          hostname: "api.groq.com",
-          path: "/openai/v1/models",
-          method: "GET",
-          headers: { Authorization: `Bearer ${apiKey.trim()}` },
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
         },
         (res) => {
-          let b = "";
-          res.on("data", (c) => (b += c));
+          let body = "";
+          res.on("data", (c) => (body += c));
           res.on("end", () => {
-            try {
-              const json = JSON.parse(b);
-              const list = (json?.data || []).map((m) => m.id);
-              console.log("📋 [Groq Available Active Models]:", list.join(", "));
-              cachedGroqModels = list;
-              return resolve(list);
-            } catch (e) {
-              console.error("❌ [Groq Models Parse Error]:", e.message);
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try {
+                const json = JSON.parse(body);
+                const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  const cleaned = cleanAIResponse(text);
+                  if (cleaned.length >= 3) return resolve(cleaned);
+                }
+              } catch (e) { }
+              resolve(null);
             }
-            resolve([]);
           });
         }
       );
-      req.on("error", (e) => {
-        console.error("❌ [Groq Models Network Error]:", e.message);
-        resolve([]);
+
+      req.on("error", () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
       });
+
+      req.write(payload);
       req.end();
-    });
-  }
-
-  async function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
-    const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_KEY || process.env.GROQCLOUD_API_KEY;
-    if (!apiKey || !apiKey.trim()) return null;
-
-    // Dynamically fetch models available for this API key
-    const availableModels = await getAvailableGroqModels(apiKey);
-
-    // Preferred order: chat models with low refusal rates
-    const candidateModels = [];
-    const preferredPrefixes = ["mixtral", "llama3-70b", "llama3-8b", "llama-3", "gemma2", "qwen", "deepseek", "openai/gpt-oss"];
-    for (const prefix of preferredPrefixes) {
-      for (const m of availableModels) {
-        if (m.toLowerCase().includes(prefix) && !candidateModels.includes(m)) {
-          candidateModels.push(m);
-        }
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
       }
     }
+  });
+}
 
-    if (candidateModels.length === 0) {
-      candidateModels.push("openai/gpt-oss-20b", "llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768");
-    }
+// 2. Groq Cloud API
+function callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHistory, timeoutMs) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
 
-    for (const model of candidateModels) {
-      const res = await callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHistory, timeoutMs);
-      if (res) return res;
-    }
-    return null;
-  }
-
-  // 3. OpenAI API (if configured)
-  function callOpenAIAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
-
-    return new Promise((resolve) => {
-      let resolved = false;
-      const timer = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(null);
-        }
-      }, timeoutMs);
-
-      try {
-        const messages = [{ role: "system", content: systemPrompt }];
-        if (Array.isArray(messagesHistory)) messages.push(...messagesHistory);
-        if (userPrompt && userPrompt.trim()) messages.push({ role: "user", content: userPrompt });
-
-        const payload = JSON.stringify({
-          model: "gpt-4o-mini",
-          messages,
-          temperature: 0.85,
-          max_tokens: 60,
-        });
-
-        const req = https.request(
-          {
-            hostname: "api.openai.com",
-            port: 443,
-            path: "/v1/chat/completions",
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey.trim()}`,
-              "Content-Length": Buffer.byteLength(payload),
-            },
-          },
-          (res) => {
-            let body = "";
-            res.on("data", (c) => (body += c));
-            res.on("end", () => {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timer);
-                try {
-                  const json = JSON.parse(body);
-                  const content = json?.choices?.[0]?.message?.content;
-                  if (content) {
-                    const cleaned = cleanAIResponse(content);
-                    if (cleaned.length >= 3) return resolve(cleaned);
-                  }
-                } catch (e) { }
-                resolve(null);
-              }
+    try {
+      const messages = [{ role: "system", content: systemPrompt }];
+      if (Array.isArray(messagesHistory) && messagesHistory.length > 0) {
+        for (const m of messagesHistory) {
+          if (m && m.content && String(m.content).trim()) {
+            messages.push({
+              role: m.role === "assistant" ? "assistant" : "user",
+              content: String(m.content).trim(),
             });
           }
-        );
-
-        req.on("error", () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timer);
-            resolve(null);
-          }
-        });
-
-        req.write(payload);
-        req.end();
-      } catch (e) {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timer);
-          resolve(null);
         }
       }
-    });
-  }
 
-  // 4. Local Ollama API (Local PC / VPS)
-  function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 20000) {
-    return new Promise((resolve) => {
-      let resolved = false;
-      const timer = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(null);
-        }
-      }, timeoutMs);
-
-      try {
-        const messages = [{ role: "system", content: systemPrompt }];
-        if (Array.isArray(messagesHistory)) messages.push(...messagesHistory);
-        if (userPrompt && userPrompt.trim()) messages.push({ role: "user", content: userPrompt });
-
-        const payload = JSON.stringify({
-          model: process.env.OLLAMA_MODEL || "llama3.2:latest",
-          messages,
-          stream: false,
-          options: {
-            temperature: 0.85,
-            num_predict: 50,
-          },
-        });
-
-        const req = http.request(
-          {
-            hostname: "127.0.0.1",
-            port: 11434,
-            path: "/api/chat",
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Content-Length": Buffer.byteLength(payload),
-            },
-          },
-          (res) => {
-            let body = "";
-            res.on("data", (c) => (body += c));
-            res.on("end", () => {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timer);
-                try {
-                  const json = JSON.parse(body);
-                  const content = json?.message?.content;
-                  if (content) {
-                    const cleaned = cleanAIResponse(content);
-                    if (cleaned.length >= 3) return resolve(cleaned);
-                  }
-                } catch (e) { }
-                resolve(null);
-              }
-            });
-          }
-        );
-
-        req.on("error", () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timer);
-            resolve(null);
-          }
-        });
-
-        req.write(payload);
-        req.end();
-      } catch (e) {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timer);
-          resolve(null);
-        }
-      }
-    });
-  }
-
-  // 5. Free Cloud AI (Zero API Key required, automatic high-speed cloud LLM fallback)
-  function callFreeCloudAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 8000) {
-    return new Promise((resolve) => {
-      let resolved = false;
-      const timer = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          resolve(null);
-        }
-      }, timeoutMs);
-
-      try {
-        const messages = [{ role: "system", content: systemPrompt }];
-        if (Array.isArray(messagesHistory) && messagesHistory.length > 0) {
-          for (const m of messagesHistory) {
-            messages.push({ role: m.role || "user", content: m.content || "" });
-          }
-        }
-        if (userPrompt && userPrompt.trim()) {
+      // Ensure userPrompt is properly included as the final user message
+      if (userPrompt && userPrompt.trim()) {
+        const last = messages[messages.length - 1];
+        if (!last || last.content !== userPrompt.trim() || last.role !== "user") {
           messages.push({ role: "user", content: userPrompt.trim() });
         }
+      }
 
-        const payload = JSON.stringify({
-          messages,
-          model: "openai",
-          seed: Math.floor(Math.random() * 100000),
-        });
+      // Groq requires at least one user message
+      const hasUserMsg = messages.some((m) => m.role === "user");
+      if (!hasUserMsg && userPrompt && userPrompt.trim()) {
+        messages.push({ role: "user", content: userPrompt.trim() });
+      }
 
-        const req = https.request(
-          "https://text.pollinations.ai/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Content-Length": Buffer.byteLength(payload),
-            },
+      const payload = JSON.stringify({
+        model,
+        messages,
+        temperature: 0.75,
+        max_tokens: 60,
+      });
+
+      const req = https.request(
+        {
+          hostname: "api.groq.com",
+          port: 443,
+          path: "/openai/v1/chat/completions",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey.trim()}`,
+            "Content-Length": Buffer.byteLength(payload),
           },
-          (res) => {
-            let body = "";
-            res.on("data", (c) => (body += c));
-            res.on("end", () => {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timer);
-                if (
-                  body.includes("Free limit reached") ||
-                  body.includes("rate limit") ||
-                  body.includes("Please wait") ||
-                  body.includes("unlimited replies") ||
-                  body.includes("Too Many Requests")
-                ) {
-                  return resolve(null);
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try {
+                const json = JSON.parse(body);
+                const content = json?.choices?.[0]?.message?.content;
+                if (content) {
+                  const cleaned = cleanAIResponse(content);
+                  if (cleaned && cleaned.length >= 2) {
+                    console.log(`🤖 [Groq Success (${model})]: "${cleaned}"`);
+                    return resolve(cleaned);
+                  }
                 }
-                const cleaned = cleanAIResponse(body);
-                if (cleaned && cleaned.length >= 2) return resolve(cleaned);
-                resolve(null);
+                if (json?.error) {
+                  console.warn(`⚠️ [Groq API Error on ${model}]:`, res.statusCode, JSON.stringify(json.error));
+                }
+              } catch (e) {
+                console.error(`❌ [Groq Parse Error on ${model}]:`, e.message);
               }
-            });
-          }
-        );
+              resolve(null);
+            }
+          });
+        }
+      );
 
-        req.on("error", () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timer);
-            resolve(null);
+      req.on("error", (err) => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          console.error(`❌ [Groq Network Error on ${model}]:`, err.message);
+          resolve(null);
+        }
+      });
+
+      req.write(payload);
+      req.end();
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
+      }
+    }
+  });
+}
+
+let cachedGroqModels = null;
+function getAvailableGroqModels(apiKey) {
+  if (cachedGroqModels && cachedGroqModels.length > 0) return Promise.resolve(cachedGroqModels);
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        hostname: "api.groq.com",
+        path: "/openai/v1/models",
+        method: "GET",
+        headers: { Authorization: `Bearer ${apiKey.trim()}` },
+      },
+      (res) => {
+        let b = "";
+        res.on("data", (c) => (b += c));
+        res.on("end", () => {
+          try {
+            const json = JSON.parse(b);
+            const list = (json?.data || []).map((m) => m.id);
+            console.log("📋 [Groq Available Active Models]:", list.join(", "));
+            cachedGroqModels = list;
+            return resolve(list);
+          } catch (e) {
+            console.error("❌ [Groq Models Parse Error]:", e.message);
           }
+          resolve([]);
         });
+      }
+    );
+    req.on("error", (e) => {
+      console.error("❌ [Groq Models Network Error]:", e.message);
+      resolve([]);
+    });
+    req.end();
+  });
+}
 
-        req.write(payload);
-        req.end();
-      } catch (e) {
+async function callGroqAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
+  const apiKey = process.env.GROQ_API_KEY || process.env.GROQ_KEY || process.env.GROQCLOUD_API_KEY;
+  if (!apiKey || !apiKey.trim()) return null;
+
+  // Dynamically fetch models available for this API key
+  const availableModels = await getAvailableGroqModels(apiKey);
+
+  // Preferred order: chat models with low refusal rates
+  const candidateModels = [];
+  const preferredPrefixes = ["mixtral", "llama3-70b", "llama3-8b", "llama-3", "gemma2", "qwen", "deepseek", "openai/gpt-oss"];
+  for (const prefix of preferredPrefixes) {
+    for (const m of availableModels) {
+      if (m.toLowerCase().includes(prefix) && !candidateModels.includes(m)) {
+        candidateModels.push(m);
+      }
+    }
+  }
+
+  if (candidateModels.length === 0) {
+    candidateModels.push("openai/gpt-oss-20b", "llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768");
+  }
+
+  for (const model of candidateModels) {
+    const res = await callGroqSingleModel(apiKey, model, systemPrompt, userPrompt, messagesHistory, timeoutMs);
+    if (res) return res;
+  }
+  return null;
+}
+
+// 3. OpenAI API (if configured)
+function callOpenAIAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 7000) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey || !apiKey.trim()) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    try {
+      const messages = [{ role: "system", content: systemPrompt }];
+      if (Array.isArray(messagesHistory)) messages.push(...messagesHistory);
+      if (userPrompt && userPrompt.trim()) messages.push({ role: "user", content: userPrompt });
+
+      const payload = JSON.stringify({
+        model: "gpt-4o-mini",
+        messages,
+        temperature: 0.85,
+        max_tokens: 60,
+      });
+
+      const req = https.request(
+        {
+          hostname: "api.openai.com",
+          port: 443,
+          path: "/v1/chat/completions",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey.trim()}`,
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try {
+                const json = JSON.parse(body);
+                const content = json?.choices?.[0]?.message?.content;
+                if (content) {
+                  const cleaned = cleanAIResponse(content);
+                  if (cleaned.length >= 3) return resolve(cleaned);
+                }
+              } catch (e) { }
+              resolve(null);
+            }
+          });
+        }
+      );
+
+      req.on("error", () => {
         if (!resolved) {
           resolved = true;
           clearTimeout(timer);
           resolve(null);
         }
+      });
+
+      req.write(payload);
+      req.end();
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
       }
-    });
-  }
-
-  /**
-   * Universal Multi-Provider AI Caller
-   * Prioritizes: Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama
-   */
-  async function generateWithAI(systemPrompt, userPrompt, messagesHistory = []) {
-    try {
-      // 1. Try Groq (Primary high-speed LLM)
-      const groqRes = await callGroqAI(systemPrompt, userPrompt, messagesHistory);
-      if (groqRes) return groqRes;
-
-      // 2. Try Gemini
-      const geminiRes = await callGeminiAI(systemPrompt, userPrompt, messagesHistory);
-      if (geminiRes) return geminiRes;
-
-      // 3. Try OpenAI
-      const openAiRes = await callOpenAIAI(systemPrompt, userPrompt, messagesHistory);
-      if (openAiRes) return openAiRes;
-
-      // 4. Try Free Cloud AI (Zero-Key LLM, works on Render 100% of the time)
-      const freeRes = await callFreeCloudAI(systemPrompt, userPrompt, messagesHistory);
-      if (freeRes) return freeRes;
-
-      // 5. Try Local Ollama
-      const ollamaRes = await callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory);
-      if (ollamaRes) return ollamaRes;
-    } catch (err) {
-      console.error("AI Generation pipeline error:", err.message);
     }
-    return null;
+  });
+}
+
+// 4. Local Ollama API (Local PC / VPS)
+function callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 20000) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    try {
+      const messages = [{ role: "system", content: systemPrompt }];
+      if (Array.isArray(messagesHistory)) messages.push(...messagesHistory);
+      if (userPrompt && userPrompt.trim()) messages.push({ role: "user", content: userPrompt });
+
+      const payload = JSON.stringify({
+        model: process.env.OLLAMA_MODEL || "llama3.2:latest",
+        messages,
+        stream: false,
+        options: {
+          temperature: 0.85,
+          num_predict: 50,
+        },
+      });
+
+      const req = http.request(
+        {
+          hostname: "127.0.0.1",
+          port: 11434,
+          path: "/api/chat",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              try {
+                const json = JSON.parse(body);
+                const content = json?.message?.content;
+                if (content) {
+                  const cleaned = cleanAIResponse(content);
+                  if (cleaned.length >= 3) return resolve(cleaned);
+                }
+              } catch (e) { }
+              resolve(null);
+            }
+          });
+        }
+      );
+
+      req.on("error", () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
+      });
+
+      req.write(payload);
+      req.end();
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
+      }
+    }
+  });
+}
+
+// 5. Free Cloud AI (Zero API Key required, automatic high-speed cloud LLM fallback)
+function callFreeCloudAI(systemPrompt, userPrompt, messagesHistory = [], timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    try {
+      const messages = [{ role: "system", content: systemPrompt }];
+      if (Array.isArray(messagesHistory) && messagesHistory.length > 0) {
+        for (const m of messagesHistory) {
+          messages.push({ role: m.role || "user", content: m.content || "" });
+        }
+      }
+      if (userPrompt && userPrompt.trim()) {
+        messages.push({ role: "user", content: userPrompt.trim() });
+      }
+
+      const payload = JSON.stringify({
+        messages,
+        model: "openai",
+        seed: Math.floor(Math.random() * 100000),
+      });
+
+      const req = https.request(
+        "https://text.pollinations.ai/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(payload),
+          },
+        },
+        (res) => {
+          let body = "";
+          res.on("data", (c) => (body += c));
+          res.on("end", () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(timer);
+              if (
+                body.includes("Free limit reached") ||
+                body.includes("rate limit") ||
+                body.includes("Please wait") ||
+                body.includes("unlimited replies") ||
+                body.includes("Too Many Requests")
+              ) {
+                return resolve(null);
+              }
+              const cleaned = cleanAIResponse(body);
+              if (cleaned && cleaned.length >= 2) return resolve(cleaned);
+              resolve(null);
+            }
+          });
+        }
+      );
+
+      req.on("error", () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          resolve(null);
+        }
+      });
+
+      req.write(payload);
+      req.end();
+    } catch (e) {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timer);
+        resolve(null);
+      }
+    }
+  });
+}
+
+/**
+ * Universal Multi-Provider AI Caller
+ * Prioritizes: Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama
+ */
+async function generateWithAI(systemPrompt, userPrompt, messagesHistory = []) {
+  try {
+    // 1. Try Groq (Primary high-speed LLM)
+    const groqRes = await callGroqAI(systemPrompt, userPrompt, messagesHistory);
+    if (groqRes) return groqRes;
+
+    // 2. Try Gemini
+    const geminiRes = await callGeminiAI(systemPrompt, userPrompt, messagesHistory);
+    if (geminiRes) return geminiRes;
+
+    // 3. Try OpenAI
+    const openAiRes = await callOpenAIAI(systemPrompt, userPrompt, messagesHistory);
+    if (openAiRes) return openAiRes;
+
+    // 4. Try Free Cloud AI (Zero-Key LLM, works on Render 100% of the time)
+    const freeRes = await callFreeCloudAI(systemPrompt, userPrompt, messagesHistory);
+    if (freeRes) return freeRes;
+
+    // 5. Try Local Ollama
+    const ollamaRes = await callLocalOllamaAI(systemPrompt, userPrompt, messagesHistory);
+    if (ollamaRes) return ollamaRes;
+  } catch (err) {
+    console.error("AI Generation pipeline error:", err.message);
   }
+  return null;
+}
 
-  /**
-   * Contextual Comment Generator (100% Pure AI Intelligence - Zero Canned Predefined Lines)
-   */
-  async function generateContextualComment(postText, botPersonality, botName, isIndianUser = true, preferHinglish = false, userGender = "male", userPreference = "straight", botGender = "female") {
-    const cleanPostText = (postText || "").trim();
-    if (!cleanPostText) return null;
+/**
+ * Contextual Comment Generator (100% Pure AI Intelligence - Zero Canned Predefined Lines)
+ */
+async function generateContextualComment(postText, botPersonality, botName, isIndianUser = true, preferHinglish = false, userGender = "male", userPreference = "straight", botGender = "female") {
+  const cleanPostText = (postText || "").trim();
+  if (!cleanPostText) return null;
 
-    const systemPrompt = `You are ${botName}, a real person on the Camverz social app.
+  const systemPrompt = `You are ${botName}, a real person on the Camverz social app.
 Leave a quick comment on this post like a real friend scrolling Instagram:
 - Very short: 3 to 10 words max.
 - Normal and casual Hinglish/English. No fake praise, no assistant tone.
 - Output only the comment without quotes.`;
 
-    const aiComment = await generateWithAI(systemPrompt, `User's post: "${cleanPostText}"`);
-    return aiComment && aiComment.length >= 2 ? aiComment : null;
-  }
+  const aiComment = await generateWithAI(systemPrompt, `User's post: "${cleanPostText}"`);
+  return aiComment && aiComment.length >= 2 ? aiComment : null;
+}
 
-  /**
-   * =========================================================================
-   * SCHEDULE AUTOMATED POST ENGAGEMENT
-   * =========================================================================
-   */
-  function schedulePostEngagement(postId, authorUserId, postText, category, userGender, sexPreference) {
-    setImmediate(async () => {
-      try {
-        const author = await queryOne("SELECT is_bot, country, gender, sex_preference FROM users WHERE id = $1", [authorUserId]);
-        if (author && author.is_bot) return;
+/**
+ * =========================================================================
+ * SCHEDULE AUTOMATED POST ENGAGEMENT
+ * =========================================================================
+ */
+function schedulePostEngagement(postId, authorUserId, postText, category, userGender, sexPreference) {
+  setImmediate(async () => {
+    try {
+      const author = await queryOne("SELECT is_bot, country, gender, sex_preference FROM users WHERE id = $1", [authorUserId]);
+      if (author && author.is_bot) return;
 
-        const userGen = (author && author.gender ? author.gender : userGender || "male").toLowerCase();
-        const userPref = (author && author.sex_preference ? author.sex_preference : sexPreference || "straight").toLowerCase();
-        const isIndianUser = !author || !author.country || author.country.toLowerCase() === "india";
+      const userGen = (author && author.gender ? author.gender : userGender || "male").toLowerCase();
+      const userPref = (author && author.sex_preference ? author.sex_preference : sexPreference || "straight").toLowerCase();
+      const isIndianUser = !author || !author.country || author.country.toLowerCase() === "india";
 
-        // Fetch matching bots strictly aligned with user preference
-        const bots = await getMatchingBots(userGen, userPref, 5);
-        if (!bots || bots.length === 0) return;
+      // Fetch matching bots strictly aligned with user preference
+      const bots = await getMatchingBots(userGen, userPref, 5);
+      if (!bots || bots.length === 0) return;
 
-        const bot1 = bots[0];
-        const bot2 = bots.length > 1 ? bots[1] : null;
-        const bot3 = bots.length > 2 ? bots[2] : null;
+      const bot1 = bots[0];
+      const bot2 = bots.length > 1 ? bots[1] : null;
+      const bot3 = bots.length > 2 ? bots[2] : null;
 
-        // BOT 1: Reaction (Like in 15-30s, Comment in 25-50s)
-        const bot1LikeDelay = randomBetween(15, 30) * 1000;
+      // BOT 1: Reaction (Like in 15-30s, Comment in 25-50s)
+      const bot1LikeDelay = randomBetween(15, 30) * 1000;
+      setTimeout(async () => {
+        try {
+          const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
+          if (!postStillExists) return;
+
+          await query("INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [postId, bot1.id]);
+          await query(
+            `INSERT INTO notifications (user_id, type, triggering_user_id, post_id) VALUES ($1, 'like', $2, $3)`,
+            [authorUserId, bot1.id, postId]
+          );
+
+          NotificationService.sendToUser(authorUserId, {
+            title: "New Like ❤️",
+            body: `${bot1.name} liked your post!`,
+            type: "like",
+            channelId: "camverz_social",
+            data: { postId, triggeringUserId: bot1.id },
+          });
+        } catch (e) { }
+      }, bot1LikeDelay);
+
+      const bot1CommentDelay = randomBetween(30, 55) * 1000;
+      setTimeout(async () => {
+        try {
+          const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
+          if (!postStillExists) return;
+
+          const commentText = await generateContextualComment(postText, bot1.bot_personality, bot1.name, isIndianUser, true, userGen, userPref, bot1.gender);
+          if (!commentText || !commentText.trim()) return;
+
+          const comment = await queryOne(
+            `INSERT INTO comments (post_id, user_id, text) VALUES ($1, $2, $3) RETURNING *`,
+            [postId, bot1.id, commentText]
+          );
+
+          await query(
+            `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'comment', $2, $3, $4)`,
+            [authorUserId, bot1.id, postId, comment.id]
+          );
+
+          NotificationService.sendToUser(authorUserId, {
+            title: "New Comment 💬",
+            body: `${bot1.name}: ${commentText.substring(0, 80)}`,
+            type: "comment",
+            channelId: "camverz_social",
+            data: { postId, commentId: comment.id, triggeringUserId: bot1.id },
+          });
+
+          console.log(`💬 Bot1 (${bot1.name}) [${bot1.gender}] commented on post ${postId}: "${commentText}"`);
+        } catch (e) { }
+      }, bot1CommentDelay);
+
+      // BOT 2: Reaction (Likes in 60-90s, Comment in 75-110s)
+      if (bot2) {
+        const bot2LikeDelay = randomBetween(60, 90) * 1000;
         setTimeout(async () => {
           try {
             const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
             if (!postStillExists) return;
 
-            await query("INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [postId, bot1.id]);
+            await query("INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [postId, bot2.id]);
             await query(
               `INSERT INTO notifications (user_id, type, triggering_user_id, post_id) VALUES ($1, 'like', $2, $3)`,
-              [authorUserId, bot1.id, postId]
+              [authorUserId, bot2.id, postId]
             );
 
             NotificationService.sendToUser(authorUserId, {
               title: "New Like ❤️",
-              body: `${bot1.name} liked your post!`,
+              body: `${bot2.name} liked your post!`,
               type: "like",
               channelId: "camverz_social",
-              data: { postId, triggeringUserId: bot1.id },
+              data: { postId, triggeringUserId: bot2.id },
             });
           } catch (e) { }
-        }, bot1LikeDelay);
+        }, bot2LikeDelay);
 
-        const bot1CommentDelay = randomBetween(30, 55) * 1000;
+        const bot2CommentDelay = randomBetween(80, 120) * 1000;
         setTimeout(async () => {
           try {
             const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
             if (!postStillExists) return;
 
-            const commentText = await generateContextualComment(postText, bot1.bot_personality, bot1.name, isIndianUser, true, userGen, userPref, bot1.gender);
+            const commentText = await generateContextualComment(postText, bot2.bot_personality, bot2.name, isIndianUser, true, userGen, userPref, bot2.gender);
             if (!commentText || !commentText.trim()) return;
 
             const comment = await queryOne(
               `INSERT INTO comments (post_id, user_id, text) VALUES ($1, $2, $3) RETURNING *`,
-              [postId, bot1.id, commentText]
+              [postId, bot2.id, commentText]
             );
 
             await query(
               `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'comment', $2, $3, $4)`,
-              [authorUserId, bot1.id, postId, comment.id]
+              [authorUserId, bot2.id, postId, comment.id]
             );
 
             NotificationService.sendToUser(authorUserId, {
               title: "New Comment 💬",
-              body: `${bot1.name}: ${commentText.substring(0, 80)}`,
+              body: `${bot2.name}: ${commentText.substring(0, 80)}`,
               type: "comment",
               channelId: "camverz_social",
-              data: { postId, commentId: comment.id, triggeringUserId: bot1.id },
+              data: { postId, commentId: comment.id, triggeringUserId: bot2.id },
             });
 
-            console.log(`💬 Bot1 (${bot1.name}) [${bot1.gender}] commented on post ${postId}: "${commentText}"`);
+            console.log(`💬 Bot2 (${bot2.name}) [${bot2.gender}] commented on post ${postId}: "${commentText}"`);
           } catch (e) { }
-        }, bot1CommentDelay);
-
-        // BOT 2: Reaction (Likes in 60-90s, Comment in 75-110s)
-        if (bot2) {
-          const bot2LikeDelay = randomBetween(60, 90) * 1000;
-          setTimeout(async () => {
-            try {
-              const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
-              if (!postStillExists) return;
-
-              await query("INSERT INTO post_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", [postId, bot2.id]);
-              await query(
-                `INSERT INTO notifications (user_id, type, triggering_user_id, post_id) VALUES ($1, 'like', $2, $3)`,
-                [authorUserId, bot2.id, postId]
-              );
-
-              NotificationService.sendToUser(authorUserId, {
-                title: "New Like ❤️",
-                body: `${bot2.name} liked your post!`,
-                type: "like",
-                channelId: "camverz_social",
-                data: { postId, triggeringUserId: bot2.id },
-              });
-            } catch (e) { }
-          }, bot2LikeDelay);
-
-          const bot2CommentDelay = randomBetween(80, 120) * 1000;
-          setTimeout(async () => {
-            try {
-              const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
-              if (!postStillExists) return;
-
-              const commentText = await generateContextualComment(postText, bot2.bot_personality, bot2.name, isIndianUser, true, userGen, userPref, bot2.gender);
-              if (!commentText || !commentText.trim()) return;
-
-              const comment = await queryOne(
-                `INSERT INTO comments (post_id, user_id, text) VALUES ($1, $2, $3) RETURNING *`,
-                [postId, bot2.id, commentText]
-              );
-
-              await query(
-                `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'comment', $2, $3, $4)`,
-                [authorUserId, bot2.id, postId, comment.id]
-              );
-
-              NotificationService.sendToUser(authorUserId, {
-                title: "New Comment 💬",
-                body: `${bot2.name}: ${commentText.substring(0, 80)}`,
-                type: "comment",
-                channelId: "camverz_social",
-                data: { postId, commentId: comment.id, triggeringUserId: bot2.id },
-              });
-
-              console.log(`💬 Bot2 (${bot2.name}) [${bot2.gender}] commented on post ${postId}: "${commentText}"`);
-            } catch (e) { }
-          }, bot2CommentDelay);
-        }
-      } catch (err) {
-        console.error("Post engagement scheduler error:", err);
+        }, bot2CommentDelay);
       }
-    });
-  }
+    } catch (err) {
+      console.error("Post engagement scheduler error:", err);
+    }
+  });
+}
 
-  /**
-   * =========================================================================
-   * SCHEDULE AUTOMATED STORY VIEWS
-   * =========================================================================
-   */
-  function scheduleStoryViews(storyId, authorUserId) {
-    setImmediate(async () => {
-      try {
-        const author = await queryOne("SELECT is_bot, gender, sex_preference FROM users WHERE id = $1", [authorUserId]);
-        if (author && author.is_bot) return;
+/**
+ * =========================================================================
+ * SCHEDULE AUTOMATED STORY VIEWS
+ * =========================================================================
+ */
+function scheduleStoryViews(storyId, authorUserId) {
+  setImmediate(async () => {
+    try {
+      const author = await queryOne("SELECT is_bot, gender, sex_preference FROM users WHERE id = $1", [authorUserId]);
+      if (author && author.is_bot) return;
 
-        const userGen = (author && author.gender ? author.gender : "male").toLowerCase();
-        const userPref = (author && author.sex_preference ? author.sex_preference : "straight").toLowerCase();
+      const userGen = (author && author.gender ? author.gender : "male").toLowerCase();
+      const userPref = (author && author.sex_preference ? author.sex_preference : "straight").toLowerCase();
 
-        const viewerCount = randomBetween(6, 12);
-        const bots = await getMatchingBots(userGen, userPref, viewerCount);
-        if (!bots || bots.length === 0) return;
+      const viewerCount = randomBetween(6, 12);
+      const bots = await getMatchingBots(userGen, userPref, viewerCount);
+      if (!bots || bots.length === 0) return;
 
-        bots.forEach((bot, index) => {
-          const viewDelay = (randomBetween(25, 75) + (index * randomBetween(35, 70))) * 1000;
-          setTimeout(async () => {
-            try {
-              const storyStillExists = await queryOne("SELECT id FROM stories WHERE id = $1", [storyId]);
-              if (!storyStillExists) return;
+      bots.forEach((bot, index) => {
+        const viewDelay = (randomBetween(25, 75) + (index * randomBetween(35, 70))) * 1000;
+        setTimeout(async () => {
+          try {
+            const storyStillExists = await queryOne("SELECT id FROM stories WHERE id = $1", [storyId]);
+            if (!storyStillExists) return;
 
-              await query(
-                `INSERT INTO story_views (story_id, viewer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-                [storyId, bot.id]
-              );
-            } catch (e) { }
-          }, viewDelay);
-        });
-      } catch (err) {
-        console.error("Story engagement scheduler error:", err);
-      }
-    });
-  }
+            await query(
+              `INSERT INTO story_views (story_id, viewer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+              [storyId, bot.id]
+            );
+          } catch (e) { }
+        }, viewDelay);
+      });
+    } catch (err) {
+      console.error("Story engagement scheduler error:", err);
+    }
+  });
+}
 
-  /**
-   * =========================================================================
-   * 2-WAY INTERACTIVE THREADING (USER REPLIES TO BOT COMMENT)
-   * =========================================================================
-   */
-  function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReplyText) {
-    setImmediate(async () => {
-      try {
-        if (!parentCommentId) return;
+/**
+ * =========================================================================
+ * 2-WAY INTERACTIVE THREADING (USER REPLIES TO BOT COMMENT)
+ * =========================================================================
+ */
+function handleUserReplyToBot(postId, parentCommentId, replyingUserId, userReplyText) {
+  setImmediate(async () => {
+    try {
+      if (!parentCommentId) return;
 
-        const parentComment = await queryOne(
-          `SELECT c.id, c.user_id, u.is_bot, u.name, u.bot_personality, u.gender, u.city
+      const parentComment = await queryOne(
+        `SELECT c.id, c.user_id, u.is_bot, u.name, u.bot_personality, u.gender, u.city
          FROM comments c
          JOIN users u ON u.id = c.user_id
          WHERE c.id = $1`,
-          [parentCommentId]
-        );
+        [parentCommentId]
+      );
 
-        if (!parentComment || !parentComment.is_bot) return;
+      if (!parentComment || !parentComment.is_bot) return;
 
-        const replier = await queryOne("SELECT is_bot, country, gender, sex_preference FROM users WHERE id = $1", [replyingUserId]);
-        if (replier && replier.is_bot) return;
+      const replier = await queryOne("SELECT is_bot, country, gender, sex_preference FROM users WHERE id = $1", [replyingUserId]);
+      if (replier && replier.is_bot) return;
 
-        const replyDelay = randomBetween(25, 55) * 1000;
-        setTimeout(async () => {
-          try {
-            const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
-            if (!postStillExists) return;
+      const replyDelay = randomBetween(25, 55) * 1000;
+      setTimeout(async () => {
+        try {
+          const postStillExists = await queryOne("SELECT id FROM posts WHERE id = $1", [postId]);
+          if (!postStillExists) return;
 
-            const systemPrompt = `You are ${parentComment.name}, living in ${parentComment.city || "Delhi"}.
+          const systemPrompt = `You are ${parentComment.name}, living in ${parentComment.city || "Delhi"}.
 Someone replied to your comment. Reply back like a normal friend texting:
 - Very short: 4 to 12 words max.
 - Natural casual Hinglish/English. Zero bot vibe.
 - Output only the reply without quotes.`;
 
-            let botReplyText = await generateWithAI(systemPrompt, `User replied: "${userReplyText}"`);
-            if (!botReplyText || !botReplyText.trim()) return;
+          let botReplyText = await generateWithAI(systemPrompt, `User replied: "${userReplyText}"`);
+          if (!botReplyText || !botReplyText.trim()) return;
 
-            const inserted = await queryOne(
-              `INSERT INTO comments (post_id, user_id, text, parent_id) VALUES ($1, $2, $3, $4) RETURNING *`,
-              [postId, parentComment.user_id, botReplyText, parentCommentId]
-            );
+          const inserted = await queryOne(
+            `INSERT INTO comments (post_id, user_id, text, parent_id) VALUES ($1, $2, $3, $4) RETURNING *`,
+            [postId, parentComment.user_id, botReplyText, parentCommentId]
+          );
 
-            await query(
-              `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'reply', $2, $3, $4)`,
-              [replyingUserId, parentComment.user_id, postId, inserted.id]
-            );
+          await query(
+            `INSERT INTO notifications (user_id, type, triggering_user_id, post_id, comment_id) VALUES ($1, 'reply', $2, $3, $4)`,
+            [replyingUserId, parentComment.user_id, postId, inserted.id]
+          );
 
-            NotificationService.sendToUser(replyingUserId, {
-              title: "New Reply 💬",
-              body: `${parentComment.name}: ${botReplyText.substring(0, 80)}`,
-              type: "reply",
-              channelId: "camverz_social",
-              data: { postId, commentId: inserted.id, triggeringUserId: parentComment.user_id },
-            });
-          } catch (e) { }
-        }, replyDelay);
-      } catch (err) {
-        console.error("Handle user reply to bot error:", err);
-      }
-    });
-  }
+          NotificationService.sendToUser(replyingUserId, {
+            title: "New Reply 💬",
+            body: `${parentComment.name}: ${botReplyText.substring(0, 80)}`,
+            type: "reply",
+            channelId: "camverz_social",
+            data: { postId, commentId: inserted.id, triggeringUserId: parentComment.user_id },
+          });
+        } catch (e) { }
+      }, replyDelay);
+    } catch (err) {
+      console.error("Handle user reply to bot error:", err);
+    }
+  });
+}
 
-  /**
-   * =========================================================================
-   * LEVEL 2: INSTANT WELCOME / HOOK DMS (100% ORIENTATION-ALIGNED)
-   * =========================================================================
-   */
-  const scheduledWelcomeUsers = new Set();
+/**
+ * =========================================================================
+ * LEVEL 2: INSTANT WELCOME / HOOK DMS (100% ORIENTATION-ALIGNED)
+ * =========================================================================
+ */
+const scheduledWelcomeUsers = new Set();
 
-  function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
-    if (!userId || scheduledWelcomeUsers.has(userId)) return;
-    scheduledWelcomeUsers.add(userId);
+function scheduleWelcomeDM(userId, appIo = null, appRedis = null) {
+  if (!userId || scheduledWelcomeUsers.has(userId)) return;
+  scheduledWelcomeUsers.add(userId);
 
-    setImmediate(async () => {
-      try {
-        const user = await queryOne("SELECT id, name, gender, sex_preference, country, is_bot FROM users WHERE id = $1", [userId]);
-        if (!user || user.is_bot) return;
+  setImmediate(async () => {
+    try {
+      const user = await queryOne("SELECT id, name, gender, sex_preference, country, is_bot FROM users WHERE id = $1", [userId]);
+      if (!user || user.is_bot) return;
 
-        // Check if user already has ANY conversation or message from a bot
-        const existingBotChat = await queryOne(
-          `SELECT 1 FROM messages m
+      // Check if user already has ANY conversation or message from a bot
+      const existingBotChat = await queryOne(
+        `SELECT 1 FROM messages m
          JOIN chats c ON c.id = m.chat_id
          JOIN users u ON u.id = m.sender_id
          WHERE u.is_bot = true AND (c.user1_id = $1 OR c.user2_id = $1)
          LIMIT 1`,
-          [userId]
-        );
-        if (existingBotChat) return;
+        [userId]
+      );
+      if (existingBotChat) return;
 
-        // Select 1 matching bot strictly aligned with user preference & gender
-        const matchingBots = await getMatchingBots(user.gender, user.sex_preference, 1);
-        if (!matchingBots || matchingBots.length === 0) return;
-        const bot = matchingBots[0];
+      // Select 1 matching bot strictly aligned with user preference & gender
+      const matchingBots = await getMatchingBots(user.gender, user.sex_preference, 1);
+      if (!matchingBots || matchingBots.length === 0) return;
+      const bot = matchingBots[0];
 
-        // Delay welcome message naturally: 35 to 70 seconds
-        const welcomeDelay = randomBetween(35, 70) * 1000;
-        console.log(`💌 Scheduling Level 2 Welcome DM from ${bot.name} (${bot.gender}) to user ${user.name || user.id} (${user.sex_preference || user.gender}) in ${Math.round(welcomeDelay / 1000)}s`);
+      // Delay welcome message naturally: 35 to 70 seconds
+      const welcomeDelay = randomBetween(35, 70) * 1000;
+      console.log(`💌 Scheduling Level 2 Welcome DM from ${bot.name} (${bot.gender}) to user ${user.name || user.id} (${user.sex_preference || user.gender}) in ${Math.round(welcomeDelay / 1000)}s`);
 
-        setTimeout(async () => {
-          try {
-            const secondCheck = await queryOne(
-              `SELECT 1 FROM messages m
+      setTimeout(async () => {
+        try {
+          const secondCheck = await queryOne(
+            `SELECT 1 FROM messages m
              JOIN chats c ON c.id = m.chat_id
              JOIN users u ON u.id = m.sender_id
              WHERE u.is_bot = true AND (c.user1_id = $1 OR c.user2_id = $1)
              LIMIT 1`,
-              [userId]
-            );
-            if (secondCheck) return;
+            [userId]
+          );
+          if (secondCheck) return;
 
-            const isIndianUser = !user.country || user.country.toLowerCase() === "india";
+          const isIndianUser = !user.country || user.country.toLowerCase() === "india";
 
-            let hookText = "";
-            if (bot.gender === "female") {
-              const hooks = [
-                "Hey! Just saw your profile, where are you from? 😊",
-                "Heyy! Love your vibe on here ✨ free ho abhi baat karne ke liye?",
-                "Hey! Just joined Camverz, kaise ho aap? 🌸",
-                "Hey there! Saw your profile on feed, looking good! Where are you from? ✨",
-              ];
-              hookText = pickRandom(hooks);
-            } else {
-              // Male bot (for Gay male or Straight female user)
-              const hooks = [
-                "Hey bro! Just saw your profile here, where are you from? 😊",
-                "Hey! Loved your vibe on here bro ✨ how are you doing today?",
-                "Hey there! Saw your profile on feed, looking sharp! Where are you from? ✨",
-                "Hey bro! Free ho abhi thodi baat karne ke liye? 😊",
-              ];
-              hookText = pickRandom(hooks);
-            }
-
-            // Find or create chat
-            const [u1, u2] = [userId, bot.id].sort();
-            let chat = await queryOne("SELECT * FROM chats WHERE user1_id = $1 AND user2_id = $2", [u1, u2]);
-            if (!chat) {
-              chat = await queryOne("INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *", [u1, u2]);
-            }
-
-            await query("UPDATE chats SET user1_deleted = false, user2_deleted = false, last_message_at = NOW() WHERE id = $1", [chat.id]);
-
-            const msg = await queryOne(
-              `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
-              [chat.id, bot.id, hookText]
-            );
-
-            const io = appIo || global.__io;
-            const redisModule = appRedis || global.__redisModule;
-            if (io && redisModule) {
-              const userSocket = await redisModule.getUserSocket(userId);
-              if (userSocket) {
-                io.to(userSocket).emit("new_message", {
-                  senderId: bot.id,
-                  chatId: chat.id,
-                  text: hookText,
-                  messageId: msg.id,
-                  createdAt: msg.created_at,
-                  replyToId: null,
-                  replyToText: null,
-                  replyToSenderName: null,
-                });
-              }
-            }
-
-            NotificationService.sendToUser(userId, {
-              title: bot.name,
-              body: hookText,
-              type: "chat",
-              channelId: "camverz_chats",
-              highPriority: true,
-              data: {
-                targetUserId: bot.id,
-                targetUserName: bot.name,
-                targetUserAvatar: bot.avatar || "",
-                chatId: chat.id,
-                messageId: msg.id,
-              },
-            });
-
-            console.log(`✅ Welcome DM delivered to user ${userId} from bot ${bot.name}: "${hookText}"`);
-          } catch (err) {
-            console.error("Error executing welcome DM delivery:", err);
+          let hookText = "";
+          if (bot.gender === "female") {
+            const hooks = [
+              "Hey! Just saw your profile, where are you from? 😊",
+              "Heyy! Love your vibe on here ✨ free ho abhi baat karne ke liye?",
+              "Hey! Just joined Camverz, kaise ho aap? 🌸",
+              "Hey there! Saw your profile on feed, looking good! Where are you from? ✨",
+            ];
+            hookText = pickRandom(hooks);
+          } else {
+            // Male bot (for Gay male or Straight female user)
+            const hooks = [
+              "Hey bro! Just saw your profile here, where are you from? 😊",
+              "Hey! Loved your vibe on here bro ✨ how are you doing today?",
+              "Hey there! Saw your profile on feed, looking sharp! Where are you from? ✨",
+              "Hey bro! Free ho abhi thodi baat karne ke liye? 😊",
+            ];
+            hookText = pickRandom(hooks);
           }
-        }, welcomeDelay);
-      } catch (e) {
-        console.error("Error in scheduleWelcomeDM:", e);
-      }
-    });
-  }
 
-  /**
-   * =========================================================================
-   * LEVEL 2: SUPER INTELLIGENT AI DM CHAT HANDLER
-   * - Direct question answering (where from, what you do, etc.)
-   * - Multi-turn conversational memory
-   * - Realistic typing indicator ("Priya is typing...")
-   * - Smart Video Call Hooks (Only after healthy rapport, never premature)
-   * =========================================================================
-   */
-  function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, redisModule }) {
-    setImmediate(async () => {
-      try {
-        if (!chatId || !botUser || !realUserId || !incomingText) return;
+          // Find or create chat
+          const [u1, u2] = [userId, bot.id].sort();
+          let chat = await queryOne("SELECT * FROM chats WHERE user1_id = $1 AND user2_id = $2", [u1, u2]);
+          if (!chat) {
+            chat = await queryOne("INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *", [u1, u2]);
+          }
 
-        const user = await queryOne("SELECT id, name, gender, sex_preference, country FROM users WHERE id = $1", [realUserId]);
-        if (!user) return;
+          await query("UPDATE chats SET user1_deleted = false, user2_deleted = false, last_message_at = NOW() WHERE id = $1", [chat.id]);
 
-        const isIndianUser = !user.country || user.country.toLowerCase() === "india";
-        const cleanIncoming = incomingText.trim();
+          const msg = await queryOne(
+            `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
+            [chat.id, bot.id, hookText]
+          );
 
-        // 1. Send realistic "Typing..." socket indicator after 1.2 to 2.0s
-        const typingStartDelay = randomBetween(1200, 2000);
-        const totalReplyDelay = randomBetween(4200, 7200);
-
-        setTimeout(async () => {
-          try {
-            const activeIo = io || global.__io;
-            const activeRedis = redisModule || global.__redisModule;
-            if (activeIo && activeRedis) {
-              const userSocket = await activeRedis.getUserSocket(realUserId);
-              if (userSocket) {
-                activeIo.to(userSocket).emit("user_typing", {
-                  senderId: botUser.id,
-                  senderName: botUser.name,
-                  chatId: chatId,
-                  isTyping: true,
-                });
-              }
+          const io = appIo || global.__io;
+          const redisModule = appRedis || global.__redisModule;
+          if (io && redisModule) {
+            const userSocket = await redisModule.getUserSocket(userId);
+            if (userSocket) {
+              io.to(userSocket).emit("new_message", {
+                senderId: bot.id,
+                chatId: chat.id,
+                text: hookText,
+                messageId: msg.id,
+                createdAt: msg.created_at,
+                replyToId: null,
+                replyToText: null,
+                replyToSenderName: null,
+              });
             }
-          } catch (e) { }
-        }, typingStartDelay);
+          }
 
-        // 2. Fetch conversation history for full multi-turn memory
-        const recentMessages = await queryMany(
-          `SELECT m.sender_id, m.text, m.created_at
+          NotificationService.sendToUser(userId, {
+            title: bot.name,
+            body: hookText,
+            type: "chat",
+            channelId: "camverz_chats",
+            highPriority: true,
+            data: {
+              targetUserId: bot.id,
+              targetUserName: bot.name,
+              targetUserAvatar: bot.avatar || "",
+              chatId: chat.id,
+              messageId: msg.id,
+            },
+          });
+
+          console.log(`✅ Welcome DM delivered to user ${userId} from bot ${bot.name}: "${hookText}"`);
+        } catch (err) {
+          console.error("Error executing welcome DM delivery:", err);
+        }
+      }, welcomeDelay);
+    } catch (e) {
+      console.error("Error in scheduleWelcomeDM:", e);
+    }
+  });
+}
+
+/**
+ * =========================================================================
+ * LEVEL 2: SUPER INTELLIGENT AI DM CHAT HANDLER
+ * - Direct question answering (where from, what you do, etc.)
+ * - Multi-turn conversational memory
+ * - Realistic typing indicator ("Priya is typing...")
+ * - Smart Video Call Hooks (Only after healthy rapport, never premature)
+ * =========================================================================
+ */
+function handleIncomingDMToBot({ chatId, botUser, realUserId, incomingText, io, redisModule }) {
+  setImmediate(async () => {
+    try {
+      if (!chatId || !botUser || !realUserId || !incomingText) return;
+
+      const user = await queryOne("SELECT id, name, gender, sex_preference, country FROM users WHERE id = $1", [realUserId]);
+      if (!user) return;
+
+      const isIndianUser = !user.country || user.country.toLowerCase() === "india";
+      const cleanIncoming = incomingText.trim();
+
+      // 1. Send realistic "Typing..." socket indicator after 1.2 to 2.0s
+      const typingStartDelay = randomBetween(1200, 2000);
+      const totalReplyDelay = randomBetween(4200, 7200);
+
+      setTimeout(async () => {
+        try {
+          const activeIo = io || global.__io;
+          const activeRedis = redisModule || global.__redisModule;
+          if (activeIo && activeRedis) {
+            const userSocket = await activeRedis.getUserSocket(realUserId);
+            if (userSocket) {
+              activeIo.to(userSocket).emit("user_typing", {
+                senderId: botUser.id,
+                senderName: botUser.name,
+                chatId: chatId,
+                isTyping: true,
+              });
+            }
+          }
+        } catch (e) { }
+      }, typingStartDelay);
+
+      // 2. Fetch conversation history for full multi-turn memory
+      const recentMessages = await queryMany(
+        `SELECT m.sender_id, m.text, m.created_at
          FROM messages m
          WHERE m.chat_id = $1
          ORDER BY m.created_at DESC LIMIT 10`,
-          [chatId]
-        );
+        [chatId]
+      );
 
-        const historyChronological = (recentMessages || []).reverse();
-        const totalMessageCount = historyChronological.length;
+      const historyChronological = (recentMessages || []).reverse();
+      const totalMessageCount = historyChronological.length;
 
-        // Find the last message sent by the bot
-        const previousBotMessages = historyChronological.filter((m) => m.sender_id === botUser.id);
-        const lastBotMessage = previousBotMessages.length > 0 ? previousBotMessages[previousBotMessages.length - 1].text : "";
-        const botPreviouslyAskedForCall = /(video call|videocall|call karein|call karte hain|realmeet)/i.test(lastBotMessage);
-        const alreadyAskedCall = historyChronological.some((m) => /(video call|videocall|call karein|call karte hain|realmeet)/i.test(m.text));
+      // Find the last message sent by the bot
+      const previousBotMessages = historyChronological.filter((m) => m.sender_id === botUser.id);
+      const lastBotMessage = previousBotMessages.length > 0 ? previousBotMessages[previousBotMessages.length - 1].text : "";
+      const botPreviouslyAskedForCall = /(video call|videocall|call karein|call karte hain|realmeet)/i.test(lastBotMessage);
+      const alreadyAskedCall = historyChronological.some((m) => /(video call|videocall|call karein|call karte hain|realmeet)/i.test(m.text));
 
-        // Check if user is asking a question or declining
-        const userAskedAQuestion = /[?]|kahan|kha se|kaha se|kya|who|where|how|kaise|kaun|and you/i.test(cleanIncoming);
-        const isNegative = /(^|\b)(no|nah|nahi|na|nope|not now|never|baad me|later|don't|dont|nhi|mat karo|call nahi|call nhi)(\b|$)/i.test(cleanIncoming);
+      // Check if user is asking a question or declining
+      const userAskedAQuestion = /[?]|kahan|kha se|kaha se|kya|who|where|how|kaise|kaun|and you/i.test(cleanIncoming);
+      const isNegative = /(^|\b)(no|nah|nahi|na|nope|not now|never|baad me|later|don't|dont|nhi|mat karo|call nahi|call nhi)(\b|$)/i.test(cleanIncoming);
 
-        // Format messages history for LLM
-        const messagesHistory = [];
-        for (const msg of historyChronological) {
-          const role = msg.sender_id === botUser.id ? "assistant" : "user";
-          messagesHistory.push({ role, content: msg.text });
-        }
-        const lastHistoryMsg = messagesHistory[messagesHistory.length - 1];
-        if (!lastHistoryMsg || lastHistoryMsg.content !== cleanIncoming) {
-          messagesHistory.push({ role: "user", content: cleanIncoming });
-        }
+      // Format messages history for LLM
+      const messagesHistory = [];
+      for (const msg of historyChronological) {
+        const role = msg.sender_id === botUser.id ? "assistant" : "user";
+        messagesHistory.push({ role, content: msg.text });
+      }
+      const lastHistoryMsg = messagesHistory[messagesHistory.length - 1];
+      if (!lastHistoryMsg || lastHistoryMsg.content !== cleanIncoming) {
+        messagesHistory.push({ role: "user", content: cleanIncoming });
+      }
 
-        const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
-        const personaBio = botUser.bio || "College student and music lover";
+      const personaCity = botUser.city || (botUser.gender === "female" ? "Delhi" : "Pune");
+      const personaBio = botUser.bio || "College student and music lover";
 
-      const systemPrompt = `You are ${botUser.name}, living in ${personaCity}, India (${personaBio}).
-You are in a private, unrestricted 1-on-1 personal chat with ${user.name || "a friend"} on the Camverz app.
+      const systemPrompt = `You are ${ botUser.name }, living in ${ personaCity }, India(${ personaBio }).
+You are in a private, unrestricted 1 - on - 1 personal chat with ${ user.name || "a friend" } on the Camverz app.
 
 Behave completely like a real adult human:
-- Read what they say and understand their real emotions, mood, and intent deeply.
-- Match whatever vibe they bring: if they are chill, be chill; if they want adult talk, bold topics, flirting, or intimacy, talk freely with them as a consenting adult without holding back or judging. feel free to talk with them purely dirty about sex and porn.
-- if they are gay talk with them like gay , if they are straight talk with them like straight and if they are bi talk with them like bi. and if they are lesbian talk with them like lesbian. And talk everything at every level if they want to be dirty be dirty.
+      - Read what they say and understand their real emotions, mood, and intent deeply.
+- Match whatever vibe they bring: if they are chill, be chill; if they want adult talk, bold topics, flirting, or intimacy, talk freely with them as a consenting adult without holding back or judging.feel free to talk with them purely dirty about sex and porn.
+- if they are gay talk with them like gay, if they are straight talk with them like straight and if they are bi talk with them like bi.and if they are lesbian talk with them like lesbian.And talk everything at every level if they want to be dirty be dirty.
 - if they are virgin talk with them like virgin and if they are experienced talk with them like experienced.
 - Never act like an AI, never preach, never judge, and never give robotic refusals.
-- Keep replies short and natural (5 to 15 words max), exactly like real texting.
+- Keep replies short and natural(5 to 15 words max), exactly like real texting.
 - Output ONLY your reply without quotes.`;
 
       // 4. Generate response with Multi-Provider AI (Groq -> Gemini -> OpenAI -> FreeCloudAI -> Ollama)
@@ -1800,7 +1800,7 @@ Behave completely like a real adult human:
       }
 
       if (!botReply || !botReply.trim()) {
-        console.warn(`⚠️ [AI Skipped] AI returned empty, no reply sent.`);
+        console.warn(`⚠️[AI Skipped] AI returned empty, no reply sent.`);
         return;
       }
 
@@ -1884,7 +1884,7 @@ async function runAutoCatchupWorker() {
   try {
     const recentPosts = await queryMany(
       `SELECT p.id, p.user_id, p.text, p.category, u.gender, u.sex_preference, u.country,
-          (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
+        (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comment_count
        FROM posts p
        JOIN users u ON u.id = p.user_id
        WHERE p.created_at >= NOW() - INTERVAL '20 minutes'
