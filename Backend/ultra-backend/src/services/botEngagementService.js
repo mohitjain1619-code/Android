@@ -20,6 +20,56 @@ const NotificationService = require("./notificationService");
 
 // 50+ Diverse Ultra-Realistic Bot Profiles (Native App Avatars Only)
 const BOT_PROFILES = [
+  // --- MALE PROFILES ---
+  {
+    google_id: "bot_kabir_sharma",
+    email: "kabir.bot@camverz.internal",
+    name: "Kabir Sharma",
+    gender: "male",
+    avatar: "av2",
+    photo_url: null,
+    bio: "Gym freak, traveler & deep conversation lover ✈️🏋️‍♂️",
+    city: "Delhi",
+    verified: true,
+    personality: "flirty_charming",
+  },
+  {
+    google_id: "bot_rohan_verma",
+    email: "rohan.bot@camverz.internal",
+    name: "Rohan Verma",
+    gender: "male",
+    avatar: "av6",
+    photo_url: null,
+    bio: "Guitarist & tech lover 🎸 Mumbai vibes",
+    city: "Mumbai",
+    verified: true,
+    personality: "chill_relaxed",
+  },
+  {
+    google_id: "bot_sameer_khan",
+    email: "sameer.bot@camverz.internal",
+    name: "Sameer Khan",
+    gender: "male",
+    avatar: "av7",
+    photo_url: null,
+    bio: "Coffee lover & late night talks ☕ Bangalore",
+    city: "Bangalore",
+    verified: true,
+    personality: "curious_thoughtful",
+  },
+  {
+    google_id: "bot_aryan_malhotra",
+    email: "aryan.bot@camverz.internal",
+    name: "Aryan Malhotra",
+    gender: "male",
+    avatar: "av9",
+    photo_url: null,
+    bio: "Living in the moment ✨ Chandigarh",
+    city: "Chandigarh",
+    verified: true,
+    personality: "witty_genz",
+  },
+
   // --- FEMALE PROFILES (32 Profiles) ---
   {
     google_id: "bot_priya_sharma",
@@ -735,13 +785,41 @@ async function getMatchingBots(userGender, userPreference, count = 4) {
     if (bots && bots.length > 0) return bots;
 
     // Failsafe: return matching gender bots even if is_bot flag was unset
-    return await queryMany(
+    const fallbackBots = await queryMany(
       `SELECT id, name, gender, avatar, photo_url, bot_personality, city, bio
        FROM users
        WHERE LOWER(TRIM(gender)) = $1
        ORDER BY RANDOM() LIMIT $2`,
       [targetGender, count]
     );
+    if (fallbackBots && fallbackBots.length > 0) return fallbackBots;
+
+    // Hard fallback to persistent seeded bot
+    if (targetGender === "male") {
+      return [{
+        id: "bot_kabir_sharma",
+        google_id: "bot_kabir_sharma",
+        name: "Kabir Sharma",
+        gender: "male",
+        avatar: "av2",
+        photo_url: null,
+        bot_personality: "flirty_charming",
+        city: "Delhi",
+        bio: "Gym freak, traveler & deep conversation lover ✈️🏋️‍♂️"
+      }];
+    } else {
+      return [{
+        id: "bot_simran_kaur",
+        google_id: "bot_simran_kaur",
+        name: "Simran Kaur",
+        gender: "female",
+        avatar: "av11",
+        photo_url: null,
+        bot_personality: "witty_genz",
+        city: "Chandigarh",
+        bio: "Dance, fashion & iced latte ☕✨"
+      }];
+    }
   } catch (err) {
     console.error("Error fetching matching bots:", err);
     return [];
