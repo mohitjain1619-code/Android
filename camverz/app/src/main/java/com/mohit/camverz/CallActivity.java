@@ -689,6 +689,9 @@ public class CallActivity extends BaseActivity {
         CallManager.setCurrentRoomName(roomName);
         NotificationHelper.cancelIncomingCallNotification(this);
         CallRingtoneManager.getInstance().stop();
+        if (timeoutHandler != null) {
+            timeoutHandler.removeCallbacks(timeoutRunnable);
+        }
 
         setupViews();
         initWebRTC(); // Starts local camera capturer and attaches localView
@@ -833,7 +836,7 @@ public class CallActivity extends BaseActivity {
     private void setupViews() {
         eglBase = EglBase.create();
         localView.init(eglBase.getEglBaseContext(), null);
-        if (!isBotCall && remoteView != null) {
+        if (remoteView != null) {
             remoteView.init(eglBase.getEglBaseContext(), null);
             remoteView.setMirror(true);
             remoteView.setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FILL);
@@ -1966,6 +1969,12 @@ public class CallActivity extends BaseActivity {
             limitCountdownRunnable = null;
         }
 
+        if (botVideoView != null) {
+            try {
+                botVideoView.stopPlayback();
+            } catch (Exception ignored) {}
+        }
+
         CallManager.setCallActive(false);
         timeoutHandler.removeCallbacks(timeoutRunnable);
         autoHideHandler.removeCallbacks(autoHideRunnable);
@@ -2490,7 +2499,7 @@ public class CallActivity extends BaseActivity {
     }
 
     private void startLimitCountdown() {
-        if (tokenManager.hasVideoCallPlan()) return;
+        if (tokenManager.hasVideoCallPlan() || isBotCall) return;
         limitCountdownHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         limitCountdownRunnable = new Runnable() {
             @Override
