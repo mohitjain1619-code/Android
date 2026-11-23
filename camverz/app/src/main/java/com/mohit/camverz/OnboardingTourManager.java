@@ -55,6 +55,7 @@ public class OnboardingTourManager {
             String email = TokenManager.getInstance(context).getUserEmail();
             return email != null && (
                     "mohitjain1619@gmail.com".equalsIgnoreCase(email.trim()) ||
+                    "mohitjain8120@gmail.com".equalsIgnoreCase(email.trim()) ||
                     "mohitj8120@gmail.com".equalsIgnoreCase(email.trim()) ||
                     "jainmohit8120@gmail.com".equalsIgnoreCase(email.trim())
             );

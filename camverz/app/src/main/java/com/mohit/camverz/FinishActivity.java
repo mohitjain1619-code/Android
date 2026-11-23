@@ -31,7 +31,7 @@ public class FinishActivity extends BaseActivity {
     Button btnStart;
     android.view.View rootLayout;
 
-    private String userName, gender, city, dob;
+    private String userName, gender, city, country, dob;
     private ApiService api;
     private TokenManager tokenManager;
 
@@ -54,12 +54,14 @@ public class FinishActivity extends BaseActivity {
         userName = getIntent().getStringExtra("userName");
         gender = getIntent().getStringExtra("gender");
         city = getIntent().getStringExtra("city");
+        country = getIntent().getStringExtra("country");
         dob = getIntent().getStringExtra("dob");
 
         // Display on screen
         finalName.setText(userName);
         finalGender.setText("Gender: " + (gender != null ? capitalizeFirst(gender) : "N/A"));
-        finalCity.setText("City: " + (city != null ? city : "N/A"));
+        String locationDisplay = (city != null && !city.isEmpty()) ? city : (country != null ? country : "N/A");
+        finalCity.setText("City: " + locationDisplay);
         finalDob.setText("Birthday: " + (dob != null ? dob : "N/A"));
 
         btnStart.setOnTouchListener((v, event) -> {
@@ -113,7 +115,12 @@ public class FinishActivity extends BaseActivity {
         Map<String, Object> profileUpdate = new HashMap<>();
         profileUpdate.put("name", name);
         profileUpdate.put("gender", gender);
-        profileUpdate.put("city", city);
+        if (city != null && !city.trim().isEmpty()) {
+            profileUpdate.put("city", city);
+        }
+        if (country != null && !country.trim().isEmpty()) {
+            profileUpdate.put("country", country);
+        }
         profileUpdate.put("dob", dob);
         profileUpdate.put("avatar", "av1");
 

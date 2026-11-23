@@ -203,6 +203,22 @@
                         android:visibility="gone"
                         app:backgroundTint="@null" />
 
+                    <!-- Admin Onboarding Retest Button (Visible only to mohitjain1619@gmail.com) -->
+                    <Button
+                        android:id="@+id/btn_retest_onboarding"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_onboarding_gps_btn"
+                        android:paddingHorizontal="16dp"
+                        android:text="🔁 Retest Onboarding (Admin)"
+                        android:textAllCaps="false"
+                        android:textColor="#00E5FF"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        app:backgroundTint="@null" />
+
                     <!-- Luxury Subscription Plan Card -->
                     <LinearLayout
                         android:id="@+id/subscription_card_layout"

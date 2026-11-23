@@ -14,9 +14,20 @@ public class Message {
     private String replyToId;
     private String replyToText;
     private String replyToSenderName;
+    private boolean isMe;
 
     public Message() {
         // Default constructor required for calls to DataSnapshot.getValue(Message.class)
+        this.deletedFor = new ArrayList<>();
+    }
+
+    public Message(String messageId, String message, String senderId, boolean isMe) {
+        this.messageId = messageId;
+        this.message = message;
+        this.senderId = senderId;
+        this.isMe = isMe;
+        this.timestamp = System.currentTimeMillis();
+        this.seen = false;
         this.deletedFor = new ArrayList<>();
     }
 
@@ -78,6 +89,31 @@ public class Message {
 
     public void setMessageId(String messageId) {
         this.messageId = messageId;
+    }
+
+    // Aliases for compatibility and tests
+    public String getId() {
+        return messageId;
+    }
+
+    public void setId(String id) {
+        this.messageId = id;
+    }
+
+    public String getText() {
+        return message;
+    }
+
+    public void setText(String text) {
+        this.message = text;
+    }
+
+    public boolean isMe() {
+        return isMe;
+    }
+
+    public void setMe(boolean me) {
+        this.isMe = me;
     }
 
     public String getSenderId() {

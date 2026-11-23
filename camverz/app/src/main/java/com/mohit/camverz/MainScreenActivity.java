@@ -233,6 +233,24 @@ public class MainScreenActivity extends BaseActivity {
             });
         }
 
+        // Admin shortcut for Mohit's accounts to test onboarding from the beginning anytime
+        View topLogoContainer = findViewById(R.id.top_logo_container);
+        if (topLogoContainer != null) {
+            String myEmail = tokenManager.getUserEmail();
+            boolean isMohitAdmin = myEmail != null && (
+                    myEmail.trim().equalsIgnoreCase("mohitjain1619@gmail.com") ||
+                    myEmail.trim().equalsIgnoreCase("mohitjain8120@gmail.com") ||
+                    myEmail.trim().equalsIgnoreCase("mohitj8120@gmail.com") ||
+                    myEmail.trim().equalsIgnoreCase("jainmohit8120@gmail.com")
+            );
+            if (isMohitAdmin) {
+                topLogoContainer.setOnLongClickListener(v -> {
+                    showAdminOnboardingResetDialog();
+                    return true;
+                });
+            }
+        }
+
         chipCommunityHub = findViewById(R.id.chip_community_hub);
         chipWebsiteHub = findViewById(R.id.chip_website_hub);
 
@@ -1164,5 +1182,33 @@ public class MainScreenActivity extends BaseActivity {
             });
             dialog.show();
         }
+    }
+
+    private void showAdminOnboardingResetDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("🛠️ Admin: Restart Onboarding")
+                .setMessage("Reset onboarding state and test all onboarding flows from the beginning?")
+                .setPositiveButton("Start Fresh", (dialog, which) -> {
+                    tokenManager.setOnboardingComplete(false);
+                    try {
+                        java.util.Map<String, Object> resetMap = new java.util.HashMap<>();
+                        resetMap.put("city", "");
+                        resetMap.put("country", "");
+                        resetMap.put("dob", "");
+                        api.updateMe(resetMap).enqueue(new retrofit2.Callback<JsonObject>() {
+                            @Override
+                            public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {}
+                            @Override
+                            public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
+                        });
+                    } catch (Exception ignored) {}
+
+                    Intent intent = new Intent(MainScreenActivity.this, OnboardingActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 }

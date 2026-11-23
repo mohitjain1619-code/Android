@@ -11,7 +11,7 @@ public class MessageReplyEdgeCaseTest {
     @Test
     public void testMessageDefaultValuesAndNullSafety() {
         Message msg = new Message();
-        assertNull(msg.getId());
+        assertNull(msg  .getId());
         assertNull(msg.getText());
         assertNull(msg.getSenderId());
         assertNull(msg.getReplyToId());

@@ -336,6 +336,9 @@ public class FeedActivity extends BaseActivity {
                             }
                         }
                         adapter.notifyDataSetChanged();
+                        if (postsRecyclerView != null) {
+                            postsRecyclerView.scrollToPosition(0);
+                        }
                         updateEmptyState(false, null);
                         return;
                     }

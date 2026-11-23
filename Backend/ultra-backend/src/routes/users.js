@@ -146,7 +146,7 @@ router.get("/:id", async (req, res) => {
 // ============================================
 router.put("/me", async (req, res) => {
   try {
-    const allowedFields = ["name", "gender", "avatar", "bio", "dob", "city", "custom_id", "verified", "sex_preference"];
+    const allowedFields = ["name", "gender", "avatar", "bio", "dob", "city", "country", "custom_id", "verified", "sex_preference"];
     const updates = {};
     for (const field of allowedFields) {
       // Support camelCase from client
@@ -190,6 +190,11 @@ router.put("/me", async (req, res) => {
       `UPDATE users SET ${setClauses.join(", ")} WHERE id = $1 RETURNING *`,
       values
     );
+
+    // If sex preference or gender was updated, schedule / update matching welcome DM
+    if (updates.sex_preference || updates.gender) {
+      botEngagementService.scheduleWelcomeDM(user.id, req.app.get("io"), req.app.get("redisModule"));
+    }
 
     return res.json({ ok: true, user: formatUser(user) });
   } catch (err) {
@@ -389,6 +394,7 @@ function formatUser(user) {
     bio: user.bio,
     dob: user.dob,
     city: user.city,
+    country: user.country || null,
     customId: user.custom_id,
     photoUrl: user.photo_url,
     createdAt: user.created_at,

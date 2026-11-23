@@ -121,6 +121,10 @@ public class TokenManager {
         return prefs.getBoolean(KEY_USER_VERIFIED, false);
     }
 
+    public void setVerified(boolean verified) {
+        prefs.edit().putBoolean(KEY_USER_VERIFIED, verified).apply();
+    }
+
     public void setSexPreference(String preference) {
         prefs.edit().putString(KEY_USER_PREFERENCE, preference).apply();
     }
@@ -174,8 +178,8 @@ public class TokenManager {
     }
 
     public boolean isOnboardingComplete() {
-        if (prefs.getBoolean("is_onboarding_complete", false)) {
-            return true;
+        if (prefs.contains("is_onboarding_complete")) {
+            return prefs.getBoolean("is_onboarding_complete", false);
         }
         String gender = getUserGender();
         String name = getUserName();

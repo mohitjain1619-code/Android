@@ -514,12 +514,13 @@ public class ConnectingActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         destroyNativeAd();
+        cancelCountdown();
         if (!matchAccepted) {
             leaveQueue();
         }
         removeSocketListeners();
+        super.onDestroy();
     }
 
 

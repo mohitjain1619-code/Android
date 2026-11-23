@@ -696,6 +696,9 @@ public class CallActivity extends BaseActivity {
         if (remoteView != null) {
             remoteView.setVisibility(View.GONE);
         }
+        if (remoteAvatarOverlay != null) {
+            remoteAvatarOverlay.setVisibility(View.GONE);
+        }
 
         if (botVideoView != null) {
             botVideoView.setVisibility(View.VISIBLE);
@@ -730,26 +733,21 @@ public class CallActivity extends BaseActivity {
     private void playBotVideo() {
         if (botVideoView == null) return;
         try {
-            String assetPathToUse = (botAssetPath != null && !botAssetPath.isEmpty()) 
-                ? botAssetPath 
-                : "bot_videos/gay_straightgirls/video_1.mp4";
-
-            java.io.File cachedVideo = getOrExtractAssetVideo(assetPathToUse);
-            if (cachedVideo != null && cachedVideo.exists() && cachedVideo.length() > 0) {
-                Log.d(TAG, "🤖 Playing bot video from local cached asset: " + cachedVideo.getAbsolutePath());
-                botVideoView.setVideoPath(cachedVideo.getAbsolutePath());
-            } else if (botVideoUrl != null && !botVideoUrl.isEmpty()) {
-                String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
-                String fullUrl = botVideoUrl.startsWith("http") ? botVideoUrl : baseUrl + botVideoUrl;
-                Log.d(TAG, "🤖 Streaming bot video from server URL: " + fullUrl);
-                botVideoView.setVideoURI(android.net.Uri.parse(fullUrl));
-            } else {
-                Log.w(TAG, "⚠️ No valid bot video source found.");
-                return;
-            }
+            if (remoteView != null) remoteView.setVisibility(View.GONE);
+            if (remoteAvatarOverlay != null) remoteAvatarOverlay.setVisibility(View.GONE);
+            botVideoView.setVisibility(View.VISIBLE);
 
             botVideoView.setOnPreparedListener(mp -> {
-                mp.setLooping(true);
+                Log.d(TAG, "▶️ Bot video onPrepared callback fired!");
+                try {
+                    mp.setLooping(true);
+                    mp.setVolume(1.0f, 1.0f);
+                } catch (Exception e) {
+                    Log.w(TAG, "Error configuring mediaPlayer in onPrepared", e);
+                }
+                if (remoteAvatarOverlay != null) {
+                    remoteAvatarOverlay.setVisibility(View.GONE);
+                }
                 botVideoView.start();
                 Log.d(TAG, "▶️ Bot video started playing and looping!");
             });
@@ -761,8 +759,37 @@ public class CallActivity extends BaseActivity {
 
             botVideoView.setOnErrorListener((mp, what, extra) -> {
                 Log.e(TAG, "❌ Bot VideoView error: what=" + what + ", extra=" + extra);
+                if (botVideoUrl != null && !botVideoUrl.isEmpty()) {
+                    String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
+                    String fullUrl = botVideoUrl.startsWith("http") ? botVideoUrl : baseUrl + botVideoUrl;
+                    Log.d(TAG, "🤖 Fallback streaming from server URL: " + fullUrl);
+                    try {
+                        botVideoView.setOnErrorListener(null);
+                        botVideoView.setVideoURI(android.net.Uri.parse(fullUrl));
+                        botVideoView.start();
+                    } catch (Exception ex) {
+                        Log.e(TAG, "Failed fallback streaming URL", ex);
+                    }
+                }
                 return true;
             });
+
+            String assetPathToUse = (botAssetPath != null && !botAssetPath.isEmpty()) 
+                ? botAssetPath 
+                : "bot_videos/gay_straightgirls/Video_!.mp4";
+
+            java.io.File cachedVideo = getOrExtractAssetVideo(assetPathToUse);
+            if (cachedVideo != null && cachedVideo.exists() && cachedVideo.length() > 50000) {
+                Log.d(TAG, "🤖 Playing bot video from local cached asset: " + cachedVideo.getAbsolutePath() + " (size: " + cachedVideo.length() + ")");
+                botVideoView.setVideoPath(cachedVideo.getAbsolutePath());
+            } else if (botVideoUrl != null && !botVideoUrl.isEmpty()) {
+                String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
+                String fullUrl = botVideoUrl.startsWith("http") ? botVideoUrl : baseUrl + botVideoUrl;
+                Log.d(TAG, "🤖 Streaming bot video from server URL: " + fullUrl);
+                botVideoView.setVideoURI(android.net.Uri.parse(fullUrl));
+            } else {
+                Log.w(TAG, "⚠️ No valid bot video source found.");
+            }
 
         } catch (Exception e) {
             Log.e(TAG, "Error playing bot video", e);
@@ -770,38 +797,52 @@ public class CallActivity extends BaseActivity {
     }
 
     private java.io.File getOrExtractAssetVideo(String assetPath) {
-        try {
-            java.io.File cacheFile = new java.io.File(getCacheDir(), "bot_vid_" + Math.abs(assetPath.hashCode()) + ".mp4");
-            if (cacheFile.exists() && cacheFile.length() > 0) {
-                return cacheFile;
-            }
-            try (java.io.InputStream is = getAssets().open(assetPath);
-                 java.io.OutputStream os = new java.io.FileOutputStream(cacheFile)) {
-                byte[] buffer = new byte[16384];
-                int read;
-                while ((read = is.read(buffer)) != -1) {
-                    os.write(buffer, 0, read);
+        String[] candidatePaths = new String[] {
+            assetPath,
+            "bot_videos/gay_straightgirls/Video_!.mp4",
+            "bot_videos/gay_straightgirls/video_1.mp4"
+        };
+
+        for (String path : candidatePaths) {
+            if (path == null || path.isEmpty()) continue;
+            try {
+                java.io.File cacheFile = new java.io.File(getCacheDir(), "bot_vid_" + Math.abs(path.hashCode()) + ".mp4");
+                if (cacheFile.exists() && cacheFile.length() > 50000) {
+                    return cacheFile;
                 }
-                os.flush();
-                return cacheFile;
+                try (java.io.InputStream is = getAssets().open(path);
+                     java.io.OutputStream os = new java.io.FileOutputStream(cacheFile)) {
+                    byte[] buffer = new byte[32768];
+                    int read;
+                    while ((read = is.read(buffer)) != -1) {
+                        os.write(buffer, 0, read);
+                    }
+                    os.flush();
+                    if (cacheFile.length() > 50000) {
+                        Log.d(TAG, "Successfully extracted asset video: " + path + " to " + cacheFile.getAbsolutePath());
+                        return cacheFile;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Could not extract asset candidate: " + path + " (" + e.getMessage() + ")");
             }
-        } catch (Exception e) {
-            Log.w(TAG, "Could not extract asset: " + assetPath + " (" + e.getMessage() + ")");
-            return null;
         }
+        return null;
     }
 
     private void setupViews() {
         eglBase = EglBase.create();
         localView.init(eglBase.getEglBaseContext(), null);
-        remoteView.init(eglBase.getEglBaseContext(), null);
+        if (!isBotCall && remoteView != null) {
+            remoteView.init(eglBase.getEglBaseContext(), null);
+            remoteView.setMirror(true);
+            remoteView.setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FILL);
+            remoteView.setEnableHardwareScaler(true);
+        }
         localView.setZOrderMediaOverlay(true);
         localView.setMirror(true);
-        remoteView.setMirror(true);
         localView.setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-        remoteView.setScalingType(org.webrtc.RendererCommon.ScalingType.SCALE_ASPECT_FILL);
         localView.setEnableHardwareScaler(true);
-        remoteView.setEnableHardwareScaler(true);
     }
 
     private void initWebRTC() {

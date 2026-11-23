@@ -185,6 +185,9 @@ public class CommentsActivity extends BaseActivity implements CommentAdapter.OnC
                             }
                         }
                         adapter.notifyDataSetChanged();
+                        if (recyclerView != null) {
+                            recyclerView.scrollToPosition(0);
+                        }
                     }
                 }
             }

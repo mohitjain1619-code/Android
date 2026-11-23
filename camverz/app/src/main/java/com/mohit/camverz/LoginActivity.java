@@ -543,7 +543,7 @@ public class LoginActivity extends BaseActivity {
                             goToMainScreen();
                         } else {
                             tokenManager.setOnboardingComplete(false);
-                            goToGenderSelection(userName, gender, city, dob);
+                            goToGenderSelection(userName, gender, null, null);
                         }
                     } else {
                         Log.w(TAG, "❌ Backend auth response not ok");

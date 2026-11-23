@@ -18,7 +18,7 @@ public class BirthdayActivity extends BaseActivity {
     private EditText birthdayInput;
     private Button btnContinue;
     private TextView backBtn;
-    private String userName, gender, city, dob;
+    private String userName, gender, city, country, dob;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +32,7 @@ public class BirthdayActivity extends BaseActivity {
         userName = getIntent().getStringExtra("userName");
         gender = getIntent().getStringExtra("gender");
         city = getIntent().getStringExtra("city");
+        country = getIntent().getStringExtra("country");
 
         if (backBtn != null) backBtn.setOnClickListener(v -> finish());
 
@@ -59,6 +60,7 @@ public class BirthdayActivity extends BaseActivity {
             i.putExtra("userName", userName);
             i.putExtra("gender", gender);
             i.putExtra("city", city);
+            i.putExtra("country", country);
             i.putExtra("dob", dob);
             startActivity(i);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

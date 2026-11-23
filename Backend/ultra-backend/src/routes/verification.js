@@ -53,16 +53,24 @@ router.post("/gender", upload.single("image"), async (req, res) => {
       ? (detectedGender === "female" && confidence >= minConfidence)
       : false;
 
+    let genderChangedToMale = false;
+
     // Update verification status in database
     if (verified) {
       await queryOne("UPDATE users SET verified = true WHERE id = $1 RETURNING *", [req.user.userId]);
+    } else if (profileGender === "female" && detectedGender === "male" && confidence >= minConfidence) {
+      // Detected boy during female face scan: automatically switch profile gender to male & auto-verify
+      await queryOne("UPDATE users SET gender = 'male', verified = true WHERE id = $1 RETURNING *", [req.user.userId]);
+      genderChangedToMale = true;
+      console.log(`[Verification] User ${req.user.userId} selected female but was detected as male (${confidence}%). Auto-updated gender to male and verified.`);
     }
 
     return res.json({
       ok: true,
       verified,
+      genderChangedToMale,
       policy: "female_strict_verification",
-      profileGender,
+      profileGender: genderChangedToMale ? "male" : profileGender,
       detectedGender,
       confidence,
       minConfidence,

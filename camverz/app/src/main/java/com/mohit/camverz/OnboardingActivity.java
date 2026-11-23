@@ -9,9 +9,11 @@ import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -63,8 +65,7 @@ public class OnboardingActivity extends BaseActivity {
     private static final String TAG = "OnboardingActivity";
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 2001;
     private static final int REQUEST_CHECK_SETTINGS = 2002;
-    private static final String DEFAULT_DOB = "15/06/2002";
-    private static final int DEFAULT_AGE = 24;
+    private static final int REQUEST_VERIFICATION = 2003;
 
     // UI Elements
     private View rootContainer;
@@ -72,6 +73,8 @@ public class OnboardingActivity extends BaseActivity {
     private LinearLayout cardMale, cardFemale;
     private ImageView ivMaleIcon, ivFemaleIcon;
     private TextView tvMaleText, tvFemaleText;
+    private LinearLayout cardStraight, cardGay, cardLesbian;
+    private TextView tvStraightText, tvGayText, tvLesbianText;
     private LinearLayout btnAutoDetectCity;
     private TextView tvAutoDetectText, tvLocationStatus;
     private LinearLayout cardBirthday;
@@ -81,9 +84,11 @@ public class OnboardingActivity extends BaseActivity {
 
     // State Variables
     private String selectedGender = "male";
-    private String selectedDob = DEFAULT_DOB;
+    private String selectedSexPreference = "Straight";
+    private String selectedDob = null;
     private String detectedCountry = "";
     private boolean isDetectingLocation = false;
+    private boolean hasRequestedLocationPermissionOnce = false;
 
     // Services
     private ApiService api;
@@ -117,6 +122,13 @@ public class OnboardingActivity extends BaseActivity {
         ivFemaleIcon = findViewById(R.id.ivFemaleIcon);
         tvMaleText = findViewById(R.id.tvMaleText);
         tvFemaleText = findViewById(R.id.tvFemaleText);
+
+        cardStraight = findViewById(R.id.cardStraight);
+        cardGay = findViewById(R.id.cardGay);
+        cardLesbian = findViewById(R.id.cardLesbian);
+        tvStraightText = findViewById(R.id.tvStraightText);
+        tvGayText = findViewById(R.id.tvGayText);
+        tvLesbianText = findViewById(R.id.tvLesbianText);
 
         btnAutoDetectCity = findViewById(R.id.btnAutoDetectCity);
         tvAutoDetectText = findViewById(R.id.tvAutoDetectText);
@@ -162,44 +174,19 @@ public class OnboardingActivity extends BaseActivity {
             selectGender("male");
         }
 
-        // 3. City / Location Pre-population (Locale display country or intent, never blank!)
-        String preCity = getIntent().getStringExtra("city");
-        if (TextUtils.isEmpty(preCity)) {
-            try {
-                Locale currentLocale = Locale.getDefault();
-                preCity = currentLocale.getDisplayCountry();
-                if (TextUtils.isEmpty(preCity)) {
-                    preCity = currentLocale.getCountry();
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "Locale country resolution error: " + e.getMessage());
-            }
-        }
-        if (TextUtils.isEmpty(preCity)) {
-            preCity = "Global";
-        }
-        etCity.setText(preCity);
-        detectedCountry = preCity;
-        tvLocationStatus.setVisibility(View.VISIBLE);
-        tvLocationStatus.setText("📍 " + preCity);
+        // 3. City / Location (Strict: Always starts completely empty. ONLY populated when user taps "Detect Location")
+        etCity.setText("");
+        detectedCountry = "";
+        tvLocationStatus.setVisibility(View.GONE);
 
-        // 4. Date of Birth Pre-population (Default: valid 18+ adult birthdate, 24 years old)
-        String preDob = getIntent().getStringExtra("dob");
-        if (!TextUtils.isEmpty(preDob) && preDob.contains("/")) {
-            selectedDob = preDob;
-        } else {
-            selectedDob = DEFAULT_DOB;
-        }
-        tvBirthday.setText(selectedDob);
-        tvBirthday.setTextColor(0xFFFFFFFF);
-        tvAgeBadge.setVisibility(View.VISIBLE);
-        tvAgeBadge.setText(String.format(getString(R.string.onboarding_age_years), DEFAULT_AGE));
+        // 4. Date of Birth (Strict: Always starts unselected. User must pick birth date)
+        selectedDob = null;
+        tvBirthday.setText(R.string.onboarding_birthday_hint);
+        tvBirthday.setTextColor(0xFF64748B);
+        tvAgeBadge.setVisibility(View.GONE);
 
-        // 5. Quiet Background Location Refinement (if permission was already granted)
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            checkGpsSettingsAndFetchLocation();
-        }
+        // 5. Sexual Preference Pre-selection
+        selectSexPreference("Straight");
     }
 
     private void setupListeners() {
@@ -207,8 +194,13 @@ public class OnboardingActivity extends BaseActivity {
         cardMale.setOnClickListener(v -> selectGender("male"));
         cardFemale.setOnClickListener(v -> selectGender("female"));
 
-        // City Auto Detect Button
-        btnAutoDetectCity.setOnClickListener(v -> checkGpsSettingsAndFetchLocation());
+        // Sexual Preference Selection
+        cardStraight.setOnClickListener(v -> selectSexPreference("Straight"));
+        cardGay.setOnClickListener(v -> selectSexPreference("Gay"));
+        cardLesbian.setOnClickListener(v -> selectSexPreference("Lesbian"));
+
+        // City Detect Location Button
+        btnAutoDetectCity.setOnClickListener(v -> handleDetectLocationClick());
 
         // Birthday Picker Click
         cardBirthday.setOnClickListener(v -> openDatePicker());
@@ -220,6 +212,9 @@ public class OnboardingActivity extends BaseActivity {
         // Touch feedback on interactive cards
         setupTouchScale(cardMale);
         setupTouchScale(cardFemale);
+        setupTouchScale(cardStraight);
+        setupTouchScale(cardGay);
+        setupTouchScale(cardLesbian);
         setupTouchScale(btnAutoDetectCity);
         setupTouchScale(cardBirthday);
 
@@ -255,13 +250,44 @@ public class OnboardingActivity extends BaseActivity {
         }
     }
 
+    private void selectSexPreference(String preference) {
+        selectedSexPreference = preference;
+        if ("Straight".equalsIgnoreCase(preference)) {
+            cardStraight.setBackgroundResource(R.drawable.bg_pref_card_selected);
+            tvStraightText.setTextColor(0xFF00E5FF);
+
+            cardGay.setBackgroundResource(R.drawable.bg_pref_card_unselected);
+            tvGayText.setTextColor(0xFF94A3B8);
+
+            cardLesbian.setBackgroundResource(R.drawable.bg_pref_card_unselected);
+            tvLesbianText.setTextColor(0xFF94A3B8);
+        } else if ("Gay".equalsIgnoreCase(preference)) {
+            cardGay.setBackgroundResource(R.drawable.bg_pref_card_selected);
+            tvGayText.setTextColor(0xFF00E5FF);
+
+            cardStraight.setBackgroundResource(R.drawable.bg_pref_card_unselected);
+            tvStraightText.setTextColor(0xFF94A3B8);
+
+            cardLesbian.setBackgroundResource(R.drawable.bg_pref_card_unselected);
+            tvLesbianText.setTextColor(0xFF94A3B8);
+        } else if ("Lesbian".equalsIgnoreCase(preference)) {
+            cardLesbian.setBackgroundResource(R.drawable.bg_pref_card_selected);
+            tvLesbianText.setTextColor(0xFF00E5FF);
+
+            cardStraight.setBackgroundResource(R.drawable.bg_pref_card_unselected);
+            tvStraightText.setTextColor(0xFF94A3B8);
+
+            cardGay.setBackgroundResource(R.drawable.bg_pref_card_unselected);
+            tvGayText.setTextColor(0xFF94A3B8);
+        }
+    }
+
     private void openDatePicker() {
         Calendar cal = Calendar.getInstance();
 
-        // Parse existing DOB to initialize picker near user's current choice
-        int initialYear = cal.get(Calendar.YEAR) - 22;
-        int initialMonth = 5; // June
-        int initialDay = 15;
+        int initialYear = cal.get(Calendar.YEAR) - 20;
+        int initialMonth = 0; // January
+        int initialDay = 1;
         if (!TextUtils.isEmpty(selectedDob) && selectedDob.contains("/")) {
             try {
                 String[] parts = selectedDob.split("/");
@@ -287,14 +313,10 @@ public class OnboardingActivity extends BaseActivity {
                         tvAgeBadge.setText(String.format(getString(R.string.onboarding_age_years), age));
                     } else {
                         showAgeErrorDialog();
-                        // Keep previous valid DOB so user is never left in an unsubmitable state
-                        if (TextUtils.isEmpty(selectedDob)) {
-                            selectedDob = DEFAULT_DOB;
-                        }
-                        tvBirthday.setText(selectedDob);
-                        tvBirthday.setTextColor(0xFFFFFFFF);
-                        tvAgeBadge.setVisibility(View.VISIBLE);
-                        tvAgeBadge.setText(String.format(getString(R.string.onboarding_age_years), DEFAULT_AGE));
+                        selectedDob = null;
+                        tvBirthday.setText(R.string.onboarding_birthday_hint);
+                        tvBirthday.setTextColor(0xFF64748B);
+                        tvAgeBadge.setVisibility(View.GONE);
                     }
                 },
                 initialYear,
@@ -303,6 +325,19 @@ public class OnboardingActivity extends BaseActivity {
         );
 
         dialog.show();
+    }
+
+    private int calculateAgeFromString(String dobStr) {
+        try {
+            String[] parts = dobStr.split("/");
+            if (parts.length == 3) {
+                int day = Integer.parseInt(parts[0]);
+                int month = Integer.parseInt(parts[1]) - 1;
+                int year = Integer.parseInt(parts[2]);
+                return calculateAge(year, month, day);
+            }
+        } catch (Exception ignored) {}
+        return 0;
     }
 
     private int calculateAge(int year, int month, int day) {
@@ -378,12 +413,55 @@ public class OnboardingActivity extends BaseActivity {
         }
     }
 
+    private void handleDetectLocationClick() {
+        boolean fineGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        boolean coarseGranted = ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        if (fineGranted || coarseGranted) {
+            checkGpsSettingsAndFetchLocation();
+            return;
+        }
+
+        if (hasRequestedLocationPermissionOnce && !ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            showLocationPermissionSettingsDialog();
+            return;
+        }
+
+        hasRequestedLocationPermissionOnce = true;
+        ActivityCompat.requestPermissions(
+                this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                LOCATION_PERMISSION_REQUEST_CODE
+        );
+    }
+
+    private void showLocationPermissionSettingsDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.onboarding_location_perm_title)
+                .setMessage(R.string.onboarding_location_perm_msg)
+                .setPositiveButton(R.string.onboarding_go_to_settings, (dialog, which) -> {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to open settings: " + e.getMessage());
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
     private void fetchLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                    LOCATION_PERMISSION_REQUEST_CODE);
+            handleDetectLocationClick();
             return;
         }
 
@@ -493,10 +571,9 @@ public class OnboardingActivity extends BaseActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                fetchLocation();
+                checkGpsSettingsAndFetchLocation();
             } else {
-                // Non-blocking: user already has their country pre-filled from Locale!
-                Log.d(TAG, "Location permission declined, using pre-filled country.");
+                showLocationPermissionSettingsDialog();
             }
         }
     }
@@ -508,6 +585,21 @@ public class OnboardingActivity extends BaseActivity {
             if (resultCode == RESULT_OK) {
                 fetchLocation();
             }
+        } else if (requestCode == REQUEST_VERIFICATION) {
+            String currentGender = tokenManager.getUserGender();
+            if ("male".equalsIgnoreCase(currentGender)) {
+                tokenManager.setVerified(true);
+                Toast.makeText(this, "Profile updated to Male & verified! 👨", Toast.LENGTH_SHORT).show();
+            } else if (resultCode == RESULT_OK) {
+                tokenManager.setVerified(true);
+                Toast.makeText(this, "Profile verified! Welcome to Camverz ✨", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Face verification is required for female profiles.", Toast.LENGTH_LONG).show();
+            }
+            Intent intent = new Intent(OnboardingActivity.this, MainScreenActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         }
     }
 
@@ -537,21 +629,24 @@ public class OnboardingActivity extends BaseActivity {
             selectGender("male");
         }
 
-        // 3. City Resilience (Never block! Use locale country if city is blank)
+        // 3. City Validation (Strict: Never default to India/Global. User must type or detect city)
         if (TextUtils.isEmpty(city)) {
-            try {
-                city = Locale.getDefault().getDisplayCountry();
-            } catch (Exception ignored) {}
-            if (TextUtils.isEmpty(city)) {
-                city = !TextUtils.isEmpty(detectedCountry) ? detectedCountry : "Global";
-            }
-            etCity.setText(city);
+            etCity.setError(getString(R.string.onboarding_error_city));
+            etCity.requestFocus();
+            Toast.makeText(this, R.string.onboarding_error_city, Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // 4. Date of Birth Resilience (Default to 18+ valid birthdate)
+        // 4. Date of Birth Validation (Strict: Must be selected and >= 18, 0/empty not allowed)
         if (TextUtils.isEmpty(selectedDob)) {
-            selectedDob = DEFAULT_DOB;
-            tvBirthday.setText(selectedDob);
+            Toast.makeText(this, R.string.onboarding_error_dob, Toast.LENGTH_SHORT).show();
+            openDatePicker();
+            return;
+        }
+        int age = calculateAgeFromString(selectedDob);
+        if (age < 18) {
+            showAgeErrorDialog();
+            return;
         }
 
         // Show saving state
@@ -575,7 +670,12 @@ public class OnboardingActivity extends BaseActivity {
         Map<String, Object> profileUpdate = new HashMap<>();
         profileUpdate.put("name", name);
         profileUpdate.put("gender", gender);
+        profileUpdate.put("sex_preference", selectedSexPreference);
+        profileUpdate.put("sexPreference", selectedSexPreference);
         profileUpdate.put("city", city);
+        if (!TextUtils.isEmpty(detectedCountry)) {
+            profileUpdate.put("country", detectedCountry);
+        }
         profileUpdate.put("dob", dob);
         profileUpdate.put("avatar", "av1");
 
@@ -629,11 +729,19 @@ public class OnboardingActivity extends BaseActivity {
                 "av1",
                 tokenManager.isVerified()
         );
+        tokenManager.setSexPreference(selectedSexPreference);
 
-        Intent intent = new Intent(OnboardingActivity.this, MainScreenActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        if ("female".equalsIgnoreCase(gender)) {
+            Log.d(TAG, "Female user detected: launching camera verification immediately");
+            Intent intent = new Intent(OnboardingActivity.this, VerificationActivity.class);
+            intent.putExtra("selected_gender", "female");
+            startActivityForResult(intent, REQUEST_VERIFICATION);
+        } else {
+            Intent intent = new Intent(OnboardingActivity.this, MainScreenActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        }
     }
 
     private void setSavingState(boolean saving) {

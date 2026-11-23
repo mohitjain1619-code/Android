@@ -399,84 +399,86 @@ io.on("connection", (socket) => {
       // No match found, enqueue self
       await redisModule.addToQueue(uid, gender, category);
 
-      // LEVEL 3: Bot Fallback Timer (PRIORITY ALWAYS TO REAL USERS: search for 8.5 seconds first)
-      if (socket.botFallbackTimer) {
-        clearTimeout(socket.botFallbackTimer);
-        socket.botFallbackTimer = null;
-      }
+      // LEVEL 3: Bot Fallback Timer (PRIORITY ALWAYS TO REAL USERS: search for 7.0 seconds first)
+      // IMPORTANT: Do NOT reset the timer if it is already ticking from a previous join-queue / heartbeat!
+      if (!socket.botFallbackTimer) {
+        socket.botFallbackTimer = setTimeout(async () => {
+          socket.botFallbackTimer = null;
+          try {
+            if (!socket.isSearching || socket.peerUid) return;
 
-      socket.botFallbackTimer = setTimeout(async () => {
-        try {
-          if (!socket.isSearching || socket.peerUid) return;
+            // Priority Check: Did a real user join the queue while we waited?
+            const latePeerId = await redisModule.popFromQueue(targetQueueKey);
+            if (latePeerId && latePeerId !== uid) {
+              const latePeerSocketId = await redisModule.getUserSocket(latePeerId);
+              const latePeerSocket = latePeerSocketId ? io.sockets.sockets.get(latePeerSocketId) : null;
+              if (latePeerSocket && latePeerSocket.isSearching) {
+                // Real match found! Real users always prioritized!
+                if (latePeerSocket.botFallbackTimer) {
+                  clearTimeout(latePeerSocket.botFallbackTimer);
+                  latePeerSocket.botFallbackTimer = null;
+                }
+                await redisModule.removeFromQueue(latePeerId);
+                await redisModule.removeFromQueue(uid);
+                const room = uid.localeCompare(latePeerId) < 0 ? `${uid}_${latePeerId}` : `${latePeerId}_${uid}`;
+                socket.isSearching = false;
+                socket.peerUid = latePeerId;
+                socket.currentRoom = room;
+                latePeerSocket.isSearching = false;
+                latePeerSocket.peerUid = uid;
+                latePeerSocket.currentRoom = room;
 
-          // Priority Check: Did a real user join the queue while we waited?
-          const latePeerId = await redisModule.popFromQueue(targetQueueKey);
-          if (latePeerId && latePeerId !== uid) {
-            const latePeerSocketId = await redisModule.getUserSocket(latePeerId);
-            const latePeerSocket = latePeerSocketId ? io.sockets.sockets.get(latePeerSocketId) : null;
-            if (latePeerSocket && latePeerSocket.isSearching) {
-              // Real match found! Real users always prioritized!
-              if (latePeerSocket.botFallbackTimer) {
-                clearTimeout(latePeerSocket.botFallbackTimer);
-                latePeerSocket.botFallbackTimer = null;
+                console.log("💚 REAL MATCH FOUND (late queue pop):", uid, "<>", latePeerId);
+                socket.emit("match-found", { peerId: latePeerId });
+                latePeerSocket.emit("match-found", { peerId: uid });
+                return;
               }
-              await redisModule.removeFromQueue(latePeerId);
-              await redisModule.removeFromQueue(uid);
-              const room = uid.localeCompare(latePeerId) < 0 ? `${uid}_${latePeerId}` : `${latePeerId}_${uid}`;
-              socket.isSearching = false;
-              socket.peerUid = latePeerId;
-              socket.currentRoom = room;
-              latePeerSocket.isSearching = false;
-              latePeerSocket.peerUid = uid;
-              latePeerSocket.currentRoom = room;
-
-              console.log("💚 REAL MATCH FOUND (late queue pop):", uid, "<>", latePeerId);
-              socket.emit("match-found", { peerId: latePeerId });
-              latePeerSocket.emit("match-found", { peerId: uid });
-              return;
             }
+
+            // No real user available after 7.0s -> Trigger Level 3 Bot Fallback (Zero Search Drop-off)
+            const userRec = await queryOne("SELECT gender, sex_preference FROM users WHERE id = $1", [uid]);
+            const userGen = (userRec?.gender || gender || "male").toLowerCase();
+            const reqCategory = String(category || "").toLowerCase().trim();
+            const userPref = (reqCategory === "gay" || reqCategory === "lesbian")
+              ? reqCategory
+              : (userRec?.sex_preference || reqCategory || "straight").toLowerCase();
+
+            const bots = await botEngagementService.getMatchingBots(userGen, userPref, 1);
+            if (!bots || bots.length === 0) return;
+            const bot = bots[0];
+
+            await redisModule.removeFromQueue(uid);
+            socket.isSearching = false;
+            socket.peerUid = bot.id;
+            const botRoom = `bot_call_${uid}_${bot.id}`;
+            socket.currentRoom = botRoom;
+
+            // Orientation-aware video selection:
+            // Gay Male or Straight Female -> Male Bot video clip (Video_!.mp4 in gay_straightgirls)
+            const isGayOrStraightFemale = userPref.includes("gay") || reqCategory === "gay" || (userGen === "female" && !userPref.includes("lesbian"));
+            const botAssetPath = isGayOrStraightFemale
+              ? "bot_videos/gay_straightgirls/Video_!.mp4"
+              : "bot_videos/gay_straightgirls/Video_!.mp4"; // fallback for now until female video provided
+            const botVideoUrl = isGayOrStraightFemale
+              ? "/uploads/bot_videos/gay_straightgirls/Video_!.mp4"
+              : "/uploads/bot_videos/gay_straightgirls/Video_!.mp4";
+
+            console.log(`🤖 [Level 3 Bot Call] Zero-dropoff fallback for user ${uid} (${userGen}, category: ${reqCategory}, pref: ${userPref}) matched with Bot ${bot.name} (${bot.gender}) after 7.0s!`);
+
+            socket.emit("match-found", {
+              peerId: bot.id,
+              peerName: bot.name,
+              peerAvatar: bot.avatar,
+              isBotCall: true,
+              botVideoUrl: botVideoUrl,
+              botAssetPath: botAssetPath,
+              room: botRoom,
+            });
+          } catch (botErr) {
+            console.error("Level 3 Bot fallback error:", botErr);
           }
-
-          // No real user available after 8.5s -> Trigger Level 3 Bot Fallback (Zero Search Drop-off)
-          const userRec = await queryOne("SELECT gender, sex_preference FROM users WHERE id = $1", [uid]);
-          const userGen = (userRec?.gender || gender || "male").toLowerCase();
-          const userPref = (userRec?.sex_preference || "straight").toLowerCase();
-
-          const bots = await botEngagementService.getMatchingBots(userGen, userPref, 1);
-          if (!bots || bots.length === 0) return;
-          const bot = bots[0];
-
-          await redisModule.removeFromQueue(uid);
-          socket.isSearching = false;
-          socket.peerUid = bot.id;
-          const botRoom = `bot_call_${uid}_${bot.id}`;
-          socket.currentRoom = botRoom;
-
-          // Orientation-aware video selection:
-          // Gay Male or Straight Female -> Male Bot video clip (Video_1.mp4 in gay_straightgirls)
-          const isGayOrStraightFemale = userPref.includes("gay") || (userGen === "female" && !userPref.includes("lesbian"));
-          const botAssetPath = isGayOrStraightFemale
-            ? "bot_videos/gay_straightgirls/video_1.mp4"
-            : "bot_videos/gay_straightgirls/video_1.mp4"; // fallback for now until female video provided
-          const botVideoUrl = isGayOrStraightFemale
-            ? "/uploads/bot_videos/gay_straightgirls/video_1.mp4"
-            : "/uploads/bot_videos/gay_straightgirls/video_1.mp4";
-
-          console.log(`🤖 [Level 3 Bot Call] Zero-dropoff fallback for user ${uid} (${userGen}, ${userPref}) matched with Bot ${bot.name} (${bot.gender}) after 8.5s!`);
-
-          socket.emit("match-found", {
-            peerId: bot.id,
-            peerName: bot.name,
-            peerAvatar: bot.avatar,
-            isBotCall: true,
-            botVideoUrl: botVideoUrl,
-            botAssetPath: botAssetPath,
-            room: botRoom,
-          });
-        } catch (botErr) {
-          console.error("Level 3 Bot fallback error:", botErr);
-        }
-      }, 8500);
+        }, 7000);
+      }
     }
   });
 

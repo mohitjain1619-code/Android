@@ -806,6 +806,11 @@ public class VerificationActivity extends BaseActivity {
     }
 
     private void fetchSelectedGender() {
+        String intentGender = getIntent().getStringExtra("selected_gender");
+        if (intentGender != null && !intentGender.trim().isEmpty()) {
+            selectedGender = intentGender.toLowerCase().trim();
+            Log.d(TAG, "Selected gender from intent: " + selectedGender);
+        }
         api.getMe().enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
@@ -838,10 +843,7 @@ public class VerificationActivity extends BaseActivity {
      */
     private void performGenderVerification() {
         if ("Change Your Gender".equalsIgnoreCase(verifyGenderButton.getText().toString().trim())) {
-            Intent intent = new Intent(this, ProfileActivity.class);
-            intent.putExtra("userId", tokenManager.getUserId());
-            startActivity(intent);
-            finish();
+            navigateToProfileAsMale();
             return;
         }
 
@@ -940,11 +942,35 @@ public class VerificationActivity extends BaseActivity {
                                 verifyGenderButton.setEnabled(true);
                                 verifyGenderButton.setText("Change Your Gender");
                                 
-                                String errorMsg = "Verification failed. Please retake.";
-                                if ("female".equalsIgnoreCase(selectedGender) && "male".equalsIgnoreCase(detectedGender)) {
-                                    errorMsg = "We detected you as a boy.";
+                                boolean detectedBoy = "female".equalsIgnoreCase(selectedGender) && "male".equalsIgnoreCase(detectedGender);
+                                if (detectedBoy || (json.has("genderChangedToMale") && json.get("genderChangedToMale").getAsBoolean())) {
+                                    // Update local state and TokenManager immediately to Male
+                                    selectedGender = "male";
+                                    String userId = tokenManager.getUserId();
+                                    String name = tokenManager.getUserName();
+                                    String email = tokenManager.getUserEmail();
+                                    String avatar = tokenManager.getUserAvatar();
+                                    tokenManager.saveUser(userId, name, email, "male", avatar, true);
+                                    tokenManager.setVerified(true);
+
+                                    // Auto-update backend as well
+                                    Map<String, Object> updateData = new HashMap<>();
+                                    updateData.put("gender", "male");
+                                    updateData.put("verified", true);
+                                    updateData.put("verificationStatus", "approved");
+                                    api.updateMe(updateData).enqueue(new Callback<JsonObject>() {
+                                        @Override
+                                        public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {}
+                                        @Override
+                                        public void onFailure(Call<JsonObject> call, Throwable t) {}
+                                    });
+
+                                    Toast.makeText(VerificationActivity.this, "We detected you as a boy. Gender updated to Male.", Toast.LENGTH_LONG).show();
+                                    showSwitchGenderDialog();
+                                } else {
+                                    String errorMsg = "Verification failed. Please retake.";
+                                    Toast.makeText(VerificationActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                                 }
-                                Toast.makeText(VerificationActivity.this, errorMsg, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
@@ -996,17 +1022,25 @@ public class VerificationActivity extends BaseActivity {
 
     private void showSwitchGenderDialog() {
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Change Gender to Male?")
-                .setMessage("We detected your face as Male. Would you like to update your profile gender to Male?\n\n⚠️ WARNING: Once updated, your profile will be auto-verified as Male and you will NOT be able to change your gender again.")
-                .setPositiveButton("Change to Male", (dialog, which) -> {
+                .setTitle("Boy Detected 👦")
+                .setMessage("We detected your face as Male. We have updated your profile gender to Male and verified your account.\n\nTap below to open your profile.")
+                .setPositiveButton("Go to Profile", (dialog, which) -> {
                     dialog.dismiss();
-                    updateProfileToMale();
+                    navigateToProfileAsMale();
                 })
-                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
                 .show();
     }
 
-    private void updateProfileToMale() {
+    private void navigateToProfileAsMale() {
+        selectedGender = "male";
+        String userId = tokenManager.getUserId();
+        String name = tokenManager.getUserName();
+        String email = tokenManager.getUserEmail();
+        String avatar = tokenManager.getUserAvatar();
+        tokenManager.saveUser(userId, name, email, "male", avatar, true);
+        tokenManager.setVerified(true);
+
         Map<String, Object> updateData = new HashMap<>();
         updateData.put("gender", "male");
         updateData.put("verified", true);
@@ -1015,28 +1049,25 @@ public class VerificationActivity extends BaseActivity {
         api.updateMe(updateData).enqueue(new Callback<JsonObject>() {
             @Override
             public void onResponse(Call<JsonObject> call, retrofit2.Response<JsonObject> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().get("ok").getAsBoolean()) {
-                    Toast.makeText(VerificationActivity.this, "Profile updated to Male successfully!", Toast.LENGTH_SHORT).show();
-                    
-                    // Update locally saved user info in TokenManager
-                    String userId = tokenManager.getUserId();
-                    String name = tokenManager.getUserName();
-                    String email = tokenManager.getUserEmail();
-                    String avatar = tokenManager.getUserAvatar();
-                    tokenManager.saveUser(userId, name, email, "male", avatar, true);
-                    
-                    setResult(RESULT_OK);
-                    finish();
-                } else {
-                    Toast.makeText(VerificationActivity.this, "Failed to update profile gender", Toast.LENGTH_SHORT).show();
-                }
+                openProfileActivityAsMale();
             }
 
             @Override
             public void onFailure(Call<JsonObject> call, Throwable t) {
-                Toast.makeText(VerificationActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                openProfileActivityAsMale();
             }
         });
+    }
+
+    private void openProfileActivityAsMale() {
+        Toast.makeText(this, "Profile updated to Male & verified! 👨", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(VerificationActivity.this, ProfileActivity.class);
+        intent.putExtra("userId", tokenManager.getUserId());
+        intent.putExtra("gender_override", "male");
+        intent.putExtra("from_onboarding", true);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override

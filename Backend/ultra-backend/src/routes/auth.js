@@ -132,36 +132,36 @@ router.post("/google", async (req, res) => {
     let isNewUser = false;
 
     if (user) {
-      const safeCountry = detectedCountry || user.country || 'India';
-      const safeCity = user.city || safeCountry;
+      const safeCountry = user.country || null;
+      const safeCity = user.city || null;
       const safeGender = (user.gender && user.gender.trim() && user.gender.toLowerCase() !== 'unspecified') ? user.gender : 'male';
-      const safeDob = (user.dob && user.dob.trim()) ? user.dob : '15/06/2002';
+      const safeDob = (user.dob && user.dob.trim()) ? user.dob : null;
       const safeSexPref = (user.sex_preference && user.sex_preference.trim()) ? user.sex_preference : 'Straight';
 
       await query(
         `UPDATE users SET 
            google_id = $1, 
            photo_url = COALESCE(NULLIF($2, ''), photo_url), 
-           country = COALESCE($3, country, 'India'),
+           country = COALESCE($3, country),
            city = COALESCE(NULLIF(city, ''), $4),
            gender = COALESCE(NULLIF(gender, ''), $5),
            dob = COALESCE(NULLIF(dob, ''), $6),
            sex_preference = COALESCE(NULLIF(sex_preference, ''), $7)
          WHERE id = $8`,
-        [googleId, photoUrl, detectedCountry || null, safeCity, safeGender, safeDob, safeSexPref, user.id]
+        [googleId, photoUrl, safeCountry, safeCity, safeGender, safeDob, safeSexPref, user.id]
       );
-      if (detectedCountry) user.country = detectedCountry;
+      user.country = safeCountry;
       user.city = safeCity;
       user.gender = safeGender;
       user.dob = safeDob;
-      console.log(`✅ Existing user logged in: ${user.id} (${email}) | Country: ${user.country || 'Global'} | City: ${user.city}`);
+      console.log(`✅ Existing user logged in: ${user.id} (${email}) | Country: ${user.country || 'Not Set'} | City: ${user.city || 'Not Set'}`);
     } else {
-      // Create new user with safe production fallbacks so they never stay as uninitialized ghost profiles
+      // Create new user without fake hardcoded location/dob - real location and dob entered strictly during onboarding
       isNewUser = true;
-      const safeCountry = detectedCountry || 'India';
-      const safeCity = safeCountry;
+      const safeCountry = null;
+      const safeCity = null;
       const safeGender = 'male';
-      const safeDob = '15/06/2002';
+      const safeDob = null;
       const safeSexPref = 'Straight';
 
       user = await queryOne(
@@ -177,7 +177,7 @@ router.post("/google", async (req, res) => {
          RETURNING *`,
         [googleId, email, name, photoUrl, googleId.substring(0, 8), safeCountry, safeCity, safeGender, safeDob, safeSexPref]
       );
-      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Global'} | City: ${user.city}`);
+      console.log(`✅ New user created: ${user.id} (${email}) | Country: ${user.country || 'Not Set'} | City: ${user.city || 'Not Set'}`);
     }
 
       // Track affiliate signup if referred
@@ -232,8 +232,10 @@ router.post("/google", async (req, res) => {
     // Generate JWT
     const token = generateToken(user);
 
-    // Level 2 Retention Booster: Schedule personalized welcome DM from a matching bot
-    botEngagementService.scheduleWelcomeDM(user.id, req.app.get("io"), req.app.get("redisModule"));
+    // Schedule personalized welcome DM only if user already has completed onboarding
+    if (user.city && user.dob && user.sex_preference) {
+      botEngagementService.scheduleWelcomeDM(user.id, req.app.get("io"), req.app.get("redisModule"));
+    }
 
     return res.json({
       ok: true,

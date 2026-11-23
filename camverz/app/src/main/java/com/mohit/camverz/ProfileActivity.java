@@ -107,7 +107,16 @@ public class ProfileActivity extends BaseActivity {
         }
 
         // Back button
-        findViewById(R.id.back_button_container).setOnClickListener(v -> finish());
+        findViewById(R.id.back_button_container).setOnClickListener(v -> {
+            if (getIntent().getBooleanExtra("from_onboarding", false) || isTaskRoot()) {
+                Intent intent = new Intent(this, MainScreenActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            } else {
+                finish();
+            }
+        });
 
         // Floating Menu Buttons
         findViewById(R.id.menu_home_btn).setOnClickListener(v -> {
@@ -169,21 +178,6 @@ public class ProfileActivity extends BaseActivity {
                     }, 200);
                 }
             });
-            bio.setOnClickListener(v -> {
-                profileScrollView.postDelayed(() -> {
-                    int yScroll = Math.max(0, bio.getTop() - 100);
-                    profileScrollView.smoothScrollTo(0, yScroll);
-                }, 200);
-            });
-        }
-        if (editBioIcon != null && bio != null && profileScrollView != null) {
-            editBioIcon.setOnClickListener(v -> {
-                bio.requestFocus();
-                profileScrollView.postDelayed(() -> {
-                    int yScroll = Math.max(0, bio.getTop() - 100);
-                    profileScrollView.smoothScrollTo(0, yScroll);
-                }, 200);
-            });
         }
 
         if (sexPreferenceLayout != null) {
@@ -220,6 +214,11 @@ public class ProfileActivity extends BaseActivity {
             startActivityForResult(intent, 102);
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         });
+
+        Button btnRetestOnboarding = findViewById(R.id.btn_retest_onboarding);
+        if (btnRetestOnboarding != null) {
+            btnRetestOnboarding.setOnClickListener(v -> showRetestOnboardingDialog());
+        }
 
         profileName.setText("");
         bio.setText("");
@@ -372,11 +371,27 @@ public class ProfileActivity extends BaseActivity {
     private void setupUI() {
         menuIcon.setOnClickListener(v -> showPopupMenu(v));
 
-        if (!currentUserId.equals(visitedUserId)) {
-            editNameIcon.setVisibility(View.GONE);
-            editBioIcon.setVisibility(View.GONE);
-            profileImageView.setClickable(false);
-            otherUserActionsLayout.setVisibility(View.VISIBLE);
+        boolean isOwnProfile = currentUserId != null && visitedUserId != null && currentUserId.trim().equalsIgnoreCase(visitedUserId.trim());
+
+        if (!isOwnProfile) {
+            if (editNameIcon != null) editNameIcon.setVisibility(View.GONE);
+            if (editBioIcon != null) editBioIcon.setVisibility(View.GONE);
+            if (profileImageView != null) profileImageView.setClickable(false);
+            if (otherUserActionsLayout != null) otherUserActionsLayout.setVisibility(View.VISIBLE);
+
+            // Disable editing & hide editing hints on another person's profile
+            if (profileName != null) {
+                profileName.setEnabled(false);
+                profileName.setFocusable(false);
+                profileName.setClickable(false);
+            }
+            if (bio != null) {
+                bio.setEnabled(false);
+                bio.setFocusable(false);
+                bio.setClickable(false);
+                bio.setCursorVisible(false);
+                bio.setHint("");
+            }
 
             followButton.setOnClickListener(v -> followUser());
             messageButton.setOnClickListener(v -> {
@@ -391,9 +406,14 @@ public class ProfileActivity extends BaseActivity {
             });
 
         } else {
-            otherUserActionsLayout.setVisibility(View.GONE);
-            profileName.setEnabled(false);
-            bio.setEnabled(false);
+            if (editNameIcon != null) editNameIcon.setVisibility(View.VISIBLE);
+            if (editBioIcon != null) editBioIcon.setVisibility(View.VISIBLE);
+            if (otherUserActionsLayout != null) otherUserActionsLayout.setVisibility(View.GONE);
+            if (profileName != null) profileName.setEnabled(false);
+            if (bio != null) {
+                bio.setEnabled(false);
+                bio.setHint(R.string.write_your_bio_hint);
+            }
         }
 
         swipeRefreshLayout.setOnRefreshListener(() -> {
@@ -763,12 +783,36 @@ public class ProfileActivity extends BaseActivity {
     private void updateProfileUI() {
         if (isBlocked || isBlockedByOther) return;
 
+        boolean isOwnProfile = currentUserId != null && visitedUserId != null && currentUserId.trim().equalsIgnoreCase(visitedUserId.trim());
+
         String name = visitedUser.getName();
-        if (currentUserId.equals(visitedUserId) && tokenManager.hasActivePlan()) {
+        if (isOwnProfile && tokenManager.hasActivePlan()) {
             name = "👑 " + name;
         }
         profileName.setText(name);
-        bio.setText(visitedUser.getBio());
+
+        String userBio = visitedUser.getBio();
+        if (isOwnProfile) {
+            bio.setText(userBio);
+            if (editNameIcon != null) editNameIcon.setVisibility(View.VISIBLE);
+            if (editBioIcon != null) editBioIcon.setVisibility(View.VISIBLE);
+        } else {
+            if (editNameIcon != null) editNameIcon.setVisibility(View.GONE);
+            if (editBioIcon != null) editBioIcon.setVisibility(View.GONE);
+            if (profileName != null) {
+                profileName.setEnabled(false);
+                profileName.setFocusable(false);
+                profileName.setClickable(false);
+            }
+            if (bio != null) {
+                bio.setEnabled(false);
+                bio.setFocusable(false);
+                bio.setClickable(false);
+                bio.setCursorVisible(false);
+                bio.setHint("");
+                bio.setText(userBio != null ? userBio : "");
+            }
+        }
         profileDetails.setText(String.format("%d, %s", getAge(visitedUser.getDob()), visitedUser.getCity()));
         
         followersCount.setText(String.valueOf(visitedUser.getFollowersCount()));
@@ -826,6 +870,23 @@ public class ProfileActivity extends BaseActivity {
                 verifyIdentityButton.setVisibility(View.VISIBLE);
             } else {
                 verifyIdentityButton.setVisibility(View.GONE);
+            }
+        }
+
+        // Exclusive Admin Onboarding Retest option for Mohit's accounts
+        Button btnRetestOnboarding = findViewById(R.id.btn_retest_onboarding);
+        if (btnRetestOnboarding != null) {
+            String myEmail = tokenManager.getUserEmail();
+            boolean isMohitAdmin = myEmail != null && (
+                    myEmail.trim().equalsIgnoreCase("mohitjain1619@gmail.com") ||
+                    myEmail.trim().equalsIgnoreCase("mohitjain8120@gmail.com") ||
+                    myEmail.trim().equalsIgnoreCase("mohitj8120@gmail.com") ||
+                    myEmail.trim().equalsIgnoreCase("jainmohit8120@gmail.com")
+            );
+            if (currentUserId.equals(visitedUserId) && isMohitAdmin) {
+                btnRetestOnboarding.setVisibility(View.VISIBLE);
+            } else {
+                btnRetestOnboarding.setVisibility(View.GONE);
             }
         }
 
@@ -1052,14 +1113,33 @@ public class ProfileActivity extends BaseActivity {
                         visitedUser.setBio(userObj.has("bio") && !userObj.get("bio").isJsonNull() ? userObj.get("bio").getAsString() : "");
                         visitedUser.setAvatar(userObj.has("avatar") ? userObj.get("avatar").getAsString() : "");
                         visitedUser.setGender(userObj.has("gender") ? userObj.get("gender").getAsString() : "");
+                        
+                        // If coming from gender detection override
+                        String genderOverride = getIntent().getStringExtra("gender_override");
+                        if ("male".equalsIgnoreCase(genderOverride)) {
+                            visitedUser.setGender("male");
+                            visitedUser.setVerified(true);
+                        }
+
                         visitedUser.setCity(userObj.has("city") && !userObj.get("city").isJsonNull() ? userObj.get("city").getAsString() : "");
                         visitedUser.setDob(userObj.has("dob") && !userObj.get("dob").isJsonNull() ? userObj.get("dob").getAsString() : "");
                         visitedUser.setCustomId(userObj.has("customId") && !userObj.get("customId").isJsonNull() ? userObj.get("customId").getAsString() : "");
                         visitedUser.setVerified(userObj.has("verified") && userObj.get("verified").getAsBoolean());
+                        if ("male".equalsIgnoreCase(visitedUser.getGender())) {
+                            visitedUser.setVerified(true);
+                        }
                         visitedUser.setSexPreference(userObj.has("sexPreference") && !userObj.get("sexPreference").isJsonNull() ? userObj.get("sexPreference").getAsString() : "Straight");
 
                         if (currentUserId.equals(visitedUserId)) {
                             tokenManager.setSexPreference(visitedUser.getSexPreference());
+                            tokenManager.saveUser(
+                                    currentUserId,
+                                    visitedUser.getName(),
+                                    tokenManager.getUserEmail(),
+                                    visitedUser.getGender(),
+                                    visitedUser.getAvatar(),
+                                    visitedUser.isVerified() || "male".equalsIgnoreCase(visitedUser.getGender())
+                            );
 
                             // Parse active plan details
                             String planName = userObj.has("planName") && !userObj.get("planName").isJsonNull()
@@ -1308,6 +1388,35 @@ public class ProfileActivity extends BaseActivity {
         } else {
             return getString(R.string.remaining_mins, diffMin);
         }
+    }
+
+    private void showRetestOnboardingDialog() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("🛠️ Retest Onboarding Flow")
+                .setMessage("Reset onboarding status and start Onboarding screen from the beginning?")
+                .setPositiveButton("Start Fresh", (dialog, which) -> {
+                    tokenManager.setOnboardingComplete(false);
+                    // Also clear backend city/country/dob so it's 100% fresh
+                    try {
+                        java.util.Map<String, Object> resetMap = new java.util.HashMap<>();
+                        resetMap.put("city", "");
+                        resetMap.put("country", "");
+                        resetMap.put("dob", "");
+                        api.updateMe(resetMap).enqueue(new retrofit2.Callback<com.google.gson.JsonObject>() {
+                            @Override
+                            public void onResponse(retrofit2.Call<com.google.gson.JsonObject> call, retrofit2.Response<com.google.gson.JsonObject> response) {}
+                            @Override
+                            public void onFailure(retrofit2.Call<com.google.gson.JsonObject> call, Throwable t) {}
+                        });
+                    } catch (Exception ignored) {}
+
+                    Intent intent = new Intent(ProfileActivity.this, OnboardingActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     @Override
