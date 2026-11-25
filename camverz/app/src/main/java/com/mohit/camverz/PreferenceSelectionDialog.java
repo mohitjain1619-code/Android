@@ -62,24 +62,11 @@ public class PreferenceSelectionDialog extends Dialog {
         MaterialCardView cardTransgender = view.findViewById(R.id.card_transgender);
         MaterialButton btnSave = view.findViewById(R.id.btn_save);
 
-        // Restrict options based on gender
-        String gender = tokenManager.getUserGender();
-        if ("male".equalsIgnoreCase(gender)) {
-            cardStraight.setVisibility(View.VISIBLE);
-            cardGay.setVisibility(View.VISIBLE);
-            cardLesbian.setVisibility(View.GONE);
-            cardTransgender.setVisibility(View.GONE);
-        } else if ("female".equalsIgnoreCase(gender)) {
-            cardStraight.setVisibility(View.VISIBLE);
-            cardGay.setVisibility(View.GONE);
-            cardLesbian.setVisibility(View.VISIBLE);
-            cardTransgender.setVisibility(View.GONE);
-        } else {
-            cardStraight.setVisibility(View.VISIBLE);
-            cardGay.setVisibility(View.VISIBLE);
-            cardLesbian.setVisibility(View.VISIBLE);
-            cardTransgender.setVisibility(View.VISIBLE);
-        }
+        // Show Straight, Gay, and Lesbian options (non-closable)
+        cardStraight.setVisibility(View.VISIBLE);
+        cardGay.setVisibility(View.VISIBLE);
+        cardLesbian.setVisibility(View.VISIBLE);
+        cardTransgender.setVisibility(View.GONE);
 
         // Pre-select current preference if already configured
         String currentPreference = tokenManager.getSexPreference();
@@ -119,28 +106,35 @@ public class PreferenceSelectionDialog extends Dialog {
             
             Map<String, Object> updates = new HashMap<>();
             updates.put("sex_preference", selectedPreference);
+            updates.put("sexPreference", selectedPreference);
 
             apiService.updateMe(updates).enqueue(new Callback<JsonObject>() {
                 @Override
                 public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                     btnSave.setEnabled(true);
                     btnSave.setText("Confirm Preference");
-                    if (response.isSuccessful() && response.body() != null) {
-                        tokenManager.setSexPreference(selectedPreference);
-                        if (listener != null) {
-                            listener.onSelected(selectedPreference);
-                        }
-                        dismiss();
-                    } else {
-                        Toast.makeText(getContext(), "Failed to save preference. Please try again.", Toast.LENGTH_SHORT).show();
+                    tokenManager.setSexPreference(selectedPreference);
+                    if ("female".equalsIgnoreCase(tokenManager.getUserGender())) {
+                        tokenManager.setFemalePostPrefConfirmed(true);
                     }
+                    if (listener != null) {
+                        listener.onSelected(selectedPreference);
+                    }
+                    dismiss();
                 }
 
                 @Override
                 public void onFailure(Call<JsonObject> call, Throwable t) {
                     btnSave.setEnabled(true);
                     btnSave.setText("Confirm Preference");
-                    Toast.makeText(getContext(), "Network error. Please check connection.", Toast.LENGTH_SHORT).show();
+                    tokenManager.setSexPreference(selectedPreference);
+                    if ("female".equalsIgnoreCase(tokenManager.getUserGender())) {
+                        tokenManager.setFemalePostPrefConfirmed(true);
+                    }
+                    if (listener != null) {
+                        listener.onSelected(selectedPreference);
+                    }
+                    dismiss();
                 }
             });
         });

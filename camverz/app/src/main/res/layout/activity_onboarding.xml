@@ -195,118 +195,126 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- SEXUAL PREFERENCE SECTION -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="@string/onboarding_pref_label"
-            android:textColor="#E2E8F0"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
+        <!-- SEXUAL PREFERENCE SECTION (Hidden from onboarding form, prompted via non-closable popup on Start Camverz) -->
         <LinearLayout
+            android:id="@+id/layoutSexPreference"
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_marginBottom="18dp"
-            android:orientation="horizontal"
-            android:weightSum="3">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
 
-            <!-- Straight -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="@string/onboarding_pref_label"
+                android:textColor="#E2E8F0"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
             <LinearLayout
-                android:id="@+id/cardStraight"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_pref_card_selected"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="6dp">
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:layout_marginBottom="18dp"
+                android:orientation="horizontal"
+                android:weightSum="3">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👫"
-                    android:textSize="20sp" />
+                <!-- Straight -->
+                <LinearLayout
+                    android:id="@+id/cardStraight"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_pref_card_selected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="6dp">
 
-                <TextView
-                    android:id="@+id/tvStraightText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/onboarding_pref_straight"
-                    android:textColor="#00E5FF"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👫"
+                        android:textSize="20sp" />
 
-            <!-- Gay -->
-            <LinearLayout
-                android:id="@+id/cardGay"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="3dp"
-                android:layout_marginEnd="3dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_pref_card_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="6dp">
+                    <TextView
+                        android:id="@+id/tvStraightText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/onboarding_pref_straight"
+                        android:textColor="#00E5FF"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👨‍❤️‍👨"
-                    android:textSize="20sp" />
+                <!-- Gay -->
+                <LinearLayout
+                    android:id="@+id/cardGay"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="3dp"
+                    android:layout_marginEnd="3dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_pref_card_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="6dp">
 
-                <TextView
-                    android:id="@+id/tvGayText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/onboarding_pref_gay"
-                    android:textColor="#94A3B8"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👨‍❤️‍👨"
+                        android:textSize="20sp" />
 
-            <!-- Lesbian -->
-            <LinearLayout
-                android:id="@+id/cardLesbian"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_pref_card_unselected"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:padding="6dp">
+                    <TextView
+                        android:id="@+id/tvGayText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/onboarding_pref_gay"
+                        android:textColor="#94A3B8"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👩‍❤️‍👩"
-                    android:textSize="20sp" />
+                <!-- Lesbian -->
+                <LinearLayout
+                    android:id="@+id/cardLesbian"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_pref_card_unselected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="6dp">
 
-                <TextView
-                    android:id="@+id/tvLesbianText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/onboarding_pref_lesbian"
-                    android:textColor="#94A3B8"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="👩‍❤️‍👩"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/tvLesbianText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/onboarding_pref_lesbian"
+                        android:textColor="#94A3B8"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 

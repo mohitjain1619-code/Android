@@ -191,7 +191,12 @@ public class MainScreenActivity extends BaseActivity {
                             sexPref = userObj.get("sex_preference").getAsString();
                         }
                         if (sexPref != null && !sexPref.trim().isEmpty()) {
-                            tokenManager.setSexPreference(sexPref.trim());
+                            String currentGender = tokenManager.getUserGender();
+                            boolean isVerified = tokenManager.isVerified();
+                            // Do not let backend default overwrite preference if female is unverified and hasn't confirmed preference yet
+                            if (!("female".equalsIgnoreCase(currentGender) && !isVerified && !tokenManager.isFemalePostPrefConfirmed())) {
+                                tokenManager.setSexPreference(sexPref.trim());
+                            }
                         }
 
                         Log.d(TAG, "Plan sync: name=" + planName + ", adFree=" + planIsAdFree + ", active=" + hasActivePlan);

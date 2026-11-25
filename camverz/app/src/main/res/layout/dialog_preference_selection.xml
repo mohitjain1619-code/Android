@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:text="Select your primary sexual preference: gay, lesbian, straight or transgender (you can edit this later)"
+            android:text="Select your preference: Straight, Gay, or Lesbian"
             android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 

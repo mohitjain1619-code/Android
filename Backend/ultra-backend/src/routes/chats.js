@@ -127,7 +127,12 @@ router.post("/:targetUserId/messages", async (req, res) => {
       return res.status(400).json({ error: "Message text is required" });
     }
 
-    const targetId = req.params.targetUserId;
+    let targetId = req.params.targetUserId;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetId);
+    if (!isUUID) {
+      const resolved = await queryOne("SELECT id FROM users WHERE custom_id = $1 OR google_id = $1", [targetId]);
+      if (resolved) targetId = resolved.id;
+    }
     if (targetId === req.user.userId) {
       return res.status(400).json({ error: "Cannot message yourself" });
     }

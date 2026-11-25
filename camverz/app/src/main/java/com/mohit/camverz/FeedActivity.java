@@ -97,11 +97,9 @@ public class FeedActivity extends BaseActivity {
             }
         });
 
-        // Create Post Button
+        // Create Post Button (+ Icon)
         findViewById(R.id.fab_create_post).setOnClickListener(v -> {
-            AdManager.getInstance().preloadDualBiddingAds(this);
-            startActivity(new Intent(this, CreatePostActivity.class));
-            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+            handleCreatePostClick(false);
         });
 
         // Floating Menu Buttons
@@ -204,10 +202,7 @@ public class FeedActivity extends BaseActivity {
                             "Tap to create a post",
                             true, android.graphics.Color.parseColor("#00FFFF"), () -> {
                                 SpotlightOverlayView.detach(this);
-                                Intent createIntent = new Intent(this, CreatePostActivity.class);
-                                createIntent.putExtra("is_onboarding_post", true);
-                                startActivity(createIntent);
-                                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                                handleCreatePostClick(true);
                             });
                 });
             }
@@ -227,6 +222,47 @@ public class FeedActivity extends BaseActivity {
         } else {
             SpotlightOverlayView.detach(this);
         }
+    }
+
+    private void handleCreatePostClick(boolean isOnboardingPost) {
+        TokenManager tokenManager = TokenManager.getInstance(this);
+        String gender = tokenManager.getUserGender();
+        boolean isVerified = tokenManager.isVerified();
+        boolean femaleConfirmed = tokenManager.isFemalePostPrefConfirmed();
+
+        // If female user has chosen female gender, is unverified, and has not confirmed preference yet:
+        // Ask ONLY ONE TIME when she clicks the + icon to create a post!
+        if ("female".equalsIgnoreCase(gender) && !isVerified && !femaleConfirmed) {
+            PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, selectedPref -> {
+                tokenManager.setSexPreference(selectedPref);
+                tokenManager.setFemalePostPrefConfirmed(true);
+                proceedToCreatePost(isOnboardingPost);
+            });
+            dialog.show();
+            return;
+        }
+
+        String preference = tokenManager.getSexPreference();
+        if (preference == null || preference.trim().isEmpty()) {
+            PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, selectedPref -> {
+                tokenManager.setSexPreference(selectedPref);
+                proceedToCreatePost(isOnboardingPost);
+            });
+            dialog.show();
+            return;
+        }
+
+        proceedToCreatePost(isOnboardingPost);
+    }
+
+    private void proceedToCreatePost(boolean isOnboardingPost) {
+        AdManager.getInstance().preloadDualBiddingAds(this);
+        Intent createIntent = new Intent(this, CreatePostActivity.class);
+        if (isOnboardingPost) {
+            createIntent.putExtra("is_onboarding_post", true);
+        }
+        startActivity(createIntent);
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 
     private void setCategory(String category) {

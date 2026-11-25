@@ -22,9 +22,9 @@ router.post("/request", async (req, res) => {
     }
     let targetUser;
     if (isValidUUID(targetUserId)) {
-      targetUser = await queryOne("SELECT id FROM users WHERE id = $1", [targetUserId]);
+      targetUser = await queryOne("SELECT id, is_bot FROM users WHERE id = $1", [targetUserId]);
     } else {
-      targetUser = await queryOne("SELECT id FROM users WHERE custom_id = $1 OR google_id = $1", [targetUserId]);
+      targetUser = await queryOne("SELECT id, is_bot FROM users WHERE custom_id = $1 OR google_id = $1", [targetUserId]);
     }
     if (!targetUser) return res.status(404).json({ error: "Target user not found" });
 
@@ -44,6 +44,12 @@ router.post("/request", async (req, res) => {
       `INSERT INTO friend_requests (from_user_id, to_user_id) VALUES ($1, $2) RETURNING *`,
       [req.user.userId, resolvedTargetId]
     );
+
+    // If target is bot, auto-accept immediately so user can friend & chat seamlessly
+    if (targetUser.is_bot) {
+      await query("UPDATE friend_requests SET status = 'accepted' WHERE id = $1", [request.id]);
+      request.status = "accepted";
+    }
 
     // Create notification
     await query(

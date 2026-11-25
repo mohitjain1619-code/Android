@@ -146,6 +146,146 @@ app.use("/uploads/stories", (req, res, next) => {
   next();
 });
 
+// Dynamic Bot Video Selector — Auto-scans directory so ANY new video added to folder is immediately available without code or app updates
+function getAvailableBotVideos(category) {
+  const dirs = [
+    path.join(__dirname, "uploads/bot_videos", category),
+    path.join(__dirname, "../../camverz/videos", category),
+  ];
+  for (const d of dirs) {
+    if (fs.existsSync(d) && fs.statSync(d).isDirectory()) {
+      try {
+        const files = fs.readdirSync(d).filter((f) => /\.(mp4|webm|mkv|mov)$/i.test(f));
+        if (files.length > 0) {
+          return files.map((f) => ({
+            url: `/uploads/bot_videos/${category}/${encodeURIComponent(f)}`,
+            asset: `bot_videos/${category}/${f}`,
+            filename: f,
+          }));
+        }
+      } catch (e) { }
+    }
+  }
+  return [];
+}
+
+// In-memory fallback if Redis is temporarily unreachable
+const inMemorySeenVideos = new Map();
+
+/**
+ * Anti-Repeat Video Selector:
+ * Ensures the same user NEVER gets the same video twice in a row.
+ * Rotates across the entire pool like an intelligent shuffle deck.
+ */
+async function getNonRepeatingBotVideo(userId, category) {
+  const allVideos = getAvailableBotVideos(category);
+  if (!allVideos || allVideos.length === 0) return null;
+  if (allVideos.length === 1) return allVideos[0];
+
+  const redisKey = `camverz:seen_bot_videos:${userId}:${category}`;
+  let seenFilenames = [];
+
+  try {
+    if (redisModule && redisModule.redis) {
+      seenFilenames = await redisModule.redis.lrange(redisKey, 0, -1);
+    }
+  } catch (e) { }
+
+  if (!seenFilenames || seenFilenames.length === 0) {
+    seenFilenames = inMemorySeenVideos.get(`${userId}:${category}`) || [];
+  }
+
+  // Filter out videos the user has already seen in this cycle
+  const unseenVideos = allVideos.filter((v) => !seenFilenames.includes(v.filename));
+
+  let chosenVideo;
+  if (unseenVideos.length > 0) {
+    // Pick randomly from remaining unseen videos
+    chosenVideo = unseenVideos[Math.floor(Math.random() * unseenVideos.length)];
+  } else {
+    // All videos have been watched by this user!
+    // Reset cycle, but exclude the very last video they just watched so it never repeats back-to-back
+    const lastSeen = seenFilenames[seenFilenames.length - 1];
+    const poolExceptLast = allVideos.filter((v) => v.filename !== lastSeen);
+    const resetPool = poolExceptLast.length > 0 ? poolExceptLast : allVideos;
+    chosenVideo = resetPool[Math.floor(Math.random() * resetPool.length)];
+
+    // Reset history
+    try {
+      if (redisModule && redisModule.redis) {
+        await redisModule.redis.del(redisKey);
+      }
+    } catch (e) { }
+    inMemorySeenVideos.delete(`${userId}:${category}`);
+    seenFilenames = [];
+  }
+
+  // Record this video in user's seen history
+  try {
+    if (redisModule && redisModule.redis) {
+      await redisModule.redis.rpush(redisKey, chosenVideo.filename);
+      await redisModule.redis.expire(redisKey, 7 * 24 * 3600); // 7 days retention
+    }
+  } catch (e) { }
+
+  const memList = inMemorySeenVideos.get(`${userId}:${category}`) || [];
+  memList.push(chosenVideo.filename);
+  if (memList.length > allVideos.length) memList.shift();
+  inMemorySeenVideos.set(`${userId}:${category}`, memList);
+
+  return chosenVideo;
+}
+
+/**
+ * Dynamic Bot Persona Mapping:
+ * Assigns a realistic, consistent bot persona (Name + Native Avatar)
+ * to each video so different videos show different people.
+ */
+function getBotPersonaForVideo(filename, gender = "male") {
+  if (gender === "male") {
+    const malePersonas = [
+      { id: "bot_kabir_sharma", name: "Kabir Sharma", avatar: "av2" },
+      { id: "bot_rohan_verma", name: "Rohan Verma", avatar: "av6" },
+      { id: "bot_sameer_khan", name: "Sameer Khan", avatar: "av7" },
+      { id: "bot_aryan_malhotra", name: "Aryan Malhotra", avatar: "av9" },
+      { id: "bot_vicky_rathore", name: "Vicky Rathore", avatar: "av14" },
+      { id: "bot_devansh_joshi", name: "Devansh Joshi", avatar: "av15" },
+    ];
+    const hash = Math.abs((filename || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0));
+    return malePersonas[hash % malePersonas.length];
+  } else {
+    const femalePersonas = [
+      { id: "bot_simran_kaur", name: "Simran Kaur", avatar: "av11" },
+      { id: "bot_priya_sharma", name: "Priya Sharma", avatar: "av3" },
+      { id: "bot_ananya_roy", name: "Ananya Roy", avatar: "av4" },
+      { id: "bot_riya_sen", name: "Riya Sen", avatar: "av5" },
+      { id: "bot_tanya_singh", name: "Tanya Singh", avatar: "av10" },
+      { id: "bot_meera_kapoor", name: "Meera Kapoor", avatar: "av12" },
+    ];
+    const hash = Math.abs((filename || "").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0));
+    return femalePersonas[hash % femalePersonas.length];
+  }
+}
+
+// Dynamic fallback: check uploads/bot_videos first; if not found, check camverz/videos
+app.use("/uploads/bot_videos", (req, res, next) => {
+  const relPath = decodeURIComponent(req.path);
+  const primaryPath = path.join(__dirname, "uploads/bot_videos", relPath);
+  const devPath = path.join(__dirname, "../../camverz/videos", relPath);
+
+  const fileToSend = (fs.existsSync(primaryPath) && fs.statSync(primaryPath).isFile())
+    ? primaryPath
+    : ((fs.existsSync(devPath) && fs.statSync(devPath).isFile()) ? devPath : null);
+
+  if (fileToSend) {
+    res.setHeader("Content-Type", "video/mp4");
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    return res.sendFile(fileToSend);
+  }
+  next();
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
   maxAge: "365d",
   setHeaders: (res, filePath) => {
@@ -253,6 +393,7 @@ io.on("connection", (socket) => {
     socket.peerUid = null;
     socket.currentRoom = null;
     await redisModule.setUserOnline(uid, socket.id);
+    query("UPDATE users SET last_active_at = NOW() WHERE id = $1", [uid]).catch(() => {});
     console.log("✅ User registered:", uid, "→", socket.id);
 
     // Check for pending incoming private call session (e.g. device just woke up via FCM push)
@@ -447,33 +588,72 @@ io.on("connection", (socket) => {
             if (!bots || bots.length === 0) return;
             const bot = bots[0];
 
-            await redisModule.removeFromQueue(uid);
-            socket.isSearching = false;
-            socket.peerUid = bot.id;
-            const botRoom = `bot_call_${uid}_${bot.id}`;
-            socket.currentRoom = botRoom;
-
             // Orientation-aware video selection:
-            // Gay Male or Straight Female -> Male Bot video clip (Video_!.mp4 in gay_straightgirls)
-            const isGayOrStraightFemale = userPref.includes("gay") || reqCategory === "gay" || (userGen === "female" && !userPref.includes("lesbian"));
-            const botAssetPath = isGayOrStraightFemale
-              ? "bot_videos/gay_straightgirls/Video_!.mp4"
-              : "bot_videos/gay_straightgirls/Video_!.mp4"; // fallback for now until female video provided
-            const botVideoUrl = isGayOrStraightFemale
-              ? "/uploads/bot_videos/gay_straightgirls/Video_!.mp4"
-              : "/uploads/bot_videos/gay_straightgirls/Video_!.mp4";
+            // ONLY Gay Male or Straight Female are seeking a MALE -> Male Bot video clip (gay_straightgirls/Video_!.mp4)
+            const isGayMale = reqCategory === "gay" || userPref.includes("gay");
+            const isStraightGirl = userGen === "female" && (reqCategory === "straight" || userPref === "straight");
+            const seekingMale = isGayMale || isStraightGirl;
 
-            console.log(`🤖 [Level 3 Bot Call] Zero-dropoff fallback for user ${uid} (${userGen}, category: ${reqCategory}, pref: ${userPref}) matched with Bot ${bot.name} (${bot.gender}) after 7.0s!`);
+            if (seekingMale) {
+              const chosen = await getNonRepeatingBotVideo(uid, "gay_straightgirls");
+              if (!chosen) {
+                console.log(`🔍 No male video found for user ${uid}. Keeping in queue for real match.`);
+                return;
+              }
 
-            socket.emit("match-found", {
-              peerId: bot.id,
-              peerName: bot.name,
-              peerAvatar: bot.avatar,
-              isBotCall: true,
-              botVideoUrl: botVideoUrl,
-              botAssetPath: botAssetPath,
-              room: botRoom,
-            });
+              const persona = getBotPersonaForVideo(chosen.filename, "male");
+              const botAssetPath = chosen.asset;
+              const botVideoUrl = chosen.url;
+              const matchedPeerId = persona.id;
+              const botName = persona.name;
+              const botAvatar = persona.avatar;
+
+              await redisModule.removeFromQueue(uid);
+              socket.isSearching = false;
+              socket.peerUid = matchedPeerId;
+              const botRoom = `bot_call_${uid}_${matchedPeerId}`;
+              socket.currentRoom = botRoom;
+
+              console.log(`🤖 [Level 3 Bot Call] Seeking Male -> Matched with ${botName} (${chosen.filename}) [Anti-Repeat Active]`);
+              socket.emit("match-found", {
+                peerId: matchedPeerId,
+                peerName: botName,
+                peerAvatar: botAvatar,
+                isBotCall: true,
+                botVideoUrl: botVideoUrl,
+                botAssetPath: botAssetPath,
+                room: botRoom,
+              });
+            } else {
+              // Straight male or lesbian female seeking female:
+              const femaleCategory = userPref.includes("lesbian") ? "lesbian" : "straight_boys";
+              let chosen = await getNonRepeatingBotVideo(uid, femaleCategory);
+              if (!chosen) {
+                chosen = await getNonRepeatingBotVideo(uid, "straightboys_lesbian");
+              }
+
+              if (chosen) {
+                const persona = getBotPersonaForVideo(chosen.filename, "female");
+                await redisModule.removeFromQueue(uid);
+                socket.isSearching = false;
+                socket.peerUid = persona.id;
+                const botRoom = `bot_call_${uid}_${persona.id}`;
+                socket.currentRoom = botRoom;
+
+                console.log(`🤖 [Level 3 Bot Call] Seeking Female -> Matched with ${persona.name} (${chosen.filename}) [Anti-Repeat Active]`);
+                socket.emit("match-found", {
+                  peerId: persona.id,
+                  peerName: persona.name,
+                  peerAvatar: persona.avatar,
+                  isBotCall: true,
+                  botVideoUrl: chosen.url,
+                  botAssetPath: chosen.asset,
+                  room: botRoom,
+                });
+              } else {
+                console.log(`🔍 User ${uid} is seeking female. No female video found in straight_boys folder yet. Keeping in queue for real match.`);
+              }
+            }
           } catch (botErr) {
             console.error("Level 3 Bot fallback error:", botErr);
           }
@@ -832,6 +1012,7 @@ io.on("connection", (socket) => {
       try {
         await redisModule.setUserOffline(disconnectedUid);
         await redisModule.removeFromQueue(disconnectedUid);
+        query("UPDATE users SET last_active_at = NOW() WHERE id = $1", [disconnectedUid]).catch(() => {});
       } catch (err) {
         console.error("Error setting user offline:", err);
       }

@@ -87,33 +87,48 @@ public class LoginActivity extends BaseActivity {
             Toast.makeText(this, "⚠️ Account deleted or session reset. Please sign in again.", Toast.LENGTH_LONG).show();
         }
 
-        appUpdateHelper = new AppUpdateHelper(this);
-
-        // Check Play Install Referrer for referrals
-        checkInstallReferrer();
-
-        // Check if already signed in (has JWT token)
-        if (tokenManager.isLoggedIn()) {
-            if (tokenManager.isOnboardingComplete()) {
-                Log.d(TAG, "User already signed in & profile complete, going to MainScreen");
-                goToMainScreen();
-                return;
-            } else {
-                Log.d(TAG, "User signed in but onboarding incomplete, routing to GenderSelection");
-                goToGenderSelection();
-                return;
-            }
+        try {
+            appUpdateHelper = new AppUpdateHelper(this);
+            appUpdateHelper.checkForUpdates();
+        } catch (Throwable t) {
+            Log.e(TAG, "Error initializing appUpdateHelper", t);
         }
 
-        appUpdateHelper.checkForUpdates();
+        // Check Play Install Referrer for referrals
+        try {
+            checkInstallReferrer();
+        } catch (Throwable t) {
+            Log.e(TAG, "Error checking install referrer", t);
+        }
+
+        // Check if already signed in (has JWT token)
+        try {
+            if (tokenManager.isLoggedIn()) {
+                if (tokenManager.isOnboardingComplete()) {
+                    Log.d(TAG, "User already signed in & profile complete, going to MainScreen");
+                    goToMainScreen();
+                    return;
+                } else {
+                    Log.d(TAG, "User signed in but onboarding incomplete, routing to GenderSelection");
+                    goToGenderSelection();
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "Error checking login status", t);
+        }
 
         // Configure Google Sign-In (same as before — still using Google OAuth)
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
+        try {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.default_web_client_id))
+                    .requestEmail()
+                    .build();
 
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+            mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+        } catch (Throwable t) {
+            Log.e(TAG, "Error initializing GoogleSignInClient", t);
+        }
 
         loadingOverlay = findViewById(R.id.loading_overlay);
         getStartedButton = findViewById(R.id.get_started_button);

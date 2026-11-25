@@ -649,15 +649,26 @@ public class OnboardingActivity extends BaseActivity {
             return;
         }
 
-        // Show saving state
-        setSavingState(true);
-
         final String finalName = name;
         final String finalCity = city;
         final String finalGender = selectedGender;
         final String finalDob = selectedDob;
 
-        executeProfileUpdateWithRetry(finalName, finalGender, finalCity, finalDob, 2);
+        if ("male".equalsIgnoreCase(selectedGender)) {
+            // Male user: Show non-closable preference dialog upon Start Camverz
+            PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, preference -> {
+                selectedSexPreference = preference;
+                setSavingState(true);
+                executeProfileUpdateWithRetry(finalName, finalGender, finalCity, finalDob, 2);
+            });
+            dialog.show();
+        } else {
+            // Female user: Do NOT show preference popup during onboarding!
+            // It will be asked later after verification, or when she creates a post.
+            selectedSexPreference = "";
+            setSavingState(true);
+            executeProfileUpdateWithRetry(finalName, finalGender, finalCity, finalDob, 2);
+        }
     }
 
     private void executeProfileUpdateWithRetry(
@@ -670,8 +681,10 @@ public class OnboardingActivity extends BaseActivity {
         Map<String, Object> profileUpdate = new HashMap<>();
         profileUpdate.put("name", name);
         profileUpdate.put("gender", gender);
-        profileUpdate.put("sex_preference", selectedSexPreference);
-        profileUpdate.put("sexPreference", selectedSexPreference);
+        if (!TextUtils.isEmpty(selectedSexPreference)) {
+            profileUpdate.put("sex_preference", selectedSexPreference);
+            profileUpdate.put("sexPreference", selectedSexPreference);
+        }
         profileUpdate.put("city", city);
         if (!TextUtils.isEmpty(detectedCountry)) {
             profileUpdate.put("country", detectedCountry);
@@ -730,6 +743,9 @@ public class OnboardingActivity extends BaseActivity {
                 tokenManager.isVerified()
         );
         tokenManager.setSexPreference(selectedSexPreference);
+        if ("female".equalsIgnoreCase(gender)) {
+            tokenManager.setFemalePostPrefConfirmed(false);
+        }
 
         if ("female".equalsIgnoreCase(gender)) {
             Log.d(TAG, "Female user detected: launching camera verification immediately");

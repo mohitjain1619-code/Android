@@ -53,6 +53,9 @@ public class ConnectingActivity extends BaseActivity {
     private Handler countdownHandler;
     private Runnable countdownRunnable;
 
+    private Handler clientBotFallbackHandler;
+    private Runnable clientBotFallbackRunnable;
+
     private TextView waitingText;
     private long searchStartTime = 0;
 
@@ -134,6 +137,97 @@ public class ConnectingActivity extends BaseActivity {
         }
 
         startQueueHeartbeat();
+        startClientBotFallback();
+    }
+
+    private void startClientBotFallback() {
+        cancelClientBotFallback();
+        clientBotFallbackHandler = new Handler(Looper.getMainLooper());
+        clientBotFallbackRunnable = () -> {
+            if (isWaiting && !isFinishing() && !isDestroyed()) {
+                triggerClientBotFallback();
+            }
+        };
+        // 9.0s safety timer ensures that even if remote backend heartbeat resets or lags, user is matched seamlessly
+        clientBotFallbackHandler.postDelayed(clientBotFallbackRunnable, 9000);
+    }
+
+    private void cancelClientBotFallback() {
+        if (clientBotFallbackHandler != null && clientBotFallbackRunnable != null) {
+            clientBotFallbackHandler.removeCallbacks(clientBotFallbackRunnable);
+            clientBotFallbackHandler = null;
+            clientBotFallbackRunnable = null;
+        }
+    }
+
+    private void triggerClientBotFallback() {
+        if (!isWaiting || isFinishing() || isDestroyed()) return;
+
+        // Sexual orientation matching:
+        // 'gay_straightgirls/Video_!.mp4' contains a MALE video.
+        // It must ONLY be played to users who are seeking a MALE:
+        // 1. Gay male (category == "gay")
+        // 2. Straight girl (userGender == "female" && category == "straight")
+        boolean isGayMale = "gay".equalsIgnoreCase(category);
+        boolean isStraightGirl = "female".equalsIgnoreCase(userGender) && "straight".equalsIgnoreCase(category);
+        boolean seekingMale = isGayMale || isStraightGirl;
+
+        if (seekingMale) {
+            Log.d(TAG, "🤖 [Client Fallback] User is seeking male -> matching with Kabir Sharma (gay_straightgirls/Video_!.mp4)");
+            isWaiting = false;
+            stopQueueHeartbeat();
+            cancelClientBotFallback();
+
+            String botId = "bot_kabir_sharma";
+            String botName = "Kabir Sharma";
+            String botAvatar = "av2";
+            String botAssetPath = "bot_videos/gay_straightgirls/Video_!.mp4";
+            String botVideoUrl = "https://android-9t8m.onrender.com/uploads/bot_videos/gay_straightgirls/Video_!.mp4";
+
+            startMatchTransitionCountdown(botId, botName, botAvatar, true, botVideoUrl, botAssetPath);
+        } else {
+            // User is seeking a FEMALE (e.g. Straight Boy or Lesbian Girl)
+            // NEVER connect a straight boy to a male video!
+            // Check if a female video exists in assets (e.g. straight_boys or straightboys_lesbian)
+            String femaleAsset = findAvailableFemaleBotVideoAsset();
+            if (femaleAsset != null) {
+                Log.d(TAG, "🤖 [Client Fallback] Female bot video found -> matching with Simran Kaur (" + femaleAsset + ")");
+                isWaiting = false;
+                stopQueueHeartbeat();
+                cancelClientBotFallback();
+
+                String botId = "bot_simran_kaur";
+                String botName = "Simran Kaur";
+                String botAvatar = "av11";
+                String botVideoUrl = "https://android-9t8m.onrender.com/uploads/" + femaleAsset;
+
+                startMatchTransitionCountdown(botId, botName, botAvatar, true, botVideoUrl, femaleAsset);
+            } else {
+                Log.d(TAG, "🔍 Straight boy seeking female: gay_straightgirls is boy-only. No female bot video uploaded yet. Continuing search for real female users.");
+                if (waitingText != null) {
+                    waitingText.setText("Finding a real match... Please wait");
+                }
+            }
+        }
+    }
+
+    private String findAvailableFemaleBotVideoAsset() {
+        String[] candidatePaths = {
+            "bot_videos/straight_boys/Video_!.mp4",
+            "bot_videos/straight_boys/video_1.mp4",
+            "bot_videos/straightboys_lesbian/Video_!.mp4",
+            "bot_videos/straightboys_lesbian/video_1.mp4"
+        };
+        for (String path : candidatePaths) {
+            try {
+                android.content.res.AssetFileDescriptor afd = getAssets().openFd(path);
+                if (afd != null && afd.getLength() > 50000) {
+                    afd.close();
+                    return path;
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 
     private void startQueueHeartbeat() {
@@ -152,15 +246,16 @@ public class ConnectingActivity extends BaseActivity {
                         socket.emit("join-queue", obj);
                     } catch (Exception e) {}
                     if (queueHeartbeatHandler != null) {
-                        queueHeartbeatHandler.postDelayed(this, 8000); // 8 second heartbeat
+                        queueHeartbeatHandler.postDelayed(this, 25000); // 25s heartbeat to prevent resetting backend timer
                     }
                 }
             }
         };
-        queueHeartbeatHandler.postDelayed(queueHeartbeatRunnable, 8000);
+        queueHeartbeatHandler.postDelayed(queueHeartbeatRunnable, 25000);
     }
 
     private void stopQueueHeartbeat() {
+        cancelClientBotFallback();
         if (queueHeartbeatHandler != null && queueHeartbeatRunnable != null) {
             queueHeartbeatHandler.removeCallbacks(queueHeartbeatRunnable);
             queueHeartbeatHandler = null;
@@ -200,6 +295,7 @@ public class ConnectingActivity extends BaseActivity {
     }
 
     private void cancelCountdown() {
+        cancelClientBotFallback();
         if (countdownHandler != null && countdownRunnable != null) {
             countdownHandler.removeCallbacks(countdownRunnable);
             countdownHandler = null;
@@ -275,7 +371,8 @@ public class ConnectingActivity extends BaseActivity {
     private void startMatchTransitionCountdown(String peerId, String peerName, String peerAvatar, boolean isBotCall, String botVideoUrl, String botAssetPath) {
         cancelCountdown();
         if (waitingText != null) {
-            waitingText.setText("Matched! Connecting...");
+            String displayName = (peerName != null && !peerName.trim().isEmpty()) ? peerName : "Match";
+            waitingText.setText("Matched with " + displayName + "! Connecting...");
         }
         countdownHandler = new Handler(Looper.getMainLooper());
         countdownRunnable = () -> {

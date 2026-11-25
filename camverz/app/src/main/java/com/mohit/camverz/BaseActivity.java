@@ -95,9 +95,14 @@ public class BaseActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "⚠️ Screenshot/Recording Protection: OFF (DEBUG MODE OR BYPASS)");
         }
-        // Initialize AdManager globally across all activities (isolated from AdTestingActivity)
-        if (!getClass().getSimpleName().contains("AdTestingActivity")) {
-            initializeIronSource(this);
+        // Initialize AdManager globally across all activities (isolated from AdTestingActivity and LanguageSelectionActivity)
+        if (!getClass().getSimpleName().contains("AdTestingActivity")
+                && !getClass().getSimpleName().contains("LanguageSelectionActivity")) {
+            try {
+                initializeIronSource(this);
+            } catch (Throwable t) {
+                Log.e(TAG, "Error initializing IronSource in BaseActivity", t);
+            }
         }
     }
 

@@ -106,7 +106,7 @@ public class CallActivity extends BaseActivity {
     private boolean isBotCall = false;
     private String botVideoUrl = null;
     private String botAssetPath = null;
-    private android.widget.VideoView botVideoView;
+    private CenterCropVideoView botVideoView;
     private boolean connectionAnimationActive = true;
     private boolean isCallAccepted = false;
     private boolean isCameraCapturing = false;
@@ -724,13 +724,7 @@ public class CallActivity extends BaseActivity {
             }
         } catch (Exception ignored) {}
 
-        // In-call realistic bot banter after 3.5 seconds
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (!isFinishing() && !isDestroyed() && !callEnded) {
-                String botNameStr = (peerNameValue != null && !peerNameValue.isEmpty()) ? peerNameValue : "Matched User";
-                Toast.makeText(CallActivity.this, "💬 " + botNameStr + ": Hey! Can you hear me? Mic thoda glitch kar raha hai haha 🙈", Toast.LENGTH_LONG).show();
-            }
-        }, 3500);
+
     }
 
     private void playBotVideo() {
@@ -743,8 +737,13 @@ public class CallActivity extends BaseActivity {
             botVideoView.setOnPreparedListener(mp -> {
                 Log.d(TAG, "▶️ Bot video onPrepared callback fired!");
                 try {
-                    mp.setLooping(true);
+                    mp.setLooping(false);
                     mp.setVolume(1.0f, 1.0f);
+                    int vw = mp.getVideoWidth();
+                    int vh = mp.getVideoHeight();
+                    if (botVideoView != null && vw > 0 && vh > 0) {
+                        botVideoView.setVideoDimensions(vw, vh);
+                    }
                 } catch (Exception e) {
                     Log.w(TAG, "Error configuring mediaPlayer in onPrepared", e);
                 }
@@ -752,46 +751,56 @@ public class CallActivity extends BaseActivity {
                     remoteAvatarOverlay.setVisibility(View.GONE);
                 }
                 botVideoView.start();
-                Log.d(TAG, "▶️ Bot video started playing and looping!");
+                Log.d(TAG, "▶️ Bot video started playing!");
             });
 
             botVideoView.setOnCompletionListener(mp -> {
-                botVideoView.seekTo(0);
-                botVideoView.start();
+                Log.d(TAG, "⏹️ Bot video finished! Disconnecting call as other user ended.");
+                runOnUiThread(() -> {
+                    Toast.makeText(CallActivity.this, "User disconnected the call", Toast.LENGTH_SHORT).show();
+                    disconnect();
+                });
             });
 
             botVideoView.setOnErrorListener((mp, what, extra) -> {
                 Log.e(TAG, "❌ Bot VideoView error: what=" + what + ", extra=" + extra);
-                if (botVideoUrl != null && !botVideoUrl.isEmpty()) {
-                    String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
-                    String fullUrl = botVideoUrl.startsWith("http") ? botVideoUrl : baseUrl + botVideoUrl;
-                    Log.d(TAG, "🤖 Fallback streaming from server URL: " + fullUrl);
-                    try {
-                        botVideoView.setOnErrorListener(null);
-                        botVideoView.setVideoURI(android.net.Uri.parse(fullUrl));
+                try {
+                    botVideoView.setOnErrorListener(null);
+                    // Fallback to local cached asset if remote streaming fails
+                    String fallbackAsset = (botAssetPath != null && !botAssetPath.isEmpty()) 
+                        ? botAssetPath 
+                        : "bot_videos/gay_straightgirls/Video_!.mp4";
+                    java.io.File cachedVideo = getOrExtractAssetVideo(fallbackAsset);
+                    if (cachedVideo != null && cachedVideo.exists() && cachedVideo.length() > 50000) {
+                        Log.d(TAG, "🤖 Falling back to local cached asset: " + cachedVideo.getAbsolutePath());
+                        botVideoView.setVideoPath(cachedVideo.getAbsolutePath());
                         botVideoView.start();
-                    } catch (Exception ex) {
-                        Log.e(TAG, "Failed fallback streaming URL", ex);
+                        return true;
                     }
+                } catch (Exception ex) {
+                    Log.e(TAG, "Failed fallback to local cached asset", ex);
                 }
                 return true;
             });
 
-            String assetPathToUse = (botAssetPath != null && !botAssetPath.isEmpty()) 
-                ? botAssetPath 
-                : "bot_videos/gay_straightgirls/Video_!.mp4";
-
-            java.io.File cachedVideo = getOrExtractAssetVideo(assetPathToUse);
-            if (cachedVideo != null && cachedVideo.exists() && cachedVideo.length() > 50000) {
-                Log.d(TAG, "🤖 Playing bot video from local cached asset: " + cachedVideo.getAbsolutePath() + " (size: " + cachedVideo.length() + ")");
-                botVideoView.setVideoPath(cachedVideo.getAbsolutePath());
-            } else if (botVideoUrl != null && !botVideoUrl.isEmpty()) {
+            // Prioritize dynamic server botVideoUrl so new videos added to backend/cloud play dynamically without PlayStore app updates!
+            if (botVideoUrl != null && !botVideoUrl.trim().isEmpty()) {
                 String baseUrl = com.mohit.camverz.BuildConfig.BASE_URL;
                 String fullUrl = botVideoUrl.startsWith("http") ? botVideoUrl : baseUrl + botVideoUrl;
-                Log.d(TAG, "🤖 Streaming bot video from server URL: " + fullUrl);
+                Log.d(TAG, "🤖 Streaming dynamic bot video from server URL: " + fullUrl);
                 botVideoView.setVideoURI(android.net.Uri.parse(fullUrl));
             } else {
-                Log.w(TAG, "⚠️ No valid bot video source found.");
+                String assetPathToUse = (botAssetPath != null && !botAssetPath.isEmpty()) 
+                    ? botAssetPath 
+                    : "bot_videos/gay_straightgirls/Video_!.mp4";
+
+                java.io.File cachedVideo = getOrExtractAssetVideo(assetPathToUse);
+                if (cachedVideo != null && cachedVideo.exists() && cachedVideo.length() > 50000) {
+                    Log.d(TAG, "🤖 Playing bot video from local cached asset: " + cachedVideo.getAbsolutePath() + " (size: " + cachedVideo.length() + ")");
+                    botVideoView.setVideoPath(cachedVideo.getAbsolutePath());
+                } else {
+                    Log.w(TAG, "⚠️ No valid bot video source found.");
+                }
             }
 
         } catch (Exception e) {
@@ -2186,6 +2195,25 @@ public class CallActivity extends BaseActivity {
             return;
         }
 
+        if (isBotCall) {
+            // For bot calls: The name and avatar are known and deterministic.
+            // Do NOT let unseeded server fallbacks overwrite them with generic "User" / "av1"!
+            if (peerNameValue == null || peerNameValue.isEmpty() || "User".equalsIgnoreCase(peerNameValue)) {
+                peerNameValue = (passedName != null && !passedName.isEmpty()) ? passedName : "Kabir Sharma";
+            }
+            if (peerAvatarUrl == null || peerAvatarUrl.isEmpty() || "av1".equalsIgnoreCase(peerAvatarUrl)) {
+                peerAvatarUrl = (passedAvatar != null && !passedAvatar.isEmpty()) ? passedAvatar : "av2";
+            }
+            if (peerName != null) peerName.setText(peerNameValue);
+            if (remoteAvatarNameText != null) remoteAvatarNameText.setText(peerNameValue);
+            AvatarHelper.loadAvatar(CallActivity.this, null, peerAvatarUrl, peerNameValue, peerAvatar);
+            AvatarHelper.loadAvatar(CallActivity.this, null, peerAvatarUrl, peerNameValue, remoteAvatarLarge);
+            AvatarHelper.loadAvatar(CallActivity.this, null, peerAvatarUrl, peerNameValue, remoteAvatarBlurBg);
+            friendStatus = "none";
+            updateFollowButtonUI();
+            return;
+        }
+
         checkFriendStatus();
 
         final String fallbackName = passedName;
@@ -2198,8 +2226,29 @@ public class CallActivity extends BaseActivity {
                     JsonObject data = response.body();
                     if (data.has("ok") && data.get("ok").getAsBoolean() && data.has("user")) {
                         JsonObject user = data.getAsJsonObject("user");
-                        peerNameValue = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : (fallbackName != null ? fallbackName : "User");
-                        peerAvatarUrl = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : (fallbackAvatar != null ? fallbackAvatar : "");
+                        String serverName = user.has("name") && !user.get("name").isJsonNull() ? user.get("name").getAsString() : "";
+                        if (!serverName.isEmpty() && !"User".equalsIgnoreCase(serverName)) {
+                            peerNameValue = serverName;
+                        } else if (fallbackName != null && !fallbackName.isEmpty()) {
+                            peerNameValue = fallbackName;
+                        } else {
+                            peerNameValue = "User";
+                        }
+
+                        String serverAvatar = user.has("avatar") && !user.get("avatar").isJsonNull() ? user.get("avatar").getAsString() : "";
+                        if (!serverAvatar.isEmpty()) {
+                            peerAvatarUrl = serverAvatar;
+                        } else if (fallbackAvatar != null && !fallbackAvatar.isEmpty()) {
+                            peerAvatarUrl = fallbackAvatar;
+                        }
+
+                        if (user.has("id") && !user.get("id").isJsonNull()) {
+                            String realId = user.get("id").getAsString();
+                            if (realId != null && !realId.isEmpty()) {
+                                peerId = realId;
+                            }
+                        }
+
                         String photoUrl = user.has("photoUrl") && !user.get("photoUrl").isJsonNull() ? user.get("photoUrl").getAsString() : null;
 
                         if (peerName != null) peerName.setText(peerNameValue);
@@ -2270,6 +2319,26 @@ public class CallActivity extends BaseActivity {
         
         if ("friends".equalsIgnoreCase(friendStatus)) {
             Toast.makeText(this, "You are already friends!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (isBotCall) {
+            // For bot calls: Instant accept and update UI to Friends
+            isUpdatingFollow = false;
+            friendStatus = "friends";
+            updateFollowButtonUI();
+            Toast.makeText(CallActivity.this, "Friend Request Accepted! 🎉", Toast.LENGTH_SHORT).show();
+
+            try {
+                java.util.Map<String, String> body = new java.util.HashMap<>();
+                body.put("targetUserId", peerId);
+                api.sendFriendRequest(body).enqueue(new retrofit2.Callback<JsonObject>() {
+                    @Override
+                    public void onResponse(retrofit2.Call<JsonObject> call, retrofit2.Response<JsonObject> response) {}
+                    @Override
+                    public void onFailure(retrofit2.Call<JsonObject> call, Throwable t) {}
+                });
+            } catch (Exception ignored) {}
             return;
         }
 

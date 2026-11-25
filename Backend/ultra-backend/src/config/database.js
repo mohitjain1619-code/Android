@@ -372,7 +372,21 @@ async function runMigrations() {
       -- Bot Engine columns
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_bot BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS bot_personality TEXT DEFAULT 'friendly';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ DEFAULT NOW();
       CREATE INDEX IF NOT EXISTS idx_users_is_bot ON users(is_bot);
+      CREATE INDEX IF NOT EXISTS idx_users_last_active ON users(last_active_at);
+
+      -- Level 4 Retention Push Notification Logs Table
+      CREATE TABLE IF NOT EXISTS user_retention_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        hook_type TEXT NOT NULL,
+        bot_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        title TEXT,
+        body TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_retention_logs_user_hook ON user_retention_logs(user_id, hook_type, created_at);
     `);
 
     // Ensure bot profiles are seeded

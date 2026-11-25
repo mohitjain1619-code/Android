@@ -12,11 +12,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Bot Video Layer for Level 3 Buffer Calls (Zero Search Drop-off) -->
-    <VideoView
+    <!-- Bot Video Layer with Vertical AspectFill / CenterCrop (Zero Black Bars) -->
+    <com.mohit.camverz.CenterCropVideoView
         android:id="@+id/botVideoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_centerInParent="true"
         android:visibility="gone" />
 
     <!-- Remote Video Off Overlay -->

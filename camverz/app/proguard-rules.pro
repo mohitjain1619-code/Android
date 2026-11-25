@@ -6,9 +6,9 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# Enable optimization passes and access modification for high DEX optimization score
--optimizationpasses 5
--allowaccessmodification
+# ProGuard / R8 Configuration for Camverz
+-dontobfuscate
+-dontoptimize
 
 # ==============================================================================
 # General Attributes & Annotations
@@ -251,3 +251,47 @@
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**
 -dontwarn com.google.j2objc.annotations.**
+
+# ==============================================================================
+# Google Play Billing 8.x
+# ==============================================================================
+-dontwarn com.android.billingclient.**
+-keep class com.android.billingclient.** { *; }
+-keep interface com.android.billingclient.** { *; }
+-keepclassmembers class com.android.billingclient.** { *; }
+
+# ==============================================================================
+# Google Play Core & App Update
+# ==============================================================================
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+-keepclassmembers class com.google.android.play.core.** { *; }
+
+# ==============================================================================
+# Google Play Install Referrer
+# ==============================================================================
+-dontwarn com.android.installreferrer.**
+-keep class com.android.installreferrer.** { *; }
+-keepclassmembers class com.android.installreferrer.** { *; }
+
+# ==============================================================================
+# AndroidX Security Crypto & Google Tink
+# ==============================================================================
+-dontwarn androidx.security.crypto.**
+-keep class androidx.security.crypto.** { *; }
+-keepclassmembers class androidx.security.crypto.** { *; }
+-keep class com.google.crypto.tink.** { *; }
+-keepclassmembers class com.google.crypto.tink.** { *; }
+
+# ==============================================================================
+# Camverz Application Components & Critical Entry Points
+# ==============================================================================
+-keep class com.mohit.camverz.CamverzApp { *; }
+-keep class com.mohit.camverz.BaseActivity { *; }
+-keep class com.mohit.camverz.LoginActivity { *; }
+-keep class com.mohit.camverz.LanguageSelectionActivity { *; }
+-keep class com.mohit.camverz.BillingManager { *; }
+-keep class com.mohit.camverz.AdManager { *; }
+-keep class com.mohit.camverz.AppUpdateHelper { *; }
+-keep class com.mohit.camverz.LocaleHelper { *; }
+-keep class com.mohit.camverz.api.TokenManager { *; }

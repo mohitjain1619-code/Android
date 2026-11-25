@@ -99,6 +99,15 @@ public class CreatePostActivity extends BaseActivity {
             }
         });
 
+        // Fail-safe check: If female user is unverified and hasn't chosen sex preference yet
+        if ("female".equalsIgnoreCase(tokenManager.getUserGender()) && !tokenManager.isVerified() && !tokenManager.isFemalePostPrefConfirmed()) {
+            PreferenceSelectionDialog dialog = new PreferenceSelectionDialog(this, selectedPref -> {
+                tokenManager.setSexPreference(selectedPref);
+                tokenManager.setFemalePostPrefConfirmed(true);
+            });
+            dialog.show();
+        }
+
         // If onboarding post, let user write freely and attach progressive spotlight
         if (OnboardingTourManager.getInstance(this).shouldBypassAdsForPost(this)
                 || getIntent().getBooleanExtra("is_onboarding_post", false)) {

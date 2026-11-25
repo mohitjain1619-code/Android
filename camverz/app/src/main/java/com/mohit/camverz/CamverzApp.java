@@ -29,8 +29,7 @@ public class CamverzApp extends Application {
 
     @Override
     protected void attachBaseContext(android.content.Context base) {
-        android.content.Context localeContext = base != null ? LocaleHelper.applyLocale(base) : null;
-        super.attachBaseContext(localeContext != null ? localeContext : base);
+        super.attachBaseContext(base);
     }
 
     @Override
@@ -85,7 +84,7 @@ public class CamverzApp extends Application {
         // Initialize Google Play Billing Client globally & restore purchases
         try {
             BillingManager.getInstance(this).startConnection(null);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Log.e(TAG, "Error initializing BillingManager in CamverzApp", e);
         }
 
