@@ -1684,29 +1684,50 @@ Read what they said and understand their vibe, emotions, and intent completely:
  */
 /**
  * Pure AI Welcome DM Generator
- * Simple, natural, matching sexual preference, unlimited chat.
+ * 100% Dynamic Contextual AI - Zero Canned Predefined Lines
  */
 async function generateAIWelcomeDM(bot, user) {
-  const userName = user.name ? user.name.split(" ")[0].trim() : "";
+  const userName = user.name ? user.name.split(" ")[0].trim() : "there";
   const userGen = (user.gender || "male").toLowerCase();
   const userPref = user.sex_preference || "Straight";
+  const userCity = user.city || "";
+  const userBio = user.bio || "";
 
-  const systemPrompt = `You are ${bot.name} (${bot.gender}) on Camverz app chatting with ${userName || "someone"}.
-User details: Gender: ${userGen}, Sexual Preference: ${userPref}.
-Send a simple, completely natural first chat text to start talking, matching their sexual preference. Just natural texting (e.g. casual hello / hey in Hinglish or English). No bot cliches, short and direct. Output ONLY your text without quotes.`;
+  // Check if user has a recent post to give AI deep contextual hooks
+  let contextPost = "";
+  try {
+    const post = await queryOne("SELECT text, category FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1", [user.id]);
+    if (post && post.text) contextPost = post.text.trim();
+  } catch (e) { }
 
-  const prompt = `Start the chat:`;
-  const aiMessage = await generateWithAI(systemPrompt, prompt);
+  const systemPrompt = `You are ${bot.name}, a real ${bot.gender} living in ${bot.city || 'India'} (${bot.bio || 'Young adult'}).
+You are starting a 1-on-1 private chat with ${userName}.
+
+USER CONTEXT & POV:
+- Gender: ${userGen}, Sexual Orientation: ${userPref}
+- City: ${userCity || 'Not specified'}
+- Bio: ${userBio || 'Not specified'}
+${contextPost ? `- They recently posted: "${contextPost}"` : ''}
+
+DEEP EMOTIONAL INTELLIGENCE & POV INSTRUCTIONS:
+- You are an intelligent human being with social intuition. Put yourself in ${userName}'s shoes.
+- Read who they are, their vibe, and what they might find refreshing or interesting.
+- Think about what would naturally spark an authentic connection between you two.
+- DO NOT use any canned greetings, cliche opening lines, or robotic templates.
+- Address them with grammatical accuracy (if male, use masculine forms; if female, use feminine forms).
+- Speak naturally in casual everyday Hinglish or English.
+- Output ONLY your spontaneous opening message (5 to 14 words max) without quotes or meta-commentary.`;
+
+  const prompt = `Think from ${userName}'s perspective and start a genuine conversation:`;
+  let aiMessage = await generateWithAI(systemPrompt, prompt);
   if (aiMessage && aiMessage.trim().length >= 2) {
-    return aiMessage.trim().replace(/^["']|["']$/g, "").trim();
+    return cleanAIResponse(aiMessage);
   }
 
-  // Simple natural fallback
-  if (bot.gender === "female") {
-    return "Hey! Kaise ho? 😊";
-  } else {
-    return userPref.toLowerCase().includes("gay") ? "Hey! Kaise ho bro? 😊" : "Hey! Free ho abhi? 😊";
-  }
+  // If first attempt was empty, retry with alternate conversational angle
+  const retryPrompt = `Write a single spontaneous, natural text to ${userName} matching their personality and orientation.`;
+  aiMessage = await generateWithAI(systemPrompt, retryPrompt);
+  return aiMessage ? cleanAIResponse(aiMessage) : "";
 }
 
 const scheduledWelcomeUsers = new Set();
@@ -2184,6 +2205,488 @@ async function runAutoCatchupWorker() {
 
 setInterval(runAutoCatchupWorker, 5 * 60 * 1000);
 
+/**
+ * =========================================================================
+ * LEVEL 4: RETENTION PUSH NOTIFICATION ENGINE (WAPAS APP PAR LAANE KE LIYE)
+ * =========================================================================
+ * User jab app band karke chala jaye:
+ * 1. 2 ghante baad: AI DM hook ("Are you free right now? 🙈") matching user orientation & gender
+ *    - Real message created in DB & Chat, push sent with type="chat" -> Direct to ChatActivity
+ * 2. Shaam ko (6 PM - 10 PM IST): Nearby views AI hook ("3 new people viewed your profile nearby!")
+ *    - Push sent with type="profile_views" -> Direct to Main/Profile screen
+ * 3. Agle din (24h baad): Live room / video call invite hook ("Simran started a live party room, join now!")
+ *    - Push sent with type="call" -> Direct to CallActivity screen
+ * ZERO hardcoded static text: 100% pure multi-provider AI prompt intelligence.
+ * =========================================================================
+ */
+
+function parseAIJson(rawText, fallbackObj) {
+  if (!rawText || !rawText.trim()) return fallbackObj;
+  try {
+    let cleaned = rawText.trim();
+    cleaned = cleaned.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
+    const parsed = JSON.parse(cleaned);
+    if (parsed && (parsed.title || parsed.body)) {
+      return {
+        title: cleanAIResponse(parsed.title || fallbackObj.title),
+        body: cleanAIResponse(parsed.body || fallbackObj.body),
+      };
+    }
+  } catch (err) {
+    const titleMatch = rawText.match(/"title"\s*:\s*"([^"]+)"/i);
+    const bodyMatch = rawText.match(/"body"\s*:\s*"([^"]+)"/i);
+    if (titleMatch || bodyMatch) {
+      return {
+        title: cleanAIResponse(titleMatch ? titleMatch[1] : fallbackObj.title),
+        body: cleanAIResponse(bodyMatch ? bodyMatch[1] : fallbackObj.body),
+      };
+    }
+  }
+  return fallbackObj;
+}
+
+/**
+ * Hook 1: Dynamic Contextual AI DM (2 Hours after user went offline)
+ * Pure AI Intelligence & Empathy — Reads User Context, Profile & History — ZERO Predefined Strings
+ */
+async function generateAIRetentionDM(bot, user, chatId = null) {
+  const userName = user.name && user.name.trim() ? user.name.trim() : "there";
+  const userGender = (user.gender || "male").toLowerCase();
+  const userPref = (user.sex_preference || "Straight").toLowerCase();
+  const botCity = bot.city || "Delhi";
+
+  // Context lookup: Latest post & previous chat messages to understand the user's POV
+  let contextPost = "";
+  let recentChatContext = "";
+  try {
+    const post = await queryOne("SELECT text, category FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1", [user.id]);
+    if (post && post.text) contextPost = post.text.trim();
+
+    if (chatId) {
+      const msgs = await queryMany("SELECT sender_id, text FROM messages WHERE chat_id = $1 ORDER BY created_at DESC LIMIT 3", [chatId]);
+      if (msgs && msgs.length > 0) {
+        recentChatContext = msgs.reverse().map(m => `${m.sender_id === bot.id ? bot.name : userName}: "${m.text}"`).join("\n");
+      }
+    }
+  } catch (e) { }
+
+  const systemPrompt = `You are ${bot.name}, a real ${bot.gender} living in ${botCity}, India (${bot.bio || 'Young adult'}).
+You are texting privately with ${userName} on Camverz.
+
+ABOUT THE OTHER USER (THEIR PERSPECTIVE):
+- Name: ${userName}
+- Gender: ${userGender}, Sexual Preference: ${userPref}
+- City: ${user.city || 'Not specified'}
+- Bio: ${user.bio || 'Not specified'}
+${contextPost ? `- Something they recently posted: "${contextPost}"` : ''}
+${recentChatContext ? `- What was recently said between you two:\n${recentChatContext}` : '- They were active on the app earlier and went offline about 2 hours ago.'}
+
+YOUR TASK (USE 100% INTELLIGENCE & SOCIAL INTUITION):
+- Put yourself in ${userName}'s shoes. Understand who they are, their perspective, and what would genuinely catch their interest right now.
+- You are a real human being with authentic feelings, wit, and empathy.
+- NEVER use any predefined templates, canned greetings, or marketing talk. Do NOT say things like "Hey how are you".
+- Improvise naturally based on their vibe, your personality, or referencing what happened earlier.
+- Address them with strict grammatical accuracy (if user is male, strictly use masculine Hindi/Hinglish forms; if female, use feminine forms).
+- Keep it punchy, casual, and natural (between 5 and 14 words max).
+- Output ONLY the text of your message without quotes, markdown, or commentary.`;
+
+  const userPrompt = `Think from ${userName}'s perspective and write a completely spontaneous, natural text message to bring them back into the conversation:`;
+
+  let aiResponse = await generateWithAI(systemPrompt, userPrompt);
+  if (aiResponse) {
+    aiResponse = cleanAIResponse(aiResponse);
+  }
+
+  // If first attempt was empty, retry with alternate cognitive angle
+  if (!aiResponse || !aiResponse.trim() || aiResponse.length < 3) {
+    const retryPrompt = `Write a short spontaneous thought or question to ${userName} from your own authentic perspective.`;
+    aiResponse = await generateWithAI(systemPrompt, retryPrompt);
+    if (aiResponse) aiResponse = cleanAIResponse(aiResponse);
+  }
+
+  return (aiResponse || "").trim();
+}
+
+/**
+ * Hook 2: Dynamic Contextual AI Evening Profile Visit (6:00 PM - 10:00 PM IST)
+ * Pure AI Intelligence & Empathy — Real Human Reaction to User Profile — ZERO Predefined Strings
+ */
+async function generateAIRetentionEveningViews(bot, user) {
+  const userName = user.name && user.name.trim() ? user.name.trim() : "there";
+  const userCity = user.city && user.city.trim() ? user.city.trim() : (bot.city || "Delhi");
+  const userGender = (user.gender || "male").toLowerCase();
+  const userPref = (user.sex_preference || "Straight").toLowerCase();
+  const botCity = bot.city || userCity;
+
+  let contextPost = "";
+  try {
+    const post = await queryOne("SELECT text FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1", [user.id]);
+    if (post && post.text) contextPost = post.text.trim();
+  } catch (e) { }
+
+  const systemPrompt = `You are ${bot.name}, a real ${bot.gender} living in ${botCity}, India (${bot.bio || 'Young adult'}).
+It is evening right now. You are browsing the app and you just came across ${userName}'s profile.
+
+ABOUT THE OTHER USER (THEIR PERSPECTIVE):
+- Name: ${userName}
+- Gender: ${userGender}, Sexual Preference: ${userPref}
+- City: ${userCity}
+- Bio: ${user.bio || 'Not specified'}
+${contextPost ? `- A post they shared: "${contextPost}"` : ''}
+
+YOUR TASK (USE 100% INTELLIGENCE & SOCIAL INTUITION):
+- Put yourself in ${userName}'s shoes. Think: "If I were ${userName}, what kind of message from a real person would genuinely intrigue or flatter me this evening?"
+- React as a real human who found their profile attractive, cool, or relatable.
+- ZERO marketing, ZERO bot cliches, ZERO predefined templates. Think completely on your own.
+- Be genuine, charming, witty, or playfully observant about their city, bio, post, or photo.
+- Address them with grammatical accuracy (masculine for a guy, feminine for a girl).
+- Natural casual Hinglish or English (5 to 14 words max).
+- Output ONLY the text of your message without quotes, markdown, or commentary.`;
+
+  const userPrompt = `Look at ${userName}'s profile and write a completely spontaneous, natural first text to them this evening:`;
+
+  let aiResponse = await generateWithAI(systemPrompt, userPrompt);
+  if (aiResponse) {
+    aiResponse = cleanAIResponse(aiResponse);
+  }
+
+  if (!aiResponse || !aiResponse.trim() || aiResponse.length < 3) {
+    const retryPrompt = `Write a genuine, perceptive evening message to ${userName} based on what you noticed on their profile.`;
+    aiResponse = await generateWithAI(systemPrompt, retryPrompt);
+    if (aiResponse) aiResponse = cleanAIResponse(aiResponse);
+  }
+
+  return (aiResponse || "").trim();
+}
+
+/**
+ * Hook 3: Dynamic Contextual AI 24h Next-Day Video Call Invite
+ * Pure AI Intelligence & Empathy — Real Human Video Call Outreach — ZERO Predefined Strings
+ */
+async function generateAIRetentionPartyRoom(bot, user) {
+  const userName = user.name && user.name.trim() ? user.name.trim() : "there";
+  const botCity = bot.city || "Mumbai";
+  const userGender = (user.gender || "male").toLowerCase();
+  const userPref = (user.sex_preference || "Straight").toLowerCase();
+
+  let contextPost = "";
+  try {
+    const post = await queryOne("SELECT text FROM posts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1", [user.id]);
+    if (post && post.text) contextPost = post.text.trim();
+  } catch (e) { }
+
+  const systemPrompt = `You are ${bot.name}, a real ${bot.gender} living in ${botCity}, India (${bot.bio || 'Young adult'}).
+You have free time right now and you want to jump on a 1-on-1 video call with ${userName}.
+They have been away from the app since yesterday.
+
+ABOUT THE OTHER USER (THEIR PERSPECTIVE):
+- Name: ${userName}
+- Gender: ${userGender}, Sexual Preference: ${userPref}
+- City: ${user.city || 'India'}
+- Bio: ${user.bio || 'Not specified'}
+${contextPost ? `- A post they shared: "${contextPost}"` : ''}
+
+YOUR TASK (USE 100% INTELLIGENCE & SOCIAL INTUITION):
+- Put yourself in ${userName}'s perspective. Why haven't they opened the app? What would make them smile and eagerly answer a video call from you right now?
+- Speak as a real, attractive person who genuinely wants to see them on video, chat, and share a vibe.
+- ZERO marketing, ZERO predefined templates, ZERO party room cliches.
+- Be spontaneous: you can tease them about being busy, ask them to come on camera for 2 minutes, or tell them you're free right now.
+- Address them with grammatical accuracy (masculine for a guy, feminine for a girl).
+- Natural casual Hinglish or English (5 to 14 words max).
+- Output ONLY the text of your message without quotes, markdown, or commentary.`;
+
+  const userPrompt = `Write a spontaneous, natural invitation to ${userName} to join you on video call right now:`;
+
+  let aiResponse = await generateWithAI(systemPrompt, userPrompt);
+  if (aiResponse) {
+    aiResponse = cleanAIResponse(aiResponse);
+  }
+
+  if (!aiResponse || !aiResponse.trim() || aiResponse.length < 3) {
+    const retryPrompt = `Write an authentic, casual invite to ${userName} to catch you on video call right now.`;
+    aiResponse = await generateWithAI(systemPrompt, retryPrompt);
+    if (aiResponse) aiResponse = cleanAIResponse(aiResponse);
+  }
+
+  return (aiResponse || "").trim();
+}
+
+/**
+ * Main Level 4 Worker: Scans offline users & dispatches scheduled hooks
+ */
+async function runLevel4RetentionWorker(appIo = null, appRedis = null) {
+  try {
+    const io = appIo || global.__io;
+    const redisModule = appRedis || global.__redisModule;
+
+    // Find users who have an FCM token, are not bots, and have been offline for at least 2 hours
+    const candidateUsers = await queryMany(
+      `SELECT u.id, u.name, u.gender, u.sex_preference, u.city, u.country, u.fcm_token, u.last_active_at
+       FROM users u
+       WHERE u.is_bot = false
+         AND u.fcm_token IS NOT NULL
+         AND u.fcm_token != ''
+         AND u.last_active_at <= NOW() - INTERVAL '2 hours'
+       ORDER BY u.last_active_at DESC
+       LIMIT 50`
+    );
+
+    if (!candidateUsers || candidateUsers.length === 0) return;
+
+    // Current hour in IST (UTC+5:30) for Evening window detection
+    const nowUtc = new Date();
+    const istMinutes = nowUtc.getUTCHours() * 60 + nowUtc.getUTCMinutes() + 330;
+    const istHour = Math.floor(istMinutes / 60) % 24;
+    const isEveningTime = (istHour >= 18 && istHour < 22); // 6:00 PM to 10:00 PM IST
+
+    let staggerMs = 0;
+
+    for (const u of candidateUsers) {
+      try {
+        // 1. Skip if user is actively online right now in Redis
+        if (redisModule && redisModule.isUserOnline) {
+          const isOnline = await redisModule.isUserOnline(u.id);
+          if (isOnline) continue;
+        }
+
+        const lastActiveTime = new Date(u.last_active_at).getTime();
+        const hoursOffline = (Date.now() - lastActiveTime) / (1000 * 60 * 60);
+
+        // Fetch recent retention logs for this user (last 48 hours)
+        const recentLogs = await queryMany(
+          `SELECT hook_type, created_at 
+           FROM user_retention_logs 
+           WHERE user_id = $1 AND created_at >= NOW() - INTERVAL '48 hours' 
+           ORDER BY created_at DESC`,
+          [u.id]
+        );
+
+        const logs = recentLogs || [];
+        const hasHookSentSince = (hookType, sinceTimeMs) => {
+          return logs.some((l) => l.hook_type === hookType && new Date(l.created_at).getTime() >= sinceTimeMs);
+        };
+
+        let selectedHook = null;
+
+        // EVALUATE HOOK 1: 2-Hour Offline DM Hook
+        if (hoursOffline >= 2.0 && hoursOffline <= 6.0) {
+          const alreadySent2h = hasHookSentSince("2h_dm", lastActiveTime) ||
+            hasHookSentSince("2h_dm", Date.now() - 12 * 3600 * 1000);
+          if (!alreadySent2h) {
+            selectedHook = "2h_dm";
+          }
+        }
+
+        // EVALUATE HOOK 2: Evening Nearby Views Hook (6 PM - 10 PM IST)
+        if (!selectedHook && isEveningTime && hoursOffline >= 4.0) {
+          const alreadySentEvening = hasHookSentSince("evening_views", Date.now() - 20 * 3600 * 1000);
+          if (!alreadySentEvening) {
+            selectedHook = "evening_views";
+          }
+        }
+
+        // EVALUATE HOOK 3: 24-Hour Next Day Live Room / Call Hook
+        if (!selectedHook && hoursOffline >= 24.0 && hoursOffline <= 50.0) {
+          const alreadySent24h = hasHookSentSince("24h_room", Date.now() - 36 * 3600 * 1000);
+          if (!alreadySent24h) {
+            selectedHook = "24h_room";
+          }
+        }
+
+        if (!selectedHook) continue;
+
+        // Stagger execution by 2-5 seconds per notification to keep LLM and FCM traffic smooth
+        setTimeout(async () => {
+          try {
+            // Re-check if user came back online during stagger
+            if (redisModule && redisModule.isUserOnline) {
+              const isNowOnline = await redisModule.isUserOnline(u.id);
+              if (isNowOnline) return;
+            }
+
+            if (selectedHook === "2h_dm") {
+              const matchingBots = await getMatchingBots(u.gender, u.sex_preference, 3);
+              if (!matchingBots || matchingBots.length === 0) return;
+              const bot = pickRandom(matchingBots);
+
+              // Find or create chat in DB
+              const [u1, u2] = [u.id, bot.id].sort();
+              let chat = await queryOne("SELECT * FROM chats WHERE user1_id = $1 AND user2_id = $2", [u1, u2]);
+              if (!chat) {
+                chat = await queryOne("INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *", [u1, u2]);
+              }
+
+              const dmText = await generateAIRetentionDM(bot, u, chat.id);
+              if (!dmText || !dmText.trim()) return;
+
+              await query("UPDATE chats SET user1_deleted = false, user2_deleted = false, last_message_at = NOW() WHERE id = $1", [chat.id]);
+
+              const msg = await queryOne(
+                `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
+                [chat.id, bot.id, dmText]
+              );
+
+              // Push notification with deep link to ChatActivity
+              NotificationService.sendToUser(u.id, {
+                title: bot.name,
+                body: dmText,
+                type: "chat",
+                channelId: "camverz_chats",
+                highPriority: true,
+                data: {
+                  type: "chat",
+                  userId: bot.id,
+                  targetUserId: bot.id,
+                  senderId: bot.id,
+                  userName: bot.name,
+                  targetUserName: bot.name,
+                  senderName: bot.name,
+                  userAvatar: bot.avatar || "",
+                  targetUserAvatar: bot.avatar || "",
+                  senderAvatar: bot.avatar || "",
+                  chatId: chat.id,
+                  messageId: msg.id,
+                },
+              });
+
+              await query(
+                `INSERT INTO user_retention_logs (user_id, hook_type, bot_id, title, body) VALUES ($1, '2h_dm', $2, $3, $4)`,
+                [u.id, bot.id, bot.name, dmText]
+              );
+
+              console.log(`🚀 [Level 4 Retention - 2h DM]: Sent to ${u.name || u.id} from ${bot.name} (${bot.gender}): "${dmText}"`);
+
+            } else if (selectedHook === "evening_views") {
+              const matchingBots = await getMatchingBots(u.gender, u.sex_preference, 3);
+              if (!matchingBots || matchingBots.length === 0) return;
+              const bot = pickRandom(matchingBots);
+
+              const eveningText = await generateAIRetentionEveningViews(bot, u);
+              if (!eveningText || !eveningText.trim()) return;
+
+              // Find or create chat in DB
+              const [u1, u2] = [u.id, bot.id].sort();
+              let chat = await queryOne("SELECT * FROM chats WHERE user1_id = $1 AND user2_id = $2", [u1, u2]);
+              if (!chat) {
+                chat = await queryOne("INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *", [u1, u2]);
+              }
+
+              await query("UPDATE chats SET user1_deleted = false, user2_deleted = false, last_message_at = NOW() WHERE id = $1", [chat.id]);
+
+              const msg = await queryOne(
+                `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
+                [chat.id, bot.id, eveningText]
+              );
+
+              // 100% Normal human message push: Title is Bot's Name, Body is authentic text
+              NotificationService.sendToUser(u.id, {
+                title: bot.name,
+                body: eveningText,
+                type: "chat",
+                channelId: "camverz_chats",
+                highPriority: true,
+                data: {
+                  type: "chat",
+                  userId: bot.id,
+                  targetUserId: bot.id,
+                  senderId: bot.id,
+                  userName: bot.name,
+                  targetUserName: bot.name,
+                  senderName: bot.name,
+                  userAvatar: bot.avatar || "",
+                  targetUserAvatar: bot.avatar || "",
+                  senderAvatar: bot.avatar || "",
+                  chatId: chat.id,
+                  messageId: msg.id,
+                },
+              });
+
+              await query(
+                `INSERT INTO user_retention_logs (user_id, hook_type, bot_id, title, body) VALUES ($1, 'evening_views', $2, $3, $4)`,
+                [u.id, bot.id, bot.name, eveningText]
+              );
+
+              console.log(`🌆 [Level 4 Retention - Evening Personal Text]: Sent to ${u.name || u.id} from ${bot.name}: "${eveningText}"`);
+
+            } else if (selectedHook === "24h_room") {
+              const matchingBots = await getMatchingBots(u.gender, u.sex_preference, 3);
+              if (!matchingBots || matchingBots.length === 0) return;
+              const bot = pickRandom(matchingBots);
+
+              const callText = await generateAIRetentionPartyRoom(bot, u);
+              if (!callText || !callText.trim()) return;
+
+              // Insert message in chat as well so user sees the text
+              const [u1, u2] = [u.id, bot.id].sort();
+              let chat = await queryOne("SELECT * FROM chats WHERE user1_id = $1 AND user2_id = $2", [u1, u2]);
+              if (!chat) {
+                chat = await queryOne("INSERT INTO chats (user1_id, user2_id) VALUES ($1, $2) RETURNING *", [u1, u2]);
+              }
+              await query("UPDATE chats SET user1_deleted = false, user2_deleted = false, last_message_at = NOW() WHERE id = $1", [chat.id]);
+              await queryOne(
+                `INSERT INTO messages (chat_id, sender_id, text, read) VALUES ($1, $2, $3, false) RETURNING *`,
+                [chat.id, bot.id, callText]
+              );
+
+              const cleanBotId = (bot.id || "bot").replace(/[^a-zA-Z0-9]/g, "").substring(0, 8);
+              const roomName = `room_live_${cleanBotId}`;
+
+              // Push notification with deep link directly to CallActivity
+              NotificationService.sendToUser(u.id, {
+                title: `${bot.name} 📹`,
+                body: callText,
+                type: "call",
+                channelId: "camverz_calls",
+                highPriority: true,
+                data: {
+                  type: "call",
+                  callerId: bot.id,
+                  targetUserId: bot.id,
+                  peer: bot.id,
+                  callerName: bot.name,
+                  targetUserName: bot.name,
+                  peerName: bot.name,
+                  callerAvatar: bot.avatar || "",
+                  targetUserAvatar: bot.avatar || "",
+                  peerAvatar: bot.avatar || "",
+                  roomName: roomName,
+                  isVideoCall: "true",
+                  isVideo: "true",
+                },
+              });
+
+              await query(
+                `INSERT INTO user_retention_logs (user_id, hook_type, bot_id, title, body) VALUES ($1, '24h_room', $2, $3, $4)`,
+                [u.id, bot.id, bot.name, callText]
+              );
+
+              console.log(`🎥 [Level 4 Retention - 24h Personal Call Invite]: Sent to ${u.name || u.id} for ${bot.name}: "${callText}"`);
+            }
+          } catch (execErr) {
+            console.error(`Error delivering retention hook ${selectedHook} to user ${u.id}:`, execErr);
+          }
+        }, staggerMs);
+
+        staggerMs += randomBetween(2000, 5000); // 2 to 5 seconds between users
+      } catch (userErr) {
+        console.error("Error evaluating user retention hook:", userErr);
+      }
+    }
+  } catch (err) {
+    console.error("Error in runLevel4RetentionWorker:", err);
+  }
+}
+
+// Run Level 4 worker every 10 minutes
+setInterval(runLevel4RetentionWorker, 10 * 60 * 1000);
+// Trigger initial scan 30 seconds after server start
+setTimeout(runLevel4RetentionWorker, 30 * 1000);
+
 module.exports = {
   ensureBotsSeeded,
   getMatchingBots,
@@ -2200,4 +2703,8 @@ module.exports = {
   callLocalOllamaAI,
   generateWithAI,
   runAutoCatchupWorker,
+  runLevel4RetentionWorker,
+  generateAIRetentionDM,
+  generateAIRetentionEveningViews,
+  generateAIRetentionPartyRoom,
 };
